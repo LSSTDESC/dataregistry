@@ -1,6 +1,6 @@
 # Making heavy use of Eric's package desc-howto-python-package
 [project]
-name = "dataRegistry"
+name = "dataregistry"
 description = "Creation and user API for DESC data registry"
 readme = "README.md"
 requires-python = ">=3.8"
