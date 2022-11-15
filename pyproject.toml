@@ -1,0 +1,34 @@
+# Making heavy use of Eric's package desc-howto-python-package
+[project]
+name = "dataRegistry"
+description = "Creation and user API for DESC data registry"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [
+    { name = "Joanne Bogart", email = "jrbogart@slac.stanford.edu" }
+]
+classifiers = [
+    # Add line for license here?
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    # include another line for specific Python version?
+    "Natural Language :: English",
+    "Operating System :: POSIX"
+    ]
+dynamic = ["version"]
+dependencies = [
+    "psycopg2",
+    "sqlalchemy",
+    ]
+
+[build-system]
+requires = ["setuptools>=61", "wheel", "setuptools_scm[toml]>6.2"]
+
+[tool.setuptools_scm]
+write_to = "src/dataregistry/_version.py"
+
+# For now, no package data
+# [tool.setuptools.package-data]
+
+# If use tools like pytest, pylint, etc. add list of them here
+# followed by more configuration that the tools need

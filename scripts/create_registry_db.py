@@ -1,7 +1,7 @@
 import os
 import enum
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum
-from db_basic import create_db_engine, TableCreator
+from dataregistry.db_basic import create_db_engine, TableCreator
 
 engine = create_db_engine(config_file=os.path.join(os.getenv('HOME'),
                                                    '.registry_config_dev'))
