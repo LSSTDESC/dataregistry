@@ -16,6 +16,7 @@ class OwnershipEnum(enum.Enum):
 cols = []
 cols.append(Column("dataset_id", Integer, primary_key=True))
 cols.append(Column("name", String, nullable=False))
+cols.append(Column("relative_path", String, nullable=False))
 cols.append(Column("version_major", Integer, nullable=False))
 cols.append(Column("version_minor", Integer, nullable=False))
 cols.append(Column("version_patch", Integer, nullable=False))
