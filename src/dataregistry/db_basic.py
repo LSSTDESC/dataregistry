@@ -3,7 +3,9 @@ import yaml
 import os
 from collections import namedtuple
 
-__all__ = ['create_db_engine', 'TableCreator']
+SCHEMA_VERSION = 'registry_0_1'
+
+__all__ = ['create_db_engine', 'TableCreator', 'SCHEMA_VERSION']
 
 def create_db_engine(config_file=None, db_dialect='postgresql'):
 
@@ -37,12 +39,12 @@ def create_db_engine(config_file=None, db_dialect='postgresql'):
                                          config file''')
 
 class TableCreator:
-    def __init__(self, engine, schema=None):
+    def __init__(self, engine, schema=SCHEMA_VERSION):
         self._engine = engine
         self._schema = schema
         self._metadata = MetaData(bind=engine, schema=schema)
 
-    def define_table(self, name, columns):
+    def define_table(self, name, columns, constraints=[]):
         '''
         Usual case: caller wants to create a collection of tables all at once
         so just stash definition in MetaData object.
@@ -50,6 +52,7 @@ class TableCreator:
         Parameters
         name         string          table name
         columns      list of sqlalchemy.Column objects
+        constraints  (optional) list of sqlalchemy.Constraint objects
 
         returns     tbl, an sqlalchemy.Table object.
                     User may instantiate immediately with
@@ -57,13 +60,15 @@ class TableCreator:
 
         '''
         tbl = Table(name, self._metadata, *columns)
+        for c in constraints:
+            tbl.append_constraint(c)
 
         return tbl
 
-    def create_table(self, name, columns):
+    def create_table(self, name, columns, constraints=None):
         ''' Define and instantiate a single table '''
 
-        tbl = define_table(self, name, columns)
+        tbl = define_table(self, name, columns, constraints)
         tbl.create()
 
     def create_all(self):

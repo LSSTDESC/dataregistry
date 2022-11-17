@@ -1,6 +1,7 @@
 import os
 import enum
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import ForeignKey, UniqueConstraint, Enum
 from dataregistry.db_basic import create_db_engine, TableCreator
 
 engine = create_db_engine(config_file=os.path.join(os.getenv('HOME'),
@@ -41,6 +42,18 @@ cols.append(Column("owner", String, nullable=False))
 
 tab_creator.define_table("dataset", cols)
 
+# Dataset alias name table
+cols = []
+cols.append(Column("dataset_alias_id", Integer, primary_key=True))
+cols.append(Column("alias", String, nullable=False))
+cols.append(Column("dataset_id", Integer, ForeignKey("dataset.dataset_id")))
+cols.append(Column("supersede_date", DateTime,  default=None))
+cols.append(Column("creation_date", DateTime, nullable=False))
+
+tab_creator.define_table("dataset_alias", cols,
+                         [UniqueConstraint("alias", "supersede_date",
+                                           name="dataset_u_supersede")])
+
 # Execution table
 cols = []
 cols.append(Column("execution_id", Integer, primary_key=True))
@@ -53,6 +66,19 @@ cols.append(Column("name", String))
 cols.append(Column("locale", String))
 
 tab_creator.define_table("execution", cols)
+
+# Execution alias name table
+cols = []
+cols.append(Column("execution_alias_id", Integer, primary_key=True))
+cols.append(Column("alias", String, nullable=False))
+cols.append(Column("execution_id", Integer,
+                   ForeignKey("execution.execution_id")))
+cols.append(Column("supersede_date", DateTime,  default=None))
+cols.append(Column("creation_date", DateTime, nullable=False))
+
+tab_creator.define_table("execution_alias", cols,
+                         [UniqueConstraint("alias", "supersede_date",
+                                           name="execution_u_supersede")])
 
 # Internal dependencies - which datasets are inputs to creation of others
 cols = []
