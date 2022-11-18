@@ -1,11 +1,13 @@
 from sqlalchemy import create_engine, MetaData, Table
 import yaml
 import os
+import enum
 from collections import namedtuple
 
 SCHEMA_VERSION = 'registry_0_1'
 
-__all__ = ['create_db_engine', 'TableCreator', 'SCHEMA_VERSION']
+__all__ = ['create_db_engine', 'TableCreator', 'SCHEMA_VERSION',
+           'OwnershipEnum']
 
 def create_db_engine(config_file=None, db_dialect='postgresql'):
 
@@ -37,6 +39,11 @@ def create_db_engine(config_file=None, db_dialect='postgresql'):
         # check that .pgpass exists with correct permissions
         raise NotImplementedException('''Currently can only create engine from
                                          config file''')
+
+class OwnershipEnum(enum.Enum):
+    production = 1
+    group = 2
+    user = 3
 
 class TableCreator:
     def __init__(self, engine, schema=SCHEMA_VERSION):

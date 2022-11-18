@@ -1,17 +1,12 @@
 import os
-import enum
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy import ForeignKey, UniqueConstraint, Enum
-from dataregistry.db_basic import create_db_engine, TableCreator
+from dataregistry.db_basic import create_db_engine, TableCreator, OwnershipEnum
 
 engine = create_db_engine(config_file=os.path.join(os.getenv('HOME'),
                                                    '.registry_config_dev'))
 
 tab_creator = TableCreator(engine, 'registry_0_1')
-class OwnershipEnum(enum.Enum):
-    production = 1
-    group = 2
-    user = 3
 
 # Main table, a row per dataset
 cols = []
