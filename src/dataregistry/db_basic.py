@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, MetaData, Table
+from sqlalchemy import create_engine, engine_from_config, MetaData, Table, text
 import yaml
 import os
 import enum
@@ -9,36 +9,13 @@ SCHEMA_VERSION = 'registry_0_1'
 __all__ = ['create_db_engine', 'TableCreator', 'SCHEMA_VERSION',
            'OwnershipEnum']
 
-def create_db_engine(config_file=None, db_dialect='postgresql'):
+def create_db_engine(config_file, db_dialect='postgresql'):
 
     if config_file:
         # Should check file is private to user
         with open(config_file) as f:
             connection_parameters = yaml.safe_load(f)
-
-        if db_dialect == 'postgresql':
-            if not 'pwd' in connection_parameters:
-                raise ValueException('Db connection file must contain value for pwd')
-            pwd = connection_parameters['pwd']
-            host = connection_parameters['host']
-            dbname = connection_parameters['dbname']
-            user = connection_parameters['user']
-            if '5432' not in host:
-                host = host + ':5432'
-
-            url = f'{db_dialect}://{user}:{pwd}@{host}/{dbname}'
-        elif db_dialect == 'sqlite':
-            # dbname parameter should be path to sqlite file
-            db_file = connection_parameters['dbname']
-            url = f'{db_dialect}///{db_file}'
-
-        return create_engine(url)
-
-    else:
-        # If postgres maybe use .pgpass?
-        # check that .pgpass exists with correct permissions
-        raise NotImplementedException('''Currently can only create engine from
-                                         config file''')
+            return engine_from_config(connection_parameters)
 
 class OwnershipEnum(enum.Enum):
     production = 1
@@ -83,6 +60,14 @@ class TableCreator:
         Instantiate all tables defined so far which don't already exist
         '''
         self._metadata.create_all()
+
+    def grant_reader_access(self, acct):
+        '''
+        Grant SELECT to specified account
+        '''
+        stmt = f'GRANT SELECT ON ALL TABLES IN SCHEMA {self._schema} to {acct}'
+        with self._engine.connect() as conn:
+            conn.execute(text(stmt))
 
 if __name__ == '__main__':
     from sqlalchemy import Column, Integer, String

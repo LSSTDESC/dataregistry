@@ -4,7 +4,8 @@ from sqlalchemy import ForeignKey, UniqueConstraint, Enum
 from dataregistry.db_basic import create_db_engine, TableCreator, OwnershipEnum
 
 engine = create_db_engine(config_file=os.path.join(os.getenv('HOME'),
-                                                   '.registry_config_dev'))
+                                                   '.config_reg_writer'))
+                                                   ##'.registry_config_dev'))
 
 tab_creator = TableCreator(engine, 'registry_0_1')
 
@@ -85,3 +86,5 @@ cols.append(Column("output_id", Integer, ForeignKey("dataset.dataset_id")))
 tab_creator.define_table("dependency", cols)
 
 tab_creator.create_all()
+
+tab_creator.grant_reader_access('reg_reader')

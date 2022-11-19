@@ -58,7 +58,7 @@ class Registrar():
                 result = conn.execute(insert(exec_table), [values])
                 # It seems autocommit is in effect and no commit is needed
                 ## conn.commit()
-                return result[0]["execution_id"]
+                return result.inserted_primary_key
             except DBAPIError as e:
                 print('Original error:')
                 print(e.StatementError.orig)
