@@ -1,4 +1,6 @@
-from sqlalchemy import create_engine, engine_from_config, MetaData, Table, text
+from sqlalchemy import engine_from_config
+from sqlalchemy.engine import make_url
+from sqlalchemy import MetaData, Table, text
 import yaml
 import os
 import enum
@@ -9,13 +11,15 @@ SCHEMA_VERSION = 'registry_0_1'
 __all__ = ['create_db_engine', 'TableCreator', 'SCHEMA_VERSION',
            'OwnershipEnum']
 
-def create_db_engine(config_file, db_dialect='postgresql'):
+def create_db_engine(config_file):
+    # Ideally config_file does not contain password, but if it does
+    # it should be accessible to owner only
+    with open(config_file) as f:
+        connection_parameters = yaml.safe_load(f)
+        driver = make_url(connection_parameters['sqlalchemy.url']).drivername
+        dialect = driver.split('+')[0]
 
-    if config_file:
-        # Should check file is private to user
-        with open(config_file) as f:
-            connection_parameters = yaml.safe_load(f)
-            return engine_from_config(connection_parameters)
+        return engine_from_config(connection_parameters), dialect
 
 class OwnershipEnum(enum.Enum):
     production = 1
@@ -71,15 +75,23 @@ class TableCreator:
 
 if __name__ == '__main__':
     from sqlalchemy import Column, Integer, String
+    import sys
 
     cols = []
     cols.append(Column("primary_id", Integer, primary_key=True))
     cols.append(Column("short_string", String(16)))
 
-    engine = create_db_engine(config_file=os.path.join(os.getenv('HOME'),
-                                                       '.registry_config_dev'))
+    if len(sys.argv) > 1:
+        config_file = sys.argv[1]
+    else:
+        config_file = os.path.join(os.getenv('HOME'), '.config_reg_writer')
 
-    tab_creator = TableCreator(engine, 'registry_0_1')
+    engine, dialect = create_db_engine(config_file=config_file)
+
+    if dialect != 'sqlite':
+        tab_creator = TableCreator(engine, schema='registry_0_1')
+    else:
+        tab_creator = TableCreator(engine, schema=None)
 
     tab_creator.define_table('sillytable', cols)
 

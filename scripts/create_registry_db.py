@@ -1,13 +1,21 @@
 import os
+import sys
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy import ForeignKey, UniqueConstraint, Enum
 from dataregistry.db_basic import create_db_engine, TableCreator, OwnershipEnum
 
-engine = create_db_engine(config_file=os.path.join(os.getenv('HOME'),
-                                                   '.config_reg_writer'))
-                                                   ##'.registry_config_dev'))
+if len(sys.argv) > 1:
+    config_file = sys.argv[1]
+else:
+    config_file = os.path.join(os.getenv('HOME'), '.config_reg_writer')
+engine, dialect = create_db_engine(config_file=config_file)
 
-tab_creator = TableCreator(engine, 'registry_0_1')
+if dialect == 'sqlite':
+    schema = None
+else:
+    schema = 'registry_0_1'
+
+tab_creator = TableCreator(engine, schema=schema)
 
 # Main table, a row per dataset
 cols = []
@@ -87,4 +95,5 @@ tab_creator.define_table("dependency", cols)
 
 tab_creator.create_all()
 
-tab_creator.grant_reader_access('reg_reader')
+if dialect != 'sqlite':
+    tab_creator.grant_reader_access('reg_reader')
