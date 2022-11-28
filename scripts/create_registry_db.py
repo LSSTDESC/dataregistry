@@ -1,8 +1,9 @@
 import os
 import sys
+import enum
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy import ForeignKey, UniqueConstraint, Enum
-from dataregistry.db_basic import create_db_engine, TableCreator, OwnershipEnum
+from dataregistry.db_basic import create_db_engine, TableCreator, ownertypeenum
 
 if len(sys.argv) > 1:
     config_file = sys.argv[1]
@@ -38,7 +39,7 @@ cols.append(Column("access_API", String(20)))
 # A way to associate a dataset with a program execution or "run"
 cols.append(Column("execution_id", Integer, ForeignKey("execution.execution_id")))
 cols.append(Column("description", String))
-cols.append(Column("ownership_type", Enum(OwnershipEnum), nullable=False))
+cols.append(Column("owner_type", Enum(ownertypeenum), nullable=False))
 # If ownership_type is 'production', then owner is always 'production'
 # If ownership_type is 'group', owner will be a group name
 # If ownership_type is 'user', owner will be a user name
@@ -53,6 +54,7 @@ cols.append(Column("alias", String, nullable=False))
 cols.append(Column("dataset_id", Integer, ForeignKey("dataset.dataset_id")))
 cols.append(Column("supersede_date", DateTime,  default=None))
 cols.append(Column("creation_date", DateTime, nullable=False))
+cols.append(Column("creator_uid", String(20), nullable=False))
 
 tab_creator.define_table("dataset_alias", cols,
                          [UniqueConstraint("alias", "supersede_date",
@@ -68,6 +70,7 @@ cols.append(Column("execution_start", DateTime))
 cols.append(Column("name", String))
 # locale is, e.g. site where code was run
 cols.append(Column("locale", String))
+cols.append(Column("creator_uid", String(20), nullable=False))
 
 tab_creator.define_table("execution", cols)
 
@@ -79,6 +82,7 @@ cols.append(Column("execution_id", Integer,
                    ForeignKey("execution.execution_id")))
 cols.append(Column("supersede_date", DateTime,  default=None))
 cols.append(Column("creation_date", DateTime, nullable=False))
+cols.append(Column("creator_uid", String(20), nullable=False))
 
 tab_creator.define_table("execution_alias", cols,
                          [UniqueConstraint("alias", "supersede_date",

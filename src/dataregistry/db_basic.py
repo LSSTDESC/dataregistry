@@ -1,15 +1,15 @@
 from sqlalchemy import engine_from_config
 from sqlalchemy.engine import make_url
-from sqlalchemy import MetaData, Table, text
+import enum
+from sqlalchemy import MetaData, Table, Enum, text
 import yaml
 import os
-import enum
 from collections import namedtuple
 
 SCHEMA_VERSION = 'registry_0_1'
 
 __all__ = ['create_db_engine', 'TableCreator', 'SCHEMA_VERSION',
-           'OwnershipEnum']
+           'ownertypeenum']
 
 def create_db_engine(config_file):
     # Ideally config_file does not contain password, but if it does
@@ -21,10 +21,10 @@ def create_db_engine(config_file):
 
         return engine_from_config(connection_parameters), dialect
 
-class OwnershipEnum(enum.Enum):
-    production = 1
-    group = 2
-    user = 3
+class ownertypeenum(enum.Enum):
+    production = "production"
+    group = "group"
+    user = "user"
 
 class TableCreator:
     def __init__(self, engine, schema=SCHEMA_VERSION):

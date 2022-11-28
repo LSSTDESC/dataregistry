@@ -1,21 +1,55 @@
+import os
 from datetime import datetime
 from sqlalchemy import MetaData, Table, Column, insert   # maybe other stuff
 from sqlalchemy.exc import DBAPIError
-from dataregistry.db_basic import SCHEMA_VERSION, OwnershipEnum
+from dataregistry.db_basic import SCHEMA_VERSION, ownertypeenum
+
+_SEPARATOR = '.'
+def make_version_string(major, minor=0, patch=0, suffix=None):
+    version = _SEPARATOR.join([major, minor, patch])
+    if suffix:
+        version = SEPARATOR.join([version, suffix])
+    return version
+
+def parse_version_string(version):
+    '''
+    Return dict with keys major, minor, patch and (if present) suffix
+    '''
+    # Perhaps better to do with regular expressions.  Or at least verify
+    # that major, minor, patch are integers
+    cmp = version.split(_SEPARATOR, maxsplit=3)
+    d = {'major' : cmp[0]}
+    if len(cmp) > 1:
+        d['minor'] = cmp[1]
+    else:
+        d['minor'] = 0
+    if len(cmp) > 2:
+        d['patch'] = cmp[2]
+    else:
+        d['patch'] = 0
+    if len(cmp) > 3:
+        d['suffix'] = cmp[4]
+
+    return d
 
 class Registrar():
     '''
     Register new datasets, executions ("runs") or alias names
     '''
-    def __init__(self, db_engine, owner_type, owner=None,
+    def __init__(self, db_engine, dialect, owner_type, owner=None,
                  schema_version=SCHEMA_VERSION):
         self._engine = db_engine
-        self._owner_type = owner_type
+        self._dialect = dialect
+        self._owner_type = owner_type.value
         self._owner = owner
-        if self._owner_type == OwnershipEnum.production:
+        if self._owner_type == ownertypeenum.production:
             self._owner = 'production'
-        self._schema_version=schema_version
+        if dialect == 'sqlite':
+            self._schema_version = None
+        else:
+            self._schema_version=schema_version
         self._metadata = MetaData(bind=db_engine, schema=self._schema_version)
+        self._userid = os.getenv('USER')
 
     def register_dataset(self, name, relative_path, version_major,
                          version_minor,
@@ -25,7 +59,33 @@ class Registrar():
         #    arguments
         #    schema, owner_type, owner from self
         #    generate value for register_date
-        pass # for now
+        values  = {"name" : name}
+        values["relative_path"] = relative_path
+        values["version_major"] = version_major
+        values["version_minor"] = version_minor
+        values["version_patch"] = version_patch
+        if version_suffix: values["version_suffix"] = version_suffix
+        if creation_date: values["dataset_creation_date"] = creation_date
+        if description: values["description"] = description
+        if execution_id: values["execution_id"] = execution_id
+        if access_API: values["access_API"] = access_API
+        values["register_date"] = datetime.now()
+        values["owner_type"] = self._owner_type
+        values["owner"] = self._owner
+        values["creator_uid"] = self._userid
+
+        dataset_table = Table("dataset", self._metadata,
+                              autoload_with=self._engine)
+        with self._engine.connect() as conn:
+            try:
+                result = conn.execute(insert(dataset_table), [values])
+                # It seems autocommit is in effect and no commit is needed
+                ## conn.commit()
+                return result.inserted_primary_key[0]
+            except DBAPIError as e:
+                print('Original error:')
+                print(e.StatementError.orig)
+                return None
 
     def register_execution(self, name, description=None, execution_start=None,
                            locale=None):
@@ -50,6 +110,7 @@ class Registrar():
         if execution_start: values["execution_start"] = execution_start
         if description: values["description"] = description
         values["register_date"] = datetime.now()
+        values["creator_uid"] = self._userid
 
         exec_table = Table("execution", self._metadata,
                            autoload_with=self._engine)
@@ -58,7 +119,7 @@ class Registrar():
                 result = conn.execute(insert(exec_table), [values])
                 # It seems autocommit is in effect and no commit is needed
                 ## conn.commit()
-                return result.inserted_primary_key
+                return result.inserted_primary_key[0]
             except DBAPIError as e:
                 print('Original error:')
                 print(e.StatementError.orig)
