@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from sqlalchemy import MetaData, Table, Column, insert   # maybe other stuff
+from sqlalchemy import MetaData, Table, Column, insert, text   # maybe other stuff
 from sqlalchemy.exc import DBAPIError
 from dataregistry.db_basic import SCHEMA_VERSION, ownertypeenum
 
@@ -50,6 +50,11 @@ class Registrar():
             self._schema_version=schema_version
         self._metadata = MetaData(bind=db_engine, schema=self._schema_version)
         self._userid = os.getenv('USER')
+        self._dataset_table = None
+        self._execution_table = None
+        self._dataset_alias_table = None
+        self._execution_alias_table = None
+        self._dependency_table = None
 
     def register_dataset(self, name, relative_path, version_major,
                          version_minor,
@@ -74,8 +79,10 @@ class Registrar():
         values["owner"] = self._owner
         values["creator_uid"] = self._userid
 
-        dataset_table = Table("dataset", self._metadata,
-                              autoload_with=self._engine)
+        if self._dataset_table is None:
+            self._dataset_table = Table("dataset", self._metadata,
+                                        autoload_with=self._engine)
+        dataset_table = self._dataset_table
         with self._engine.connect() as conn:
             try:
                 result = conn.execute(insert(dataset_table), [values])
@@ -96,8 +103,6 @@ class Registrar():
         ----------
         name            string   Typically pipeline name or program name
                                  (should there also be a version string?)
-        program_version string   Optional
-        nickname        string   Optional (Must be unique)
         description     string   Optional
         execution_start datetime Optional
         locale          string   Optional
@@ -112,14 +117,54 @@ class Registrar():
         values["register_date"] = datetime.now()
         values["creator_uid"] = self._userid
 
-        exec_table = Table("execution", self._metadata,
-                           autoload_with=self._engine)
+        if self._execution_table is None:
+
+            self._execution_table = Table("execution", self._metadata,
+                                          autoload_with=self._engine)
+        exec_table = self._execution_table
         with self._engine.connect() as conn:
             try:
                 result = conn.execute(insert(exec_table), [values])
                 # It seems autocommit is in effect and no commit is needed
                 ## conn.commit()
                 return result.inserted_primary_key[0]
+            except DBAPIError as e:
+                print('Original error:')
+                print(e.StatementError.orig)
+                return None
+
+    def register_dataset_alias(self, aliasname, dataset_id):
+        '''
+        Make an alias for an existing dataset
+
+        Parameters
+        ----------
+        aliasname          the new alias
+        dataset_id         id for existing dataset
+
+
+        '''
+        now = datatime.now()
+        values = {"alias" : aliasname}
+        values["dataset_id"] = dataset_id
+        values["register_date"] = now
+        values["creator_uid"] = self._userid
+
+        if self._dataset_alias_table is None:
+
+            self._dataset_alias_table = Table("dataset_alias", self._metadata,
+                                              autoload_with=self._engine)
+        alias_table = self._dataset_alias_table
+        with self._engine.connect() as conn:
+            try:
+                result = conn.execute(insert(alias_table), [values])
+                res =  result.inserted_primary_key[0]
+                # Update any other alias rows which have been superseded
+                stmt = update(alias_table)\
+                       .where(alias_table.c.alias == aliasname,
+                              id != res)\
+                       .values(supersede_date=now)
+                conn.execute(stmt)
             except DBAPIError as e:
                 print('Original error:')
                 print(e.StatementError.orig)
