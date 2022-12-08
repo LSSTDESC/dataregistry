@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from sqlalchemy import MetaData, Table, Column, insert, text   # maybe other stuff
+from sqlalchemy import MetaData, Table, Column, insert, text, update
 from sqlalchemy.exc import DBAPIError
 from dataregistry.db_basic import SCHEMA_VERSION, ownertypeenum
 
@@ -144,7 +144,7 @@ class Registrar():
 
 
         '''
-        now = datatime.now()
+        now = datetime.now()
         values = {"alias" : aliasname}
         values["dataset_id"] = dataset_id
         values["register_date"] = now
@@ -162,7 +162,7 @@ class Registrar():
                 # Update any other alias rows which have been superseded
                 stmt = update(alias_table)\
                        .where(alias_table.c.alias == aliasname,
-                              id != res)\
+                              alias_table.c.dataset_alias_id != res)\
                        .values(supersede_date=now)
                 conn.execute(stmt)
             except DBAPIError as e:

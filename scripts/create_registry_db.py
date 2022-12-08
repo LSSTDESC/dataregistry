@@ -53,12 +53,12 @@ cols.append(Column("dataset_alias_id", Integer, primary_key=True))
 cols.append(Column("alias", String, nullable=False))
 cols.append(Column("dataset_id", Integer, ForeignKey("dataset.dataset_id")))
 cols.append(Column("supersede_date", DateTime,  default=None))
-cols.append(Column("creation_date", DateTime, nullable=False))
+cols.append(Column("register_date", DateTime, nullable=False))
 cols.append(Column("creator_uid", String(20), nullable=False))
 
 tab_creator.define_table("dataset_alias", cols,
-                         [UniqueConstraint("alias", "supersede_date",
-                                           name="dataset_u_supersede")])
+                         [UniqueConstraint("alias", "register_date",
+                                           name="dataset_u_register")])
 
 # Execution table
 cols = []
@@ -81,12 +81,12 @@ cols.append(Column("alias", String, nullable=False))
 cols.append(Column("execution_id", Integer,
                    ForeignKey("execution.execution_id")))
 cols.append(Column("supersede_date", DateTime,  default=None))
-cols.append(Column("creation_date", DateTime, nullable=False))
+cols.append(Column("register_date", DateTime, nullable=False))
 cols.append(Column("creator_uid", String(20), nullable=False))
 
 tab_creator.define_table("execution_alias", cols,
-                         [UniqueConstraint("alias", "supersede_date",
-                                           name="execution_u_supersede")])
+                         [UniqueConstraint("alias", "register_date",
+                                           name="execution_u_register")])
 
 # Internal dependencies - which datasets are inputs to creation of others
 cols = []
