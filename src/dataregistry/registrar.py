@@ -1,8 +1,8 @@
 import os
 from datetime import datetime
-from sqlalchemy import MetaData, Table, Column, insert, text, update
+from sqlalchemy import MetaData, Table, Column, insert, text, update, select
 from sqlalchemy.exc import DBAPIError
-from dataregistry.db_basic import SCHEMA_VERSION, ownertypeenum
+from dataregistry.db_basic import add_table_row, SCHEMA_VERSION, ownertypeenum
 
 _SEPARATOR = '.'
 def make_version_string(major, minor=0, patch=0, suffix=None):
@@ -41,6 +41,8 @@ class Registrar():
         self._engine = db_engine
         self._dialect = dialect
         self._owner_type = owner_type.value
+        if owner is None:
+            owner = '.'
         self._owner = owner
         if self._owner_type == ownertypeenum.production:
             self._owner = 'production'
@@ -59,7 +61,43 @@ class Registrar():
     def register_dataset(self, name, relative_path, version_major,
                          version_minor,
                          version_patch, version_suffix=None, creation_date=None,
-                         description=None, execution_id=None, access_API=None):
+                         description=None, execution_id=None, access_API=None,
+                         is_overwritable=False):
+        '''
+        Return id of new row if successful, else None
+        '''
+        # Cannot set is_overwritable to True in production
+
+
+        if self._dataset_table is None:
+            self._dataset_table = Table("dataset", self._metadata,
+                                        autoload_with=self._engine)
+        dataset_table = self._dataset_table
+        # First check if any entries already exist with the same relative_path
+        # and, if they do, if they are overwritable. If any are not, abort
+        stmt = select(dataset_table.c.dataset_id,
+                      dataset_table.c.is_overwritable)\
+                      .where(dataset_table.c.relative_path == relative_path,
+                             dataset_table.c.owner == self._owner,
+                             dataset_table.c.owner_type == self._owner_type)\
+                      .order_by(dataset_table.c.register_date.desc())
+        with self._engine.connect() as conn:
+            try:
+                result = conn.execute(stmt)
+            except DBAPIError as e:
+                print('Original error:')
+                print(e.StatementError.orig)
+                return None
+            most_recent = 0
+            for r in result:
+                if not r.is_overwritable:
+                    print(f'Dataset with relative path {relative_path} exists and is not overwritable')
+                    return None
+                else:
+                    if most_recent == 0:
+                        most_recent = r.dataset_id
+                        # If new row creation succeeds, need to update this row
+
         # Create new row using
         #    arguments
         #    schema, owner_type, owner from self
@@ -74,25 +112,30 @@ class Registrar():
         if description: values["description"] = description
         if execution_id: values["execution_id"] = execution_id
         if access_API: values["access_API"] = access_API
+        values["is_overwritable"] = is_overwritable
+        values["is_overwritten"] = False
         values["register_date"] = datetime.now()
         values["owner_type"] = self._owner_type
         values["owner"] = self._owner
         values["creator_uid"] = self._userid
 
-        if self._dataset_table is None:
-            self._dataset_table = Table("dataset", self._metadata,
-                                        autoload_with=self._engine)
-        dataset_table = self._dataset_table
         with self._engine.connect() as conn:
-            try:
-                result = conn.execute(insert(dataset_table), [values])
-                # It seems autocommit is in effect and no commit is needed
-                ## conn.commit()
-                return result.inserted_primary_key[0]
-            except DBAPIError as e:
-                print('Original error:')
-                print(e.StatementError.orig)
+            prim_key = add_table_row(conn, dataset_table, values)
+            if not prim_key:
                 return None
+
+            if most_recent > 0:
+                try:
+                    # Update that row, setting is_overwritten to True
+                    update_stmt = update(dataset_table)\
+                      .where(dataset_table.c.dataset_id == most_recent)\
+                      .values(is_overwritten=True)
+                    conn.execute(update_stmt)
+                except DBAPIError as e:
+                    print('Original error:')
+                    print(e.StatementError.orig)
+                    return None
+            return prim_key
 
     def register_execution(self, name, description=None, execution_start=None,
                            locale=None):
@@ -123,15 +166,7 @@ class Registrar():
                                           autoload_with=self._engine)
         exec_table = self._execution_table
         with self._engine.connect() as conn:
-            try:
-                result = conn.execute(insert(exec_table), [values])
-                # It seems autocommit is in effect and no commit is needed
-                ## conn.commit()
-                return result.inserted_primary_key[0]
-            except DBAPIError as e:
-                print('Original error:')
-                print(e.StatementError.orig)
-                return None
+            return add_table_row(conn, exec_table, values)
 
     def register_dataset_alias(self, aliasname, dataset_id):
         '''
@@ -157,14 +192,15 @@ class Registrar():
         alias_table = self._dataset_alias_table
         with self._engine.connect() as conn:
             try:
-                result = conn.execute(insert(alias_table), [values])
-                res =  result.inserted_primary_key[0]
+                prim_key = add_table_row(conn, alias_table, values)
+
                 # Update any other alias rows which have been superseded
                 stmt = update(alias_table)\
                        .where(alias_table.c.alias == aliasname,
-                              alias_table.c.dataset_alias_id != res)\
+                              alias_table.c.dataset_alias_id != prim_key)\
                        .values(supersede_date=now)
                 conn.execute(stmt)
+                return prim_key
             except DBAPIError as e:
                 print('Original error:')
                 print(e.StatementError.orig)

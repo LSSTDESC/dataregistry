@@ -14,6 +14,7 @@ print(f'Created execution entry with id {new_id}')
 new_id = registrar.register_dataset('my_favorite_dataset',
                                     'some_subdir/no_such_dataset.parquet',
                                     1,0,0,version_suffix='junk',
-                                    description='Non-existent dataset')
+                                    description='Non-existent dataset',
+                                    is_overwritable=True)
 
-print(f'Created execution entry with id {new_id}')
+print(f'Created dataset entry with id {new_id}')

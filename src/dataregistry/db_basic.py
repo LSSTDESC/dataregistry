@@ -1,15 +1,16 @@
 from sqlalchemy import engine_from_config
 from sqlalchemy.engine import make_url
 import enum
-from sqlalchemy import MetaData, Table, Enum, text
+from sqlalchemy import MetaData, Table, Enum, Column, text, insert
+from sqlalchemy.exc import DBAPIError
 import yaml
 import os
 from collections import namedtuple
 
 SCHEMA_VERSION = 'registry_0_1'
 
-__all__ = ['create_db_engine', 'TableCreator', 'SCHEMA_VERSION',
-           'ownertypeenum']
+__all__ = ['create_db_engine', 'add_table_row', 'TableCreator',
+           'SCHEMA_VERSION', 'ownertypeenum']
 
 def create_db_engine(config_file):
     # Ideally config_file does not contain password, but if it does
@@ -25,6 +26,26 @@ class ownertypeenum(enum.Enum):
     production = "production"
     group = "group"
     user = "user"
+
+def add_table_row(conn, table_meta, values):
+    '''
+    Generic insert, given connection, metadata for a table and
+    column values to be used.
+    Return primary key for new row
+    '''
+    try:
+        result = conn.execute(insert(table_meta), [values])
+        # It seems autocommit is in effect and no commit is needed
+        ## conn.commit()
+        return result.inserted_primary_key[0]
+    except DBAPIError as e:
+        print('Original error:')
+        print(e.StatementError.orig)
+        return None
+
+
+
+
 
 class TableCreator:
     def __init__(self, engine, schema=SCHEMA_VERSION):
