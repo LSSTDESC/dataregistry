@@ -7,7 +7,7 @@ import yaml
 import os
 from collections import namedtuple
 
-SCHEMA_VERSION = 'registry_0_1'
+SCHEMA_VERSION = 'registry_0_2'
 
 __all__ = ['create_db_engine', 'add_table_row', 'TableCreator',
            'SCHEMA_VERSION', 'ownertypeenum']
