@@ -35,8 +35,7 @@ def add_table_row(conn, table_meta, values):
     '''
     try:
         result = conn.execute(insert(table_meta), [values])
-        # It seems autocommit is in effect and no commit is needed
-        ## conn.commit()
+        conn.commit()
         return result.inserted_primary_key[0]
     except DBAPIError as e:
         print('Original error:')
