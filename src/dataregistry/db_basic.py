@@ -51,7 +51,7 @@ class TableCreator:
     def __init__(self, engine, schema=SCHEMA_VERSION):
         self._engine = engine
         self._schema = schema
-        self._metadata = MetaData(bind=engine, schema=schema)
+        self._metadata = MetaData(schema=schema)
 
     def define_table(self, name, columns, constraints=[]):
         '''
@@ -78,13 +78,13 @@ class TableCreator:
         ''' Define and instantiate a single table '''
 
         tbl = define_table(self, name, columns, constraints)
-        tbl.create()
+        tbl.create(self._engine)
 
     def create_all(self):
         '''
         Instantiate all tables defined so far which don't already exist
         '''
-        self._metadata.create_all()
+        self._metadata.create_all(self._engine)
 
     def grant_reader_access(self, acct):
         '''

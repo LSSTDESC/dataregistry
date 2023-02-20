@@ -14,7 +14,7 @@ engine, dialect = create_db_engine(config_file=config_file)
 if dialect == 'sqlite':
     schema = None
 else:
-    schema = 'registry_0_1'
+    schema = 'registry_0_2'
 
 tab_creator = TableCreator(engine, schema=schema)
 
@@ -32,6 +32,7 @@ cols.append(Column("is_archived", Boolean, default=False))
 cols.append(Column("is_external_link", Boolean, default=False))
 cols.append(Column("is_overwritable", Boolean, default=False))
 cols.append(Column("is_overwritten", Boolean, default=False))
+cols.append(Column("is_valid", Boolean, default=True)) # False if, e.g., copy failed
 
 # The following are boilerplate, included in all or most tables
 cols.append(Column("register_date", DateTime, nullable=False))
