@@ -1,15 +1,16 @@
 from sqlalchemy import engine_from_config
 from sqlalchemy.engine import make_url
 import enum
-from sqlalchemy import MetaData, Table, Enum, text
+from sqlalchemy import MetaData, Table, Enum, Column, text, insert
+from sqlalchemy.exc import DBAPIError
 import yaml
 import os
 from collections import namedtuple
 
-SCHEMA_VERSION = 'registry_0_1'
+SCHEMA_VERSION = 'registry_0_2'
 
-__all__ = ['create_db_engine', 'TableCreator', 'SCHEMA_VERSION',
-           'ownertypeenum']
+__all__ = ['create_db_engine', 'add_table_row', 'TableCreator',
+           'SCHEMA_VERSION', 'ownertypeenum']
 
 def create_db_engine(config_file):
     # Ideally config_file does not contain password, but if it does
@@ -26,11 +27,30 @@ class ownertypeenum(enum.Enum):
     group = "group"
     user = "user"
 
+def add_table_row(conn, table_meta, values):
+    '''
+    Generic insert, given connection, metadata for a table and
+    column values to be used.
+    Return primary key for new row
+    '''
+    try:
+        result = conn.execute(insert(table_meta), [values])
+        conn.commit()
+        return result.inserted_primary_key[0]
+    except DBAPIError as e:
+        print('Original error:')
+        print(e.StatementError.orig)
+        return None
+
+
+
+
+
 class TableCreator:
     def __init__(self, engine, schema=SCHEMA_VERSION):
         self._engine = engine
         self._schema = schema
-        self._metadata = MetaData(bind=engine, schema=schema)
+        self._metadata = MetaData(schema=schema)
 
     def define_table(self, name, columns, constraints=[]):
         '''
@@ -57,13 +77,13 @@ class TableCreator:
         ''' Define and instantiate a single table '''
 
         tbl = define_table(self, name, columns, constraints)
-        tbl.create()
+        tbl.create(self._engine)
 
     def create_all(self):
         '''
         Instantiate all tables defined so far which don't already exist
         '''
-        self._metadata.create_all()
+        self._metadata.create_all(self._engine)
 
     def grant_reader_access(self, acct):
         '''

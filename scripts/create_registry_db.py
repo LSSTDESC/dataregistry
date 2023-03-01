@@ -1,7 +1,7 @@
 import os
 import sys
 import enum
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Index
 from sqlalchemy import ForeignKey, UniqueConstraint, Enum
 from dataregistry.db_basic import create_db_engine, TableCreator, ownertypeenum
 
@@ -14,7 +14,7 @@ engine, dialect = create_db_engine(config_file=config_file)
 if dialect == 'sqlite':
     schema = None
 else:
-    schema = 'registry_0_1'
+    schema = 'registry_0_2'
 
 tab_creator = TableCreator(engine, schema=schema)
 
@@ -27,8 +27,15 @@ cols.append(Column("version_major", Integer, nullable=False))
 cols.append(Column("version_minor", Integer, nullable=False))
 cols.append(Column("version_patch", Integer, nullable=False))
 cols.append(Column("version_suffix", String))
-cols.append(Column("register_date", DateTime, nullable=False))
 cols.append(Column("dataset_creation_date", DateTime))
+cols.append(Column("is_archived", Boolean, default=False))
+cols.append(Column("is_external_link", Boolean, default=False))
+cols.append(Column("is_overwritable", Boolean, default=False))
+cols.append(Column("is_overwritten", Boolean, default=False))
+cols.append(Column("is_valid", Boolean, default=True)) # False if, e.g., copy failed
+
+# The following are boilerplate, included in all or most tables
+cols.append(Column("register_date", DateTime, nullable=False))
 cols.append(Column("creator_uid", String(20), nullable=False))
 
 # Make access_API a string for now, but it could be an enumeration or
@@ -45,7 +52,9 @@ cols.append(Column("owner_type", Enum(ownertypeenum), nullable=False))
 # If ownership_type is 'user', owner will be a user name
 cols.append(Column("owner", String, nullable=False))
 
-tab_creator.define_table("dataset", cols)
+
+tab_creator.define_table("dataset", cols,
+                         [Index("relative_path", "owner", "owner_type")])
 
 # Dataset alias name table
 cols = []
@@ -96,6 +105,10 @@ cols.append(Column("input_id", Integer, ForeignKey("dataset.dataset_id")))
 cols.append(Column("output_id", Integer, ForeignKey("dataset.dataset_id")))
 
 tab_creator.define_table("dependency", cols)
+
+### Still to be defined:
+#    a table to keep track of external dependencies
+#    moved.  A table to track history of datasets which have been moved.
 
 tab_creator.create_all()
 
