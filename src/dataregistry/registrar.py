@@ -95,6 +95,7 @@ class Registrar():
                              dataset_table.c.owner == self._owner,
                              dataset_table.c.owner_type == self._owner_type)\
                       .order_by(dataset_table.c.dataset_id.desc())
+        previous = []
         with self._engine.connect() as conn:
             try:
                 result = conn.execute(stmt)
@@ -102,15 +103,13 @@ class Registrar():
                 print('Original error:')
                 print(e.StatementError.orig)
                 return None
-            most_recent = 0
+
             for r in result:
                 if not r.is_overwritable:
                     print(f'Dataset with relative path {relative_path} exists and is not overwritable')
                     return None
                 else:
-                    if most_recent == 0:
-                        most_recent = r.dataset_id
-                        # If new row creation succeeds, need to update this row
+                    previous.append(r.dataset_id)
 
         # Confirm new dataset exists
         dest =  form_dataset_path(self._owner_type, self._owner,
@@ -166,13 +165,14 @@ class Registrar():
             if not prim_key:
                 return None
 
-            if most_recent > 0:
+            if len(previous) > 0:
                 try:
-                    # Update that row, setting is_overwritten to True
+                    # Update previous rows, setting is_overwritten to True
                     update_stmt = update(dataset_table)\
-                      .where(dataset_table.c.dataset_id == most_recent)\
+                      .where(dataset_table.c.dataset_id.in_(previous))\
                       .values(is_overwritten=True)
                     conn.execute(update_stmt)
+                    conn.commit()
                 except DBAPIError as e:
                     print('Original error:')
                     print(e.StatementError.orig)
