@@ -126,23 +126,6 @@ class Registrar():
             print('Dataset to be registered does not exist or is not readable')
             raise e
 
-        # Could maybe check that previous (i.e., largest old id with same
-        # path) is not identical to new one, but that would mean, e.g.
-        # forming and saving checksum upon registering. That could be slow.
-
-        # If dataset needs to be copied and we're overwriting
-        #    - rename old one
-        #    - do the copy
-        #    - if copy fails, rename back and exit with error
-        # Create new row using
-        #      arguments
-        #      schema, owner_type, owner from self
-        #      generate value for register_date
-        # and if we're overwriting, in same transaction update old entry
-        #    - if making new rows fails
-        #         - if we renamed an old dataset, rename back
-        #         - exit with error
-        # Success!   If we renamed something, delete it
         values  = {"name" : name}
         values["relative_path"] = relative_path
         values["version_major"] = version_major
