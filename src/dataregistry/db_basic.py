@@ -47,9 +47,10 @@ def add_table_row(conn, table_meta, values):
 
 
 class TableCreator:
-    def __init__(self, engine, schema=SCHEMA_VERSION):
+    def __init__(self, engine, dialect, schema=SCHEMA_VERSION):
         self._engine = engine
         self._schema = schema
+        self._dialect = dialect
         self._metadata = MetaData(schema=schema)
 
     def define_table(self, name, columns, constraints=[]):
@@ -83,15 +84,35 @@ class TableCreator:
         '''
         Instantiate all tables defined so far which don't already exist
         '''
+        self.create_schema()
         self._metadata.create_all(self._engine)
+        self.grant_reader_access('reg_reader')
+
+    def create_schema(self):
+        if self._dialect == 'sqlite':
+            return
+        stmt = f'CREATE SCHEMA IF NOT EXISTS {self._schema}'
+        with self._engine.connect() as conn:
+            conn.execute(text(stmt))
+            conn.commit()
 
     def grant_reader_access(self, acct):
         '''
-        Grant SELECT to specified account
+        Grant USAGE on schema, SELECT on tables to specified account
         '''
-        stmt = f'GRANT SELECT ON ALL TABLES IN SCHEMA {self._schema} to {acct}'
+        if self._dialect == 'sqlite':
+            return
+        # Cannot figure out how to pass value of acct using parameters,
+        # so for safety do minimal checking ourselves: check that value of
+        # acct has no spaces
+        if len(acct.split()) != 1 :
+            raise ValueException(f'grant_reader_access: {acct} is not a valid account')
+        usage_priv = f'GRANT USAGE ON SCHEMA {self._schema} to {acct}'
+        select_priv = f'GRANT SELECT ON ALL TABLES IN SCHEMA {self._schema} to {acct}'
         with self._engine.connect() as conn:
-            conn.execute(text(stmt))
+            conn.execute(text(usage_priv))
+            conn.execute(text(select_priv))
+            conn.commit()
 
 if __name__ == '__main__':
     from sqlalchemy import Column, Integer, String
@@ -109,7 +130,7 @@ if __name__ == '__main__':
     engine, dialect = create_db_engine(config_file=config_file)
 
     if dialect != 'sqlite':
-        tab_creator = TableCreator(engine, schema='registry_0_1')
+        tab_creator = TableCreator(engine, dialect, schema='registry_jrb')
     else:
         tab_creator = TableCreator(engine, schema=None)
 
