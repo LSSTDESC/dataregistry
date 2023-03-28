@@ -1,22 +1,27 @@
 import os
 import sys
 import enum
+import argparse
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Index
 from sqlalchemy import ForeignKey, UniqueConstraint, Enum
 from dataregistry.db_basic import create_db_engine, TableCreator, ownertypeenum
 
-if len(sys.argv) > 1:
-    config_file = sys.argv[1]
-else:
-    config_file = os.path.join(os.getenv('HOME'), '.config_reg_writer')
-engine, dialect = create_db_engine(config_file=config_file)
+parser = argparse.ArgumentParser(description='''
+Creates dataregistry tables in specified schema and connection information (config)''', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('--schema', help="name of schema to contain tables. Will be created if it doesn't already exist", default="registry_dev")
+parser.add_argument('--config', default="", help="path to config file used to establish connection")
 
+args = parser.parse_args()
+schema = args.schema
+config = args.config
+if config == "":
+    config = os.path.join(os.getenv('HOME'), '.config_reg_writer')
+
+engine, dialect = create_db_engine(config_file=config)
 if dialect == 'sqlite':
     schema = None
-else:
-    schema = 'registry_0_2'
 
-tab_creator = TableCreator(engine, schema=schema)
+tab_creator = TableCreator(engine, dialect, schema=schema)
 
 # Main table, a row per dataset
 cols = []
@@ -111,6 +116,3 @@ tab_creator.define_table("dependency", cols)
 #    moved.  A table to track history of datasets which have been moved.
 
 tab_creator.create_all()
-
-if dialect != 'sqlite':
-    tab_creator.grant_reader_access('reg_reader')

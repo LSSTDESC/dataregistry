@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dataregistry"
-version = "0.1.0"
+version = "0.1.1"
 description = "Creation and user API for DESC data registry."
 readme = "README.md"
 authors = [{ name = "Joanne Bogart", email = "jrb@slac.stanford.edu" }]
