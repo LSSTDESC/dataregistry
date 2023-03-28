@@ -1,11 +1,17 @@
 import os
+import sys
 from dataregistry.registrar import Registrar
-from dataregistry.db_basic import create_db_engine, ownertypeenum
+from dataregistry.db_basic import create_db_engine, ownertypeenum, SCHEMA_VERSION
 
 engine, dialect = create_db_engine(config_file=os.path.join(os.getenv('HOME'),
                                                             '.config_reg_writer'))
+if len(sys.argv) > 1:
+    schema = sys.argv[1]
+else:
+    schema = SCHEMA_VERSION
 
-registrar = Registrar(engine, dialect, ownertypeenum.user, owner='jrbogart')
+registrar = Registrar(engine, dialect, ownertypeenum.user, owner='jrbogart',
+                      schema_version=schema)
 
 new_id = registrar.register_execution('my_program', 'imaginary program',
                                       locale='NERSC')
