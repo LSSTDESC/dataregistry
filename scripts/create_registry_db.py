@@ -51,7 +51,7 @@ cols.append(Column("access_API", String(20)))
 # A way to associate a dataset with a program execution or "run"
 cols.append(Column("execution_id", Integer, ForeignKey("execution.execution_id")))
 cols.append(Column("description", String))
-cols.append(Column("owner_type", Enum(ownertypeenum), nullable=False))
+cols.append(Column("owner_type", Enum(ownertypeenum, schema=schema), nullable=False))
 # If ownership_type is 'production', then owner is always 'production'
 # If ownership_type is 'group', owner will be a group name
 # If ownership_type is 'user', owner will be a user name
