@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from shutil import copyfile, copytree
 from sqlalchemy import MetaData, Table, Column, insert, text, update, select
 from sqlalchemy.exc import DBAPIError
 from dataregistry.db_basic import add_table_row, SCHEMA_VERSION, ownertypeenum
@@ -80,9 +81,6 @@ class Registrar():
         if (self._owner_type == 'production') and is_overwritable:
             raise ValueError('Cannot overwrite production entries')
 
-        if old_location:
-            raise DataRegistryNYI('dataset copy')
-
         if self._dataset_table is None:
             self._dataset_table = Table("dataset", self._metadata,
                                         autoload_with=self._engine)
@@ -99,6 +97,7 @@ class Registrar():
         with self._engine.connect() as conn:
             try:
                 result = conn.execute(stmt)
+                conn.commit()
             except DBAPIError as e:
                 print('Original error:')
                 print(e.StatementError.orig)
@@ -125,6 +124,19 @@ class Registrar():
         except Exception as e:
             print('Dataset to be registered does not exist or is not readable')
             raise e
+
+        if old_location:
+            # copy to dest.  For directory do recursive copy
+            # for now always copy; don't try to handle sym link
+            # Assuming we don't want to copy any metadata (e.g.
+            # permissions)
+            ftype = os.stat(old_location).st_mode & 0o0170000
+            if ftype == 0o0100000:        # regular file
+                copyfile(old_location, dest)
+            elif fytpe == 0o0040000:      # directory
+                copytree(old_location, dest, copy_function=copyfile)
+
+
 
         values  = {"name" : name}
         values["relative_path"] = relative_path
