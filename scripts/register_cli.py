@@ -71,8 +71,8 @@ parser.add_argument('--make-sym-link', action='store_true',
                     help='''Make sym link at relpath rather than
                             (default behavior) copy file from old location
                             Ignored if old-location not specified.''')
-parser.add_argument('--schema-version', default=None,
-                    help='By default use newest available schema version')
+parser.add_argument('--schema-version', default=f'{SCHEMA_VERSION}')
+#                    help='By default use newest available schema version')
 
 args = parser.parse_args()
 
