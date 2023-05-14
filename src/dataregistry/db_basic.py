@@ -27,6 +27,10 @@ class ownertypeenum(enum.Enum):
     group = "group"
     user = "user"
 
+class datatypeenum(enum.Enum):
+    file = "file"
+    directory = "directory"
+
 def add_table_row(conn, table_meta, values):
     '''
     Generic insert, given connection, metadata for a table and

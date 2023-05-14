@@ -49,3 +49,34 @@ def form_dataset_path(owner_type, owner, relative_path, root_dir=None):
     if root_dir:
         to_return = os.path.join(root_dir, to_return)
     return to_return
+
+def get_directory_info(path):
+    """
+    Get the total disk space used by a directory and the total number of files
+    in the directory (includes subdirectories):
+
+    Parameters
+    ----------
+    path : str
+        Location of directory
+
+    Returns
+    -------
+    num_files : int
+        Total number of files in dir (including subdirectories)
+    total_size : float
+        Total disk space (in bytes) used by directory (including subdirectories)
+    """
+
+    num_files = 0
+    total_size = 0
+    with os.scandir(path) as it:
+        for entry in it:
+            if entry.is_file():
+                num_files += 1
+                total_size += entry.stat().st_size
+            elif entry.is_dir():
+                subdir_num_files, subdir_total_size = get_directory_info(entry.path)
+                num_files += subdir_num_files
+                total_size += subdir_total_size
+    return num_files, total_size

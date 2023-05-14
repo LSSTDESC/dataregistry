@@ -3,12 +3,14 @@ from datetime import datetime
 from shutil import copyfile, copytree
 from sqlalchemy import MetaData, Table, Column, insert, text, update, select
 from sqlalchemy.exc import DBAPIError
-from dataregistry.db_basic import add_table_row, SCHEMA_VERSION, ownertypeenum
-from dataregistry.registrar_util import form_dataset_path
+from dataregistry.db_basic import add_table_row, SCHEMA_VERSION, ownertypeenum, datatypeenum
+from dataregistry.registrar_util import form_dataset_path, get_directory_info
 from dataregistry.exceptions import *
 
 __all__ = ['Registrar']
 _DEFAULT_ROOT_DIR = '/global/cfs/cdirs/desc-co/jrbogart/dregs_root' #temporary
+#_DEFAULT_ROOT_DIR = "/home/mcalpine/Documents/dregs_root"
+
 class Registrar():
     '''
     Register new datasets, executions ("runs") or alias names
@@ -118,25 +120,31 @@ class Registrar():
         else:
             loc = dest
 
-        try:
-            f = open(loc)
-            f.close()
-        except Exception as e:
-            print('Dataset to be registered does not exist or is not readable')
-            raise e
+        if os.path.isfile(loc):
+            print(f"{loc} is a FILE.")
+            dataset_type = "file"
+        elif os.path.isdir(loc):
+            print(f"{loc} is a DIRECTORY.")
+            dataset_type = "directory"
+        else:
+            raise FileNotFoundError(f"Dataset {loc} not found")
 
         if old_location:
             # copy to dest.  For directory do recursive copy
             # for now always copy; don't try to handle sym link
             # Assuming we don't want to copy any metadata (e.g.
             # permissions)
-            ftype = os.stat(old_location).st_mode & 0o0170000
-            if ftype == 0o0100000:        # regular file
+            if dataset_type == "file":
                 copyfile(old_location, dest)
-            elif fytpe == 0o0040000:      # directory
+            elif dataset_type == "directory":
                 copytree(old_location, dest, copy_function=copyfile)
 
-
+        # Get metadata on dataset.
+        if dataset_type == "directory":
+            num_files, total_size = get_directory_info(loc)
+        else:
+            num_files = 1
+            total_size = os.path.getsize(loc)
 
         values  = {"name" : name}
         values["relative_path"] = relative_path
@@ -154,6 +162,9 @@ class Registrar():
         values["owner_type"] = self._owner_type
         values["owner"] = self._owner
         values["creator_uid"] = self._userid
+        values["data_type"] = dataset_type
+        values["nfiles"] = num_files
+        values["total_disk_space"] = total_size / 1024 / 1024 # Mb
 
         with self._engine.connect() as conn:
             prim_key = add_table_row(conn, dataset_table, values)
