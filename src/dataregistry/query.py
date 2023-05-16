@@ -20,6 +20,7 @@ except:
 
 from sqlalchemy.exc import DBAPIError
 from dataregistry.db_basic import add_table_row, SCHEMA_VERSION, ownertypeenum
+from dataregistry.db_basic import TableMetadata
 from dataregistry.registrar_util import form_dataset_path
 from dataregistry.exceptions import *
 
@@ -62,44 +63,34 @@ class Query():
         # Do we need to know where the datasets actually are?  If so
         # we need a ROOT_DIR
 
-        self._metadata = MetaData(schema=self._schema_version)
+        self._metadata_getter = TableMetadata(self._schema_version,
+                                              db_engine)
 
-        # Get all table definitions
-        self._metadata.reflect(db_engine)
-        self._tables = None
-        self._dataset_table = None
-        self._execution_table = None
+        # Get table definitions
+        self._tables = dict()
+        self._tables["dataset"] = self._metadata_getter.get("dataset")
+        self._tables["execution"] = self._metadata_getter.get("execution")
         # self._dataset_alias_table = None
         # self._execution_alias_table = None
         # self._dependency_table = None
         self._dataset_native = None
         self._from_execution = None
         self._all_dataset_properties = None
+        self._get_properties()
 
-        self._reflect_tables()
-
-    def _reflect_tables(self):
+    def _get_properties(self):
         '''
-        Load metadata from the database
+        Cache column names which may be queried.
         '''
-        if self._tables is None:
-            self._tables = dict()
-
-        if 'dataset' not in self._tables:
-            self._tables['dataset'] = Table("dataset", self._metadata,
-                                            autoload_with=self._engine)
+        if self._dataset_native is None:
             self._dataset_native = dict()
-            for c in self._metadata.tables[f'{self._schema_version}.dataset'].c:
+            for c in self._tables['dataset'].c:
                 self._dataset_native['dataset.' + c.name] = is_orderable_type(c.type)
 
-        if 'execution' not in self._tables:
-            self._tables['execution'] = Table("execution", self._metadata,
-                                              autoload_with=self._engine)
-
-            if self._from_execution is None:
-                self._from_execution = dict()
-                for c in self._metadata.tables[f'{self._schema_version}.execution'].c:
-                    self._from_execution['execution.' + c.name] = is_orderable_type(c.type)
+        if  self._from_execution is None:
+            self._from_execution = dict()
+            for c in self._tables['execution'].c:
+                self._from_execution['execution.' + c.name] = is_orderable_type(c.type)
 
     def list_dataset_properties(self):
         '''
