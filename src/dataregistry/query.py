@@ -160,7 +160,7 @@ class Query():
             if len(in_tbl) == 0:
                 raise ValueException(f'Column {col} not found')
             if len(in_tbl) > 1:
-                raise ValueException(f'Column {col} appears in more than one table')
+                raise ValueException(f'Column {col} appears in more than one table. Include table in specification: <table>.{col}')
             tblname = in_tbl[0]
 
         return tblname, col, self._tables[tblname].c[col]

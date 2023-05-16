@@ -4,6 +4,7 @@ from shutil import copyfile, copytree
 from sqlalchemy import MetaData, Table, Column, insert, text, update, select
 from sqlalchemy.exc import DBAPIError
 from dataregistry.db_basic import add_table_row, SCHEMA_VERSION, ownertypeenum
+from dataregistry.db_basic import TableMetadata
 from dataregistry.registrar_util import form_dataset_path
 from dataregistry.exceptions import *
 
@@ -27,14 +28,14 @@ class Registrar():
             self._schema_version = None
         else:
             self._schema_version=schema_version
-        self._metadata = MetaData(schema=self._schema_version)
+
+        self._metadata_getter = TableMetadata(self._schema_version,
+                                              db_engine)
         self._userid = os.getenv('USER')
-        self._dataset_table = None
-        self._execution_table = None
-        self._dataset_alias_table = None
-        self._execution_alias_table = None
-        self._dependency_table = None
         self._root_dir = _DEFAULT_ROOT_DIR  # <-- should be site dependent
+
+    def _get_table_metadata(self, tbl):
+        return self._metadata_getter.get(tbl)
 
     # Should verify that argument is reasonable       <---
     def set_root_dir(self, root_dir):
@@ -47,7 +48,8 @@ class Registrar():
     def register_dataset(self, name, relative_path, version_major,
                          version_minor,
                          version_patch, version_suffix=None, creation_date=None,
-                         description=None, execution_id=None, access_API=None,
+                         description=None, execution_id=None,
+                         input_datasets=[], access_API=None,
                          is_overwritable=False, old_location=None, copy=True):
         '''
         Return id of new row if successful, else None
@@ -68,6 +70,7 @@ class Registrar():
         description      Optional human-readable description
         execution_id     Optional; used to associate dataset with a particular
                          execution of some code
+        input_datasets   Iterable of dataset ids
         access_API       Hint as to how to read the data
         is_overwritable  True if dataset may be overwritten.  Defaults to False.
                          Always False for production datasets
@@ -81,10 +84,8 @@ class Registrar():
         if (self._owner_type == 'production') and is_overwritable:
             raise ValueError('Cannot overwrite production entries')
 
-        if self._dataset_table is None:
-            self._dataset_table = Table("dataset", self._metadata,
-                                        autoload_with=self._engine)
-        dataset_table = self._dataset_table
+        dataset_table = self._get_table_metadata("dataset")
+
         # First check if any entries already exist with the same relative_path
         # and, if they do, if they are overwritable. If any are not, abort
         stmt = select(dataset_table.c.dataset_id,
@@ -136,8 +137,6 @@ class Registrar():
             elif fytpe == 0o0040000:      # directory
                 copytree(old_location, dest, copy_function=copyfile)
 
-
-
         values  = {"name" : name}
         values["relative_path"] = relative_path
         values["version_major"] = version_major
@@ -160,23 +159,23 @@ class Registrar():
             if not prim_key:
                 return None
 
-            if len(previous) > 0:
-                try:
+            try:
+                if len(previous) > 0:
                     # Update previous rows, setting is_overwritten to True
                     update_stmt = update(dataset_table)\
                       .where(dataset_table.c.dataset_id.in_(previous))\
                       .values(is_overwritten=True)
                     conn.execute(update_stmt)
-                    conn.commit()
-                except DBAPIError as e:
-                    print('Original error:')
-                    print(e.StatementError.orig)
-                    return None
-
-        # Not yet implemented
-        # if old_location:
-        #     # copy from loc to destination
-        #     try   ...
+                values = {"output_id" : prim_key}
+                for d in input_datasets:
+                    values["register_date"] = datetime.now()
+                    values["input_id"] = d
+                    add_table_row(conn, self._dependency_table, values)
+                conn.commit()
+            except DBAPIError as e:
+                print('Original error:')
+                print(e.StatementError.orig)
+                return None
 
         return prim_key
 
@@ -203,11 +202,7 @@ class Registrar():
         values["register_date"] = datetime.now()
         values["creator_uid"] = self._userid
 
-        if self._execution_table is None:
-
-            self._execution_table = Table("execution", self._metadata,
-                                          autoload_with=self._engine)
-        exec_table = self._execution_table
+        exec_table = self._get_table_metadata("execution")
         with self._engine.connect() as conn:
             return add_table_row(conn, exec_table, values)
 
@@ -228,11 +223,7 @@ class Registrar():
         values["register_date"] = now
         values["creator_uid"] = self._userid
 
-        if self._dataset_alias_table is None:
-
-            self._dataset_alias_table = Table("dataset_alias", self._metadata,
-                                              autoload_with=self._engine)
-        alias_table = self._dataset_alias_table
+        alias_table = self._get_table_metadata("dataset_alias")
         with self._engine.connect() as conn:
             try:
                 prim_key = add_table_row(conn, alias_table, values)
