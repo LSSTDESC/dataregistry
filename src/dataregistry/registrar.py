@@ -4,14 +4,14 @@ from datetime import datetime
 from shutil import copyfile, copytree
 from sqlalchemy import MetaData, Table, Column, insert, text, update, select
 from sqlalchemy.exc import DBAPIError
-from dataregistry.db_basic import add_table_row, SCHEMA_VERSION, ownertypeenum, datatypeenum
+from dataregistry.db_basic import add_table_row, SCHEMA_VERSION, ownertypeenum
 from dataregistry.registrar_util import form_dataset_path, get_directory_info
 from dataregistry.db_basic import TableMetadata
 from dataregistry.exceptions import *
 
 __all__ = ['Registrar']
 _DEFAULT_ROOT_DIR = '/global/cfs/cdirs/desc-co/jrbogart/dregs_root' #temporary
-#_DEFAULT_ROOT_DIR = "/home/mcalpine/Documents/dregs_root"
+_DEFAULT_ROOT_DIR = "/home/mcalpine/Documents/dregs_root"
 
 class Registrar():
     '''
@@ -123,9 +123,9 @@ class Registrar():
             loc = dest
 
         if os.path.isfile(loc):
-            dataset_type = "file"
+            dataset_organization = "file"
         elif os.path.isdir(loc):
-            dataset_type = "directory"
+            dataset_organization = "directory"
         else:
             raise FileNotFoundError(f"Dataset {loc} not found")
 
@@ -133,7 +133,7 @@ class Registrar():
         if verbose:
             tic = time.time()
             print("Collecting metadata...", end="")
-        if dataset_type == "directory":
+        if dataset_organization == "directory":
             num_files, total_size = get_directory_info(loc)
         else:
             num_files = 1
@@ -149,9 +149,9 @@ class Registrar():
             if verbose:
                 tic = time.time()
                 print(f"Copying {num_files} files ({total_size/1024/1024:.2f} Mb)...",end="")
-            if dataset_type == "file":
+            if dataset_organization == "file":
                 copyfile(old_location, dest)
-            elif dataset_type == "directory":
+            elif dataset_organization == "directory":
                 copytree(old_location, dest, copy_function=copyfile)
             if verbose:
                 print(f"took {time.time()-tic:.2f}")
@@ -172,7 +172,7 @@ class Registrar():
         values["owner_type"] = self._owner_type
         values["owner"] = self._owner
         values["creator_uid"] = self._userid
-        values["data_type"] = dataset_type
+        values["data_org"] = dataset_organization
         values["nfiles"] = num_files
         values["total_disk_space"] = total_size / 1024 / 1024 # Mb
 
