@@ -1,3 +1,4 @@
+import time
 import os
 from datetime import datetime
 from shutil import copyfile, copytree
@@ -50,7 +51,8 @@ class Registrar():
                          version_minor,
                          version_patch, version_suffix=None, creation_date=None,
                          description=None, execution_id=None, access_API=None,
-                         is_overwritable=False, old_location=None, copy=True):
+                         is_overwritable=False, old_location=None, copy=True,
+                         verbose=True):
         '''
         Return id of new row if successful, else None
 
@@ -78,7 +80,7 @@ class Registrar():
         copy             If old_location is None, ignore.   Else,
                            * if True copy from old_location to relative_path.
                            * if False make sym link at relative_path
-
+        verbose         Provide some additional output information
         '''
         if (self._owner_type == 'production') and is_overwritable:
             raise ValueError('Cannot overwrite production entries')
@@ -121,30 +123,38 @@ class Registrar():
             loc = dest
 
         if os.path.isfile(loc):
-            print(f"{loc} is a FILE.")
             dataset_type = "file"
         elif os.path.isdir(loc):
-            print(f"{loc} is a DIRECTORY.")
             dataset_type = "directory"
         else:
             raise FileNotFoundError(f"Dataset {loc} not found")
+
+        # Get metadata on dataset.
+        if verbose:
+            tic = time.time()
+            print("Collecting metadata...", end="")
+        if dataset_type == "directory":
+            num_files, total_size = get_directory_info(loc)
+        else:
+            num_files = 1
+            total_size = os.path.getsize(loc)
+        if verbose:
+            print(f"took {time.time()-tic:.2f}s")
 
         if old_location:
             # copy to dest.  For directory do recursive copy
             # for now always copy; don't try to handle sym link
             # Assuming we don't want to copy any metadata (e.g.
             # permissions)
+            if verbose:
+                tic = time.time()
+                print(f"Copying {num_files} files ({total_size/1024/1024:.2f} Mb)...",end="")
             if dataset_type == "file":
                 copyfile(old_location, dest)
             elif dataset_type == "directory":
                 copytree(old_location, dest, copy_function=copyfile)
-
-        # Get metadata on dataset.
-        if dataset_type == "directory":
-            num_files, total_size = get_directory_info(loc)
-        else:
-            num_files = 1
-            total_size = os.path.getsize(loc)
+            if verbose:
+                print(f"took {time.time()-tic:.2f}")
 
         values  = {"name" : name}
         values["relative_path"] = relative_path
