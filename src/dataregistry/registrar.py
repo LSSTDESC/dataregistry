@@ -50,7 +50,8 @@ class Registrar():
                          version_patch, version_suffix=None, creation_date=None,
                          description=None, execution_id=None,
                          input_datasets=[], access_API=None,
-                         is_overwritable=False, old_location=None, copy=True):
+                         is_overwritable=False, old_location=None, copy=True,
+                         is_dummy=False):
         '''
         Return id of new row if successful, else None
 
@@ -79,7 +80,8 @@ class Registrar():
         copy             If old_location is None, ignore.   Else,
                            * if True copy from old_location to relative_path.
                            * if False make sym link at relative_path
-
+        is_dummy         True for dummy datasets. This copies no data, only creates
+                         and entry in the database (for testing only).
         '''
         if (self._owner_type == 'production') and is_overwritable:
             raise ValueError('Cannot overwrite production entries')
@@ -112,30 +114,31 @@ class Registrar():
                     previous.append(r.dataset_id)
 
         # Confirm new dataset exists
-        dest =  form_dataset_path(self._owner_type, self._owner,
-                                  relative_path, self._root_dir)
-        if old_location:
-            loc = old_location
-        else:
-            loc = dest
+        if not is_dummy:
+            dest =  form_dataset_path(self._owner_type, self._owner,
+                                      relative_path, self._root_dir)
+            if old_location:
+                loc = old_location
+            else:
+                loc = dest
 
-        try:
-            f = open(loc)
-            f.close()
-        except Exception as e:
-            print('Dataset to be registered does not exist or is not readable')
-            raise e
+            try:
+                f = open(loc)
+                f.close()
+            except Exception as e:
+                print('Dataset to be registered does not exist or is not readable')
+                raise e
 
-        if old_location:
-            # copy to dest.  For directory do recursive copy
-            # for now always copy; don't try to handle sym link
-            # Assuming we don't want to copy any metadata (e.g.
-            # permissions)
-            ftype = os.stat(old_location).st_mode & 0o0170000
-            if ftype == 0o0100000:        # regular file
-                copyfile(old_location, dest)
-            elif fytpe == 0o0040000:      # directory
-                copytree(old_location, dest, copy_function=copyfile)
+            if old_location:
+                # copy to dest.  For directory do recursive copy
+                # for now always copy; don't try to handle sym link
+                # Assuming we don't want to copy any metadata (e.g.
+                # permissions)
+                ftype = os.stat(old_location).st_mode & 0o0170000
+                if ftype == 0o0100000:        # regular file
+                    copyfile(old_location, dest)
+                elif fytpe == 0o0040000:      # directory
+                    copytree(old_location, dest, copy_function=copyfile)
 
         values  = {"name" : name}
         values["relative_path"] = relative_path
@@ -153,6 +156,7 @@ class Registrar():
         values["owner_type"] = self._owner_type
         values["owner"] = self._owner
         values["creator_uid"] = self._userid
+        values["is_dummy"] = is_dummy
 
         with self._engine.connect() as conn:
             prim_key = add_table_row(conn, dataset_table, values)

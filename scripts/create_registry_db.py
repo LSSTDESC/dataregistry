@@ -38,6 +38,7 @@ cols.append(Column("is_external_link", Boolean, default=False))
 cols.append(Column("is_overwritable", Boolean, default=False))
 cols.append(Column("is_overwritten", Boolean, default=False))
 cols.append(Column("is_valid", Boolean, default=True)) # False if, e.g., copy failed
+cols.append(Column("is_dummy", Boolean, default=False)) # Is this a dummy dataset for testing
 
 # The following are boilerplate, included in all or most tables
 cols.append(Column("register_date", DateTime, nullable=False))
