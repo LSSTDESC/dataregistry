@@ -13,7 +13,7 @@ Low-level utility routines and classes for accessing the registry
 SCHEMA_VERSION = 'registry_dev'
 
 __all__ = ['create_db_engine', 'add_table_row', 'TableCreator',
-           'TableMetadata', 'SCHEMA_VERSION', 'ownertypeenum']
+           'TableMetadata', 'SCHEMA_VERSION', 'ownertypeenum', 'dataorgenum']
 
 def create_db_engine(config_file):
     # Ideally config_file does not contain password, but if it does
@@ -29,6 +29,11 @@ class ownertypeenum(enum.Enum):
     production = "production"
     group = "group"
     user = "user"
+
+class dataorgenum(enum.Enum):
+    file = "file"
+    directory = "directory"
+    dummy = "dummy"
 
 def add_table_row(conn, table_meta, values):
     '''

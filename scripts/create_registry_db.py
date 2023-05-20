@@ -2,9 +2,9 @@ import os
 import sys
 import enum
 import argparse
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Index
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Index, Float
 from sqlalchemy import ForeignKey, UniqueConstraint, Enum
-from dataregistry.db_basic import create_db_engine, TableCreator, ownertypeenum
+from dataregistry.db_basic import create_db_engine, TableCreator, ownertypeenum, dataorgenum
 
 parser = argparse.ArgumentParser(description='''
 Creates dataregistry tables in specified schema and connection information (config)''', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -38,7 +38,6 @@ cols.append(Column("is_external_link", Boolean, default=False))
 cols.append(Column("is_overwritable", Boolean, default=False))
 cols.append(Column("is_overwritten", Boolean, default=False))
 cols.append(Column("is_valid", Boolean, default=True)) # False if, e.g., copy failed
-cols.append(Column("is_dummy", Boolean, default=False)) # Is this a dummy dataset for testing
 
 # The following are boilerplate, included in all or most tables
 cols.append(Column("register_date", DateTime, nullable=False))
@@ -58,6 +57,10 @@ cols.append(Column("owner_type", Enum(ownertypeenum), nullable=False))
 # If ownership_type is 'user', owner will be a user name
 cols.append(Column("owner", String, nullable=False))
 
+# To store metadata about the dataset.
+cols.append(Column("data_org", Enum(dataorgenum), nullable=False))
+cols.append(Column("nfiles", Integer, nullable=False))
+cols.append(Column("total_disk_space", Float, nullable=False))
 
 tab_creator.define_table("dataset", cols,
                          [Index("relative_path", "owner", "owner_type")])
