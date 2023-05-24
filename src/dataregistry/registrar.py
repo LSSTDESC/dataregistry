@@ -1,15 +1,18 @@
+import time
 import os
 from datetime import datetime
 from shutil import copyfile, copytree
 from sqlalchemy import MetaData, Table, Column, insert, text, update, select
 from sqlalchemy.exc import DBAPIError
 from dataregistry.db_basic import add_table_row, SCHEMA_VERSION, ownertypeenum
+from dataregistry.registrar_util import form_dataset_path, get_directory_info
 from dataregistry.db_basic import TableMetadata
-from dataregistry.registrar_util import form_dataset_path
 from dataregistry.exceptions import *
 
 __all__ = ['Registrar']
 _DEFAULT_ROOT_DIR = '/global/cfs/cdirs/desc-co/jrbogart/dregs_root' #temporary
+_DEFAULT_ROOT_DIR = "/home/mcalpine/Documents/dregs_root"
+
 class Registrar():
     '''
     Register new datasets, executions ("runs") or alias names
@@ -50,7 +53,7 @@ class Registrar():
                          version_patch, version_suffix=None, creation_date=None,
                          description=None, execution_id=None,
                          input_datasets=[], access_API=None,
-                         is_overwritable=False, old_location=None, copy=True):
+                         is_overwritable=False, old_location=None, copy=True, verbose=True):
         '''
         Return id of new row if successful, else None
 
@@ -79,7 +82,7 @@ class Registrar():
         copy             If old_location is None, ignore.   Else,
                            * if True copy from old_location to relative_path.
                            * if False make sym link at relative_path
-
+        verbose         Provide some additional output information
         '''
         if (self._owner_type == 'production') and is_overwritable:
             raise ValueError('Cannot overwrite production entries')
@@ -119,23 +122,39 @@ class Registrar():
         else:
             loc = dest
 
-        try:
-            f = open(loc)
-            f.close()
-        except Exception as e:
-            print('Dataset to be registered does not exist or is not readable')
-            raise e
+        if os.path.isfile(loc):
+            dataset_organization = "file"
+        elif os.path.isdir(loc):
+            dataset_organization = "directory"
+        else:
+            raise FileNotFoundError(f"Dataset {loc} not found")
+
+        # Get metadata on dataset.
+        if verbose:
+            tic = time.time()
+            print("Collecting metadata...", end="")
+        if dataset_organization == "directory":
+            num_files, total_size = get_directory_info(loc)
+        else:
+            num_files = 1
+            total_size = os.path.getsize(loc)
+        if verbose:
+            print(f"took {time.time()-tic:.2f}s")
 
         if old_location:
             # copy to dest.  For directory do recursive copy
             # for now always copy; don't try to handle sym link
             # Assuming we don't want to copy any metadata (e.g.
             # permissions)
-            ftype = os.stat(old_location).st_mode & 0o0170000
-            if ftype == 0o0100000:        # regular file
+            if verbose:
+                tic = time.time()
+                print(f"Copying {num_files} files ({total_size/1024/1024:.2f} Mb)...",end="")
+            if dataset_organization == "file":
                 copyfile(old_location, dest)
-            elif fytpe == 0o0040000:      # directory
+            elif dataset_organization == "directory":
                 copytree(old_location, dest, copy_function=copyfile)
+            if verbose:
+                print(f"took {time.time()-tic:.2f}")
 
         values  = {"name" : name}
         values["relative_path"] = relative_path
@@ -153,6 +172,9 @@ class Registrar():
         values["owner_type"] = self._owner_type
         values["owner"] = self._owner
         values["creator_uid"] = self._userid
+        values["data_org"] = dataset_organization
+        values["nfiles"] = num_files
+        values["total_disk_space"] = total_size / 1024 / 1024 # Mb
 
         with self._engine.connect() as conn:
             prim_key = add_table_row(conn, dataset_table, values)
