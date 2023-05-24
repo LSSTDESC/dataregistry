@@ -54,7 +54,7 @@ class Registrar():
                          description=None, execution_id=None,
                          input_datasets=[], access_API=None,
                          is_overwritable=False, old_location=None, copy=True,
-                         is_dummy=False, verbose=True):
+                         is_dummy=False, verbose=False):
         '''
         Return id of new row if successful, else None
 
