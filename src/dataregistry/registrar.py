@@ -53,7 +53,7 @@ class Registrar():
                          version_patch, version_suffix=None, creation_date=None,
                          description=None, execution_id=None,
                          input_datasets=[], access_API=None,
-                         is_overwritable=False, old_location=None, copy=True, verbose=True):
+                         is_overwritable=False, old_location=None, copy=True, verbose=False):
         '''
         Return id of new row if successful, else None
 
