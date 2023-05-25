@@ -56,10 +56,11 @@ jobs:
 
       # Make a dummy config file.
       - name: Create dummy config file
-        run : echo "sqlalchemy.url : postgresql://postgres:postgres@localhost:5432/desc_data_registry" > .config.dummy
+        run: |
+          echo "sqlalchemy.url : postgresql://postgres:postgres@localhost:5432/desc_data_registry" > config.txt
 
       # Create schema
       - name: Create data registry schema
         run: |
           cd scripts
-          python create_registry_db.py --config ../.config.dummy
+          python create_registry_db.py --config ../config.txt
