@@ -11,7 +11,6 @@ from dataregistry.exceptions import *
 
 __all__ = ['Registrar']
 _DEFAULT_ROOT_DIR = '/global/cfs/cdirs/desc-co/jrbogart/dregs_root' #temporary
-_DEFAULT_ROOT_DIR = "/home/mcalpine/Documents/dregs_root"
 
 class Registrar():
     '''
@@ -84,7 +83,7 @@ class Registrar():
                            * if True copy from old_location to relative_path.
                            * if False make sym link at relative_path
         is_dummy         True for dummy datasets. This copies no data, only creates
-                         and entry in the database (for testing only).
+                         an entry in the database (for testing only).
         verbose         Provide some additional output information
         '''
         if (self._owner_type == 'production') and is_overwritable:
