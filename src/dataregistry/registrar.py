@@ -11,7 +11,6 @@ from dataregistry.exceptions import *
 
 __all__ = ['Registrar']
 _DEFAULT_ROOT_DIR = '/global/cfs/cdirs/desc-co/jrbogart/dregs_root' #temporary
-_DEFAULT_ROOT_DIR = "/home/mcalpine/Documents/dregs_root"
 
 class Registrar():
     '''
@@ -53,7 +52,8 @@ class Registrar():
                          version_patch, version_suffix=None, creation_date=None,
                          description=None, execution_id=None,
                          input_datasets=[], access_API=None,
-                         is_overwritable=False, old_location=None, copy=True, verbose=False):
+                         is_overwritable=False, old_location=None, copy=True,
+                         is_dummy=False, verbose=False):
         '''
         Return id of new row if successful, else None
 
@@ -82,6 +82,8 @@ class Registrar():
         copy             If old_location is None, ignore.   Else,
                            * if True copy from old_location to relative_path.
                            * if False make sym link at relative_path
+        is_dummy         True for dummy datasets. This copies no data, only creates
+                         an entry in the database (for testing only).
         verbose         Provide some additional output information
         '''
         if (self._owner_type == 'production') and is_overwritable:
@@ -115,46 +117,52 @@ class Registrar():
                     previous.append(r.dataset_id)
 
         # Confirm new dataset exists
-        dest =  form_dataset_path(self._owner_type, self._owner,
-                                  relative_path, self._root_dir)
-        if old_location:
-            loc = old_location
-        else:
-            loc = dest
+        if not is_dummy:
+            dest =  form_dataset_path(self._owner_type, self._owner,
+                                      relative_path, self._root_dir)
+            if old_location:
+                loc = old_location
+            else:
+                loc = dest
 
-        if os.path.isfile(loc):
-            dataset_organization = "file"
-        elif os.path.isdir(loc):
-            dataset_organization = "directory"
-        else:
-            raise FileNotFoundError(f"Dataset {loc} not found")
-
-        # Get metadata on dataset.
-        if verbose:
-            tic = time.time()
-            print("Collecting metadata...", end="")
-        if dataset_organization == "directory":
-            num_files, total_size = get_directory_info(loc)
-        else:
-            num_files = 1
-            total_size = os.path.getsize(loc)
-        if verbose:
-            print(f"took {time.time()-tic:.2f}s")
-
-        if old_location:
-            # copy to dest.  For directory do recursive copy
-            # for now always copy; don't try to handle sym link
-            # Assuming we don't want to copy any metadata (e.g.
-            # permissions)
+            if os.path.isfile(loc):
+                dataset_organization = "file"
+            elif os.path.isdir(loc):
+                dataset_organization = "directory"
+            else:
+                raise FileNotFoundError(f"Dataset {loc} not found")
+    
+            # Get metadata on dataset.
             if verbose:
                 tic = time.time()
-                print(f"Copying {num_files} files ({total_size/1024/1024:.2f} Mb)...",end="")
-            if dataset_organization == "file":
-                copyfile(old_location, dest)
-            elif dataset_organization == "directory":
-                copytree(old_location, dest, copy_function=copyfile)
+                print("Collecting metadata...", end="")
+            if dataset_organization == "directory":
+                num_files, total_size = get_directory_info(loc)
+            else:
+                num_files = 1
+                total_size = os.path.getsize(loc)
             if verbose:
-                print(f"took {time.time()-tic:.2f}")
+                print(f"took {time.time()-tic:.2f}s")
+    
+            if old_location:
+                # copy to dest.  For directory do recursive copy
+                # for now always copy; don't try to handle sym link
+                # Assuming we don't want to copy any metadata (e.g.
+                # permissions)
+                if verbose:
+                    tic = time.time()
+                    print(f"Copying {num_files} files ({total_size/1024/1024:.2f} Mb)...",end="")
+                if dataset_organization == "file":
+                    copyfile(old_location, dest)
+                elif dataset_organization == "directory":
+                    copytree(old_location, dest, copy_function=copyfile)
+                if verbose:
+                    print(f"took {time.time()-tic:.2f}")
+        else:
+            # In the case of a dummy dataset
+            dataset_organization = "dummy"
+            num_files = 0
+            total_size = 0
 
         values  = {"name" : name}
         values["relative_path"] = relative_path
@@ -184,7 +192,8 @@ class Registrar():
             try:
                 if len(previous) > 0:
                     # Update previous rows, setting is_overwritten to True
-                    update_stmt = update(dataset_table)\
+               
+                    datasetupdate_stmt = update(dataset_table)\
                       .where(dataset_table.c.dataset_id.in_(previous))\
                       .values(is_overwritten=True)
                     conn.execute(update_stmt)

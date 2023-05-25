@@ -38,7 +38,8 @@ def make_entry(args):
                                         creation_date=args.creation_date,
                                         description=args.description,
                                         old_location=args.old_location,
-                                        copy=(not args.make_sym_link))
+                                        copy=(not args.make_sym_link),
+                                        is_dummy=args.is_dummy)
 
     # new_id = registrar.register_dataset('my_favorite_dataset',
     #                                     'some_subdir/no_such_dataset.parquet',
@@ -73,6 +74,7 @@ parser.add_argument('--make-sym-link', action='store_true',
                             Ignored if old-location not specified.''')
 parser.add_argument('--schema-version', default=f'{SCHEMA_VERSION}')
 #                    help='By default use newest available schema version')
+parser.add_argument('--is_dummy', action="store_true", help="Dummy entry, don't copy any data")
 
 args = parser.parse_args()
 

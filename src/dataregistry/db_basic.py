@@ -33,6 +33,7 @@ class ownertypeenum(enum.Enum):
 class dataorgenum(enum.Enum):
     file = "file"
     directory = "directory"
+    dummy = "dummy"
 
 def add_table_row(conn, table_meta, values):
     '''
