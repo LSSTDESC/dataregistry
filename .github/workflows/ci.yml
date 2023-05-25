@@ -53,6 +53,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install .
+          python -m pip install pyaml
 
       # Make a dummy config file.
       - name: Create dummy config file
