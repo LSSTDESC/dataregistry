@@ -131,7 +131,7 @@ class Registrar():
                 dataset_organization = "directory"
             else:
                 raise FileNotFoundError(f"Dataset {loc} not found")
-    
+
             # Get metadata on dataset.
             if verbose:
                 tic = time.time()
@@ -143,7 +143,7 @@ class Registrar():
                 total_size = os.path.getsize(loc)
             if verbose:
                 print(f"took {time.time()-tic:.2f}s")
-    
+
             if old_location:
                 # copy to dest.  For directory do recursive copy
                 # for now always copy; don't try to handle sym link
@@ -153,6 +153,8 @@ class Registrar():
                     tic = time.time()
                     print(f"Copying {num_files} files ({total_size/1024/1024:.2f} Mb)...",end="")
                 if dataset_organization == "file":
+                    # Create any intervening directories
+                    os.makedirs(os.path.dirname(dest), exist_ok=True)
                     copyfile(old_location, dest)
                 elif dataset_organization == "directory":
                     copytree(old_location, dest, copy_function=copyfile)
@@ -192,7 +194,7 @@ class Registrar():
             try:
                 if len(previous) > 0:
                     # Update previous rows, setting is_overwritten to True
-               
+
                     datasetupdate_stmt = update(dataset_table)\
                       .where(dataset_table.c.dataset_id.in_(previous))\
                       .values(is_overwritten=True)
