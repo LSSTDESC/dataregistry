@@ -57,6 +57,7 @@ jobs:
 
       # Make a dummy config file.
       - name: Create dummy config file
+        run: |
           echo "sqlalchemy.url : postgresql://postgres:postgres@localhost:5432/desc_data_registry" > config.txt
 
       # Create schema
