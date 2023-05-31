@@ -108,7 +108,7 @@ class Query():
 
     def is_orderable_property(self, property_name):
         if not self._all_dataset_properties:
-            list_dataset_properties()
+            self.list_dataset_properties()
         if not property_name in self._all_dataset_properties.keys():
             raise ValueException(f'Unknown property {property_name}')
         return self._all_dataset_properties[property_name]
@@ -119,7 +119,7 @@ class Query():
         Should return a list of property names, not necessarily identical
         to column names in the execution table.
         '''
-        pass
+        raise NotImplementedError('Query.list_execution_properties is not implemented')
 
     def _check_property_name(self, c):
         '''
@@ -136,11 +136,11 @@ class Query():
         '''
         parts = c.split('.')
         if len(parts) > 2:
-            raise ValueException(f'check_filter: "{f[0]}" is not a dataset property')
+            raise ValueException(f'check_filter: "{c}" is not of proper form <table_name>.<column_name> for a dataset property: too many "."')
         col = parts[-1]
         if len(parts) == 2:
             if c not in self._all_dataset_properties:
-                raise ValueException(f'check_filter: "{f[0]}" is not a dataset property')
+                raise ValueException(f'check_filter: "{c}" not found among dataset properties')
             else:
                 tblname = parts[0]
         else:     # search for table
@@ -187,7 +187,7 @@ class Query():
         Return (probably) pandas dataframe
         '''
         if not self._all_dataset_properties:
-            list_dataset_properties()
+            self.list_dataset_properties()
 
         # Determine if we need a join or not
         j = self._tables['dataset'].join(self._tables['execution'])
