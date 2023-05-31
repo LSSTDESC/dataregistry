@@ -7,10 +7,13 @@ import yaml
 import os
 from collections import namedtuple
 
+'''
+Low-level utility routines and classes for accessing the registry
+'''
 SCHEMA_VERSION = 'registry_dev'
 
 __all__ = ['create_db_engine', 'add_table_row', 'TableCreator',
-           'SCHEMA_VERSION', 'ownertypeenum']
+           'TableMetadata', 'SCHEMA_VERSION', 'ownertypeenum', 'dataorgenum']
 
 def create_db_engine(config_file):
     # Ideally config_file does not contain password, but if it does
@@ -27,6 +30,11 @@ class ownertypeenum(enum.Enum):
     group = "group"
     user = "user"
 
+class dataorgenum(enum.Enum):
+    file = "file"
+    directory = "directory"
+    dummy = "dummy"
+
 def add_table_row(conn, table_meta, values):
     '''
     Generic insert, given connection, metadata for a table and
@@ -41,10 +49,6 @@ def add_table_row(conn, table_meta, values):
         print('Original error:')
         print(e.StatementError.orig)
         return None
-
-
-
-
 
 class TableCreator:
     def __init__(self, engine, dialect, schema=SCHEMA_VERSION):
@@ -113,6 +117,21 @@ class TableCreator:
             conn.execute(text(usage_priv))
             conn.execute(text(select_priv))
             conn.commit()
+
+class TableMetadata():
+    '''
+    Keep and dispense table metadata
+    '''
+    def __init__(self, schema, engine):
+        self._metadata = MetaData(schema=schema)
+        self._table_metadata = dict()
+        self._engine = engine
+    def get(self, tbl):
+        if tbl not in self._table_metadata:
+            self._table_metadata[tbl] = Table(tbl, self._metadata,
+                                              autoload_with=self._engine)
+        return self._table_metadata[tbl]
+
 
 if __name__ == '__main__':
     from sqlalchemy import Column, Integer, String
