@@ -9,6 +9,9 @@ jobs:
     # You must use a Linux environment when using service containers or container jobs
     runs-on: ubuntu-latest
 
+    env:
+      DREGS_CONFIG: "${{ github.workspace }}/config.txt"
+
     # Service containers to run with `runner-job`
     services:
       # Label used to access the service container
@@ -58,10 +61,10 @@ jobs:
       # Make a dummy config file.
       - name: Create dummy config file
         run: |
-          echo "sqlalchemy.url : postgresql://postgres:postgres@localhost:5432/desc_data_registry" > config.txt
+          echo "sqlalchemy.url : postgresql://postgres:postgres@localhost:5432/desc_data_registry" > ${{ DREGS_CONFIG }}
 
       # Create schema
       - name: Create data registry schema
         run: |
           cd scripts
-          python create_registry_db.py --config ../config.txt
+          python create_registry_db.py --config ${{ DREGS_CONFIG }}
