@@ -68,3 +68,4 @@ jobs:
         run: |
           cd scripts
           python create_registry_db.py --config $DREGS_CONFIG
+          python3 create_test_entries.py
