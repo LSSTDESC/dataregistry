@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools" >= 61.0"] # PEP 621 compliant
+requires = ["setuptools >= 61.0"] # PEP 621 compliant
 build-backend = "setuptools.build_meta"
 
 [project]
