@@ -68,4 +68,6 @@ jobs:
         run: |
           cd scripts
           python create_registry_db.py --config $DREGS_CONFIG
+          cd ../tests/ci
           python3 create_test_entries.py
+          python3 test_query.py
