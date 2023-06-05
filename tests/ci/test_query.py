@@ -6,7 +6,7 @@ NUM_DATASET_COLUMNS = 23
 NUM_EXECUTION_COLUMNS = 7
 
 if os.getenv("DREGS_CONFIG") is None:
-    DREGS_CONFIG = "/home/mcalpine/Documents/dataregistry/config_local"
+    raise Exception("Need to set DREGS_CONFIG env variable")
 else:
     DREGS_CONFIG = os.getenv("DREGS_CONFIG")
 
