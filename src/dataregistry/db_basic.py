@@ -90,7 +90,10 @@ class TableCreator:
         '''
         self.create_schema()
         self._metadata.create_all(self._engine)
-        self.grant_reader_access('reg_reader')
+        try:
+            self.grant_reader_access('reg_reader')
+        except:
+            print("Could not grant access to reg_reader")
 
     def create_schema(self):
         if self._dialect == 'sqlite':
