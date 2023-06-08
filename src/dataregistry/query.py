@@ -48,7 +48,7 @@ ALL_ORDERABLE = {sqltypes.INTEGER, sqltypes.FLOAT, sqltypes.DOUBLE,
 def is_orderable_type(ctype):
     return type(ctype) in ALL_ORDERABLE
 
-def _convert_alchemy_to_dict(result):
+def _convert_alchemy_to_dict(results):
     """
     Function to convert a sqlalchemy.engine.Result object to a dict.
 
