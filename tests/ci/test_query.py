@@ -25,12 +25,19 @@ assert len(execution_columns) == NUM_EXECUTION_COLUMNS, "Bad execution columns l
 
 # Do some queries on the test data.
 
-# Query 1: Query dataset name
+# Query on dataset name
 f = Filter('dataset.name', '==', 'DESC dataset 1')
 results = q.find_datasets(['dataset.dataset_id', 'dataset.name'], [f])
 assert results.rowcount == 2, "Bad result from query 1"
 
-# Query 2: Query on version
+# Query on version
 f = Filter('dataset.version_major', '<', 100)
 results = q.find_datasets(['dataset.dataset_id', 'dataset.name'], [f])
 assert results.rowcount == 4, "Bad result from query 2"
+
+# Query to check dataset return type
+f = Filter('dataset.version_major', '<', 100)
+results = q.find_datasets(['dataset.dataset_id', 'dataset.name'], [f], return_type="dict")
+assert type(results) == dict, "Bad return type from query 3"
+assert len(results.keys()) == 2, "Bad dict length in query 3"
+assert len(results["dataset_id"]) == 2, "Bad array length in query 3"

@@ -48,6 +48,32 @@ ALL_ORDERABLE = {sqltypes.INTEGER, sqltypes.FLOAT, sqltypes.DOUBLE,
 def is_orderable_type(ctype):
     return type(ctype) in ALL_ORDERABLE
 
+def _convert_alchemy_to_dict(result):
+    """
+    Function to convert a sqlalchemy.engine.Result object to a dict.
+
+    Parameters
+    ----------
+    result : sqlalchemy.engine.Result object
+
+    Returns
+    -------
+    data : dict
+        Each row in the results table becomes a key
+    """
+
+    # Set up return dict
+    data = {}
+    for att in results.keys():
+        data[att] = []
+    
+    # Pull out the rows
+    for r in results:
+        for att in results.keys():
+        data[att].append(r._mapping[att])
+
+    return data
+
 class Query():
     '''
     Class implementing supported queries
@@ -174,7 +200,7 @@ class Query():
 
         return stmt.where(column_ref.__getattribute__(the_op)(value))
 
-    def find_datasets(self, property_names=None, filters=[]):
+    def find_datasets(self, property_names=None, filters=[], return_type=None):
         '''
         Get specified properties for datasets satisfying all filters
 
@@ -219,7 +245,14 @@ class Query():
                 print(e.StatementError.orig)
                 return None
 
-        return result
+        if return_type == "dict":
+            # Return a dict
+            return _convert_alchemy_to_dict(result)
+        elif return_type is None:
+            # Return a sqlalchemy.engine.Result object
+            return result
+        else:
+            raise ValueError(f"{return_type} is a bad return_type")
 
 if __name__ == '__main__':
     from dataregistry.db_basic import create_db_engine
