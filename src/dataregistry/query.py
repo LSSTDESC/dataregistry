@@ -70,7 +70,7 @@ def _convert_alchemy_to_dict(result):
     # Pull out the rows
     for r in results:
         for att in results.keys():
-        data[att].append(r._mapping[att])
+            data[att].append(r._mapping[att])
 
     return data
 
