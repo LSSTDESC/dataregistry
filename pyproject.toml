@@ -3,8 +3,8 @@ requires = ["setuptools >= 61.0"] # PEP 621 compliant
 build-backend = "setuptools.build_meta"
 
 [project]
+dynamic = ["version"]
 name = "dataregistry"
-version = "0.1.1"
 description = "Creation and user API for DESC data registry."
 readme = "README.md"
 authors = [{ name = "Joanne Bogart", email = "jrb@slac.stanford.edu" }]
@@ -16,10 +16,12 @@ keywords = ["desc", "python", "registry"]
 dependencies = [
     'psycopg2',
     'sqlalchemy',
-    'importlib-metadata;python_version<"3.8"',
-    'pyyaml'
+    'pyaml',
 ]
 requires-python = ">=3.7" # For setuptools >= 61.0 support
+
+[tool.setuptools.dynamic]
+version = {attr = "dataregistry._version.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
