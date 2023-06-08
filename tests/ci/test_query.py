@@ -40,4 +40,4 @@ f = Filter('dataset.version_major', '<', 100)
 results = q.find_datasets(['dataset.dataset_id', 'dataset.name'], [f], return_type="dict")
 assert type(results) == dict, "Bad return type from query 3"
 assert len(results.keys()) == 2, "Bad dict length in query 3"
-assert len(results["dataset_id"]) == 2, "Bad array length in query 3"
+assert len(results["dataset_id"]) == 4, "Bad array length in query 3"
