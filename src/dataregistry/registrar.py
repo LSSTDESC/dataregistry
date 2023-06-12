@@ -6,11 +6,13 @@ from sqlalchemy import MetaData, Table, Column, insert, text, update, select
 from sqlalchemy.exc import DBAPIError
 from dataregistry.db_basic import add_table_row, SCHEMA_VERSION, ownertypeenum
 from dataregistry.registrar_util import form_dataset_path, get_directory_info
+from dataregistry.registrar_util import parse_version_string, calculate_special
 from dataregistry.db_basic import TableMetadata
 from dataregistry.exceptions import *
 
 __all__ = ['Registrar']
 _DEFAULT_ROOT_DIR = '/global/cfs/cdirs/desc-co/jrbogart/dregs_root' #temporary
+
 
 class Registrar():
     '''
@@ -47,9 +49,8 @@ class Registrar():
     def root_dir(self):
         return self._root_dir
 
-    def register_dataset(self, name, relative_path, version_major,
-                         version_minor,
-                         version_patch, version_suffix=None, creation_date=None,
+    def register_dataset(self, name, relative_path, version_string,
+                         version_suffix=None, creation_date=None,
                          description=None, execution_id=None,
                          input_datasets=[], access_API=None,
                          is_overwritable=False, old_location=None, copy=True,
@@ -62,11 +63,12 @@ class Registrar():
         name             Any convenient, evocative name for the human.
                          No check for uniqueness. Perhaps should be uniqueness
                          constrain on (name, version_major, version_minor,
-                                       version_patch)
+                                       version_patch, version_suffix)
         relative_path    Relative to owner_type/owner as specified to
                          to Registrar constructor
-        version_major, version_minor, version_patch
-                         Required version specifiers
+        version_string   Must be of form a.b.c where a, b, and c are
+                         non-negative integers OR one of the special
+                         keywords 'major', 'minor' or 'patch'
         version_suffix   Optional version specifier for non-production datasets
         creation_date    If not specified, take from dataset file or directory
                          creation date
@@ -86,8 +88,14 @@ class Registrar():
                          an entry in the database (for testing only).
         verbose         Provide some additional output information
         '''
-        if (self._owner_type == 'production') and is_overwritable:
-            raise ValueError('Cannot overwrite production entries')
+        if (self._owner_type == 'production'):
+            if is_overwritable:
+                raise ValueError('Cannot overwrite production entries')
+            if version_suffix is not None:
+                raise ValueError('Production entries cannot have a version suffix')
+
+        # Check version string
+        special = version_string in ['major', 'minor', 'patch']
 
         dataset_table = self._get_table_metadata("dataset")
 
@@ -115,6 +123,13 @@ class Registrar():
                     return None
                 else:
                     previous.append(r.dataset_id)
+        if not special:
+            v_fields = parse_version_string(version_string)
+        else:
+            # Generate new version fields based on previous entries
+            # with the same name field and same suffix
+            v_fields = calculate_special(name, version_string, version_suffix,
+                                         dataset_table, self._engine)
 
         # Confirm new dataset exists
         if not is_dummy:
@@ -168,9 +183,9 @@ class Registrar():
 
         values  = {"name" : name}
         values["relative_path"] = relative_path
-        values["version_major"] = version_major
-        values["version_minor"] = version_minor
-        values["version_patch"] = version_patch
+        values["version_major"] = v_fields['major']
+        values["version_minor"] = v_fields['minor']
+        values["version_patch"] = v_fields['patch']
         if version_suffix: values["version_suffix"] = version_suffix
         if creation_date: values["dataset_creation_date"] = creation_date
         if description: values["description"] = description
@@ -195,7 +210,7 @@ class Registrar():
                 if len(previous) > 0:
                     # Update previous rows, setting is_overwritten to True
 
-                    datasetupdate_stmt = update(dataset_table)\
+                    update_stmt = update(dataset_table)\
                       .where(dataset_table.c.dataset_id.in_(previous))\
                       .values(is_overwritten=True)
                     conn.execute(update_stmt)
