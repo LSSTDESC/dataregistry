@@ -84,15 +84,6 @@ _insert_entry(
 
 _insert_entry(
     "DESC dataset 1",
-    "DESC/datasets/my_first_dataset_v2",
-    "0.0.2",
-    "user",
-    None,
-    "This is my first DESC dataset (updated)",
-)
-
-_insert_entry(
-    "DESC dataset 1",
     "DESC/datasets/my_first_dataset_v2_minor_upgrade",
     "minor",
     "user",
