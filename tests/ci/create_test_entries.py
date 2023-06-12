@@ -1,7 +1,8 @@
 import os
 import sys
+
+from dataregistry.db_basic import SCHEMA_VERSION, create_db_engine, ownertypeenum
 from dataregistry.registrar import Registrar
-from dataregistry.db_basic import create_db_engine, ownertypeenum, SCHEMA_VERSION
 
 _lookup = {
     "production": ownertypeenum.production,
@@ -39,7 +40,46 @@ def _parse_version(version_str):
     return int(v[0]), int(v[1]), int(v[2])
 
 
-def _insert_entry(name, relpath, version, owner_type, owner, description):
+def _insert_execution_entry(name, description, owner_type, owner):
+    """
+    Wrapper to create execution entry
+
+    Parameters
+    ----------
+    name : str
+        Name of execution
+    description : str
+        Description of execution
+    owner_type : str
+        Either "production", "group", "user"
+    owner : str
+        Dataset owner
+
+    Returns
+    -------
+    new_id : int
+        The execution ID for this new entry
+    """
+
+    # Create Registrar object
+    registrar = Registrar(
+        engine, dialect, _lookup[owner_type], owner=owner, schema_version=SCHEMA_VERSION
+    )
+
+    new_id = registrar.register_execution(
+        name,
+        description=description,
+    )
+
+    assert new_id is not None, "Trying to create a execution that already exists"
+    print(f"Created execution entry with id {new_id}")
+
+    return new_id
+
+
+def _insert_dataset_entry(
+    name, relpath, version, owner_type, owner, description, execution_id=None
+):
     """
     Wrapper to create dataset entry
 
@@ -58,6 +98,8 @@ def _insert_entry(name, relpath, version, owner_type, owner, description):
         Dataset owner
     description : str
         Description of dataset
+    execution_id : int
+        Execution entry related to this dataset
     """
 
     # Some defaults over all test datasets
@@ -66,7 +108,6 @@ def _insert_entry(name, relpath, version, owner_type, owner, description):
     creation_data = None
     old_location = None
     make_sym_link = False
-    schema_version = SCHEMA_VERSION
     is_dummy = True
     version_suffix = ""
     if owner is None:
@@ -74,7 +115,7 @@ def _insert_entry(name, relpath, version, owner_type, owner, description):
 
     # Create Registrar object
     registrar = Registrar(
-        engine, dialect, _lookup[owner_type], owner=owner, schema_version=schema_version
+        engine, dialect, _lookup[owner_type], owner=owner, schema_version=SCHEMA_VERSION
     )
 
     # Add new entry.
@@ -92,23 +133,30 @@ def _insert_entry(name, relpath, version, owner_type, owner, description):
         old_location=old_location,
         copy=(not make_sym_link),
         is_dummy=is_dummy,
+        execution_id=execution_id,
     )
 
     assert new_id is not None, "Trying to create a dataset that already exists"
     print(f"Created dataset entry with id {new_id}")
 
 
-# Make some test entries. These will be dummy entries, copying no actual data.
-_insert_entry(
+# Make some test execution entries.
+execution_id_1 = _insert_execution_entry(
+    "DESC execution 1", "My first pipeline execution", "user", None
+)
+
+# Make some test dataset entries. These will be dummy entries, copying no actual data.
+_insert_dataset_entry(
     "DESC dataset 1",
     "DESC/datasets/my_first_dataset",
     "0.0.1",
     "user",
     None,
     "This is my first DESC dataset",
+    execution_id=execution_id_1,
 )
 
-_insert_entry(
+_insert_dataset_entry(
     "DESC dataset 1",
     "DESC/datasets/my_first_dataset_v2",
     "0.0.2",
@@ -117,7 +165,7 @@ _insert_entry(
     "This is my first DESC dataset (updated)",
 )
 
-_insert_entry(
+_insert_dataset_entry(
     "DESC dataset 2",
     "DESC/datasets/my_second_dataset",
     "0.0.1",
@@ -126,7 +174,7 @@ _insert_entry(
     "This is my second DESC dataset",
 )
 
-_insert_entry(
+_insert_dataset_entry(
     "DESC production dataset 1",
     "DESC/datasets/my_first_production_dataset",
     "0.0.1",
