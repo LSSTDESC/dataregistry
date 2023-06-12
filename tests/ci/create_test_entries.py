@@ -46,7 +46,7 @@ def _insert_entry(name, relpath, version, owner_type, owner, description):
     make_sym_link = False
     schema_version = SCHEMA_VERSION
     is_dummy = True
-    version_suffix = ""
+    version_suffix = None
     if owner is None:
         owner = os.getenv("USER")
 
@@ -97,7 +97,7 @@ _insert_entry(
     "minor",
     "user",
     None,
-    "This is my first DESC dataset (updated)",
+    "This is my first DESC dataset (minor version update)",
 )
 
 _insert_entry(
