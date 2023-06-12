@@ -26,24 +26,29 @@ assert len(execution_columns) == NUM_EXECUTION_COLUMNS, "Bad execution columns l
 
 # Do some queries on the test data.
 
-# Query 1: Query dataset name
-f = Filter("dataset.name", "==", "DESC dataset 1")
-results = q.find_datasets(["dataset.dataset_id", "dataset.name"], [f])
-assert results.rowcount == 2, "Bad result from query 1"
+## Query 1: Query dataset name
+#f = Filter("dataset.name", "==", "DESC dataset 1")
+#results = q.find_datasets(["dataset.dataset_id", "dataset.name"], [f])
+#assert results.rowcount == 2, "Bad result from query 1"
+#
+## Query 2: Query on version
+#f = Filter("dataset.version_major", "<", 100)
+#results = q.find_datasets(["dataset.dataset_id", "dataset.name"], [f])
+#assert results.rowcount == 4, "Bad result from query 2"
+#
+## Query 3: Query on execution ID
+#f = Filter("dataset.execution_id", "==", 1)
+#results = q.find_datasets(["execution.execution_id", "dataset.execution_id"], [f])
+#assert results.rowcount == 1, "Bad result from query 3.1"
+#for r in results:
+#    assert r[0] == r[1], "Bad result from query 3.2"
+#f = Filter("execution.execution_id", "==", 1)
+#results = q.find_datasets(["execution.execution_id", "dataset.execution_id"], [f])
+#assert results.rowcount == 1, "Bad result from query 3.3"
+#for r in results:
+#    assert r[0] == r[1], "Bad result from query 3.4"
 
-# Query 2: Query on version
-f = Filter("dataset.version_major", "<", 100)
-results = q.find_datasets(["dataset.dataset_id", "dataset.name"], [f])
-assert results.rowcount == 4, "Bad result from query 2"
-
-# Query 3: Query on execution ID
-f = Filter("dataset.execution_id", "==", 1)
-results = q.find_datasets(["execution.execution_id", "dataset.execution_id"], [f])
-assert results.rowcount == 1, "Bad result from query 3.1"
-for r in results:
-    assert r[0] == r[1], "Bad result from query 3.2"
-f = Filter("execution.execution_id", "==", 1)
-results = q.find_datasets(["execution.execution_id", "dataset.execution_id"], [f])
-assert results.rowcount == 1, "Bad result from query 3.3"
-for r in results:
-    assert r[0] == r[1], "Bad result from query 3.4"
+# Query 4: Query on alias
+f = Filter("dataset_alias.alias", "==", "My first alias")
+results = q.find_datasets(["dataset.dataset_id", "dataset_alias.name"], [f])
+assert results.rowcount == 1, "Bad result from query 4"

@@ -39,6 +39,42 @@ def _parse_version(version_str):
 
     return int(v[0]), int(v[1]), int(v[2])
 
+def _insert_alias_entry(name, dataset_id, owner_type, owner):
+    """
+    Wrapper to create dataset alias entry
+
+    Parameters
+    ----------
+    name : str
+        Name of alias
+    dataset_id : int
+        Dataset we are assigning alias name to
+    owner_type : str
+        Either "production", "group", "user"
+    owner : str
+        Dataset owner
+
+    Returns
+    -------
+    new_id : int
+        The alias ID for this new entry
+    """
+
+    # Create Registrar object
+    registrar = Registrar(
+        engine, dialect, _lookup[owner_type], owner=owner, schema_version=SCHEMA_VERSION
+    )
+
+    new_id = registrar.register_dataset_alias(
+        name,
+        dataset_id,
+    )
+
+    assert new_id is not None, "Trying to create a dataset alias that already exists"
+    print(f"Created dataset alias entry with id {new_id}")
+
+    return new_id
+
 
 def _insert_execution_entry(name, description, owner_type, owner):
     """
@@ -100,6 +136,11 @@ def _insert_dataset_entry(
         Description of dataset
     execution_id : int
         Execution entry related to this dataset
+
+    Returns
+    -------
+    new_id : int
+        The dataset it created for this entry
     """
 
     # Some defaults over all test datasets
@@ -139,14 +180,16 @@ def _insert_dataset_entry(
     assert new_id is not None, "Trying to create a dataset that already exists"
     print(f"Created dataset entry with id {new_id}")
 
+    return new_id
 
 # Make some test execution entries.
 execution_id_1 = _insert_execution_entry(
     "DESC execution 1", "My first pipeline execution", "user", None
 )
 
-# Make some test dataset entries. These will be dummy entries, copying no actual data.
-_insert_dataset_entry(
+# Make some test dataset entries.
+# These will be dummy entries, copying no actual data.
+dataset_id_1 = _insert_dataset_entry(
     "DESC dataset 1",
     "DESC/datasets/my_first_dataset",
     "0.0.1",
@@ -181,4 +224,12 @@ _insert_dataset_entry(
     "production",
     None,
     "This is my first DESC production dataset",
+)
+
+# Make some test dataset alias entries.
+_insert_alias_entry(
+    "My first alias",
+    dataset_id_1,
+    "user",
+    None
 )
