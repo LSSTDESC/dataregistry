@@ -127,4 +127,12 @@ def calculate_special(name, v_string, v_suffix, dataset_table, engine):
             old_patch = int(r[2])
     v_fields = {'major' : old_major, 'minor' : old_minor, 'patch' : old_patch}
     v_fields[v_string] = v_fields[v_string] + 1
+
+    # reset fields as needed
+    if v_string == 'minor':
+        v_fields['patch'] = 0
+    if v_string == 'major':
+        v_fields['patch'] = 0
+        v_fields['minor'] = 0
+
     return v_fields
