@@ -24,13 +24,9 @@ def make_entry(args):
     registrar = Registrar(engine, dialect, _lookup[args.owner_type],
                           owner=owner, schema_version=schema)
 
-    v = args.version.split('.')
-    suffix = None
-    if len(v) > 3 and owner_type != 'production':
-        suffix = ''.join(v[3:])
     new_id = registrar.register_dataset(args.name, args.relpath,
-                                        v[0], v[1], v[2],
-                                        version_suffix=suffix,
+                                        args.version,
+                                        version_suffix=args.version_suffix,
                                         creation_date=args.creation_date,
                                         description=args.description,
                                         old_location=args.old_location,
@@ -44,11 +40,17 @@ parser = argparse.ArgumentParser(description='''Register datasets with dataregis
 parser.add_argument('name', help='A name for the dataset')
 parser.add_argument('relpath', help='''destination for dataset relative
   to <registry root>/<owner_type>/<owner>''')
-parser.add_argument('version', help='''Semantic version string of form m.n.p
-                 or m.n.p.stuff where m n p are nonneg. ints,
-                 stuff is an arbitrary string''')
+parser.add_argument('version', help='''
+                     Semantic version string of form m.n.p
+                     where m n p are nonneg. ints
+                     or one of the special values "patch", "minor", "major"
+                     ''')
+parser.add_argument('--version_suffix', default=None,
+                    help='''
+                    Version string suffix. Must be None for production
+                    ''')
 parser.add_argument('--owner-type', choices=['production', 'group', 'user'],
-                    default='user')
+                    default='user', help='Defaults to "user"')
 parser.add_argument('--owner', default=None,
                     help='defaults to current user for owner type user')
 parser.add_argument('--locale', default='NERSC')
