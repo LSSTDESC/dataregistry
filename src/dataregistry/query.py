@@ -110,7 +110,7 @@ class Query():
         if not self._all_dataset_properties:
             self.list_dataset_properties()
         if not property_name in self._all_dataset_properties.keys():
-            raise ValueException(f'Unknown property {property_name}')
+            raise ValueError(f'Unknown property {property_name}')
         return self._all_dataset_properties[property_name]
 
     # Do we need this routine?  Will users want to query executions?
@@ -127,7 +127,7 @@ class Query():
         <table_name>.<column_name> check that it identifies a column belonging to the
         dataset table or a table it references or is associated with
         If input is just <column_name> and that name appears in more than one relevant
-        table, raise ValueException
+        table, raise ValueError
 
         Parameters
         c      string   identifies possible column
@@ -136,11 +136,11 @@ class Query():
         '''
         parts = c.split('.')
         if len(parts) > 2:
-            raise ValueException(f'check_filter: "{c}" is not of proper form <table_name>.<column_name> for a dataset property: too many "."')
+            raise ValueError(f'check_filter: "{c}" is not of proper form <table_name>.<column_name> for a dataset property: too many "."')
         col = parts[-1]
         if len(parts) == 2:
             if c not in self._all_dataset_properties:
-                raise ValueException(f'check_filter: "{c}" not found among dataset properties')
+                raise ValueError(f'check_filter: "{c}" not found among dataset properties')
             else:
                 tblname = parts[0]
         else:     # search for table
@@ -149,9 +149,9 @@ class Query():
                 if col in tbl.columns:
                     in_tbl.append(tbl)
             if len(in_tbl) == 0:
-                raise ValueException(f'Column {col} not found')
+                raise ValueError(f'Column {col} not found')
             if len(in_tbl) > 1:
-                raise ValueException(f'Column {col} appears in more than one table. Include table in specification: <table>.{col}')
+                raise ValueError(f'Column {col} appears in more than one table. Include table in specification: <table>.{col}')
             tblname = in_tbl[0]
 
         return tblname, col, self._tables[tblname].c[col]
@@ -164,11 +164,11 @@ class Query():
         tbl_name, column_name, column_ref = self._check_property_name(f[0])
 
         if f[1] not in _colops.keys():
-            raise ValueException(f'check_filter: "{f[1]}" is not a supported operator')
+            raise ValueError(f'check_filter: "{f[1]}" is not a supported operator')
         else:
             the_op = _colops[f[1]]
         if not self.is_orderable_property(f[0]) and f[1] not in ['==', '=',  '!=']:
-            raise ValueException('check_filter: Cannot apply "{f[1]}" to "{f[0]}"')
+            raise ValueError('check_filter: Cannot apply "{f[1]}" to "{f[0]}"')
         else:
             value = f[2]
 
