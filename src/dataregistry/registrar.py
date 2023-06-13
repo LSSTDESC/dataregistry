@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 from shutil import copyfile, copytree
 from sqlalchemy import MetaData, Table, Column, insert, text, update, select
-from sqlalchemy.exc import DBAPIError
+from sqlalchemy.exc import DBAPIError, IntegrityError
 from dataregistry.db_basic import add_table_row, SCHEMA_VERSION, ownertypeenum
 from dataregistry.registrar_util import form_dataset_path, get_directory_info
 from dataregistry.registrar_util import parse_version_string, calculate_special
@@ -49,8 +49,8 @@ class Registrar():
     def root_dir(self):
         return self._root_dir
 
-    def register_dataset(self, name, relative_path, version_string,
-                         version_suffix=None, creation_date=None,
+    def register_dataset(self, relative_path, version,
+                         version_suffix=None, name=None, creation_date=None,
                          description=None, execution_id=None,
                          input_datasets=[], access_API=None,
                          is_overwritable=False, old_location=None, copy=True,
@@ -60,16 +60,15 @@ class Registrar():
 
         Parameters
         ----------
-        name             Any convenient, evocative name for the human.
-                         No check for uniqueness. Perhaps should be uniqueness
-                         constrain on (name, version_major, version_minor,
-                                       version_patch, version_suffix)
         relative_path    Relative to owner_type/owner as specified to
                          to Registrar constructor
-        version_string   Must be of form a.b.c where a, b, and c are
+        version          Must be of form a.b.c where a, b, and c are
                          non-negative integers OR one of the special
                          keywords 'major', 'minor' or 'patch'
         version_suffix   Optional version specifier for non-production datasets
+        name             Any convenient, evocative name for the human.
+                         (name, version, version_suffix) should be unique
+                         Defaults to relative_path basename (without extension)
         creation_date    If not specified, take from dataset file or directory
                          creation date
         description      Optional human-readable description
@@ -95,9 +94,20 @@ class Registrar():
                 raise ValueError('Production entries cannot have a version suffix')
 
         # Check version string
-        special = version_string in ['major', 'minor', 'patch']
+        special = version in ['major', 'minor', 'patch']
 
         dataset_table = self._get_table_metadata("dataset")
+
+        if name is None:
+            relpath = relative_path
+            if relative_path.endswith('/'):
+                relpath = relative_path[:-1]
+            base = os.path.basename(relpath)
+            if '.' in base:
+                cmp = base.split('.')
+                name = '.'.join(cmp[:-1])
+            else:
+                name = base
 
         # First check if any entries already exist with the same relative_path
         # and, if they do, if they are overwritable. If any are not, abort
@@ -124,12 +134,14 @@ class Registrar():
                 else:
                     previous.append(r.dataset_id)
         if not special:
-            v_fields = parse_version_string(version_string)
+            v_fields = parse_version_string(version)
+            version_string = version
         else:
             # Generate new version fields based on previous entries
             # with the same name field and same suffix
-            v_fields = calculate_special(name, version_string, version_suffix,
+            v_fields = calculate_special(name, version, version_suffix,
                                          dataset_table, self._engine)
+            version_string = '.'.join(str(v_fields.values()))
 
         # Confirm new dataset exists
         if not is_dummy:
@@ -186,6 +198,7 @@ class Registrar():
         values["version_major"] = v_fields['major']
         values["version_minor"] = v_fields['minor']
         values["version_patch"] = v_fields['patch']
+        values["version_string"] = version
         if version_suffix: values["version_suffix"] = version_suffix
         if creation_date: values["dataset_creation_date"] = creation_date
         if description: values["description"] = description
@@ -220,9 +233,13 @@ class Registrar():
                     values["input_id"] = d
                     add_table_row(conn, self._dependency_table, values)
                 conn.commit()
+            except IntegrityError as ei:
+                print('Original error:')
+                print(e.orig)
+                return None
             except DBAPIError as e:
                 print('Original error:')
-                print(e.StatementError.orig)
+                print(e.orig)
                 return None
 
         return prim_key
@@ -282,8 +299,9 @@ class Registrar():
                               alias_table.c.dataset_alias_id != prim_key)\
                        .values(supersede_date=now)
                 conn.execute(stmt)
+                conn.commit()
                 return prim_key
             except DBAPIError as e:
                 print('Original error:')
-                print(e.StatementError.orig)
+                print(e.orig)
                 return None

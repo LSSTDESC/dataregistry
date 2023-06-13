@@ -31,6 +31,7 @@ cols.append(Column("relative_path", String, nullable=False))
 cols.append(Column("version_major", Integer, nullable=False))
 cols.append(Column("version_minor", Integer, nullable=False))
 cols.append(Column("version_patch", Integer, nullable=False))
+cols.append(Column("version_string", String, nullable=False))
 cols.append(Column("version_suffix", String))
 cols.append(Column("dataset_creation_date", DateTime))
 cols.append(Column("is_archived", Boolean, default=False))
@@ -63,7 +64,10 @@ cols.append(Column("nfiles", Integer, nullable=False))
 cols.append(Column("total_disk_space", Float, nullable=False))
 
 tab_creator.define_table("dataset", cols,
-                         [Index("relative_path", "owner", "owner_type")])
+                         [Index("relative_path", "owner", "owner_type"),
+                          UniqueConstraint("name", "version_string",
+                                           "version_suffix",
+                                           name="dataset_u_version")])
 
 # Dataset alias name table
 cols = []

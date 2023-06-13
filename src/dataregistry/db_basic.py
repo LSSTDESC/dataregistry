@@ -2,7 +2,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy.engine import make_url
 import enum
 from sqlalchemy import MetaData, Table, Enum, Column, text, insert
-from sqlalchemy.exc import DBAPIError
+from sqlalchemy.exc import DBAPIError, IntegrityError
 import yaml
 import os
 from collections import namedtuple
@@ -45,9 +45,13 @@ def add_table_row(conn, table_meta, values):
         result = conn.execute(insert(table_meta), [values])
         conn.commit()
         return result.inserted_primary_key[0]
+    except IntegrityError as ei:
+        print('Original error:')
+        print(ei.orig)
+        return None
     except DBAPIError as e:
         print('Original error:')
-        print(e.StatementError.orig)
+        print(e.orig)
         return None
 
 class TableCreator:
