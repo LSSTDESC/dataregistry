@@ -67,149 +67,169 @@ class Query():
                                               db_engine)
 
         # Get table definitions
-        self._tables = dict()
-        self._tables["dataset"] = self._metadata_getter.get("dataset")
-        self._tables["execution"] = self._metadata_getter.get("execution")
-        # self._dataset_alias_table = None
-        # self._execution_alias_table = None
-        # self._dependency_table = None
-        self._dataset_native = None
-        self._from_execution = None
         self._all_dataset_properties = None
-        self._get_properties()
+        self._table_list = ["dataset", "execution", "dataset_alias"]
+        self._get_database_tables()
 
-    def _get_properties(self):
+    def _get_database_tables(self):
         '''
-        Cache column names which may be queried.
+        Pulls out the table metadata from the data registry database and stores
+        them in the self._tables dict.
+
+        In addition, a dict is created for each table of the database which
+        stores the column names of the table, and if those columns are of an
+        orderable type. The dicts are named as self._<table_name>_columns. 
+
+        This helps us with querying against those tables, and joining between
+        them. 
         '''
-        if self._dataset_native is None:
-            self._dataset_native = dict()
-            for c in self._tables['dataset'].c:
-                self._dataset_native['dataset.' + c.name] = is_orderable_type(c.type)
+        self._tables = dict()
+        for table in self._table_list:
+            # Metadata from table
+            self._tables[table] = self._metadata_getter.get(table)
 
-        if  self._from_execution is None:
-            self._from_execution = dict()
-            for c in self._tables['execution'].c:
-                self._from_execution['execution.' + c.name] = is_orderable_type(c.type)
+            # Pull out column names from table.
+            setattr(self, f"_{table}_columns", dict())
+            for c in self._tables[table].c:
+                getattr(self, f"_{table}_columns")[table + "." + c.name] = is_orderable_type(c.type)
 
-    def list_dataset_properties(self):
+    def _parse_selected_columns(self, property_names):
         '''
-        Returns a set of property names of the form <table_name>.<column_name>
-        <table_name> is either 'dataset' or another table name (e.g. 'execution')
-        for a table which may be joined with dataset.
-        '''
-        if self._all_dataset_properties:
-            return self._all_dataset_properties.keys()
+        See what tables we need to work with (i.e., join) for a given property list.
 
-        all_properties = dict(self._dataset_native)
-        all_properties.update(self._from_execution)
-        self._all_dataset_properties = dict(all_properties)
-        return list(all_properties.keys())
-
-    def is_orderable_property(self, property_name):
-        if not self._all_dataset_properties:
-            self.list_dataset_properties()
-        if not property_name in self._all_dataset_properties.keys():
-            raise ValueError(f'Unknown property {property_name}')
-        return self._all_dataset_properties[property_name]
-
-    # Do we need this routine?  Will users want to query executions?
-    def list_execution_properties(self):
-        '''
-        Should return a list of property names, not necessarily identical
-        to column names in the execution table.
-        '''
-        raise NotImplementedError('Query.list_execution_properties is not implemented')
-
-    def _check_property_name(self, c):
-        '''
-        Given string representation of form <column_name> or
-        <table_name>.<column_name> check that it identifies a column belonging to the
-        dataset table or a table it references or is associated with
-        If input is just <column_name> and that name appears in more than one relevant
-        table, raise ValueError
-
+        If the user is not explicit (i.e., uses <column_name> over
+        <table_name>.<column_name>) the property names must be unique in the
+        database, and not clash between tables.
+        
         Parameters
-        c      string   identifies possible column
-        Returns
-        table name, column name, column reference
+        ----------
+        property_names : list
+            String list of database columns 
         '''
-        parts = c.split('.')
-        if len(parts) > 2:
-            raise ValueError(f'check_filter: "{c}" is not of proper form <table_name>.<column_name> for a dataset property: too many "."')
-        col = parts[-1]
-        if len(parts) == 2:
-            if c not in self._all_dataset_properties:
-                raise ValueError(f'check_filter: "{c}" not found among dataset properties')
-            else:
-                tblname = parts[0]
-        else:     # search for table
-            in_tbl = []
-            for tbl in self._tables:
-                if col in tbl.columns:
-                    in_tbl.append(tbl)
-            if len(in_tbl) == 0:
-                raise ValueError(f'Column {col} not found')
-            if len(in_tbl) > 1:
-                raise ValueError(f'Column {col} appears in more than one table. Include table in specification: <table>.{col}')
-            tblname = in_tbl[0]
 
-        return tblname, col, self._tables[tblname].c[col]
+        tables_required = set()
+        column_list = []
+        is_orderable_list = []
+
+        # Determine the column name and table for each property
+        for p in property_names:
+
+            # Case of <table_name>.<property_name> format
+            if "." in p:
+                assert len(p.split(".")) == 2, f"{p} is bad property name format"
+                table_name = p.split(".")[0]
+                col_name = p.split(".")[1]
+
+            # Case of <property_name> only format
+            else:
+                col_name = p
+                
+                # Now find what table its from.
+                found_count = 0
+                for t in self._table_list:
+                    if f"{t}.{col_name}" in getattr(self, f"_{t}_columns").keys():
+                        found_count += 1
+                        table_name = t
+
+                # Was this name unique in the database?
+                assert found_count > 0, f"Did not find any columns named {col_name}"
+                assert found_count == 1, f"Column name '{col_name}' is not unique to one table in the database, use <table_name>.<column_name> format instead"
+
+            tables_required.add(table_name)
+            is_orderable_list.append(getattr(self, f"_{table_name}_columns")[table_name + "." + col_name])
+            column_list.append(self._tables[table_name].c[col_name])
+
+        return list(tables_required), column_list, is_orderable_list
 
     def _render_filter(self, f, stmt):
         '''
         Check that parts of the filter look ok.  Return statement with where clause
         appended
         '''
-        tbl_name, column_name, column_ref = self._check_property_name(f[0])
 
+        _, column_ref, column_is_orderable = self._parse_selected_columns([f[0]])
+        assert len(column_ref) == len(column_is_orderable) == 1
+
+        # Extract the filter operator (also making sure it is an allowed one)
         if f[1] not in _colops.keys():
             raise ValueError(f'check_filter: "{f[1]}" is not a supported operator')
         else:
             the_op = _colops[f[1]]
-        if not self.is_orderable_property(f[0]) and f[1] not in ['==', '=',  '!=']:
+
+        # Extract the property we are ordering on (also making sure is is orderable)
+        if not column_is_orderable[0] and f[1] not in ['==', '=',  '!=']:
             raise ValueError('check_filter: Cannot apply "{f[1]}" to "{f[0]}"')
         else:
             value = f[2]
 
-        return stmt.where(column_ref.__getattribute__(the_op)(value))
+        return stmt.where(column_ref[0].__getattribute__(the_op)(value))
 
     def find_datasets(self, property_names=None, filters=[]):
         '''
-        Get specified properties for datasets satisfying all filters
+        Get specified properties for datasets satisfying all filters.
 
-        If property_names is None, return all properties. Otherwise it should be
-        a sublist of the return from list_dataset_properties
+        If property_names is None, return all properties from the dataset table
+        (only). Otherwise, return the property_names columns for each
+        discovered dataset (which can be from multiple tables via a join).
 
-        filters should be a list of Filter objects, which are constraints on
-        column values
+        Filters should be a list of Filter objects, which are constraints on
+        column values.
 
-        Return (probably) pandas dataframe
+        These choices get translated into an SQL query.
+
+        Example queries
+        ---------------
+        find_datasets(property_names=None, filters=[])
+            - SELECT * FROM registry_dev.dataset
+
+        find_datasets(property_names=["dataset.name", "execution.name"], filters=[])
+            - SELECT dataset.name, execution.name FROM registry_dev.dataset
+              JOIN registry_dev.execution ON
+              registry_dev.execution.execution_id =
+              registry_dev.dataset.execution_id
+
+        f = Filter("dataset.name", "==", "DESC dataset 1")
+        find_datasets(property_names=["dataset.description"], filters=[f])
+            - SELECT dataset.description FROM registry_dev.dataset WHERE
+              registry_dev.dataset.name = :name_1
+
+        Returns
+        -------
+        result : sqlAlchemy Result object
         '''
-        if not self._all_dataset_properties:
-            self.list_dataset_properties()
 
-        # Determine if we need a join or not
-        j = self._tables['dataset'].join(self._tables['execution'])
-        if not property_names:
-            # join dataset and execution tables
-            stmt = select('dataset_table').select_from(j)
+        # What tables are required for this query?
+        tables_required, _, _ = self._parse_selected_columns(property_names)
+
+        # Construct query
+
+        # No properties requested, return all from dataset table (only)
+        if property_names is None:
+            stmt = select("*").select_from(self._tables['dataset'])
+
+        # Return the selected properties.
         else:
             stmt = select(*[text(p) for p in property_names])
-            tbls = set()
-            for p in property_names:
-                tbls.update({p.split('.')[0]})
-            if len(tbls) == 2:
+
+            # Create joins
+            if len(tables_required) > 1:
+                j = self._tables["dataset"]
+                for i in range(len(tables_required)):
+                    if tables_required[i] == "dataset":
+                        continue
+
+                    j = j.join(self._tables[tables_required[i]])
+
                 stmt = stmt.select_from(j)
             else:
-                stmt = stmt.select_from(self._tables['dataset'])
+                stmt = stmt.select_from(self._tables[tables_required[0]])
 
         # Append filters if acceptable
         if len(filters) > 0:
             for f in filters:
-                #f = self._render_filter(f)
-                #stmt = stmt.where(f)
                 stmt = self._render_filter(f, stmt)
+
+        # Execute the query
         with self._engine.connect() as conn:
             try:
                 result = conn.execute(stmt)
@@ -220,29 +240,3 @@ class Query():
                 return None
 
         return result
-
-if __name__ == '__main__':
-    from dataregistry.db_basic import create_db_engine
-    import os
-    config = os.path.join(os.getenv('HOME'), '.config_reg_reader')
-    engine, dialect = create_db_engine(config)
-    q = Query(engine, dialect, schema_version='registry_jrb')
-    props = q.list_dataset_properties()
-
-    name_filter = Filter('dataset.name', '==', 'old.bashrc')
-    minor_filter = Filter('dataset.version_minor', '<', 2)
-
-    results = q.find_datasets(['dataset.dataset_id', 'dataset.name',
-                               'dataset.version_minor', 'dataset.version_patch'], [name_filter])
-
-    print('Name filter only:')
-    for r in results:
-        print(f'dataset_id: {r[0]} name: {r[1]} version_minor: {r[2]} version_patch: {r[3]}')
-
-    results = q.find_datasets(['dataset.dataset_id', 'dataset.name',
-                               'dataset.version_minor', 'dataset.version_patch'],
-                              [name_filter, minor_filter])
-
-    print('\nName filter and version_minor filter:')
-    for r in results:
-        print(f'dataset_id: {r[0]} name: {r[1]} version_minor: {r[2]} version_patch: {r[3]}')
