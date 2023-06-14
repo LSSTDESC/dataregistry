@@ -229,7 +229,7 @@ if __name__ == '__main__':
     q = Query(engine, dialect, schema_version='registry_jrb')
     props = q.list_dataset_properties()
 
-    name_filter = Filter('dataset.name', '==', 'old.bashrc')
+    name_filter = Filter('dataset.name', '==', 'my_favorite_dataset')
     minor_filter = Filter('dataset.version_minor', '<', 2)
 
     results = q.find_datasets(['dataset.dataset_id', 'dataset.name',
