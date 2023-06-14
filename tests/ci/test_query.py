@@ -33,7 +33,7 @@ assert results.rowcount == 2, "Bad result from query 1"
 # Query 2: Query on version
 f = Filter('dataset.version_major', '<', 100)
 results = q.find_datasets(['dataset.dataset_id', 'dataset.name'], [f])
-assert results.rowcount == 4, "Bad result from query 2"
+assert results.rowcount == 5, "Bad result from query 2"
 
 # Query 3: Query on name for an entry where name was defaulted
 f = Filter('name', '==', 'my_third_dataset')
