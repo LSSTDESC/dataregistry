@@ -24,8 +24,8 @@ def make_entry(args):
     registrar = Registrar(engine, dialect, _lookup[args.owner_type],
                           owner=owner, schema_version=schema)
 
-    new_id = registrar.register_dataset(args.name, args.relpath,
-                                        args.version,
+    new_id = registrar.register_dataset(args.relpath,
+                                        args.version, name=args.name,
                                         version_suffix=args.version_suffix,
                                         creation_date=args.creation_date,
                                         description=args.description,
@@ -37,7 +37,7 @@ def make_entry(args):
 
 parser = argparse.ArgumentParser(description='''Register datasets with dataregistry''',
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('name', help='A name for the dataset')
+parser.add_argument('--name', help='A name for the dataset. By default taken from relpath', default=None)
 parser.add_argument('relpath', help='''destination for dataset relative
   to <registry root>/<owner_type>/<owner>''')
 parser.add_argument('version', help='''
