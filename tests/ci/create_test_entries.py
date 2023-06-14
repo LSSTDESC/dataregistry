@@ -57,10 +57,10 @@ def _insert_entry(name, relpath, version, owner_type, owner, description):
 
     # Add new entry.
     new_id = registrar.register_dataset(
-        name,
         relpath,
         version,
         version_suffix=version_suffix,
+        name=name,
         creation_date=creation_data,
         description=description,
         old_location=old_location,
@@ -98,6 +98,15 @@ _insert_entry(
     "user",
     None,
     "This is my second DESC dataset",
+)
+
+_insert_entry(
+    None,
+    "DESC/datasets/my_third_dataset.txt",
+    "0.2.1",
+    "user",
+    None,
+    "See if default name is correctly generated",
 )
 
 _insert_entry(
