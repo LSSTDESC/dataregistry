@@ -2,7 +2,7 @@ from dataregistry.query import Query, Filter
 from dataregistry.db_basic import create_db_engine, ownertypeenum, SCHEMA_VERSION
 import os
 
-NUM_DATASET_COLUMNS = 23
+NUM_DATASET_COLUMNS = 24
 NUM_EXECUTION_COLUMNS = 7
 
 if os.getenv("DREGS_CONFIG") is None:
