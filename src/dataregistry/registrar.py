@@ -151,6 +151,7 @@ class Registrar():
         values["creator_uid"] = self._userid
 
         exec_table = self._get_table_metadata("execution")
+        dependency_table = self._get_table_metadata("dependency")
 
         if configuration:   # read text file into a string
             # Maybe first check that file size isn't outrageous?
@@ -170,8 +171,7 @@ class Registrar():
                 values["register_date"] = datetime.now()
                 values["input_id"] = d
                 values["execution_id"] = my_id
-                add_table_row(conn, self._dependency_table, values,
-                                  commit=False)
+                add_table_row(conn, dependency_table, values, commit=False)
             conn.commit()
         return my_id
 

@@ -28,8 +28,7 @@ if new_id:
 else:
     print(f'Failed to create execution entry')
 
-config_path = os.path.join(os.getenv('HOME'), 'desc_git/dataregistry/tests',
-                           'a_config.yaml')
+config_path = os.path.join(os.path.dirname(__file__), 'a_config.yaml')
 new_id = registrar.register_execution('my_execution3', 'imaginary execution 3',
                                       locale='NERSC',
                                       configuration=config_path)
@@ -76,7 +75,7 @@ if new_id:
 else:
     print(f'Failed to create dataset entry')
 
-
+input_ids = []
 new_id = registrar.register_dataset('some_subdir/no_such_dataset3.parquet',
                                     'minor',version_suffix='junk',
                                     name='my_favorite_dataset',
@@ -85,6 +84,7 @@ new_id = registrar.register_dataset('some_subdir/no_such_dataset3.parquet',
                                     is_overwritable=True, is_dummy=True)
 if new_id:
     print(f'Created dataset entry with id {new_id}')
+    input_ids.append(new_id)
 else:
     print(f'Failed to create dataset entry')
 
@@ -97,16 +97,26 @@ new_id = registrar.register_dataset('some_subdir/no_such_dataset3.parquet',
                                     is_overwritable=True, is_dummy=True)
 if new_id:
     print(f'Created dataset entry with id {new_id}')
+    input_ids.append(new_id)
 else:
     print(f'Failed to create dataset entry')
 
-new_id = registrar.register_dataset('some_subdir/another_nondataset4.parquet',
-                                    'major',version_suffix='junk',
-                                    name='another_favorite_dataset',
-                                    execution_id=4,
-                                    description='Non-existent dataset',
-                                    is_overwritable=False, is_dummy=True)
+# Make execution entry depending on earlier datasets
+new_id = registrar.register_execution('my_execution5', 'imaginary execution 5',
+                                      locale='NERSC', input_datasets=input_ids)
 if new_id:
-    print(f'Created dataset entry with id {new_id}')
+    print(f'Created execution entry with id {new_id}')
+
+
+    new_id = registrar.register_dataset('some_subdir/nondataset5.parquet',
+                                        'major',version_suffix='junk',
+                                        name='another_favorite_dataset',
+                                        execution_id=new_id,
+                                        description='Non-existent dataset',
+                                        is_overwritable=False, is_dummy=True)
+    if new_id:
+        print(f'Created dataset entry with id {new_id}')
+    else:
+        print(f'Failed to create dataset entry')
 else:
-    print(f'Failed to create dataset entry')
+    print(f'Failed to create execution entry')
