@@ -3,7 +3,7 @@ from dataregistry.db_basic import create_db_engine, ownertypeenum, SCHEMA_VERSIO
 import os
 
 NUM_DATASET_COLUMNS = 24
-NUM_EXECUTION_COLUMNS = 7
+NUM_EXECUTION_COLUMNS = 8
 
 if os.getenv("DREGS_CONFIG") is None:
     raise Exception("Need to set DREGS_CONFIG env variable")
