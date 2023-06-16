@@ -35,7 +35,7 @@ class dataorgenum(enum.Enum):
     directory = "directory"
     dummy = "dummy"
 
-def add_table_row(conn, table_meta, values):
+def add_table_row(conn, table_meta, values, commit=True):
     '''
     Generic insert, given connection, metadata for a table and
     column values to be used.
@@ -43,13 +43,10 @@ def add_table_row(conn, table_meta, values):
     '''
     try:
         result = conn.execute(insert(table_meta), [values])
-        conn.commit()
+        if commit:
+            conn.commit()
         return result.inserted_primary_key[0]
-    except IntegrityError as ei:
-        print('Original error:')
-        print(ei.orig)
-        return None
-    except DBAPIError as e:
+    except (IntegrityError, DBAPIError) as e:
         print('Original error:')
         print(e.orig)
         return None

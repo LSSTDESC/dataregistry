@@ -136,3 +136,16 @@ def calculate_special(name, v_string, v_suffix, dataset_table, engine):
         v_fields['minor'] = 0
 
     return v_fields
+
+def name_from_relpath(relative_path):
+    relpath = relative_path
+    if relative_path.endswith('/'):
+        relpath = relative_path[:-1]
+    base = os.path.basename(relpath)
+    if '.' in base:
+        cmp = base.split('.')
+        name = '.'.join(cmp[:-1])
+    else:
+        name = base
+
+    return name

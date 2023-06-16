@@ -28,8 +28,11 @@ if new_id:
 else:
     print(f'Failed to create execution entry')
 
+config_path = os.path.join(os.getenv('HOME'), 'desc_git/dataregistry/tests',
+                           'a_config.yaml')
 new_id = registrar.register_execution('my_execution3', 'imaginary execution 3',
-                                      locale='NERSC')
+                                      locale='NERSC',
+                                      configuration=config_path)
 if new_id:
     print(f'Created execution entry with id {new_id}')
 else:
