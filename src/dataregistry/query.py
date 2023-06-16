@@ -100,9 +100,24 @@ class Query:
         self._metadata_getter = TableMetadata(self._schema_version, db_engine)
 
         # Get table definitions
-        self._all_dataset_properties = None
-        self._table_list = ["dataset", "execution", "dataset_alias"]
+        self._table_list = ["dataset", "execution", "dataset_alias", "dependency"]
         self._get_database_tables()
+
+    def get_all_columns(self):
+        """
+        Return all columns of the database in <table_name>.<column_name> format.
+
+        Returns
+        -------
+        column_list : list
+        """
+
+        column_list = []
+        for table in self._table_list:
+            for att in getattr(self, f"_{table}_columns"):
+                column_list.append(att)
+
+        return column_list
 
     def _get_database_tables(self):
         """
