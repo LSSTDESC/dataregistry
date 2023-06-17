@@ -23,5 +23,8 @@ requires-python = ">=3.7" # For setuptools >= 61.0 support
 [tool.setuptools.dynamic]
 version = {attr = "dataregistry._version.__version__"}
 
+[project.optional-dependencies]
+docs = ["sphinx_rtd_theme"]
+
 [tool.setuptools.packages.find]
 where = ["src"]
