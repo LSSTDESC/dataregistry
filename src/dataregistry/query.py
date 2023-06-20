@@ -34,7 +34,7 @@ try:
 except:
     LITE_TYPES = {}
 
-from sqlalchemy.exc import DBAPIError
+from sqlalchemy.exc import DBAPIError, NoSuchColumnError
 from dataregistry.db_basic import add_table_row, SCHEMA_VERSION, ownertypeenum
 from dataregistry.db_basic import TableMetadata
 from dataregistry.registrar_util import form_dataset_path
@@ -166,7 +166,8 @@ class Query:
 
             # Case of <table_name>.<property_name> format
             if "." in p:
-                assert len(p.split(".")) == 2, f"{p} is bad property name format"
+                if len(p.split(".")) != 2:
+                    raise ValueError(f"{p} is bad property name format")
                 table_name = p.split(".")[0]
                 col_name = p.split(".")[1]
 
@@ -181,11 +182,11 @@ class Query:
                         found_count += 1
                         table_name = t
 
-                # Was this name unique in the database?
-                assert found_count > 0, f"Did not find any columns named {col_name}"
-                assert (
-                    found_count == 1
-                ), f"Column name '{col_name}' is not unique to one table in the database, use <table_name>.<column_name> format instead"
+                # Was this column name found, and is it unique in the database?
+                if found_count == 0:
+                    raise NoSuchColumnError(f"Did not find any columns named {col_name}")
+                elif found_count > 1:
+                    raise DataRegistryException(f"Column name '{col_name}' is not unique to one table in the database, use <table_name>.<column_name> format instead")
 
             tables_required.add(table_name)
             is_orderable_list.append(
