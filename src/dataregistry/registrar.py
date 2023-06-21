@@ -5,9 +5,9 @@ from shutil import copyfile, copytree
 from sqlalchemy import MetaData, Table, Column, insert, text, update, select
 from sqlalchemy.exc import DBAPIError, IntegrityError
 from dataregistry.db_basic import add_table_row, SCHEMA_VERSION, ownertypeenum
-from dataregistry.registrar_util import form_dataset_path, get_directory_info
-from dataregistry.registrar_util import parse_version_string, bump_version
-from dataregistry.registrar_util import name_from_relpath
+from dataregistry.registrar_util import _form_dataset_path, get_directory_info
+from dataregistry.registrar_util import _parse_version_string, _bump_version
+from dataregistry.registrar_util import _name_from_relpath
 from dataregistry.db_basic import TableMetadata
 from dataregistry.exceptions import *
 
@@ -24,18 +24,18 @@ class Registrar():
         self._dialect = dialect
         self._owner_type = owner_type.value
         if owner is None:
-            owner = '.'
+            owner = "."
         self._owner = owner
         if self._owner_type == ownertypeenum.production.value:
-            self._owner = 'production'
-        if dialect == 'sqlite':
+            self._owner = "production"
+        if dialect == "sqlite":
             self._schema_version = None
         else:
             self._schema_version=schema_version
 
         self._metadata_getter = TableMetadata(self._schema_version,
                                               db_engine)
-        self._userid = os.getenv('USER')
+        self._userid = os.getenv("USER")
         self._root_dir = _DEFAULT_ROOT_DIR  # <-- should be site dependent
 
     def _get_table_metadata(self, tbl):
@@ -76,8 +76,8 @@ class Registrar():
         (old_location not None)
         Return dataset_organization, # of files, total size in bytes
         '''
-        dest =  form_dataset_path(self._owner_type, self._owner,
-                                      relative_path, self._root_dir)
+        dest =  _form_dataset_path(self._owner_type, self._owner,
+                                   relative_path, self._root_dir)
         if old_location:
             loc = old_location
         else:
@@ -205,34 +205,34 @@ class Registrar():
                          an entry in the database (for testing only).
         verbose         Provide some additional output information
         '''
-        if (self._owner_type == 'production'):
+        if (self._owner_type == "production"):
             if is_overwritable:
-                raise ValueError('Cannot overwrite production entries')
+                raise ValueError("Cannot overwrite production entries")
             if version_suffix is not None:
                 raise ValueError("Production entries can't have version suffix")
 
         dataset_table = self._get_table_metadata("dataset")
 
         if name is None:
-            name = name_from_relpath(relative_path)
+            name = _name_from_relpath(relative_path)
 
         # Look for previous entries. Fail if not overwritable
         previous = self._find_previous(relative_path, dataset_table)
         if previous is None:
-            print(f'Dataset with relative path {relative_path} exists and is not overwritable')
+            print(f"Dataset with relative path {relative_path} exists and is not overwritable")
             return None
 
         # deal with version string
-        special = version in ['major', 'minor', 'patch']
+        special = version in ["major", "minor", "patch"]
         if not special:
-            v_fields = parse_version_string(version)
+            v_fields = _parse_version_string(version)
             version_string = version
         else:
             # Generate new version fields based on previous entries
             # with the same name field and same suffix
-            v_fields = bump_version(name, version, version_suffix,
-                                    dataset_table, self._engine)
-            version_string = '.'.join(str(v_fields.values()))
+            v_fields = _bump_version(name, version, version_suffix,
+                                     dataset_table, self._engine)
+            version_string = ".".join(str(v_fields.values()))
 
         # Get dataset characteristics; copy if requested
         if not is_dummy:
@@ -245,20 +245,20 @@ class Registrar():
 
         # If no execution_id is supplied, create a minimal entry
         if execution_id is None:
-            ex_name = f'for_dataset_{name}-{version_string}'
+            ex_name = f"for_dataset_{name}-{version_string}"
             if version_suffix:
-                ex_name = f'{ex_name}-{version_suffix}'
-            descr = 'Fabricated execution for dataset'
+                ex_name = f"{ex_name}-{version_suffix}"
+            descr = "Fabricated execution for dataset"
             execution_id = self.register_execution(ex_name, description=descr)
             if execution_id is None:
                 return None
 
         values  = {"name" : name}
         values["relative_path"] = relative_path
-        values["version_major"] = v_fields['major']
-        values["version_minor"] = v_fields['minor']
-        values["version_patch"] = v_fields['patch']
-        values["version_string"] = version
+        values["version_major"] = v_fields["major"]
+        values["version_minor"] = v_fields["minor"]
+        values["version_patch"] = v_fields["patch"]
+        values["version_string"] = version_string
         if version_suffix: values["version_suffix"] = version_suffix
         if creation_date: values["dataset_creation_date"] = creation_date
         if description: values["description"] = description

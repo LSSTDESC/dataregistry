@@ -4,12 +4,12 @@ from sqlalchemy import MetaData, Table, Column, text, select
 
 from dataregistry.db_basic import ownertypeenum
 
-__all__ = ["parse_version_string", "bump_version",
-           "form_dataset_path", "get_directory_info"]
+__all__ = ["_parse_version_string", "_bump_version", "_form_dataset_path",
+           "get_directory_info", "_name_from_relpath"]
 VERSION_SEPARATOR = "."
 _nonneg_int_re = "0|[1-9][0-9]*"
 
-def parse_version_string(version, with_suffix=False):
+def _parse_version_string(version, with_suffix=False):
     '''
     Return dict with keys major, minor, patch and (if present) suffix.
     Fields are returned as strings.
@@ -39,7 +39,7 @@ def parse_version_string(version, with_suffix=False):
 
 ## Alternatively, make this a method in a class so that the top-level
 ## root dir can be stored
-def form_dataset_path(owner_type, owner, relative_path, root_dir=None):
+def _form_dataset_path(owner_type, owner, relative_path, root_dir=None):
     '''
     Return full absolute path if root_dir is specified, else path relative
     to the site-specific root
@@ -88,7 +88,7 @@ def get_directory_info(path):
                 total_size += subdir_total_size
     return num_files, total_size
 
-def bump_version(name, v_string, v_suffix, dataset_table, engine):
+def _bump_version(name, v_string, v_suffix, dataset_table, engine):
     '''
     Utility to figure out what new version fields should be if caller
     to register supplies a special version string
@@ -125,7 +125,7 @@ def bump_version(name, v_string, v_suffix, dataset_table, engine):
 
     return v_fields
 
-def name_from_relpath(relative_path):
+def _name_from_relpath(relative_path):
     relpath = relative_path
     if relative_path.endswith("/"):
         relpath = relative_path[:-1]
