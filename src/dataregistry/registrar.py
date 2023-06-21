@@ -6,7 +6,7 @@ from sqlalchemy import MetaData, Table, Column, insert, text, update, select
 from sqlalchemy.exc import DBAPIError, IntegrityError
 from dataregistry.db_basic import add_table_row, SCHEMA_VERSION, ownertypeenum
 from dataregistry.registrar_util import form_dataset_path, get_directory_info
-from dataregistry.registrar_util import parse_version_string, calculate_special
+from dataregistry.registrar_util import parse_version_string, bump_version
 from dataregistry.registrar_util import name_from_relpath
 from dataregistry.db_basic import TableMetadata
 from dataregistry.exceptions import *
@@ -60,13 +60,8 @@ class Registrar():
                       .order_by(dataset_table.c.dataset_id.desc())
         previous = []
         with self._engine.connect() as conn:
-            try:
-                result = conn.execute(stmt)
-                conn.commit()
-            except DBAPIError as e:
-                print('Original error:')
-                print(e.StatementError.orig)
-                return None
+            result = conn.execute(stmt)
+            conn.commit()
 
             for r in result:
                 if not r.is_overwritable:
@@ -163,8 +158,6 @@ class Registrar():
 
         with self._engine.connect() as conn:
             my_id = add_table_row(conn, exec_table, values, commit=False)
-            if my_id is None:
-                return None
 
             # handle dependencies
             for d in input_datasets:
@@ -237,8 +230,8 @@ class Registrar():
         else:
             # Generate new version fields based on previous entries
             # with the same name field and same suffix
-            v_fields = calculate_special(name, version, version_suffix,
-                                         dataset_table, self._engine)
+            v_fields = bump_version(name, version, version_suffix,
+                                    dataset_table, self._engine)
             version_string = '.'.join(str(v_fields.values()))
 
         # Get dataset characteristics; copy if requested
@@ -284,21 +277,14 @@ class Registrar():
         with self._engine.connect() as conn:
             prim_key = add_table_row(conn, dataset_table, values,
                                      commit=False)
-            if not prim_key:
-                return None
 
-            try:
-                if len(previous) > 0:
-                    # Update previous rows, setting is_overwritten to True
-                    update_stmt = update(dataset_table)\
-                      .where(dataset_table.c.dataset_id.in_(previous))\
-                      .values(is_overwritten=True)
-                    conn.execute(update_stmt)
-                conn.commit()
-            except (IntegrityError, DBAPIError) as e:
-                print('Original error:')
-                print(e.orig)
-                return None
+            if len(previous) > 0:
+                # Update previous rows, setting is_overwritten to True
+                update_stmt = update(dataset_table)\
+                    .where(dataset_table.c.dataset_id.in_(previous))\
+                    .values(is_overwritten=True)
+                conn.execute(update_stmt)
+            conn.commit()
 
         return prim_key
 
@@ -319,18 +305,13 @@ class Registrar():
 
         alias_table = self._get_table_metadata("dataset_alias")
         with self._engine.connect() as conn:
-            try:
-                prim_key = add_table_row(conn, alias_table, values)
+            prim_key = add_table_row(conn, alias_table, values)
 
-                # Update any other alias rows which have been superseded
-                stmt = update(alias_table)\
-                       .where(alias_table.c.alias == aliasname,
-                              alias_table.c.dataset_alias_id != prim_key)\
-                       .values(supersede_date=now)
-                conn.execute(stmt)
-                conn.commit()
-                return prim_key
-            except DBAPIError as e:
-                print('Original error:')
-                print(e.orig)
-                return None
+            # Update any other alias rows which have been superseded
+            stmt = update(alias_table)\
+                .where(alias_table.c.alias == aliasname,
+                       alias_table.c.dataset_alias_id != prim_key)\
+                .values(supersede_date=now)
+            conn.execute(stmt)
+            conn.commit()
+        return prim_key

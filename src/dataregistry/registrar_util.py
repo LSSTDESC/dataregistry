@@ -102,13 +102,8 @@ def bump_version(name, v_string, v_suffix, dataset_table, engine):
                    .order_by(dataset_table.c.version_minor.desc())\
                    .order_by(dataset_table.c.version_patch.desc())
     with engine.connect() as conn:
-        try:
-            result = conn.execute(stmt)
-            conn.commit()
-        except DBAPIError as e:
-            print("Original error:")
-            print(e.StatementError.orig)
-            return None
+        result = conn.execute(stmt)
+        conn.commit()
         r = result.fetchone()
         if not r:
             old_major = 0

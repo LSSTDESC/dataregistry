@@ -39,17 +39,12 @@ def add_table_row(conn, table_meta, values, commit=True):
     '''
     Generic insert, given connection, metadata for a table and
     column values to be used.
-    Return primary key for new row
+    Return primary key for new row if successful
     '''
-    try:
-        result = conn.execute(insert(table_meta), [values])
-        if commit:
-            conn.commit()
-        return result.inserted_primary_key[0]
-    except (IntegrityError, DBAPIError) as e:
-        print('Original error:')
-        print(e.orig)
-        return None
+    result = conn.execute(insert(table_meta), [values])
+    if commit:
+        conn.commit()
+    return result.inserted_primary_key[0]
 
 class TableCreator:
     def __init__(self, engine, dialect, schema=SCHEMA_VERSION):
