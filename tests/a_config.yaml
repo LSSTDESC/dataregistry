@@ -1,0 +1,6 @@
+run_by : somebody
+software_version :
+  major : 1
+  minor : 1
+  patch : 0
+an_important_list : [1,2,3]

@@ -2,7 +2,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy.engine import make_url
 import enum
 from sqlalchemy import MetaData, Table, Enum, Column, text, insert
-from sqlalchemy.exc import DBAPIError
+from sqlalchemy.exc import DBAPIError, IntegrityError
 import yaml
 import os
 from collections import namedtuple
@@ -35,20 +35,16 @@ class dataorgenum(enum.Enum):
     directory = "directory"
     dummy = "dummy"
 
-def add_table_row(conn, table_meta, values):
+def add_table_row(conn, table_meta, values, commit=True):
     '''
     Generic insert, given connection, metadata for a table and
     column values to be used.
-    Return primary key for new row
+    Return primary key for new row if successful
     '''
-    try:
-        result = conn.execute(insert(table_meta), [values])
+    result = conn.execute(insert(table_meta), [values])
+    if commit:
         conn.commit()
-        return result.inserted_primary_key[0]
-    except DBAPIError as e:
-        print('Original error:')
-        print(e.StatementError.orig)
-        return None
+    return result.inserted_primary_key[0]
 
 class TableCreator:
     def __init__(self, engine, dialect, schema=SCHEMA_VERSION):

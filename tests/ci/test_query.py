@@ -2,8 +2,8 @@ from dataregistry.query import Query, Filter
 from dataregistry.db_basic import create_db_engine, ownertypeenum, SCHEMA_VERSION
 import os
 
-NUM_DATASET_COLUMNS = 23
-NUM_EXECUTION_COLUMNS = 7
+NUM_DATASET_COLUMNS = 24
+NUM_EXECUTION_COLUMNS = 8
 
 if os.getenv("DREGS_CONFIG") is None:
     raise Exception("Need to set DREGS_CONFIG env variable")
@@ -33,4 +33,9 @@ assert results.rowcount == 2, "Bad result from query 1"
 # Query 2: Query on version
 f = Filter('dataset.version_major', '<', 100)
 results = q.find_datasets(['dataset.dataset_id', 'dataset.name'], [f])
-assert results.rowcount == 4, "Bad result from query 2"
+assert results.rowcount == 5, "Bad result from query 2"
+
+# Query 3: Query on name for an entry where name was defaulted
+f = Filter('dataset.name', '==', 'my_third_dataset')
+results = q.find_datasets(['dataset.dataset_id', 'dataset.name'], [f])
+assert results.rowcount == 1, "Bad result from query 3"

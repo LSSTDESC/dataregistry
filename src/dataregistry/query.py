@@ -21,7 +21,6 @@ except:
 from sqlalchemy.exc import DBAPIError
 from dataregistry.db_basic import add_table_row, SCHEMA_VERSION, ownertypeenum
 from dataregistry.db_basic import TableMetadata
-from dataregistry.registrar_util import form_dataset_path
 from dataregistry.exceptions import *
 
 __all__ = ['Query', 'Filter']
@@ -229,7 +228,7 @@ if __name__ == '__main__':
     q = Query(engine, dialect, schema_version='registry_jrb')
     props = q.list_dataset_properties()
 
-    name_filter = Filter('dataset.name', '==', 'old.bashrc')
+    name_filter = Filter('dataset.name', '==', 'my_favorite_dataset')
     minor_filter = Filter('dataset.version_minor', '<', 2)
 
     results = q.find_datasets(['dataset.dataset_id', 'dataset.name',

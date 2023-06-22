@@ -17,28 +17,6 @@ else:
 # Establish connection to database
 engine, dialect = create_db_engine(config_file=DREGS_CONFIG)
 
-
-def _parse_version(version_str):
-    """
-    Pull out the MAJOR.MINOR.PATCH integers from the version string.
-
-    Parameters
-    ----------
-    version_str : str
-        Format "M.N.P"
-
-    Returns
-    -------
-    M, N, P : int
-        Major, Minor, Patch version integers
-    """
-
-    v = version_str.split(".")
-    assert len(v) == 3, "Bad version string"
-
-    return int(v[0]), int(v[1]), int(v[2])
-
-
 def _insert_entry(name, relpath, version, owner_type, owner, description):
     """
     Wrapper to create dataset entry
@@ -68,7 +46,7 @@ def _insert_entry(name, relpath, version, owner_type, owner, description):
     make_sym_link = False
     schema_version = SCHEMA_VERSION
     is_dummy = True
-    version_suffix = ""
+    version_suffix = None
     if owner is None:
         owner = os.getenv("USER")
 
@@ -78,15 +56,11 @@ def _insert_entry(name, relpath, version, owner_type, owner, description):
     )
 
     # Add new entry.
-    v_major, v_minor, v_patch = _parse_version(version)
-
     new_id = registrar.register_dataset(
-        name,
         relpath,
-        v_major,
-        v_minor,
-        v_patch,
+        version,
         version_suffix=version_suffix,
+        name=name,
         creation_date=creation_data,
         description=description,
         old_location=old_location,
@@ -110,11 +84,11 @@ _insert_entry(
 
 _insert_entry(
     "DESC dataset 1",
-    "DESC/datasets/my_first_dataset_v2",
-    "0.0.2",
+    "DESC/datasets/my_first_dataset_v2_minor_upgrade",
+    "minor",
     "user",
     None,
-    "This is my first DESC dataset (updated)",
+    "This is my first DESC dataset (minor version update)",
 )
 
 _insert_entry(
@@ -124,6 +98,15 @@ _insert_entry(
     "user",
     None,
     "This is my second DESC dataset",
+)
+
+_insert_entry(
+    None,
+    "DESC/datasets/my_third_dataset.txt",
+    "0.2.1",
+    "user",
+    None,
+    "See if default name is correctly generated",
 )
 
 _insert_entry(

@@ -130,3 +130,6 @@ dmypy.json
 
 # emacs backup files
 *~
+
+# local stuff which doesn't belong in the repo
+local/
