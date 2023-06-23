@@ -18,7 +18,9 @@ q = Query(engine, dialect, schema_version=SCHEMA_VERSION)
 
 # Query 1: Query on dataset name
 f = Filter("dataset.name", "==", "bump_dataset")
-results = q.find_datasets(["dataset.name", "dataset.version_string", "dataset.relative_path"], [f])
+results = q.find_datasets(
+    ["dataset.name", "dataset.version_string", "dataset.relative_path"], [f]
+)
 assert results.rowcount == 4, "Bad result from query 1"
 
 # Make sure versions (from bump) are correct

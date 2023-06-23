@@ -86,9 +86,7 @@ def _insert_execution_entry(name, description, owner_type, owner, input_datasets
     )
 
     new_id = registrar.register_execution(
-        name,
-        description=description,
-        input_datasets=input_datasets
+        name, description=description, input_datasets=input_datasets
     )
 
     assert new_id is not None, "Trying to create a execution that already exists"
@@ -266,12 +264,17 @@ dataset_id_1 = _insert_dataset_entry(
     "user",
     None,
     "This is data for stage 1 of my first pipeline",
-    execution_id=ex_id_1
+    execution_id=ex_id_1,
 )
 
 # Stage 2 of my pipeline
 ex_id_2 = _insert_execution_entry(
-    "pipeline_stage_2", "The second stage of my pipeline", "user", None, input_datasets=[dataset_id_1])
+    "pipeline_stage_2",
+    "The second stage of my pipeline",
+    "user",
+    None,
+    input_datasets=[dataset_id_1],
+)
 
 dataset_id_2 = _insert_dataset_entry(
     "DESC/datasets/my_first_pipeline_stage2a",
@@ -279,7 +282,7 @@ dataset_id_2 = _insert_dataset_entry(
     "user",
     None,
     "This is data for stage 2 of my first pipeline",
-    execution_id=ex_id_2
+    execution_id=ex_id_2,
 )
 
 dataset_id_3 = _insert_dataset_entry(
@@ -288,12 +291,14 @@ dataset_id_3 = _insert_dataset_entry(
     "user",
     None,
     "This is data for stage 2 of my first pipeline",
-    execution_id=ex_id_2
+    execution_id=ex_id_2,
 )
 
 # Stage 3 of my pipeline)
 ex_id_3 = _insert_execution_entry(
-    "pipeline_stage_3", "The third stage of my pipeline", "user", None, input_datasets=[dataset_id_2, dataset_id_3]
+    "pipeline_stage_3",
+    "The third stage of my pipeline",
+    "user",
+    None,
+    input_datasets=[dataset_id_2, dataset_id_3],
 )
-
-    
