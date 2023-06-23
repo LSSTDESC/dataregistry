@@ -31,6 +31,7 @@ cols.append(Column("relative_path", String, nullable=False))
 cols.append(Column("version_major", Integer, nullable=False))
 cols.append(Column("version_minor", Integer, nullable=False))
 cols.append(Column("version_patch", Integer, nullable=False))
+cols.append(Column("version_string", String, nullable=False))
 cols.append(Column("version_suffix", String))
 cols.append(Column("dataset_creation_date", DateTime))
 cols.append(Column("is_archived", Boolean, default=False))
@@ -63,7 +64,10 @@ cols.append(Column("nfiles", Integer, nullable=False))
 cols.append(Column("total_disk_space", Float, nullable=False))
 
 tab_creator.define_table("dataset", cols,
-                         [Index("relative_path", "owner", "owner_type")])
+                         [Index("relative_path", "owner", "owner_type"),
+                          UniqueConstraint("name", "version_string",
+                                           "version_suffix",
+                                           name="dataset_u_version")])
 
 # Dataset alias name table
 cols = []
@@ -88,6 +92,7 @@ cols.append(Column("execution_start", DateTime))
 cols.append(Column("name", String))
 # locale is, e.g. site where code was run
 cols.append(Column("locale", String))
+cols.append(Column("configuration", String))
 cols.append(Column("creator_uid", String(20), nullable=False))
 
 tab_creator.define_table("execution", cols)
@@ -107,11 +112,12 @@ tab_creator.define_table("execution_alias", cols,
                                            name="execution_u_register")])
 
 # Internal dependencies - which datasets are inputs to creation of others
+# This table associates an execution with its inputs
 cols = []
 cols.append(Column("dependency_id", Integer, primary_key=True))
 cols.append(Column("register_date", DateTime, nullable=False))
 cols.append(Column("input_id", Integer, ForeignKey("dataset.dataset_id")))
-cols.append(Column("output_id", Integer, ForeignKey("dataset.dataset_id")))
+cols.append(Column("execution_id", Integer, ForeignKey("execution.execution_id")))
 
 tab_creator.define_table("dependency", cols)
 

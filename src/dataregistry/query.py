@@ -37,7 +37,6 @@ except:
 from sqlalchemy.exc import DBAPIError, NoSuchColumnError
 from dataregistry.db_basic import add_table_row, SCHEMA_VERSION, ownertypeenum
 from dataregistry.db_basic import TableMetadata
-from dataregistry.registrar_util import form_dataset_path
 from dataregistry.exceptions import *
 
 __all__ = ["Query", "Filter"]
