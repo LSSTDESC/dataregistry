@@ -10,6 +10,7 @@ _lookup = {
     "user": ownertypeenum.user,
 }
 
+# Locate dataregistry configuration file.
 if os.getenv("DREGS_CONFIG") is None:
     raise Exception("Need to set DREGS_CONFIG env variable")
 else:
@@ -17,26 +18,6 @@ else:
 
 # Establish connection to database
 engine, dialect = create_db_engine(config_file=DREGS_CONFIG)
-
-def _parse_version(version_str):
-    """
-    Pull out the MAJOR.MINOR.PATCH integers from the version string.
-
-    Parameters
-    ----------
-    version_str : str
-        Format "M.N.P"
-
-    Returns
-    -------
-    M, N, P : int
-        Major, Minor, Patch version integers
-    """
-
-    v = version_str.split(".")
-    assert len(v) == 3, "Bad version string"
-
-    return int(v[0]), int(v[1]), int(v[2])
 
 def _insert_alias_entry(name, dataset_id, owner_type, owner):
     """
@@ -113,26 +94,27 @@ def _insert_execution_entry(name, description, owner_type, owner):
 
 
 def _insert_dataset_entry(
-    name, relpath, version, owner_type, owner, description, execution_id=None
+    relpath, version, owner_type, owner, description, name=None, execution_id=None
 ):
     """
     Wrapper to create dataset entry
 
     Parameters
     ----------
-    name : str
-        A name for the dataset
     relpath : str
         Relative path within the data registry to store the data
         Relative to <ROOT>/<owner_type>/<owner>/...
     version : str
-        Semantic version string (i.e., M.N.P)
+        Semantic version string (i.e., M.N.P) or
+        "major", "minor", "patch" to automatically bump the version previous
     owner_type : str
         Either "production", "group", "user"
     owner : str
         Dataset owner
     description : str
         Description of dataset
+    name : str
+        A manually selected name for the dataset
     execution_id : int
         Execution entry related to this dataset
 
@@ -177,54 +159,96 @@ def _insert_dataset_entry(
 
     return new_id
 
-# Make some test execution entries.
-execution_id_1 = _insert_execution_entry(
-    "DESC execution 1", "My first pipeline execution", "user", None
-)
-
-# Make some test dataset entries.
-# These will be dummy entries, copying no actual data.
-dataset_id_1 = _insert_dataset_entry(
-    "DESC dataset 1",
+# Test set 1
+# - Auto create name for us
+_insert_dataset_entry(
     "DESC/datasets/my_first_dataset",
     "0.0.1",
     "user",
     None,
     "This is my first DESC dataset",
-    execution_id=execution_id_1,
 )
 
+# Test set 2
+# - Manual name
 _insert_dataset_entry(
-    "DESC dataset 1",
-    "DESC/datasets/my_first_dataset_v2_minor_upgrade",
-    "minor",
-    "user",
-    None,
-    "This is my first DESC dataset (minor version update)",
-)
-
-_insert_dataset_entry(
-    "DESC dataset 2",
-    "DESC/datasets/my_second_dataset",
+    "DESC/datasets/my_first_named_dataset",
     "0.0.1",
     "user",
     None,
-    "This is my second DESC dataset",
+    "This is my first named DESC dataset",
+    name="named_dataset"
+)
+
+# Test set 3
+# - Test version bumping
+_insert_dataset_entry(
+    "DESC/datasets/bump_dataset",
+    "0.0.1",
+    "user",
+    None,
+    "This is my first bumped DESC dataset",
+    name="bump_dataset"
 )
 
 _insert_dataset_entry(
-    None,
-    "DESC/datasets/my_third_dataset.txt",
-    "0.2.1",
+    "DESC/datasets/bump_dataset_2",
+    "patch",
     "user",
     None,
-    "See if default name is correctly generated",
+    "This is my second bumped DESC dataset",
+    name="bump_dataset"
 )
 
-# Make some test dataset alias entries.
-_insert_alias_entry(
-    "My first alias",
-    dataset_id_1,
+_insert_dataset_entry(
+    "DESC/datasets/bump_dataset_3",
+    "minor",
     "user",
+    None,
+    "This is my third bumped DESC dataset",
+    name="bump_dataset"
+)
+
+_insert_dataset_entry(
+    "DESC/datasets/bump_dataset_4",
+    "major",
+    "user",
+    None,
+    "This is my fourth bumped DESC dataset",
+    name="bump_dataset"
+)
+
+# Test set 4
+# - Test user types
+_insert_dataset_entry(
+    "DESC/datasets/group1_dataset_1",
+    "0.0.1",
+    "group",
+    "group1",
+    "This is group 1's first dataset",
+)
+
+_insert_dataset_entry(
+    "DESC/datasets/production_dataset_1",
+    "0.0.1",
+    "production",
+    None,
+    "This is production's first dataset",
+)
+
+# Test set 5
+# - Create dataset aliases
+dataset_id = _insert_dataset_entry(
+    "DESC/datasets/production_dataset_with_horrible_name",
+    "0.0.1",
+    "production",
+    None,
+    "This is a production dataset",
+)
+
+_insert_alias_entry(
+    "nice_dataset_name",
+    dataset_id,
+    "production",
     None
 )

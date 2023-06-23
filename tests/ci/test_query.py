@@ -16,29 +16,46 @@ q = Query(engine, dialect, schema_version=SCHEMA_VERSION)
 
 # Do some queries on the test data.
 
-# Query 1: Query dataset name
-f = Filter("dataset.name", "==", "DESC dataset 1")
-results = q.find_datasets(["dataset.dataset_id", "dataset.name"], [f])
-assert results.rowcount == 2, "Bad result from query 1"
+# Query 1: Query on dataset name
+f = Filter("dataset.name", "==", "bump_dataset")
+results = q.find_datasets(["dataset.name", "dataset.version_string", "dataset.relative_path"], [f])
+assert results.rowcount == 4, "Bad result from query 1"
 
-# Query 2: Query on version
-f = Filter("dataset.version_major", "<", 100)
-results = q.find_datasets(["dataset.dataset_id", "dataset.name"], [f])
-assert results.rowcount == 4, "Bad result from query 2"
-
-# Query 3: Query on execution ID
-f = Filter("dataset.execution_id", "==", 1)
-results = q.find_datasets(["execution.execution_id", "dataset.execution_id"], [f])
-assert results.rowcount == 1, "Bad result from query 3.1"
+# Make sure versions (from bump) are correct
 for r in results:
-    assert r[0] == r[1], "Bad result from query 3.2"
-f = Filter("execution.execution_id", "==", 1)
-results = q.find_datasets(["execution.execution_id", "dataset.execution_id"], [f])
-assert results.rowcount == 1, "Bad result from query 3.3"
-for r in results:
-    assert r[0] == r[1], "Bad result from query 3.4"
+    if r.relative_path == "DESC/datasets/bump_dataset":
+        assert r.version_string == "0.0.1"
+    elif r.relative_path == "DESC/datasets/bump_dataset_2":
+        assert r.version_string == "0.0.2"
+    elif r.relative_path == "DESC/datasets/bump_dataset_3":
+        assert r.version_string == "0.1.0"
+    elif r.relative_path == "DESC/datasets/bump_dataset_4":
+        assert r.version_string == "1.0.0"
 
-# Query 4: Query on alias
-f = Filter("dataset_alias.alias", "==", "My first alias")
-results = q.find_datasets(["dataset.dataset_id", "dataset_alias.alias"], [f])
+# Query 2: Query on owner type
+f = Filter("dataset.owner_type", "!=", "user")
+results = q.find_datasets(["dataset.name"], [f])
+assert results.rowcount == 3, "Bad result from query 2"
+
+# Query 3: Query on dataset alias
+f = Filter("dataset_alias.alias", "==", "nice_dataset_name")
+results = q.find_datasets(["dataset.dataset_id", "dataset_alias.dataset_id"], [f])
+assert results.rowcount == 1, "Bad result from query 3"
+
+# Make sure IDs match up
+for r in results:
+    assert r[0] == r[1]
+
+# Query 4: Make sure auto generated name is correct
+f = Filter("dataset.relative_path", "==", "DESC/datasets/my_first_dataset")
+results = q.find_datasets(["dataset.name"], [f])
 assert results.rowcount == 1, "Bad result from query 4"
+for r in results:
+    assert r.name == "my_first_dataset", "Bad result from query 4"
+
+# Query 5: Make sure manual name is correct
+f = Filter("dataset.relative_path", "==", "DESC/datasets/my_first_named_dataset")
+results = q.find_datasets(["dataset.name"], [f])
+assert results.rowcount == 1, "Bad result from query 5"
+for r in results:
+    assert r.name == "named_dataset", "Bad result from query 5"
