@@ -232,7 +232,7 @@ class Registrar():
             # with the same name field and same suffix
             v_fields = _bump_version(name, version, version_suffix,
                                      dataset_table, self._engine)
-            version_string = ".".join(str(v_fields.values()))
+            version_string = f"{v_fields['major']}.{v_fields['minor']}.{v_fields['patch']}"
 
         # Get dataset characteristics; copy if requested
         if not is_dummy:
