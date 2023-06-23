@@ -59,3 +59,12 @@ results = q.find_datasets(["dataset.name"], [f])
 assert results.rowcount == 1, "Bad result from query 5"
 for r in results:
     assert r.name == "named_dataset", "Bad result from query 5"
+
+# Query 6: Find the dependencies of an execution
+f = Filter("execution.name", "==", "pipeline_stage_3")
+results = q.find_datasets(["execution.execution_id"], [f])
+assert results.rowcount == 1, "Bad result from query 6"
+
+f = Filter("dependency.execution_id", "==", next(results)[0])
+results = q.find_datasets(["dependency.input_id"], [f])
+assert results.rowcount == 2, "Bad result from query 6"

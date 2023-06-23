@@ -19,6 +19,7 @@ else:
 # Establish connection to database
 engine, dialect = create_db_engine(config_file=DREGS_CONFIG)
 
+
 def _insert_alias_entry(name, dataset_id, owner_type, owner):
     """
     Wrapper to create dataset alias entry
@@ -56,7 +57,7 @@ def _insert_alias_entry(name, dataset_id, owner_type, owner):
     return new_id
 
 
-def _insert_execution_entry(name, description, owner_type, owner):
+def _insert_execution_entry(name, description, owner_type, owner, input_datasets=[]):
     """
     Wrapper to create execution entry
 
@@ -70,6 +71,8 @@ def _insert_execution_entry(name, description, owner_type, owner):
         Either "production", "group", "user"
     owner : str
         Dataset owner
+    intput_datasets : list
+        List of dataset ids
 
     Returns
     -------
@@ -85,6 +88,7 @@ def _insert_execution_entry(name, description, owner_type, owner):
     new_id = registrar.register_execution(
         name,
         description=description,
+        input_datasets=input_datasets
     )
 
     assert new_id is not None, "Trying to create a execution that already exists"
@@ -159,6 +163,7 @@ def _insert_dataset_entry(
 
     return new_id
 
+
 # Test set 1
 # - Auto create name for us
 _insert_dataset_entry(
@@ -177,7 +182,7 @@ _insert_dataset_entry(
     "user",
     None,
     "This is my first named DESC dataset",
-    name="named_dataset"
+    name="named_dataset",
 )
 
 # Test set 3
@@ -188,7 +193,7 @@ _insert_dataset_entry(
     "user",
     None,
     "This is my first bumped DESC dataset",
-    name="bump_dataset"
+    name="bump_dataset",
 )
 
 _insert_dataset_entry(
@@ -197,7 +202,7 @@ _insert_dataset_entry(
     "user",
     None,
     "This is my second bumped DESC dataset",
-    name="bump_dataset"
+    name="bump_dataset",
 )
 
 _insert_dataset_entry(
@@ -206,7 +211,7 @@ _insert_dataset_entry(
     "user",
     None,
     "This is my third bumped DESC dataset",
-    name="bump_dataset"
+    name="bump_dataset",
 )
 
 _insert_dataset_entry(
@@ -215,7 +220,7 @@ _insert_dataset_entry(
     "user",
     None,
     "This is my fourth bumped DESC dataset",
-    name="bump_dataset"
+    name="bump_dataset",
 )
 
 # Test set 4
@@ -246,9 +251,49 @@ dataset_id = _insert_dataset_entry(
     "This is a production dataset",
 )
 
-_insert_alias_entry(
-    "nice_dataset_name",
-    dataset_id,
-    "production",
-    None
+_insert_alias_entry("nice_dataset_name", dataset_id, "production", None)
+
+# Test set 6
+# - Create a pipeline with multiple input and output datasets.
+
+# Stage 1 of my pipe line
+ex_id_1 = _insert_execution_entry(
+    "pipeline_stage_1", "The first stage of my pipeline", "user", None
 )
+dataset_id_1 = _insert_dataset_entry(
+    "DESC/datasets/my_first_pipeline_stage1",
+    "0.0.1",
+    "user",
+    None,
+    "This is data for stage 1 of my first pipeline",
+    execution_id=ex_id_1
+)
+
+# Stage 2 of my pipeline
+ex_id_2 = _insert_execution_entry(
+    "pipeline_stage_2", "The second stage of my pipeline", "user", None, input_datasets=[dataset_id_1])
+
+dataset_id_2 = _insert_dataset_entry(
+    "DESC/datasets/my_first_pipeline_stage2a",
+    "0.0.1",
+    "user",
+    None,
+    "This is data for stage 2 of my first pipeline",
+    execution_id=ex_id_2
+)
+
+dataset_id_3 = _insert_dataset_entry(
+    "DESC/datasets/my_first_pipeline_stage2b",
+    "0.0.1",
+    "user",
+    None,
+    "This is data for stage 2 of my first pipeline",
+    execution_id=ex_id_2
+)
+
+# Stage 3 of my pipeline)
+ex_id_3 = _insert_execution_entry(
+    "pipeline_stage_3", "The third stage of my pipeline", "user", None, input_datasets=[dataset_id_2, dataset_id_3]
+)
+
+    
