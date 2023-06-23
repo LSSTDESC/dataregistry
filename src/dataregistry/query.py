@@ -142,7 +142,7 @@ class Query:
                     table + "." + c.name
                 ] = is_orderable_type(c.type)
 
-    def _parse_selected_columns(self, property_names):
+    def _parse_selected_columns(self, column_names):
         """
         What tables do we need for a given list of column names.
 
@@ -152,7 +152,7 @@ class Query:
         
         Parameters
         ----------
-        property_names : list
+        column_names : list
             String list of database columns 
         """
 
@@ -160,17 +160,17 @@ class Query:
         column_list = []
         is_orderable_list = []
 
-        # Determine the column name and table for each property
-        for p in property_names:
+        # Determine the column name and table it comes from
+        for p in column_names:
 
-            # Case of <table_name>.<property_name> format
+            # Case of <table_name>.<column_name> format
             if "." in p:
                 if len(p.split(".")) != 2:
-                    raise ValueError(f"{p} is bad property name format")
+                    raise ValueError(f"{p} is bad column name format")
                 table_name = p.split(".")[0]
                 col_name = p.split(".")[1]
 
-            # Case of <property_name> only format
+            # Case of <column_name> only format
             else:
                 col_name = p
 
@@ -183,9 +183,17 @@ class Query:
 
                 # Was this column name found, and is it unique in the database?
                 if found_count == 0:
-                    raise NoSuchColumnError(f"Did not find any columns named {col_name}")
+                    raise NoSuchColumnError(
+                        f"Did not find any columns named {col_name}"
+                    )
                 elif found_count > 1:
-                    raise DataRegistryException(f"Column name '{col_name}' is not unique to one table in the database, use <table_name>.<column_name> format instead")
+                    raise DataRegistryException(
+                        (
+                            f"Column name '{col_name}' is not unique to one table"
+                            f"in the database, use <table_name>.<column_name>"
+                            f"format instead"
+                        )
+                    )
 
             tables_required.add(table_name)
             is_orderable_list.append(
@@ -197,10 +205,23 @@ class Query:
 
     def _render_filter(self, f, stmt):
         """
-        Check that parts of the filter look ok.  Return statement with where clause
-        appended
+        Append SQL statement with an additional WHERE clause based on a
+        dataregistry filter.
+
+        Parameters
+        ----------
+        f : dataregistry filter
+            Logic filter to be appended to SQL query
+        stmt : sql alchemy Query object
+            Current SQL query
+
+        Returns
+        -------
+        - : sql alchemy Query object
+            Updated query with new WHERE clause
         """
 
+        # Get the reference to the column being filtered on.
         _, column_ref, column_is_orderable = self._parse_selected_columns([f[0]])
         assert len(column_ref) == len(column_is_orderable) == 1
 
@@ -220,32 +241,23 @@ class Query:
 
     def find_datasets(self, property_names=None, filters=[]):
         """
-        Get specified properties for datasets satisfying all filters.
+        Return specified database rows that satisfy a given SQL query.
 
         If property_names is None, return all properties from the dataset table
         (only). Otherwise, return the property_names columns for each
         discovered dataset (which can be from multiple tables via a join).
 
-        Filters should be a list of Filter objects, which are constraints on
-        column values.
+        Filters should be a list of dataregistry Filter objects, which are
+        constraints on column values.
 
         These choices get translated into an SQL query.
 
-        Example queries
-        ---------------
-        find_datasets(property_names=None, filters=[])
-            - SELECT * FROM registry_dev.dataset
-
-        find_datasets(property_names=["dataset.name", "execution.name"], filters=[])
-            - SELECT dataset.name, execution.name FROM registry_dev.dataset
-              JOIN registry_dev.execution ON
-              registry_dev.execution.execution_id =
-              registry_dev.dataset.execution_id
-
-        f = Filter("dataset.name", "==", "DESC dataset 1")
-        find_datasets(property_names=["dataset.description"], filters=[f])
-            - SELECT dataset.description FROM registry_dev.dataset WHERE
-              registry_dev.dataset.name = :name_1
+        Parameters
+        ----------
+        property_names : list
+            List of database columns to return (SELECT clause)
+        filters : list
+            List of filters (WHERE clauses) to apply
 
         Returns
         -------
