@@ -17,6 +17,7 @@ dependencies = [
     'psycopg2',
     'sqlalchemy',
     'pyaml',
+    'GitPython'
 ]
 requires-python = ">=3.7" # For setuptools >= 61.0 support
 
