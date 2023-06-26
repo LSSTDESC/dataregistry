@@ -54,7 +54,9 @@ def _insert_alias_entry(name, dataset_id, owner_type, owner):
     return new_id
 
 
-def _insert_execution_entry(name, description, owner_type, owner, input_datasets=[], configuration=None):
+def _insert_execution_entry(
+    name, description, owner_type, owner, input_datasets=[], configuration=None
+):
     """
     Wrapper to create execution entry
 
@@ -85,7 +87,10 @@ def _insert_execution_entry(name, description, owner_type, owner, input_datasets
     )
 
     new_id = registrar.register_execution(
-        name, description=description, input_datasets=input_datasets, configuration=configuration
+        name,
+        description=description,
+        input_datasets=input_datasets,
+        configuration=configuration,
     )
 
     assert new_id is not None, "Trying to create a execution that already exists"
@@ -95,7 +100,16 @@ def _insert_execution_entry(name, description, owner_type, owner, input_datasets
 
 
 def _insert_dataset_entry(
-    relpath, version, owner_type, owner, description, name=None, execution_id=None, version_suffix=None, is_dummy=True, old_location=None
+    relpath,
+    version,
+    owner_type,
+    owner,
+    description,
+    name=None,
+    execution_id=None,
+    version_suffix=None,
+    is_dummy=True,
+    old_location=None,
 ):
     """
     Wrapper to create dataset entry
@@ -156,7 +170,7 @@ def _insert_dataset_entry(
         copy=(not make_sym_link),
         is_dummy=is_dummy,
         execution_id=execution_id,
-        verbose=True
+        verbose=True,
     )
 
     assert new_id is not None, "Trying to create a dataset that already exists"
@@ -315,7 +329,7 @@ _insert_dataset_entry(
     None,
     "This is my first DESC dataset with a version suffix",
     name="my_first_suffix_dataset",
-    version_suffix="test-suffix"
+    version_suffix="test-suffix",
 )
 
 _insert_dataset_entry(
@@ -325,7 +339,7 @@ _insert_dataset_entry(
     None,
     "This is my first DESC dataset with a version suffix (bumped)",
     name="my_first_suffix_dataset",
-    version_suffix="test-suffix"
+    version_suffix="test-suffix",
 )
 
 # Test set 8
@@ -335,7 +349,7 @@ _insert_execution_entry(
     "An execution with an input configuration file",
     "user",
     None,
-    configuration="dummy_configuration_file.yaml"
+    configuration="dummy_configuration_file.yaml",
 )
 
 # Test set 9
@@ -347,7 +361,7 @@ _insert_dataset_entry(
     None,
     "This is my first DESC dataset with real files",
     is_dummy=False,
-    old_location="dummy_configuration_file.yaml"
+    old_location="dummy_configuration_file.yaml",
 )
 
 _insert_dataset_entry(
@@ -357,5 +371,5 @@ _insert_dataset_entry(
     None,
     "This is my second DESC dataset with real files",
     is_dummy=False,
-    old_location="../ci/"
+    old_location="../ci/",
 )
