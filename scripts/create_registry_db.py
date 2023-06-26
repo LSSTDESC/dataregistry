@@ -2,9 +2,18 @@ import os
 import sys
 import enum
 import argparse
+from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Index, Float
 from sqlalchemy import ForeignKey, UniqueConstraint, Enum
-from dataregistry.db_basic import create_db_engine, TableCreator, ownertypeenum, dataorgenum
+from dataregistry.db_basic import create_db_engine, TableCreator, ownertypeenum, dataorgenum, add_table_row
+from dataregistry.git_util import get_git_info
+from dataregistry import __version__
+
+# The following should be adjusted whenever there is a change to the structure
+# of the database tables.
+_DB_VERSION_MAJOR = 1
+_DB_VERSION_MINOR = 0
+_DB_VERSION_PATCH = 0
 
 parser = argparse.ArgumentParser(description='''
 Creates dataregistry tables in specified schema and connection information (config)''', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -62,7 +71,6 @@ cols.append(Column("owner", String, nullable=False))
 cols.append(Column("data_org", Enum(dataorgenum), nullable=False))
 cols.append(Column("nfiles", Integer, nullable=False))
 cols.append(Column("total_disk_space", Float, nullable=False))
-
 tab_creator.define_table("dataset", cols,
                          [Index("relative_path", "owner", "owner_type"),
                           UniqueConstraint("name", "version_string",
@@ -77,7 +85,6 @@ cols.append(Column("dataset_id", Integer, ForeignKey("dataset.dataset_id")))
 cols.append(Column("supersede_date", DateTime,  default=None))
 cols.append(Column("register_date", DateTime, nullable=False))
 cols.append(Column("creator_uid", String(20), nullable=False))
-
 tab_creator.define_table("dataset_alias", cols,
                          [UniqueConstraint("alias", "register_date",
                                            name="dataset_u_register")])
@@ -94,7 +101,6 @@ cols.append(Column("name", String))
 cols.append(Column("locale", String))
 cols.append(Column("configuration", String))
 cols.append(Column("creator_uid", String(20), nullable=False))
-
 tab_creator.define_table("execution", cols)
 
 # Execution alias name table
@@ -106,7 +112,6 @@ cols.append(Column("execution_id", Integer,
 cols.append(Column("supersede_date", DateTime,  default=None))
 cols.append(Column("register_date", DateTime, nullable=False))
 cols.append(Column("creator_uid", String(20), nullable=False))
-
 tab_creator.define_table("execution_alias", cols,
                          [UniqueConstraint("alias", "register_date",
                                            name="execution_u_register")])
@@ -118,11 +123,59 @@ cols.append(Column("dependency_id", Integer, primary_key=True))
 cols.append(Column("register_date", DateTime, nullable=False))
 cols.append(Column("input_id", Integer, ForeignKey("dataset.dataset_id")))
 cols.append(Column("execution_id", Integer, ForeignKey("execution.execution_id")))
-
 tab_creator.define_table("dependency", cols)
 
-### Still to be defined:
-#    a table to keep track of external dependencies
-#    moved.  A table to track history of datasets which have been moved.
+
+# Keep track of code version creating the db
+# Create this table separately so that we have handle needed to
+# make an entry
+cols = []
+cols.append(Column("provenance_id", Integer, primary_key=True))
+cols.append(Column("code_version_major", Integer, nullable=False))
+cols.append(Column("code_version_minor", Integer, nullable=False))
+cols.append(Column("code_version_patch", Integer, nullable=False))
+cols.append(Column("code_version_suffix", String))
+cols.append(Column("db_version_major", Integer, nullable=False))
+cols.append(Column("db_version_minor", Integer, nullable=False))
+cols.append(Column("db_version_patch", Integer, nullable=False))
+cols.append(Column("git_hash", String, nullable=False))
+cols.append(Column("repo_is_clean", Boolean, nullable=False))
+# update method is always "CREATE" for this script.
+# Alternative could be "MODIFY" or "MIGRATE"
+cols.append(Column("update_method", String(10), nullable=False))
+cols.append(Column("schema_enabled_date", DateTime, nullable=False))
+cols.append(Column("creator_uid", String(20), nullable=False))
+tab_creator.define_table("provenance", cols)
 
 tab_creator.create_all()
+
+# Now insert a row into the provenance table
+# First have to get metadata for the table we just created
+provenance_table = tab_creator.get_table_metadata("provenance")
+version_fields = __version__.split(".")
+patch = version_fields[2]
+suffix = None
+if "-" in patch:
+    subfields = patch.split("-")
+    patch = subfields[0]
+    suffix = "-".join(subfields[1:])
+
+values = dict()
+values["code_version_major"] = version_fields[0]
+values["code_version_minor"] = version_fields[1]
+values["code_version_patch"] = patch
+if suffix:
+    values["code_version_registry_suffix"] = suffix
+values["db_version_major"] = _DB_VERSION_MAJOR
+values["db_version_minor"] = _DB_VERSION_MINOR
+values["db_version_patch"] = _DB_VERSION_PATCH
+values["schema_enabled_date"] = datetime.now()
+values["creator_uid"] = os.getenv("USER")
+pkg_root =  os.path.join(os.path.dirname(__file__), '..')
+git_hash, is_clean = get_git_info(pkg_root)
+values["git_hash"] = git_hash
+values["repo_is_clean"] = is_clean
+values["update_method"] = "CREATE"
+
+with engine.connect() as conn:
+    id = add_table_row(conn, provenance_table, values)
