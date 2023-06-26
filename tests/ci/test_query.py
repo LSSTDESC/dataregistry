@@ -70,3 +70,17 @@ assert results.rowcount == 1, "Bad result from query 6"
 f = Filter("dependency.execution_id", "==", next(results)[0])
 results = q.find_datasets(["dependency.input_id"], [f])
 assert results.rowcount == 2, "Bad result from query 6"
+
+# Query 7: Query on version suffix
+f = Filter("dataset.version_suffix", "==", "test-suffix")
+results = q.find_datasets(
+    ["dataset.name", "dataset.version_string", "dataset.relative_path"], [f]
+)
+assert results.rowcount == 2, "Bad result from query 7"
+
+# Make sure versions (from bump) are correct
+for r in results:
+    if r.relative_path == "DESC/datasets/my_first_suffix_dataset":
+        assert r.version_string == "0.0.1"
+    elif r.relative_path == "DESC/datasets/my_first_suffix_dataset_bumped":
+        assert r.version_string == "0.1.0"

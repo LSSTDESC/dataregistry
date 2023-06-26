@@ -11,6 +11,7 @@ jobs:
 
     env:
       DREGS_CONFIG: "${{ github.workspace }}/config.txt"
+      DREGS_ROOT_DIR: "../DREGS_data/"
 
     # Service containers to run with `runner-job`
     services:
