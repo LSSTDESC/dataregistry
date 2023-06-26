@@ -70,7 +70,7 @@ class Registrar():
                     previous.append(r.dataset_id)
         return previous
 
-    def _handle_data(self, relative_path, old_location):
+    def _handle_data(self, relative_path, old_location, verbose):
         '''
         Find characteristics of dataset; copy if requested
         (old_location not None)
@@ -237,7 +237,7 @@ class Registrar():
         # Get dataset characteristics; copy if requested
         if not is_dummy:
             dataset_organizaation, num_files, total_size = \
-                self._handle_data(relative_path, old_location)
+                self._handle_data(relative_path, old_location, verbose)
         else:
             dataset_organization = "dummy"
             num_files = 0
