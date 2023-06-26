@@ -1,9 +1,7 @@
-from dataregistry.query import Query, Filter
-from dataregistry.db_basic import create_db_engine, ownertypeenum, SCHEMA_VERSION
 import os
 
-NUM_DATASET_COLUMNS = 24
-NUM_EXECUTION_COLUMNS = 8
+from dataregistry.db_basic import SCHEMA_VERSION, create_db_engine, ownertypeenum
+from dataregistry.query import Filter, Query
 
 if os.getenv("DREGS_CONFIG") is None:
     raise Exception("Need to set DREGS_CONFIG env variable")
@@ -16,26 +14,59 @@ engine, dialect = create_db_engine(config_file=DREGS_CONFIG)
 # Create query object
 q = Query(engine, dialect, schema_version=SCHEMA_VERSION)
 
-# Make sure we find the correct number of columns in the dataset and execution tables
-props = q.list_dataset_properties()
-dataset_columns = [x for x in props if "dataset." in x]
-execution_columns = [x for x in props if "execution." in x]
-assert len(dataset_columns) == NUM_DATASET_COLUMNS, "Bad dataset columns length"
-assert len(execution_columns) == NUM_EXECUTION_COLUMNS, "Bad execution columns length"
-
 # Do some queries on the test data.
 
-# Query 1: Query dataset name
-f = Filter('dataset.name', '==', 'DESC dataset 1')
-results = q.find_datasets(['dataset.dataset_id', 'dataset.name'], [f])
-assert results.rowcount == 2, "Bad result from query 1"
+# Query 1: Query on dataset name
+f = Filter("dataset.name", "==", "bumped_dataset")
+results = q.find_datasets(
+    ["dataset.name", "dataset.version_string", "dataset.relative_path"], [f]
+)
+assert results.rowcount == 4, "Bad result from query 1"
 
-# Query 2: Query on version
-f = Filter('dataset.version_major', '<', 100)
-results = q.find_datasets(['dataset.dataset_id', 'dataset.name'], [f])
-assert results.rowcount == 5, "Bad result from query 2"
+# Make sure versions (from bump) are correct
+for r in results:
+    if r.relative_path == "DESC/datasets/bumped_dataset":
+        assert r.version_string == "0.0.1"
+    elif r.relative_path == "DESC/datasets/bumped_dataset_2":
+        assert r.version_string == "0.0.2"
+    elif r.relative_path == "DESC/datasets/bumped_dataset_3":
+        assert r.version_string == "0.1.0"
+    elif r.relative_path == "DESC/datasets/bumped_dataset_4":
+        assert r.version_string == "1.0.0"
 
-# Query 3: Query on name for an entry where name was defaulted
-f = Filter('dataset.name', '==', 'my_third_dataset')
-results = q.find_datasets(['dataset.dataset_id', 'dataset.name'], [f])
+# Query 2: Query on owner type
+f = Filter("dataset.owner_type", "!=", "user")
+results = q.find_datasets(["dataset.name"], [f])
+assert results.rowcount == 3, "Bad result from query 2"
+
+# Query 3: Query on dataset alias
+f = Filter("dataset_alias.alias", "==", "nice_dataset_name")
+results = q.find_datasets(["dataset.dataset_id", "dataset_alias.dataset_id"], [f])
 assert results.rowcount == 1, "Bad result from query 3"
+
+# Make sure IDs match up
+for r in results:
+    assert r[0] == r[1]
+
+# Query 4: Make sure auto generated name is correct
+f = Filter("dataset.relative_path", "==", "DESC/datasets/my_first_dataset")
+results = q.find_datasets(["dataset.name"], [f])
+assert results.rowcount == 1, "Bad result from query 4"
+for r in results:
+    assert r.name == "my_first_dataset", "Bad result from query 4"
+
+# Query 5: Make sure manual name is correct
+f = Filter("dataset.relative_path", "==", "DESC/datasets/my_first_named_dataset")
+results = q.find_datasets(["dataset.name"], [f])
+assert results.rowcount == 1, "Bad result from query 5"
+for r in results:
+    assert r.name == "named_dataset", "Bad result from query 5"
+
+# Query 6: Find the dependencies of an execution
+f = Filter("execution.name", "==", "pipeline_stage_3")
+results = q.find_datasets(["execution.execution_id"], [f])
+assert results.rowcount == 1, "Bad result from query 6"
+
+f = Filter("dependency.execution_id", "==", next(results)[0])
+results = q.find_datasets(["dependency.input_id"], [f])
+assert results.rowcount == 2, "Bad result from query 6"
