@@ -12,7 +12,10 @@ from dataregistry.db_basic import TableMetadata
 from dataregistry.exceptions import *
 
 __all__ = ['Registrar']
-_DEFAULT_ROOT_DIR = '/global/cfs/cdirs/desc-co/jrbogart/dregs_root' #temporary
+if os.getenv("DREGS_ROOT_DIR"):
+    _DEFAULT_ROOT_DIR = os.getenv("DREGS_ROOT_DIR")
+else:
+    _DEFAULT_ROOT_DIR = '/global/cfs/cdirs/desc-co/jrbogart/dregs_root' #temporary
 
 class Registrar():
     '''
@@ -236,7 +239,7 @@ class Registrar():
 
         # Get dataset characteristics; copy if requested
         if not is_dummy:
-            dataset_organizaation, num_files, total_size = \
+            dataset_organization, num_files, total_size = \
                 self._handle_data(relative_path, old_location, verbose)
         else:
             dataset_organization = "dummy"
