@@ -72,7 +72,7 @@ def _insert_execution_entry(
         Dataset owner
     intput_datasets : list
         List of dataset ids
-    contiguration : str
+    configuration : str
         Path to configuration file for execution
 
     Returns
