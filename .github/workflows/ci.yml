@@ -74,4 +74,4 @@ jobs:
         run: |
           cd tests/ci
           python create_test_entries.py
-          pytest test_query.py
+          pytest -v test_query.py
