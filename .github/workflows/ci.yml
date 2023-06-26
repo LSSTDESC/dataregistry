@@ -11,6 +11,7 @@ jobs:
 
     env:
       DREGS_CONFIG: "${{ github.workspace }}/config.txt"
+      DREGS_ROOT_DIR: "../DREGS_data/"
 
     # Service containers to run with `runner-job`
     services:
@@ -56,6 +57,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install .
+          python -m pip install pytest
 
       # Make a dummy config file.
       - name: Create dummy config file
@@ -65,8 +67,11 @@ jobs:
       # Create schema
       - name: Create data registry schema
         run: |
-          cd scripts
-          python create_registry_db.py --config $DREGS_CONFIG
-          cd ../tests/ci
-          python3 create_test_entries.py
-          python3 test_query.py
+          python scripts/create_registry_db.py --config $DREGS_CONFIG
+
+      # Run CI tests
+      - name: Run CI tests
+        run: |
+          cd tests/ci
+          python create_test_entries.py
+          pytest -v test_query.py

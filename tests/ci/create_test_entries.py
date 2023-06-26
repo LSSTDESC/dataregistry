@@ -54,7 +54,9 @@ def _insert_alias_entry(name, dataset_id, owner_type, owner):
     return new_id
 
 
-def _insert_execution_entry(name, description, owner_type, owner, input_datasets=[]):
+def _insert_execution_entry(
+    name, description, owner_type, owner, input_datasets=[], configuration=None
+):
     """
     Wrapper to create execution entry
 
@@ -70,6 +72,8 @@ def _insert_execution_entry(name, description, owner_type, owner, input_datasets
         Dataset owner
     intput_datasets : list
         List of dataset ids
+    configuration : str
+        Path to configuration file for execution
 
     Returns
     -------
@@ -83,7 +87,10 @@ def _insert_execution_entry(name, description, owner_type, owner, input_datasets
     )
 
     new_id = registrar.register_execution(
-        name, description=description, input_datasets=input_datasets
+        name,
+        description=description,
+        input_datasets=input_datasets,
+        configuration=configuration,
     )
 
     assert new_id is not None, "Trying to create a execution that already exists"
@@ -93,7 +100,16 @@ def _insert_execution_entry(name, description, owner_type, owner, input_datasets
 
 
 def _insert_dataset_entry(
-    relpath, version, owner_type, owner, description, name=None, execution_id=None
+    relpath,
+    version,
+    owner_type,
+    owner,
+    description,
+    name=None,
+    execution_id=None,
+    version_suffix=None,
+    is_dummy=True,
+    old_location=None,
 ):
     """
     Wrapper to create dataset entry
@@ -116,6 +132,12 @@ def _insert_dataset_entry(
         A manually selected name for the dataset
     execution_id : int
         Execution entry related to this dataset
+    version_suffix : str
+        Append a suffix to the version string
+    is_dummy : bool
+        True for dummy dataset (copies no data)
+    old_location : str
+        Path to data to be copied to data registry
 
     Returns
     -------
@@ -127,10 +149,7 @@ def _insert_dataset_entry(
     locale = "NERSC"
     is_overwritable = False
     creation_data = None
-    old_location = None
     make_sym_link = False
-    is_dummy = True
-    version_suffix = None
     if owner is None:
         owner = os.getenv("USER")
 
@@ -151,6 +170,7 @@ def _insert_dataset_entry(
         copy=(not make_sym_link),
         is_dummy=is_dummy,
         execution_id=execution_id,
+        verbose=True,
     )
 
     assert new_id is not None, "Trying to create a dataset that already exists"
@@ -291,11 +311,65 @@ dataset_id_3 = _insert_dataset_entry(
     execution_id=ex_id_2,
 )
 
-# Stage 3 of my pipeline)
+# Stage 3 of my pipeline
 ex_id_3 = _insert_execution_entry(
     "pipeline_stage_3",
     "The third stage of my pipeline",
     "user",
     None,
     input_datasets=[dataset_id_2, dataset_id_3],
+)
+
+# Test set 7
+# - Version suffixes
+_insert_dataset_entry(
+    "DESC/datasets/my_first_suffix_dataset",
+    "0.0.1",
+    "user",
+    None,
+    "This is my first DESC dataset with a version suffix",
+    name="my_first_suffix_dataset",
+    version_suffix="test-suffix",
+)
+
+_insert_dataset_entry(
+    "DESC/datasets/my_first_suffix_dataset_bumped",
+    "minor",
+    "user",
+    None,
+    "This is my first DESC dataset with a version suffix (bumped)",
+    name="my_first_suffix_dataset",
+    version_suffix="test-suffix",
+)
+
+# Test set 8
+# - Include a configuration file in execution entry
+_insert_execution_entry(
+    "execution_with_configuration",
+    "An execution with an input configuration file",
+    "user",
+    None,
+    configuration="dummy_configuration_file.yaml",
+)
+
+# Test set 9
+# - Work with a real data
+_insert_dataset_entry(
+    "DESC/datasets/my_first_real_dataset_file",
+    "0.0.1",
+    "user",
+    None,
+    "This is my first DESC dataset with real files",
+    is_dummy=False,
+    old_location="dummy_configuration_file.yaml",
+)
+
+_insert_dataset_entry(
+    "DESC/datasets/my_first_real_dataset_directory",
+    "0.0.1",
+    "user",
+    None,
+    "This is my second DESC dataset with real files",
+    is_dummy=False,
+    old_location="../ci/",
 )
