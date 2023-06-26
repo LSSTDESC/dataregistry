@@ -91,6 +91,11 @@ class TableCreator:
         except:
             print("Could not grant access to reg_reader")
 
+    def get_table_metadata(self, table_name):
+        if not "." in table_name:
+            table_name = ".".join([self._schema, table_name])
+        return self._metadata.tables[table_name]
+
     def create_schema(self):
         if self._dialect == 'sqlite':
             return
