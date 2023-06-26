@@ -241,14 +241,14 @@ class Query:
 
     def find_datasets(self, property_names=None, filters=[]):
         """
-        Return specified database rows that satisfy a given SQL query.
+        Get specified properties for datasets satisfying all filters
 
         If property_names is None, return all properties from the dataset table
         (only). Otherwise, return the property_names columns for each
         discovered dataset (which can be from multiple tables via a join).
 
         Filters should be a list of dataregistry Filter objects, which are
-        constraints on column values.
+        logic constraints on column values.
 
         These choices get translated into an SQL query.
 

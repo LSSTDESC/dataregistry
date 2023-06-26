@@ -17,7 +17,7 @@ q = Query(engine, dialect, schema_version=SCHEMA_VERSION)
 # Do some queries on the test data.
 
 # Query 1: Query on dataset name
-f = Filter("dataset.name", "==", "bump_dataset")
+f = Filter("dataset.name", "==", "bumped_dataset")
 results = q.find_datasets(
     ["dataset.name", "dataset.version_string", "dataset.relative_path"], [f]
 )
@@ -25,13 +25,13 @@ assert results.rowcount == 4, "Bad result from query 1"
 
 # Make sure versions (from bump) are correct
 for r in results:
-    if r.relative_path == "DESC/datasets/bump_dataset":
+    if r.relative_path == "DESC/datasets/bumped_dataset":
         assert r.version_string == "0.0.1"
-    elif r.relative_path == "DESC/datasets/bump_dataset_2":
+    elif r.relative_path == "DESC/datasets/bumped_dataset_2":
         assert r.version_string == "0.0.2"
-    elif r.relative_path == "DESC/datasets/bump_dataset_3":
+    elif r.relative_path == "DESC/datasets/bumped_dataset_3":
         assert r.version_string == "0.1.0"
-    elif r.relative_path == "DESC/datasets/bump_dataset_4":
+    elif r.relative_path == "DESC/datasets/bumped_dataset_4":
         assert r.version_string == "1.0.0"
 
 # Query 2: Query on owner type

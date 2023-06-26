@@ -46,10 +46,7 @@ def _insert_alias_entry(name, dataset_id, owner_type, owner):
         engine, dialect, _lookup[owner_type], owner=owner, schema_version=SCHEMA_VERSION
     )
 
-    new_id = registrar.register_dataset_alias(
-        name,
-        dataset_id,
-    )
+    new_id = registrar.register_dataset_alias(name, dataset_id,)
 
     assert new_id is not None, "Trying to create a dataset alias that already exists"
     print(f"Created dataset alias entry with id {new_id}")
@@ -186,39 +183,39 @@ _insert_dataset_entry(
 # Test set 3
 # - Test version bumping
 _insert_dataset_entry(
-    "DESC/datasets/bump_dataset",
+    "DESC/datasets/bumped_dataset",
     "0.0.1",
     "user",
     None,
     "This is my first bumped DESC dataset",
-    name="bump_dataset",
+    name="bumped_dataset",
 )
 
 _insert_dataset_entry(
-    "DESC/datasets/bump_dataset_2",
+    "DESC/datasets/bumped_dataset_2",
     "patch",
     "user",
     None,
     "This is my second bumped DESC dataset",
-    name="bump_dataset",
+    name="bumped_dataset",
 )
 
 _insert_dataset_entry(
-    "DESC/datasets/bump_dataset_3",
+    "DESC/datasets/bumped_dataset_3",
     "minor",
     "user",
     None,
     "This is my third bumped DESC dataset",
-    name="bump_dataset",
+    name="bumped_dataset",
 )
 
 _insert_dataset_entry(
-    "DESC/datasets/bump_dataset_4",
+    "DESC/datasets/bumped_dataset_4",
     "major",
     "user",
     None,
     "This is my fourth bumped DESC dataset",
-    name="bump_dataset",
+    name="bumped_dataset",
 )
 
 # Test set 4
