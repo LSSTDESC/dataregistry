@@ -127,20 +127,30 @@ class Registrar():
     _MAX_CONFIG = 10000
     def register_execution(self, name, description=None, execution_start=None,
                            locale=None, configuration=None, input_datasets=[]):
-        '''
-        Register an execution of something.   Return id
+        """
+        Register a new execution in the DESC data registry.
 
         Parameters
         ----------
-        name            string   Typically pipeline name or program name
-                                 (should there also be a version string?)
-        description     string   Optional
-        execution_start datetime Optional
-        locale          string   Optional
-        configuration   string   Optional Path to text file used to
-                                          configure the execution
-        input_datasets  list     Optional List of dataset ids
-        '''
+        name : str
+            Typically pipeline name or program name
+        description : str (optional)
+            Human readible description of execution
+        execution_start : datetime (optional)
+            FILL IN
+        locale : str (optional)
+            Where was the execution performed?
+        configuration : str (optional)
+            Path to text file used to configure the execution
+        input_datasets : list (optional)
+            List of dataset ids that were the input to this execution
+
+        Returns
+        -------
+        my_id : int
+            The execution ID of the new row relating to this entry
+        """
+
         values = {"name" : name}
         if locale: values["locale"] = locale
         if execution_start: values["execution_start"] = execution_start
@@ -177,37 +187,59 @@ class Registrar():
                          access_API=None,
                          is_overwritable=False, old_location=None, copy=True,
                          is_dummy=False, verbose=False):
-        '''
-        Return id of new row if successful, else None
+        """
+        Register a new dataset in the DESC data registry.
 
         Parameters
         ----------
-        relative_path    Relative to owner_type/owner as specified to
-                         to Registrar constructor
-        version          Must be of form a.b.c where a, b, and c are
-                         non-negative integers OR one of the special
-                         keywords 'major', 'minor' or 'patch'
-        version_suffix   Optional version specifier for non-production datasets
-        name             Any convenient, evocative name for the human.
-                         (name, version, version_suffix) should be unique
-                         Defaults to relative_path basename (without extension)
-        creation_date    If not specified, take from dataset file or directory
-                         creation date
-        description      Optional human-readable description
-        execution_id     Optional; used to associate dataset with a particular
-                         execution of some code
-        access_API       Hint as to how to read the data
-        is_overwritable  True if dataset may be overwritten.  Defaults to False.
-                         Always False for production datasets
-        old_location     Absolute location of dataset.  If None, dataset should
-                         already be at correct relative_path
-        copy             If old_location is None, ignore.   Else,
-                           * if True copy from old_location to relative_path.
-                           * if False make sym link at relative_path
-        is_dummy         True for dummy datasets. This copies no data, only creates
-                         an entry in the database (for testing only).
-        verbose         Provide some additional output information
-        '''
+        relative_path : str
+            Destination for the dataset within the data registry. Path is
+            relative to ``<registry root>/<owner_type>/<owner>``.
+        version : str
+            Semantic version string of the format MAJOR.MINOR.PATCH *or*
+            a special flag "patch", "minor" or "major".
+
+            When a special flag is used it automatically bumps the relative
+            version for you (see examples for more details).
+        version_suffix : str (optional)
+            Optional suffix string to place at the end of the version string.
+            Cannot be used for production datasets.
+        name : str (optional)
+            Any convenient, evocative name for the human.
+
+            Note the combination of name, version and version_suffix must be
+            unique.
+        creation_date : datetime (optional)
+            Manually set creation date of dataset
+        description : str (optional)
+            Human-readable description of dataset
+        execution_id : int (optional)
+            Used to associate dataset with a particular execution
+        access_API : str (optional)
+            Hint as to how to read the data
+        is_overwritable : bool (optional)
+            True if dataset may be overwritten (defaults to False).
+
+            Production datasets cannot be overwritten.
+        old_location : str (optional)
+            Absolute location of dataset to copy.
+
+            If None dataset should already be at correct relative_path. 
+        copy : bool (optional)
+            If true copy data from ``old_location`` to the database.
+            If False create a symlink (defaults to True).
+        is_dummy : bool
+            True for "dummy" datasets (no data is copied, for testing purposes
+            only) 
+        verbose : bool
+            Provide some additional output information
+
+        Returns
+        -------
+        prim_key : int
+            The dataset ID of the new row relating to this entry (else None)
+        """
+
         if (self._owner_type == "production"):
             if is_overwritable:
                 raise ValueError("Cannot overwrite production entries")
@@ -292,14 +324,22 @@ class Registrar():
         return prim_key
 
     def register_dataset_alias(self, aliasname, dataset_id):
-        '''
-        Make an alias for an existing dataset
+        """
+        Register a new dataset alias in the DESC data registry.
 
         Parameters
         ----------
-        aliasname          the new alias
-        dataset_id         id for existing dataset
-        '''
+        aliasname : str
+            Human readible alias for the dataset
+        dataset_id : int
+            Existing dataset ID to attach dataset alias to
+
+        Returns
+        -------
+        prim_key : int
+            The dataset_alias ID of the new row relating to this entry
+        """
+
         now = datetime.now()
         values = {"alias" : aliasname}
         values["dataset_id"] = dataset_id

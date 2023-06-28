@@ -17,25 +17,27 @@ Usage is as follows:
 
 .. option:: <relpath>
 
-   Destination for the dataset with the data registry. Path is relative to
+   Destination for the dataset within the data registry. Path is relative to
    ``<registry root>/<owner_type>/<owner>``.
 
    :type: string
+   :required: True
 
 .. option:: <version>
 
-   Semantic version string (MAJOR.MINOR.PATCH) *or* special flag "patch",
-   "minor" of "major".
+   Semantic version string of the format MAJOR.MINOR.PATCH *or*
+   a special flag "patch", "minor" or "major".
 
-   When a special flag is used it automatically bumps the relative version for
-   you (see examples for more details).
+   When a special flag is used it automatically bumps the relative
+   version for you (see examples for more details).
 
    :type: string
+   :required: True
 
 .. option:: --version_suffix <version_suffix>
 
-   To include a suffix at the end of the version string. Cannot be used for
-   production datasets.
+   Optional suffix string to place at the end of the version string.
+   Cannot be used for production datasets.
 
    :type: string
 
