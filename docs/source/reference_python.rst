@@ -1,8 +1,9 @@
 The ``dataregistry`` package
 ============================
 
-Reference for the most commonly used functions in the ``dataregistry`` package.
-Demonstrations of their usage can be found in the examples section.
+Reference documentation for the most commonly used functions in the
+``dataregistry`` package.  Demonstrations of their usage can be found in the
+examples section.
 
 The Registrar class
 -------------------

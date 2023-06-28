@@ -12,17 +12,17 @@ Some text introducing the software and what's in the docs.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Usage:
-
-   usage_python
-   usage_cli
-
-.. toctree::
-   :maxdepth: 2
    :caption: Examples:
 
    standalone_dataset
    pipeline_dataset
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Reference:
+
+   reference_python
+   reference_cli
 
 .. toctree::
    :maxdepth: 2
