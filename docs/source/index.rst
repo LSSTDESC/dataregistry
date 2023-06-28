@@ -30,7 +30,6 @@ Some text introducing the software and what's in the docs.
 
    contact
 
-
 Indices and tables
 ==================
 
