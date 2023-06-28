@@ -3,6 +3,11 @@
 The `DREGS` CLI
 ===============
 
+The DESC data registry also comes with a Command Line Interface (CLI) which,
+currently, can only be used to register datasets.
+
+See the examples section for a demonstration of its usage.
+
 Registering a dataset
 ---------------------
 

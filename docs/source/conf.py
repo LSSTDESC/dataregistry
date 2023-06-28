@@ -3,7 +3,8 @@ import sphinx_rtd_theme
 # Add the theme to the extensions list
 extensions = [
     "sphinx_rtd_theme",
-    "sphinx.ext.autodoc"
+    "sphinx.ext.autodoc",
+    'sphinx.ext.napoleon',
 ]
 
 project = 'DESC data management'

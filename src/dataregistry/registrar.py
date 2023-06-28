@@ -134,15 +134,15 @@ class Registrar():
         ----------
         name : str
             Typically pipeline name or program name
-        description : str (optional)
+        description : str, optional
             Human readible description of execution
-        execution_start : datetime (optional)
+        execution_start : datetime, optional
             FILL IN
-        locale : str (optional)
+        locale : str, optional
             Where was the execution performed?
-        configuration : str (optional)
+        configuration : str, optional
             Path to text file used to configure the execution
-        input_datasets : list (optional)
+        input_datasets : list, optional
             List of dataset ids that were the input to this execution
 
         Returns
@@ -201,31 +201,31 @@ class Registrar():
 
             When a special flag is used it automatically bumps the relative
             version for you (see examples for more details).
-        version_suffix : str (optional)
+        version_suffix : str, optional
             Optional suffix string to place at the end of the version string.
             Cannot be used for production datasets.
-        name : str (optional)
+        name : str, optional
             Any convenient, evocative name for the human.
 
             Note the combination of name, version and version_suffix must be
             unique.
-        creation_date : datetime (optional)
+        creation_date : datetime, optional
             Manually set creation date of dataset
-        description : str (optional)
+        description : str, optional
             Human-readable description of dataset
-        execution_id : int (optional)
+        execution_id : int, optional
             Used to associate dataset with a particular execution
-        access_API : str (optional)
+        access_API : str, optional
             Hint as to how to read the data
-        is_overwritable : bool (optional)
+        is_overwritable : bool, optional
             True if dataset may be overwritten (defaults to False).
 
             Production datasets cannot be overwritten.
-        old_location : str (optional)
+        old_location : str, optional
             Absolute location of dataset to copy.
 
             If None dataset should already be at correct relative_path. 
-        copy : bool (optional)
+        copy : bool, optional
             If true copy data from ``old_location`` to the database.
             If False create a symlink (defaults to True).
         is_dummy : bool
