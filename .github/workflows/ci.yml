@@ -73,5 +73,12 @@ jobs:
       - name: Run CI tests
         run: |
           cd tests/ci
+
+          # Register database entries using dataregistry package
           python create_test_entries.py
+
+          # Register more database entries using the dregs CLI
+          bash test_cli.sh
+
+          # Run some test queries
           pytest -v test_query.py

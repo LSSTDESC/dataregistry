@@ -5,6 +5,7 @@ extensions = [
     "sphinx_rtd_theme",
     "sphinx.ext.autodoc",
     'sphinx.ext.napoleon',
+    'sphinxcontrib.autoprogram'
 ]
 
 project = 'DESC data management'
