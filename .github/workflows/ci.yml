@@ -78,7 +78,7 @@ jobs:
           python create_test_entries.py
 
           # Register more database entries using the dregs CLI
-          bash test_cli.sh
+          bash create_test_entries_cli.sh
 
           # Run some test queries
           pytest -v test_query.py
