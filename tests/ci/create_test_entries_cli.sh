@@ -15,4 +15,5 @@ dregs register my_cli_dataset3 "1.2.3" --is_dummy \
 
 # A production dataset
 dregs register my_production_cli_dataset "0.1.2" \
-    --owner-type "production"
+    --owner-type "production" \
+    --is_dummy
