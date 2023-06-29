@@ -77,7 +77,7 @@ def make_entry(args):
         creation_date=args.creation_date,
         description=args.description,
         old_location=args.old_location,
-        copy=(not args.copy),
+        copy=(not args.make_symlink),
         is_dummy=args.is_dummy,
     )
 
@@ -138,8 +138,8 @@ arg_register.add_argument(
     type=str,
 )
 arg_register.add_argument(
-    "--copy",
-    help="If true copy data from old_location to the database. If False create a symlink (defaults to True).",
+    "--make_symlink",
+    help="Flag to make symlink to data rather than copy any files.",
     action="store_true",
 )
 arg_register.add_argument(

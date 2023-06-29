@@ -60,7 +60,7 @@ would run the `DREGS` CLI as follows:
 
 .. code-block:: bash
 
-   python3 register_cli.py \
+   dregs register \
       my_paper_dataset \
       1.0.0 \
       --old-location /some/place/at/nersc/my_paper_dataset/ \
@@ -81,7 +81,7 @@ data, however we can create a new version of the dataset as follows.
 
 .. code-block:: bash
 
-   python3 register_cli.py \
+   dregs register \
       my_paper_dataset_updated \
       patch \
       --old-location /some/place/at/nersc/my_paper_dataset_updated/ \
