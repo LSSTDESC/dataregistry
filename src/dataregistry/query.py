@@ -263,9 +263,9 @@ class Query:
 
         Parameters
         ----------
-        property_names : list
+        property_names : list (optional)
             List of database columns to return (SELECT clause)
-        filters : list
+        filters : list (optional)
             List of filters (WHERE clauses) to apply
 
         Returns
