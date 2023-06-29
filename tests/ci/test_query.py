@@ -24,7 +24,7 @@ def test_query_dataset():
         ["dataset.name", "dataset.version_string", "dataset.relative_path"], [f]
     )
     assert results.rowcount == 4, "Bad result from query d1"
-    
+
     # Make sure versions (from bump) are correct
     for r in results:
         if r.relative_path == "DESC/datasets/bumped_dataset":
@@ -47,7 +47,7 @@ def test_query_dataset():
     assert results.rowcount == 1, "Bad result from query d3"
     for r in results:
         assert r.name == "my_first_dataset", "Bad result from query d3"
-    
+
     # Query 4: Make sure manual name is correct
     f = Filter("dataset.relative_path", "==", "DESC/datasets/my_first_named_dataset")
     results = q.find_datasets(["dataset.name"], [f])
@@ -61,7 +61,7 @@ def test_query_dataset():
         ["dataset.name", "dataset.version_string", "dataset.relative_path"], [f]
     )
     assert results.rowcount == 2, "Bad result from query d5"
-    
+
     # Make sure versions (from bump) are correct
     for r in results:
         if r.relative_path == "DESC/datasets/my_first_suffix_dataset":
@@ -76,7 +76,7 @@ def test_query_dataset_alias():
     f = Filter("dataset_alias.alias", "==", "nice_dataset_name")
     results = q.find_datasets(["dataset.dataset_id", "dataset_alias.dataset_id"], [f])
     assert results.rowcount == 1, "Bad result from query da1"
-    
+
     # Make sure IDs match up
     for r in results:
         assert r[0] == r[1]
@@ -93,3 +93,10 @@ def test_query_execution():
     f = Filter("dependency.execution_id", "==", next(results)[0])
     results = q.find_datasets(["dependency.input_id"], [f])
     assert results.rowcount == 2, "Bad result from query dep1"
+
+    # In fresh database, actual db versions should match versions to be
+    # used when new db is created
+    actual_major, actual_minor, actual_patch = q.get_db_versioning()
+    assert actual_major == 1, "db major version doesn't match expected"
+    assert actual_minor == 0, "db minor version doesn't match expected"
+    assert actual_patch == 0, "db patch version doesn't match expected"
