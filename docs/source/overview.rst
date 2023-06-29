@@ -1,14 +1,20 @@
-The ``registry_dev`` schema
-===========================
+Introduction
+============
 
-Schema diagram
---------------
+What is the DESC data management software?
+------------------------------------------
+
+What is is?
+
+Who is it for?
+
+The database layout
+-------------------
 
 .. image:: _static/schema_plot.png
    :alt: Image missing
 
 List of tables
---------------
 
 dataset
 ~~~~~~~
