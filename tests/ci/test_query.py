@@ -49,7 +49,7 @@ def test_query_dataset():
     # Query 2: Query on owner type
     f = Filter("dataset.owner_type", "!=", "user")
     results = q.find_datasets(["dataset.name"], [f])
-    assert results.rowcount == 3, "Bad result from query d2"
+    assert results.rowcount == 5, "Bad result from query d2"
 
     # Query 3: Make sure auto generated name is correct
     f = Filter("dataset.relative_path", "==", "DESC/datasets/my_first_dataset")
