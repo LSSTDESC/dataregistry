@@ -165,7 +165,7 @@ values["code_version_major"] = version_fields[0]
 values["code_version_minor"] = version_fields[1]
 values["code_version_patch"] = patch
 if suffix:
-    values["code_version_registry_suffix"] = suffix
+    values["code_version_suffix"] = suffix
 values["db_version_major"] = _DB_VERSION_MAJOR
 values["db_version_minor"] = _DB_VERSION_MINOR
 values["db_version_patch"] = _DB_VERSION_PATCH
