@@ -69,6 +69,16 @@ def test_query_dataset():
         elif r.relative_path == "DESC/datasets/my_first_suffix_dataset_bumped":
             assert r.version_string == "0.1.0"
 
+    # Query 6: Make sure non dummy entries have a non-zero amount of files
+    f = Filter("dataset.data_org", "!=", "dummy")
+    results = q.find_datasets(
+        ["dataset.name", "dataset.nfiles", "dataset.total_disk_space"], [f]
+    )
+
+    # Make sure nfiles > 0
+    for r in results:
+        assert r.nfiles > 0, "Bad result from query d6"
+
 def test_query_dataset_alias():
     """ Test queries of dataset alias table """
 

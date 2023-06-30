@@ -373,3 +373,25 @@ _insert_dataset_entry(
     is_dummy=False,
     old_location="../ci/",
 )
+
+# Test set 10
+# - Work with a real data already on location (i.e., old_location=None)
+_insert_dataset_entry(
+    "dummy_file1.txt",
+    "0.0.1",
+    "user",
+    "ci",
+    "This is my first DESC dataset with real files already on location",
+    is_dummy=False,
+    old_location=None,
+)
+
+_insert_dataset_entry(
+    "dummy_dir",
+    "0.0.1",
+    "user",
+    "ci",
+    "This is my second DESC dataset with real files already on location",
+    is_dummy=False,
+    old_location=None,
+)
