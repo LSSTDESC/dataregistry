@@ -122,7 +122,7 @@ class Registrar():
             if verbose:
                 print(f"took {time.time()-tic:.2f}")
 
-            return dataset_organization, num_files, total_size
+        return dataset_organization, num_files, total_size
 
     _MAX_CONFIG = 10000
     def register_execution(self, name, description=None, execution_start=None,
