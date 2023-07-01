@@ -74,18 +74,43 @@ class Registrar():
         return previous
 
     def _handle_data(self, relative_path, old_location, verbose):
-        '''
-        Find characteristics of dataset; copy if requested
-        (old_location not None)
-        Return dataset_organization, # of files, total size in bytes
-        '''
+        """
+        Find characteristics of dataset (i.e., is it a file or directory, how
+        many files and total disk space of the dataset).
+        
+        If old_location is not None, copy the dataset into the data registry.
+
+        Parameters
+        ----------
+        relative_path : str
+            Relative path of dataset in the data registry
+        old_location : str
+            Location of data (if not already in the data registry root)
+            Data will be copied from this location
+        verbose : bool
+            True for extra output
+
+        Returns
+        -------
+        dataset_organization : str
+            "file", "directory", or "dummy"
+        num_files : int
+            Total number of files making up dataset
+        total_size : float
+            Total disk space of dataset in bytes
+        """
+        
+        # Get destination directory in data registry.
         dest =  _form_dataset_path(self._owner_type, self._owner,
                                    relative_path, self._root_dir)
+
+        # Is the data already on location, or coming from somewhere new?
         if old_location:
             loc = old_location
         else:
             loc = dest
 
+        # Get metadata on dataset.
         if os.path.isfile(loc):
             dataset_organization = "file"
         elif os.path.isdir(loc):
@@ -93,7 +118,6 @@ class Registrar():
         else:
             raise FileNotFoundError(f"Dataset {loc} not found")
 
-        # Get metadata on dataset.
         if verbose:
             tic = time.time()
             print("Collecting metadata...", end="")
@@ -122,7 +146,7 @@ class Registrar():
             if verbose:
                 print(f"took {time.time()-tic:.2f}")
 
-            return dataset_organization, num_files, total_size
+        return dataset_organization, num_files, total_size
 
     _MAX_CONFIG = 10000
     def register_execution(self, name, description=None, execution_start=None,

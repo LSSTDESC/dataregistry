@@ -73,5 +73,6 @@ jobs:
       - name: Run CI tests
         run: |
           cd tests/ci
+          bash create_data.sh
           python create_test_entries.py
           pytest -v test_query.py
