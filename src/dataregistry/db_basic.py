@@ -129,7 +129,6 @@ class TableMetadata():
     '''
     def __init__(self, schema, engine):
         self._metadata = MetaData(schema=schema)
-        #self._table_metadata = dict()
         self._engine = engine
         self._schema = schema
 

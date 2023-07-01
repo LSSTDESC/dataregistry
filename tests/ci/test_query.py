@@ -94,8 +94,12 @@ def test_query_execution():
     results = q.find_datasets(["dependency.input_id"], [f])
     assert results.rowcount == 2, "Bad result from query dep1"
 
-    # In fresh database, actual db versions should match versions to be
-    # used when new db is created
+def test_db_version():
+    """
+    Test if db version is what we think it should be.
+    CI makes a fresh database, hence actual db versions should match
+    versions to be used when new db is created
+    """
     actual_major, actual_minor, actual_patch = q.get_db_versioning()
     assert actual_major == 1, "db major version doesn't match expected"
     assert actual_minor == 0, "db minor version doesn't match expected"
