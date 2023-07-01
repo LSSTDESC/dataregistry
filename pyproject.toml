@@ -30,4 +30,4 @@ docs = ["sphinx_rtd_theme"]
 where = ["src"]
 
 [project.scripts]
-dregs = "cli.register:main"
+dregs = "cli.cli:main"
