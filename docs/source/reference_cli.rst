@@ -13,5 +13,5 @@ Registering a dataset
 
 Users can register datasets to the DESC data registry via the terminal using:
 
-.. autoprogram:: cli.register:arg_register
-   :prog: ``dregs register``
+.. autoprogram:: cli.cli:arg_register
+   :prog: ``dregs register dataset``
