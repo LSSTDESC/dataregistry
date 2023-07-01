@@ -8,10 +8,8 @@ The DESC data registry also comes with a Command Line Interface (CLI) tool,
 
 See the examples section for a demonstration of its usage.
 
-Registering a dataset
----------------------
-
-Users can register datasets to the DESC data registry via the terminal using:
+Registering a new entry in the database
+---------------------------------------
 
 .. autoprogram:: cli.cli:arg_register
-   :prog: ``dregs register dataset``
+   :prog: dregs register
