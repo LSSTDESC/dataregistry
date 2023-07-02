@@ -15,6 +15,16 @@ engine, dialect = create_db_engine(config_file=DREGS_CONFIG)
 # Create query object
 q = Query(engine, dialect, schema_version=SCHEMA_VERSION)
 
+def test_query_dataset_cli():
+    """ Test queries for the dataset table entered from the CLI script """
+    
+    # Query 1: Make sure we find all datasets entered using the CLI
+    f = Filter("dataset.name", "==", "my_cli_dataset")
+    results = q.find_datasets(
+        ["dataset.name", "dataset.version_string", "dataset.relative_path"], [f]
+    )
+    assert results.rowcount == 2, "Bad result from query dcli1"
+
 def test_query_dataset():
     """ Test queries for the dataset table """
 
@@ -39,7 +49,7 @@ def test_query_dataset():
     # Query 2: Query on owner type
     f = Filter("dataset.owner_type", "!=", "user")
     results = q.find_datasets(["dataset.name"], [f])
-    assert results.rowcount == 3, "Bad result from query d2"
+    assert results.rowcount == 5, "Bad result from query d2"
 
     # Query 3: Make sure auto generated name is correct
     f = Filter("dataset.relative_path", "==", "DESC/datasets/my_first_dataset")
