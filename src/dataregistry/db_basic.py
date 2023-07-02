@@ -1,7 +1,8 @@
 from sqlalchemy import engine_from_config
 from sqlalchemy.engine import make_url
 import enum
-from sqlalchemy import MetaData, Table, Enum, Column, text, insert
+from sqlalchemy import MetaData, Table, Enum, Column
+from sqlalchemy import  column, text, insert, select
 from sqlalchemy.exc import DBAPIError, IntegrityError
 import yaml
 import os
@@ -91,6 +92,11 @@ class TableCreator:
         except:
             print("Could not grant access to reg_reader")
 
+    def get_table_metadata(self, table_name):
+        if not "." in table_name:
+            table_name = ".".join([self._schema, table_name])
+        return self._metadata.tables[table_name]
+
     def create_schema(self):
         if self._dialect == 'sqlite':
             return
@@ -123,35 +129,51 @@ class TableMetadata():
     '''
     def __init__(self, schema, engine):
         self._metadata = MetaData(schema=schema)
-        self._table_metadata = dict()
         self._engine = engine
+        self._schema = schema
+
+        # Load all existing tables
+        self._metadata.reflect(self._engine, schema)
+
+        # Fetch and save db versioning if present
+        prov_name = ".".join([schema, "provenance"])
+        if prov_name in self._metadata.tables:
+            prov_table = self._metadata.tables[prov_name]
+            cols = ["db_version_major", "db_version_minor", "db_version_patch"]
+            stmt=select(*[column(c) for c in cols])
+            stmt=stmt.select_from(prov_table)
+            stmt=stmt.order_by(prov_table.c.provenance_id.desc())
+            with self._engine.connect() as conn:
+                results = conn.execute(stmt)
+                conn.commit()
+            r = results.fetchone()
+            self._db_major = r[0]
+            self._db_minor = r[1]
+            self._db_patch = r[2]
+        else:
+            self._db_major = None
+            self._db_minor = None
+            self._db_patch = None
+
+    @property
+    def db_version_major(self):
+        return self._db_major
+
+    @property
+    def db_version_minor(self):
+        return self._db_minor
+
+    @property
+    def db_version_patch(self):
+        return self._db_patch
+
     def get(self, tbl):
-        if tbl not in self._table_metadata:
-            self._table_metadata[tbl] = Table(tbl, self._metadata,
-                                              autoload_with=self._engine)
-        return self._table_metadata[tbl]
+        if "." not in tbl:
+            tbl = ".".join([self._schema, tbl])
+        if tbl not in self._metadata.tables.keys():
+            try:
+                self._metadata.reflect(self._engine, only=[tbl])
+            except:
+                raise ValueError(f'No such table {tbl}')
 
-
-if __name__ == '__main__':
-    from sqlalchemy import Column, Integer, String
-    import sys
-
-    cols = []
-    cols.append(Column("primary_id", Integer, primary_key=True))
-    cols.append(Column("short_string", String(16)))
-
-    if len(sys.argv) > 1:
-        config_file = sys.argv[1]
-    else:
-        config_file = os.path.join(os.getenv('HOME'), '.config_reg_writer')
-
-    engine, dialect = create_db_engine(config_file=config_file)
-
-    if dialect != 'sqlite':
-        tab_creator = TableCreator(engine, dialect, schema='registry_jrb')
-    else:
-        tab_creator = TableCreator(engine, schema=None)
-
-    tab_creator.define_table('sillytable', cols)
-
-    tab_creator.create_all()
+        return self._metadata.tables[tbl]

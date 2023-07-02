@@ -96,7 +96,7 @@ class Query:
         # Do we need to know where the datasets actually are?  If so
         # we need a ROOT_DIR
 
-        self._metadata_getter = TableMetadata(self._schema_version, db_engine)
+        self._metadata = TableMetadata(self._schema_version, db_engine)
 
         # Get table definitions
         self._table_list = ["dataset", "execution", "dataset_alias", "dependency"]
@@ -125,15 +125,15 @@ class Query:
 
         In addition, a dict is created for each table of the database which
         stores the column names of the table, and if those columns are of an
-        orderable type. The dicts are named as self._<table_name>_columns. 
+        orderable type. The dicts are named as self._<table_name>_columns.
 
         This helps us with querying against those tables, and joining between
-        them. 
+        them.
         """
         self._tables = dict()
         for table in self._table_list:
             # Metadata from table
-            self._tables[table] = self._metadata_getter.get(table)
+            self._tables[table] = self._metadata.get(table)
 
             # Pull out column names from table.
             setattr(self, f"_{table}_columns", dict())
@@ -149,11 +149,11 @@ class Query:
         Column names can be in <column_name> or <table_name>.<column_name>
         format. If they are in <column_name> format the column name must be
         unique through all tables in the database.
-        
+
         Parameters
         ----------
         column_names : list
-            String list of database columns 
+            String list of database columns
         """
 
         tables_required = set()
@@ -238,6 +238,15 @@ class Query:
             value = f[2]
 
         return stmt.where(column_ref[0].__getattribute__(the_op)(value))
+
+    def get_db_versioning(self):
+        """
+        returns
+        -------
+        major, minor, patch      int   version numbers for db OR
+        None, None, None     in case db is too old to contain provenance table
+        """
+        return self._metadata.db_version_major, self._metadata.db_version_minor, self._metadata.db_version_patch
 
     def find_datasets(self, property_names=None, filters=[]):
         """
