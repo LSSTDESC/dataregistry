@@ -17,7 +17,7 @@ _DB_VERSION_PATCH = 0
 
 parser = argparse.ArgumentParser(description='''
 Creates dataregistry tables in specified schema and connection information (config)''', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--schema', help="name of schema to contain tables. Will be created if it doesn't already exist", default="registry_dev")
+parser.add_argument('--schema', help="name of schema to contain tables. Will be created if it doesn't already exist", default="registry_beta")
 parser.add_argument('--config', default="", help="path to config file used to establish connection")
 
 args = parser.parse_args()
