@@ -15,7 +15,7 @@ __all__ = ['Registrar']
 if os.getenv("DREGS_ROOT_DIR"):
     _DEFAULT_ROOT_DIR = os.getenv("DREGS_ROOT_DIR")
 else:
-    _DEFAULT_ROOT_DIR = '/global/cfs/cdirs/desc-co/jrbogart/dregs_root' #temporary
+    _DEFAULT_ROOT_DIR = '/global/cfs/cdirs/desc-co/registry-beta' #temporary
 
 class Registrar():
     '''
@@ -77,7 +77,7 @@ class Registrar():
         """
         Find characteristics of dataset (i.e., is it a file or directory, how
         many files and total disk space of the dataset).
-        
+
         If old_location is not None, copy the dataset into the data registry.
 
         Parameters
@@ -99,7 +99,7 @@ class Registrar():
         total_size : float
             Total disk space of dataset in bytes
         """
-        
+
         # Get destination directory in data registry.
         dest =  _form_dataset_path(self._owner_type, self._owner,
                                    relative_path, self._root_dir)
@@ -248,13 +248,13 @@ class Registrar():
         old_location : str, optional
             Absolute location of dataset to copy.
 
-            If None dataset should already be at correct relative_path. 
+            If None dataset should already be at correct relative_path.
         copy : bool, optional
             If true copy data from ``old_location`` to the database.
             If False create a symlink (defaults to True).
         is_dummy : bool
             True for "dummy" datasets (no data is copied, for testing purposes
-            only) 
+            only)
         verbose : bool
             Provide some additional output information
 

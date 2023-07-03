@@ -11,7 +11,7 @@ from collections import namedtuple
 '''
 Low-level utility routines and classes for accessing the registry
 '''
-SCHEMA_VERSION = 'registry_dev'
+SCHEMA_VERSION = 'registry_beta'
 
 __all__ = ['create_db_engine', 'add_table_row', 'TableCreator',
            'TableMetadata', 'SCHEMA_VERSION', 'ownertypeenum', 'dataorgenum']
