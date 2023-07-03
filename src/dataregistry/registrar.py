@@ -15,14 +15,36 @@ __all__ = ['Registrar']
 if os.getenv("DREGS_ROOT_DIR"):
     _DEFAULT_ROOT_DIR = os.getenv("DREGS_ROOT_DIR")
 else:
-    _DEFAULT_ROOT_DIR = '/global/cfs/cdirs/desc-co/registry-beta' #temporary
+    _DEFAULT_ROOT_DIR = "/global/cfs/cdirs/desc-co/registry-beta" #temporary
 
 class Registrar():
     '''
     Register new datasets, executions ("runs") or alias names
+
     '''
     def __init__(self, db_engine, dialect, owner_type, owner=None,
                  schema_version=SCHEMA_VERSION):
+        '''
+        Create a new Registrar object. Note this call should be preceded
+        by a call to create_db_engine, which will return values for
+        db_engine and dialect.
+
+        Parameters
+        ----------
+        db_engine :   sqlalchemy engine object
+        dialect : str
+            identifies target db type (e.g. "postgresql")
+        owner_type : owenertypeenum
+            which of the allowed categories will be destination for
+            new dataset entries
+        owner : str
+            Forms part of relative path of dataset location.
+            Always "production" for production databases.
+            Otherwise defaults to "."
+        schema_version : str
+            Which database schema to connect to.
+            Current default is 'registry_beta'
+        '''
         self._engine = db_engine
         self._dialect = dialect
         self._owner_type = owner_type.value
@@ -219,6 +241,10 @@ class Registrar():
         relative_path : str
             Destination for the dataset within the data registry. Path is
             relative to ``<registry root>/<owner_type>/<owner>``.
+            If the environment variable DREGS_ROOT is defined, this
+            value is used for ``<registry root>``.
+            Otherwise currently ``<registry root>`` defaults to
+            /global/cfs/cdirs/desc-co/registry-beta
         version : str
             Semantic version string of the format MAJOR.MINOR.PATCH *or*
             a special flag "patch", "minor" or "major".

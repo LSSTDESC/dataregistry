@@ -86,6 +86,20 @@ class Query:
     """
 
     def __init__(self, db_engine, dialect, schema_version=SCHEMA_VERSION):
+        '''
+        Create a new Query object. Note this call should be preceded
+        by a call to create_db_engine, which will return values for
+        db_engine and dialect
+
+        Parameters
+        ----------
+        db_engine :   sqlalchemy engine object
+        dialect : str
+            identifies target db type (e.g. 'postgresql')
+        schema_version : str
+            Which database schema to connect to.
+            Current default is 'registry_beta'
+        '''
         self._engine = db_engine
         self._dialect = dialect
         if dialect == "sqlite":
