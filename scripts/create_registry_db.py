@@ -5,7 +5,7 @@ import argparse
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Index, Float
 from sqlalchemy import ForeignKey, UniqueConstraint, Enum
-from dataregistry.db_basic import create_db_engine, TableCreator, ownertypeenum, dataorgenum, add_table_row
+from dataregistry.db_basic import create_db_engine, TableCreator, ownertypeenum, dataorgenum, add_table_row, SCHEMA_VERSION
 from dataregistry.git_util import get_git_info
 from dataregistry import __version__
 
@@ -17,7 +17,7 @@ _DB_VERSION_PATCH = 0
 
 parser = argparse.ArgumentParser(description='''
 Creates dataregistry tables in specified schema and connection information (config)''', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--schema', help="name of schema to contain tables. Will be created if it doesn't already exist", default="registry_beta")
+parser.add_argument('--schema', help="name of schema to contain tables. Will be created if it doesn't already exist", default=f"{SCHEMA_VERSION}")
 parser.add_argument('--config', default="", help="path to config file used to establish connection")
 
 args = parser.parse_args()
