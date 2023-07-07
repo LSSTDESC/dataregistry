@@ -1,10 +1,12 @@
 Standalone datasets
 ===================
 
-Here are some quick example's of how to enter standalone datasets into the DESC
+Here are some quick examples of how to enter standalone datasets into the DESC
 data registry. By standalone we mean the data does not form part of a larger
-pipeline (i.e., has no dependencies), for pipeline datasets see the next
-section.
+pipeline (i.e., has no dependencies); for pipeline datasets see the next
+section. In all cases we assume the variable ``DREGS_CONFIG`` has been
+set to the path to the DREGS config file as described on
+the :ref:`Installation page <installation>`.
 
 Registering a dataset
 ---------------------

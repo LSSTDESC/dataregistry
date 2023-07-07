@@ -1,6 +1,24 @@
+.. _installation:
+
 Installation
 ============
 
+Caveats
+-------
+
+- Currently the DESC data registry software can only be used at NERSC.
+- One of the dependencies (psycopg2) cannot be installed easily with pip.
+
+Therefore, if psycopg2 is not already in your environment, before doing the
+pip install step below, use conda to install it, e.g.
+
+.. code-block:: bash
+
+   conda create -p ./dregs_env psycopg2
+
+
+Main installation steps
+-----------------------
 To install the DESC data registry software first clone the GitHub repository
 
 .. code-block:: bash
@@ -21,8 +39,8 @@ registry database. This is done via a YAML configuration file which stores the
 connection information to the database, and a ``.pgpass`` file, which stores
 user credentials.
 
-First, make a file named ``~/.config_reg_reader`` in your ``$HOME`` directory
-containing the entry
+First, make a file, (the *DREGS config file*), say
+``~/.config_reg_access``, in your ``$HOME`` directory containing the entry
 
 .. code-block:: yaml
 
@@ -37,7 +55,8 @@ Then (if you don't have one already), create a file named ``~/.pgpass`` in your
    data-registry-dev-loadbalancer.jrbtest.development.svc.spin.nersc.org:5432:desc_data_registry:reg_reader:<password>
 
 where ``<password>`` is provided on demand by the DESC data registry admins. As
-a final step, the ``.pgpass`` file must only be readable by you, i.e.,
+a final step, the ``.pgpass`` file must only be readable by you, which you
+can ensure by doing
 
 .. code-block:: bash
 
