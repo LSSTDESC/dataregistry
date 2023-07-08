@@ -1,10 +1,11 @@
 Standalone datasets
 ===================
 
-Here are some quick example's of how to enter standalone datasets into the DESC
+Here are some quick examples of how to enter standalone datasets into the DESC
 data registry. By standalone we mean the data does not form part of a larger
-pipeline (i.e., has no dependencies), for pipeline datasets see the next
-section.
+pipeline (i.e., has no dependencies); for pipeline datasets see the next
+section. In all cases we assume the variable ``DREGS_CONFIG`` has been set to
+the path described on the :ref:`Installation page <installation>`.
 
 Registering a dataset
 ---------------------
@@ -17,34 +18,37 @@ could be part of a standalone script to enter data (though the CLI might be
 more practical in this case, see below), or as an extension of your code.
 
 To register a dataset use the ``Registrar`` class from the ``dataregistry``
-package (full documentation here). For example:
+package (full documentation :ref:`here <registrar_class>`). For example:
 
 .. code-block:: python
 
    from dataregistry.db_basic import SCHEMA_VERSION, create_db_engine, ownertypeenum
    from dataregistry.registrar import Registrar
-
+   import os
+   
    # Establish connection to database
+   DREGS_CONFIG = os.path.join(os.getenv("HOME"), ".config_reg_access")
    engine, dialect = create_db_engine(config_file=DREGS_CONFIG)
-
+   
    registrar = Registrar(
        engine, dialect, ownertypeenum.user, owner="user", schema_version=SCHEMA_VERSION
    )
-
+   
    # Add new entry.
    new_id = registrar.register_dataset(
-       relpath,
-       version,
-       version_suffix=version_suffix,
-       name=name,
-       creation_date=creation_data,
-       description=description,
-       old_location=old_location,
-       copy=(not make_sym_link),
-       is_dummy=is_dummy,
-       execution_id=execution_id,
-       verbose=True,
+       "my_desc_project/my_desc_dataset",
+       "1.0.0",
+       description="An output from some DESC code",
+       old_location="/path/at/nersc/to/the/dataset/",
    )
+
+In this case we have copied the contents of the
+``/path/at/nersc/to/the/dataset/`` directory at NERSC and registered it under
+``my_desc_project/my_desc_dataset`` in our ``user`` space within the data
+registry.
+
+``new_id`` will store the data registry ID for this dataset, if you need to
+link it to a execution later, for example.
 
 Using the `DREGS` CLI
 ~~~~~~~~~~~~~~~~~~~~~
@@ -108,19 +112,32 @@ Querying the data registry
 Currently, the only way to query the DESC data registry is via the
 ``dataregistry`` package.
 
+For example, say I want to query for the `my_paper_dataset` we entered above
+using the CLI.
+
 .. code-block:: python
 
    from dataregistry.query import Query, Filter
    from dataregistry.db_basic import create_db_engine, ownertypeenum, SCHEMA_VERSION
-
+   import os
+   
    # Establish connection to database
+   DREGS_CONFIG = os.path.join(os.getenv("HOME"), ".config_reg_access")
    engine, dialect = create_db_engine(config_file=DREGS_CONFIG)
-
+   
    # Create query object
    q = Query(engine, dialect, schema_version=SCHEMA_VERSION)
-
+   
    # Query 1: Query dataset name
-   f = Filter('dataset.name', '==', 'DESC dataset 1')
-   results = q.find_datasets(['dataset.dataset_id', 'dataset.name'], [f])
+   f = Filter('dataset.name', '==', 'my_paper_dataset')
+   results = q.find_datasets(['dataset.dataset_id', 'dataset.name', 'dataset.relative_path'], [f])
 
+Which would return a SQL Alchemy results object containing our results. In our case this should be two entries, from the two versions of the dataset we entered above.
+
+We could print the results to check using.
+
+.. code-block:: python
+
+   for r in results:
+       print(r)
 

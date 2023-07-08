@@ -5,6 +5,8 @@ Reference documentation for the most commonly used functions in the
 ``dataregistry`` package.  Demonstrations of their usage can be found in the
 examples section.
 
+.. _registrar_class:
+
 The Registrar class
 -------------------
 
