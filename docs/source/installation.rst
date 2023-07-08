@@ -44,7 +44,7 @@ First, make a file, (the *DREGS config file*), say
 
 .. code-block:: yaml
 
-   sqlalchemy.url : postgresql://reg_reader@data-registry-dev-loadbalancer.jrb-test.development.svc.spin.nersc.org:5432/desc_data_registry
+   sqlalchemy.url : postgresql://reg_writer@data-registry-dev-loadbalancer.jrb-test.development.svc.spin.nersc.org:5432/desc_data_registry
 
 Then (if you don't have one already), create a file named ``~/.pgpass`` in your
 ``$HOME`` directory, and append the entry
@@ -52,7 +52,7 @@ Then (if you don't have one already), create a file named ``~/.pgpass`` in your
 .. code-block:: bash
 
    # data registry db
-   data-registry-dev-loadbalancer.jrbtest.development.svc.spin.nersc.org:5432:desc_data_registry:reg_reader:<password>
+   data-registry-dev-loadbalancer.jrb-test.development.svc.spin.nersc.org:5432:desc_data_registry:reg_writer:<password>
 
 where ``<password>`` is provided on demand by the DESC data registry admins. As
 a final step, the ``.pgpass`` file must only be readable by you, which you
