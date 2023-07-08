@@ -3,23 +3,33 @@
 Installation
 ============
 
-Caveats
--------
-
-- Currently the DESC data registry software can only be used at NERSC.
-- One of the dependencies (psycopg2) cannot be installed easily with pip.
-
-Therefore, if psycopg2 is not already in your environment, before doing the
-pip install step below, use conda to install it, e.g.
-
-.. code-block:: bash
-
-   conda create -p ./dregs_env psycopg2
-
+Currently the DESC data registry software can only be used at NERSC (i.e.,
+PerlMutter).
 
 Main installation steps
 -----------------------
-To install the DESC data registry software first clone the GitHub repository
+
+Some of the libraries needed (``libpq-dev`` for the ``psycopg2`` package) are
+not natively available at NERSC, meaning the data registry cannot be easily
+installed standalone with *pip*.
+
+Thus we need to work within a *conda* environment. If you do not have a *conda*
+environment already at NERSC, you can make a new one via 
+
+.. code-block:: bash
+
+   module load conda/Mambaforge-22.11.1-4
+   conda create -p ./dregs_env psycopg2
+
+where ``./dregs_env`` is the path where the environment will be installed
+(change this as required). To activate the environment do
+
+.. code-block:: bash
+
+   conda activate <path to your env>
+
+Now we can install the DESC data registry software. First clone the GitHub
+repository
 
 .. code-block:: bash
 
@@ -31,6 +41,15 @@ then, navigate to the ``dataregistry`` directory and install via *pip* using
 
    python3 -m pip install .
 
+You can test to see if the ``dataregistry`` package installed successfully by
+typing
+
+.. code-block:: bash
+
+   python3 -c "import dataregistry; print(dataregistry.__version__)"
+
+and seeing the current package version printed to the console.
+
 Authenticating with the database
 --------------------------------
 
@@ -39,8 +58,8 @@ registry database. This is done via a YAML configuration file which stores the
 connection information to the database, and a ``.pgpass`` file, which stores
 user credentials.
 
-First, make a file, (the *DREGS config file*), say
-``~/.config_reg_access``, in your ``$HOME`` directory containing the entry
+First make a *DREGS config file*, say ``~/.config_reg_access``, in your
+``$HOME`` directory containing the entry
 
 .. code-block:: yaml
 
