@@ -32,7 +32,7 @@ def _get_dregs_config(config_file=None):
     if config_file is not None:
         return config_file
     # Case where the env variable is set
-    elif os.getenv("DREGS_CONFG"):
+    elif os.getenv("DREGS_CONFIG"):
         return os.getenv("DREGS_CONFIG")
     # Finally check default location in $HOME
     elif os.path.isfile(_default_loc):
