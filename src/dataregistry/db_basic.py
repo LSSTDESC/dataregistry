@@ -16,10 +16,34 @@ SCHEMA_VERSION = 'registry_beta'
 __all__ = ['create_db_engine', 'add_table_row', 'TableCreator',
            'TableMetadata', 'SCHEMA_VERSION', 'ownertypeenum', 'dataorgenum']
 
-def create_db_engine(config_file):
+def _get_dregs_config(config_file=None):
+    """
+    Automatically locate the DREGS config file.
+
+    Parameters
+    ----------
+    config_file : str
+        Manually set the location of the config file
+    """
+
+    _default_loc = os.path.join(os.getenv('HOME'), '.config_reg_access')
+
+    # Case where the user has manually specified the location
+    if config_file is not None:
+        return config_file
+    # Case where the env variable is set
+    elif os.getenv("DREGS_CONFG"):
+        return os.getenv("DREGS_CONFIG")
+    # Finally check default location in $HOME
+    elif os.path.isfile(_default_loc):
+        return default_loc
+    else:
+        raise ValueError("Unable to located DREGS config file")
+
+def create_db_engine(config_file=None):
     # Ideally config_file does not contain password, but if it does
     # it should be accessible to owner only
-    with open(config_file) as f:
+    with open(_get_dregs_config(config_file)) as f:
         connection_parameters = yaml.safe_load(f)
         driver = make_url(connection_parameters['sqlalchemy.url']).drivername
         dialect = driver.split('+')[0]

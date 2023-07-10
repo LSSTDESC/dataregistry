@@ -10,14 +10,8 @@ _lookup = {
     "user": ownertypeenum.user,
 }
 
-# Locate dataregistry configuration file.
-if os.getenv("DREGS_CONFIG") is None:
-    raise Exception("Need to set DREGS_CONFIG env variable")
-else:
-    DREGS_CONFIG = os.getenv("DREGS_CONFIG")
-
 # Establish connection to database
-engine, dialect = create_db_engine(config_file=DREGS_CONFIG)
+engine, dialect = create_db_engine()
 
 
 def _insert_alias_entry(name, dataset_id, owner_type, owner):
