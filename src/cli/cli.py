@@ -3,12 +3,22 @@ import sys
 import argparse
 from dataregistry.db_basic import SCHEMA_VERSION
 from .register import register_dataset
+from .query import dregs_ls
 
 parser = argparse.ArgumentParser(
     description="The DREGS CLI interface",
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
 )
 subparsers = parser.add_subparsers(title="subcommand", dest="subcommand")
+
+# List your entries in the database
+arg_ls = subparsers.add_parser("ls", help="List DREGS entries")
+
+arg_ls.add_argument("--user", help="List datasets for a given user",
+        default=os.getenv("USER"))
+arg_ls.add_argument(
+    "--config_file", help="Location of DREGS config file", type=str
+)
 
 # Register a new database entry.
 arg_register = subparsers.add_parser("register", help="Register a new entry to the database")
@@ -117,3 +127,7 @@ def main():
     if args.subcommand == "register":
         if args.register_type == "dataset":
             register_dataset(args)
+
+    # Query database entries
+    elif args.subcommand == "ls":
+        dregs_ls(args.user, args.config_file)
