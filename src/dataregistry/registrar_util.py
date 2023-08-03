@@ -4,20 +4,35 @@ from sqlalchemy import MetaData, Table, Column, text, select
 
 from dataregistry.db_basic import ownertypeenum
 
-__all__ = ["_parse_version_string", "_bump_version", "_form_dataset_path",
-           "get_directory_info", "_name_from_relpath"]
+__all__ = [
+    "_parse_version_string",
+    "_bump_version",
+    "_form_dataset_path",
+    "get_directory_info",
+    "_name_from_relpath",
+]
 VERSION_SEPARATOR = "."
 _nonneg_int_re = "0|[1-9][0-9]*"
 
-def _parse_version_string(version, with_suffix=False):
-    '''
-    Return dict with keys major, minor, patch and (if present) suffix.
-    Fields are returned as strings.
-    with_suffix == False means version string *must not* include suffix
-    with_suffix == True means it *may* have a suffix
 
-    Returns a dict with keys "major", "minor", "patch" and optionally "suffix"
-    '''
+def _parse_version_string(version, with_suffix=False):
+    """
+    Parase a version string into its components.
+
+    Parameters
+    ----------
+    version : str
+        Version string
+    with_suffix : bool
+        False means version string *must not* include suffix
+        True means it *may* have a suffix
+
+    Returns
+    -------
+    d : dict
+        Dict with keys "major", "minor", "patch" and optionally "suffix"
+    """
+
     cmp = version.split(VERSION_SEPARATOR)
     if not with_suffix:
         if len(cmp) != 3:
@@ -28,7 +43,7 @@ def _parse_version_string(version, with_suffix=False):
     for c in cmp[0:3]:
         if not re.fullmatch(_nonneg_int_re, c):
             raise ValueError(f"Version component {c} is not non-negative int")
-    d = {"major" : cmp[0]}
+    d = {"major": cmp[0]}
     d["minor"] = cmp[1]
     d["patch"] = cmp[2]
 
@@ -37,25 +52,37 @@ def _parse_version_string(version, with_suffix=False):
 
     return d
 
-## Alternatively, make this a method in a class so that the top-level
-## root dir can be stored
+
 def _form_dataset_path(owner_type, owner, relative_path, root_dir=None):
-    '''
-    Return full absolute path if root_dir is specified, else path relative
-    to the site-specific root
+    """
+    Construct full (or relative) path to dataset in the data registry.
+
+    Path will have the format:
+        <root_dir>/<owner_type>/<owner>/<relative_path>
+
     Parameters
     ----------
-    owner_type      of type ownertypeenum
-    owner           string
-    relative_path   string
-    root_dir        string
-    '''
+    owner_type : ownertypeenum
+        Type of dataset
+    owner : str
+        Owner of dataset
+    relative_path : str
+        Relative path within the data registry
+    root_dir : str
+        Root directory of data registry
+
+    Returns
+    -------
+    to_return : str
+        Full path of dataset in the data registry
+    """
     if owner_type == "production":
         owner = "production"
     to_return = os.path.join(owner_type, owner, relative_path)
     if root_dir:
         to_return = os.path.join(root_dir, to_return)
     return to_return
+
 
 def get_directory_info(path):
     """
@@ -88,19 +115,40 @@ def get_directory_info(path):
                 total_size += subdir_total_size
     return num_files, total_size
 
+
 def _bump_version(name, v_string, v_suffix, dataset_table, engine):
-    '''
-    Utility to figure out what new version fields should be if caller
-    to register supplies a special version string
-    '''
-    stmt = select(dataset_table.c["version_major","version_minor",
-                                  "version_patch"])\
-                                  .where(dataset_table.c.name == name)
+    """
+    Bump version of dataset automatically if user has supplied a special
+    version string during register.
+
+    Parameters
+    ----------
+    name : str
+        Name of the dataset
+    v_string : str
+        Special version string "major", "minor", "patch"
+    version_suffix : str
+        Dataset version suffix
+    dataset_table : SQLAlchemy Table object
+    engine : SQLAlchemy Engine object
+
+    Returns
+    -------
+    v_fields : dict
+        Updated version dict with keys "major", "minor", "patch"
+    """
+
+    # Find the previous dataset based on the name and version suffix
+    stmt = select(
+        dataset_table.c["version_major", "version_minor", "version_patch"]
+    ).where(dataset_table.c.name == name)
     if v_suffix:
         stmt = stmt.where(dataset_table.c.version_suffix == v_suffix)
-        stmt = stmt.order_by(dataset_table.c.version_major.desc())\
-                   .order_by(dataset_table.c.version_minor.desc())\
-                   .order_by(dataset_table.c.version_patch.desc())
+        stmt = (
+            stmt.order_by(dataset_table.c.version_major.desc())
+            .order_by(dataset_table.c.version_minor.desc())
+            .order_by(dataset_table.c.version_patch.desc())
+        )
     with engine.connect() as conn:
         result = conn.execute(stmt)
         conn.commit()
@@ -113,10 +161,12 @@ def _bump_version(name, v_string, v_suffix, dataset_table, engine):
             old_major = int(r[0])
             old_minor = int(r[1])
             old_patch = int(r[2])
-    v_fields = {"major" : old_major, "minor" : old_minor, "patch" : old_patch}
+
+    # Add 1 to the relative version part.
+    v_fields = {"major": old_major, "minor": old_minor, "patch": old_patch}
     v_fields[v_string] = v_fields[v_string] + 1
 
-    # reset fields as needed
+    # Reset fields as needed
     if v_string == "minor":
         v_fields["patch"] = 0
     if v_string == "major":
@@ -125,7 +175,27 @@ def _bump_version(name, v_string, v_suffix, dataset_table, engine):
 
     return v_fields
 
+
 def _name_from_relpath(relative_path):
+    """
+    Scrape the dataset name from the relative path.
+
+    We use this when the dataset name is not explicitly defined, and we take it
+    from the final directory if path.
+
+	e.g, /root/to/dataset/dir would return "dir"
+
+	Parameters
+	----------
+	relative_path : str
+		Path to dataset (can be relative or absolute)
+
+	Returns
+	-------
+	name : str
+		Scraped name of dataset
+    """
+
     relpath = relative_path
     if relative_path.endswith("/"):
         relpath = relative_path[:-1]
