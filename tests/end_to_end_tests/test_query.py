@@ -3,14 +3,8 @@ import os
 from dataregistry.db_basic import SCHEMA_VERSION, create_db_engine
 from dataregistry.query import Filter, Query
 
-# Load data registry configuration
-if os.getenv("DREGS_CONFIG") is None:
-    raise Exception("Need to set DREGS_CONFIG env variable")
-else:
-    DREGS_CONFIG = os.getenv("DREGS_CONFIG")
-
 # Establish connection to database
-engine, dialect = create_db_engine(config_file=DREGS_CONFIG)
+engine, dialect = create_db_engine()
 
 # Create query object
 q = Query(engine, dialect, schema_version=SCHEMA_VERSION)

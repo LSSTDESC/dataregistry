@@ -18,15 +18,12 @@ _DB_VERSION_PATCH = 0
 parser = argparse.ArgumentParser(description='''
 Creates dataregistry tables in specified schema and connection information (config)''', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--schema', help="name of schema to contain tables. Will be created if it doesn't already exist", default=f"{SCHEMA_VERSION}")
-parser.add_argument('--config', default="", help="path to config file used to establish connection")
+parser.add_argument('--config', help="Path to the DREGS config file")
 
 args = parser.parse_args()
 schema = args.schema
-config = args.config
-if config == "":
-    config = os.path.join(os.getenv('HOME'), '.config_reg_writer')
 
-engine, dialect = create_db_engine(config_file=config)
+engine, dialect = create_db_engine(config_file=args.config)
 if dialect == 'sqlite':
     schema = None
 

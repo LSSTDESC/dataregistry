@@ -10,14 +10,8 @@ _lookup = {
     "user": ownertypeenum.user,
 }
 
-# Locate dataregistry configuration file.
-if os.getenv("DREGS_CONFIG") is None:
-    raise Exception("Need to set DREGS_CONFIG env variable")
-else:
-    DREGS_CONFIG = os.getenv("DREGS_CONFIG")
-
 # Establish connection to database
-engine, dialect = create_db_engine(config_file=DREGS_CONFIG)
+engine, dialect = create_db_engine()
 
 
 def _insert_alias_entry(name, dataset_id, owner_type, owner):
@@ -371,7 +365,7 @@ _insert_dataset_entry(
     None,
     "This is my second DESC dataset with real files",
     is_dummy=False,
-    old_location="../ci/",
+    old_location="../end_to_end_tests/",
 )
 
 # Test set 10
@@ -380,7 +374,7 @@ _insert_dataset_entry(
     "dummy_file1.txt",
     "0.0.1",
     "user",
-    "ci",
+    "end_to_end_tests",
     "This is my first DESC dataset with real files already on location",
     is_dummy=False,
     old_location=None,
@@ -390,7 +384,7 @@ _insert_dataset_entry(
     "dummy_dir",
     "0.0.1",
     "user",
-    "ci",
+    "end_to_end_tests",
     "This is my second DESC dataset with real files already on location",
     is_dummy=False,
     old_location=None,

@@ -8,34 +8,6 @@ _lookup = {
     "user": ownertypeenum.user,
 }
 
-
-def _get_config_file(config_file):
-    """
-    Get configuration file to connect to database.
-
-    If not passed manually, use default location.
-
-    Parameters
-    ----------
-    config_file : str
-    
-    Returns
-    -------
-    - : str
-        Path to config file
-    """
-
-    # Case where config file is manually passed
-    if config_file:
-        return config_file
-    # Case where config file is stored an env variable
-    elif os.getenv("DREGS_CONFIG") is not None:
-        return os.getenv("DREGS_CONFIG")
-    # Default location
-    else:
-        return os.path.join(os.getenv("HOME"), ".config_reg_writer")
-
-
 def register_dataset(args):
     """
     Register a dataset in the DESC data registry.
@@ -46,7 +18,7 @@ def register_dataset(args):
     """
 
     # Connect to database.
-    engine, dialect = create_db_engine(config_file=_get_config_file(args.config_file))
+    engine, dialect = create_db_engine(config_file=args.config_file)
 
     # Select schema
     if args.schema_version:

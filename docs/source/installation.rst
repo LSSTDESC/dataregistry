@@ -58,8 +58,9 @@ registry database. This is done via a YAML configuration file which stores the
 connection information to the database, and a ``.pgpass`` file, which stores
 user credentials.
 
-First make a *DREGS config file*, say ``~/.config_reg_access``, in your
-``$HOME`` directory containing the entry
+First make a *DREGS config file*, we recommend a file named
+``~/.config_reg_access`` stored in your ``$HOME`` directory, containing the
+entry
 
 .. code-block:: yaml
 
@@ -80,3 +81,11 @@ can ensure by doing
 .. code-block:: bash
 
    chmod 600 .pgpass
+
+.. note::
+
+   If for some reason you need the *DREGS config file* to be in another
+   location, you can let DREGS know about it by setting a ``DREGS_CONFIG``
+   environment variable with the full path of the config file. If neither of
+   these options are possible, there is always the option to manually specify
+   where the configuration file is during runtime.
