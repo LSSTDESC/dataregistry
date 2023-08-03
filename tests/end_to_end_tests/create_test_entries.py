@@ -365,7 +365,7 @@ _insert_dataset_entry(
     None,
     "This is my second DESC dataset with real files",
     is_dummy=False,
-    old_location="../ci/",
+    old_location="../end_to_end_tests/",
 )
 
 # Test set 10
@@ -374,7 +374,7 @@ _insert_dataset_entry(
     "dummy_file1.txt",
     "0.0.1",
     "user",
-    "ci",
+    "end_to_end_tests",
     "This is my first DESC dataset with real files already on location",
     is_dummy=False,
     old_location=None,
@@ -384,7 +384,7 @@ _insert_dataset_entry(
     "dummy_dir",
     "0.0.1",
     "user",
-    "ci",
+    "end_to_end_tests",
     "This is my second DESC dataset with real files already on location",
     is_dummy=False,
     old_location=None,
