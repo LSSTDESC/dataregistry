@@ -67,10 +67,7 @@ jobs:
       # Run CI tests
       - name: Run CI tests
         run: |
-          cd tests/unit_tests
-          
-          # Run some test queries
-          pytest -v -s test_connection.py
+          pytest -v -s tests/unit_tests
 
   end-to-end-tests:
     runs-on: ubuntu-latest

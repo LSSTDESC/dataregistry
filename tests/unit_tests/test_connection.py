@@ -9,7 +9,7 @@ def test_connect_manual():
     )
     assert engine is not None
     assert dialect is not None
-
+    print(engine, dialect)
 
 def test_connect_env():
     """Test connection to database with DREGS_CONFIG env set"""

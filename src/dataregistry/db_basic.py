@@ -26,7 +26,7 @@ __all__ = [
 
 def _get_dregs_config(config_file=None, verbose=False):
     """
-    Automatically locate the DREGS config file.
+    Located the DREGS configuration file.
 
     The code will check three scenarios, which are, in order of priority:
         - The config_file has been manually passed
@@ -38,6 +38,11 @@ def _get_dregs_config(config_file=None, verbose=False):
     config_file : str
         Manually set the location of the config file
     verbose : bool
+
+    Returns
+    -------
+    config_file : str
+        Path to DREGS configuration file
     """
 
     _default_loc = os.path.join(os.getenv("HOME"), ".config_reg_access")
@@ -67,12 +72,29 @@ def _get_dregs_config(config_file=None, verbose=False):
 
 
 def create_db_engine(config_file=None, verbose=False):
-    # Ideally config_file does not contain password, but if it does
-    # it should be accessible to owner only
+    """
+    Establish connection to the DREGS database
+
+    Parameters
+    ----------
+    config_file : str
+        Path to DREGS configuration file, contains connection details
+    verbose : bool
+
+    Returns
+    -------
+    - : SQLAlchemy Engine object
+        Connection to the database
+    dialect : str
+        Dialect of database, default postgres
+    """
+
+    # Extract connection info from configuration file
     with open(_get_dregs_config(config_file, verbose)) as f:
         connection_parameters = yaml.safe_load(f)
-        driver = make_url(connection_parameters["sqlalchemy.url"]).drivername
-        dialect = driver.split("+")[0]
+    
+    driver = make_url(connection_parameters["sqlalchemy.url"]).drivername
+    dialect = driver.split("+")[0]
 
     return engine_from_config(connection_parameters), dialect
 
