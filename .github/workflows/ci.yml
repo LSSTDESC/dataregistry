@@ -62,7 +62,7 @@ jobs:
       # Create schema
       - name: Create data registry schema
         run: |
-          python scripts/create_registry_db.py --config $DREGS_CONFIG
+          python scripts/create_registry_db.py --config $HOME/.config_reg_access
 
       # Run CI tests
       - name: Run CI tests
