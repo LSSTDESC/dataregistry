@@ -2,50 +2,126 @@ from sqlalchemy import engine_from_config
 from sqlalchemy.engine import make_url
 import enum
 from sqlalchemy import MetaData, Table, Enum, Column
-from sqlalchemy import  column, text, insert, select
+from sqlalchemy import column, text, insert, select
 from sqlalchemy.exc import DBAPIError, IntegrityError
 import yaml
 import os
 from collections import namedtuple
 
-'''
+"""
 Low-level utility routines and classes for accessing the registry
-'''
-SCHEMA_VERSION = 'registry_beta'
+"""
+SCHEMA_VERSION = "registry_beta"
 
-__all__ = ['create_db_engine', 'add_table_row', 'TableCreator',
-           'TableMetadata', 'SCHEMA_VERSION', 'ownertypeenum', 'dataorgenum']
+__all__ = [
+    "create_db_engine",
+    "add_table_row",
+    "TableCreator",
+    "TableMetadata",
+    "SCHEMA_VERSION",
+    "ownertypeenum",
+    "dataorgenum",
+]
 
-def create_db_engine(config_file):
-    # Ideally config_file does not contain password, but if it does
-    # it should be accessible to owner only
-    with open(config_file) as f:
+
+def _get_dregs_config(config_file=None, verbose=False):
+    """
+    Located the DREGS configuration file.
+
+    The code will check three scenarios, which are, in order of priority:
+        - The config_file has been manually passed
+        - The DREGS_CONFIG env variable has been set
+        - The default location (the .config_reg_access file in HOME)
+
+    Parameters
+    ----------
+    config_file : str
+        Manually set the location of the config file
+    verbose : bool
+
+    Returns
+    -------
+    config_file : str
+        Path to DREGS configuration file
+    """
+
+    _default_loc = os.path.join(os.getenv("HOME"), ".config_reg_access")
+
+    # Case where the user has manually specified the location
+    if config_file is not None:
+        if verbose:
+            print(f"Using manually passed DREGS config file ({config_file})")
+        return config_file
+
+    # Case where the env variable is set
+    elif os.getenv("DREGS_CONFIG"):
+        if verbose:
+            print(
+                f"Using DREGS_CONFIG env for DREGS config file",
+                f"({os.getenv('DREGS_CONFIG')})",
+            )
+        return os.getenv("DREGS_CONFIG")
+
+    # Finally check default location in $HOME
+    elif os.path.isfile(_default_loc):
+        if verbose:
+            print("Using default location for DREGS config file", f"({_default_loc})")
+        return _default_loc
+    else:
+        raise ValueError("Unable to located DREGS config file")
+
+
+def create_db_engine(config_file=None, verbose=False):
+    """
+    Establish connection to the DREGS database
+
+    Parameters
+    ----------
+    config_file : str
+        Path to DREGS configuration file, contains connection details
+    verbose : bool
+
+    Returns
+    -------
+    - : SQLAlchemy Engine object
+        Connection to the database
+    dialect : str
+        Dialect of database, default postgres
+    """
+
+    # Extract connection info from configuration file
+    with open(_get_dregs_config(config_file, verbose)) as f:
         connection_parameters = yaml.safe_load(f)
-        driver = make_url(connection_parameters['sqlalchemy.url']).drivername
-        dialect = driver.split('+')[0]
+    
+    driver = make_url(connection_parameters["sqlalchemy.url"]).drivername
+    dialect = driver.split("+")[0]
 
-        return engine_from_config(connection_parameters), dialect
+    return engine_from_config(connection_parameters), dialect
+
 
 class ownertypeenum(enum.Enum):
     production = "production"
     group = "group"
     user = "user"
 
+
 class dataorgenum(enum.Enum):
     file = "file"
     directory = "directory"
     dummy = "dummy"
 
+
 def add_table_row(conn, table_meta, values, commit=True):
-    '''
+    """
     Generic insert, given connection, metadata for a table and
     column values to be used.
     Return primary key for new row if successful
-    '''
+    """
     result = conn.execute(insert(table_meta), [values])
     if commit:
         conn.commit()
     return result.inserted_primary_key[0]
+
 
 class TableCreator:
     def __init__(self, engine, dialect, schema=SCHEMA_VERSION):
@@ -55,7 +131,7 @@ class TableCreator:
         self._metadata = MetaData(schema=schema)
 
     def define_table(self, name, columns, constraints=[]):
-        '''
+        """
         Usual case: caller wants to create a collection of tables all at once
         so just stash definition in MetaData object.
 
@@ -68,7 +144,7 @@ class TableCreator:
                     User may instantiate immediately with
                     sqlalchemy.Table.create  method
 
-        '''
+        """
         tbl = Table(name, self._metadata, *columns)
         for c in constraints:
             tbl.append_constraint(c)
@@ -76,19 +152,19 @@ class TableCreator:
         return tbl
 
     def create_table(self, name, columns, constraints=None):
-        ''' Define and instantiate a single table '''
+        """ Define and instantiate a single table """
 
         tbl = define_table(self, name, columns, constraints)
         tbl.create(self._engine)
 
     def create_all(self):
-        '''
+        """
         Instantiate all tables defined so far which don't already exist
-        '''
+        """
         self.create_schema()
         self._metadata.create_all(self._engine)
         try:
-            self.grant_reader_access('reg_reader')
+            self.grant_reader_access("reg_reader")
         except:
             print("Could not grant access to reg_reader")
 
@@ -98,35 +174,37 @@ class TableCreator:
         return self._metadata.tables[table_name]
 
     def create_schema(self):
-        if self._dialect == 'sqlite':
+        if self._dialect == "sqlite":
             return
-        stmt = f'CREATE SCHEMA IF NOT EXISTS {self._schema}'
+        stmt = f"CREATE SCHEMA IF NOT EXISTS {self._schema}"
         with self._engine.connect() as conn:
             conn.execute(text(stmt))
             conn.commit()
 
     def grant_reader_access(self, acct):
-        '''
+        """
         Grant USAGE on schema, SELECT on tables to specified account
-        '''
-        if self._dialect == 'sqlite':
+        """
+        if self._dialect == "sqlite":
             return
         # Cannot figure out how to pass value of acct using parameters,
         # so for safety do minimal checking ourselves: check that value of
         # acct has no spaces
-        if len(acct.split()) != 1 :
-            raise ValueException(f'grant_reader_access: {acct} is not a valid account')
-        usage_priv = f'GRANT USAGE ON SCHEMA {self._schema} to {acct}'
-        select_priv = f'GRANT SELECT ON ALL TABLES IN SCHEMA {self._schema} to {acct}'
+        if len(acct.split()) != 1:
+            raise ValueException(f"grant_reader_access: {acct} is not a valid account")
+        usage_priv = f"GRANT USAGE ON SCHEMA {self._schema} to {acct}"
+        select_priv = f"GRANT SELECT ON ALL TABLES IN SCHEMA {self._schema} to {acct}"
         with self._engine.connect() as conn:
             conn.execute(text(usage_priv))
             conn.execute(text(select_priv))
             conn.commit()
 
-class TableMetadata():
-    '''
+
+class TableMetadata:
+    """
     Keep and dispense table metadata
-    '''
+    """
+
     def __init__(self, schema, engine):
         self._metadata = MetaData(schema=schema)
         self._engine = engine
@@ -140,9 +218,9 @@ class TableMetadata():
         if prov_name in self._metadata.tables:
             prov_table = self._metadata.tables[prov_name]
             cols = ["db_version_major", "db_version_minor", "db_version_patch"]
-            stmt=select(*[column(c) for c in cols])
-            stmt=stmt.select_from(prov_table)
-            stmt=stmt.order_by(prov_table.c.provenance_id.desc())
+            stmt = select(*[column(c) for c in cols])
+            stmt = stmt.select_from(prov_table)
+            stmt = stmt.order_by(prov_table.c.provenance_id.desc())
             with self._engine.connect() as conn:
                 results = conn.execute(stmt)
                 conn.commit()
@@ -174,6 +252,6 @@ class TableMetadata():
             try:
                 self._metadata.reflect(self._engine, only=[tbl])
             except:
-                raise ValueError(f'No such table {tbl}')
+                raise ValueError(f"No such table {tbl}")
 
         return self._metadata.tables[tbl]

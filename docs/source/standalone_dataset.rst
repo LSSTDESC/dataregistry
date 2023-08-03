@@ -4,8 +4,15 @@ Standalone datasets
 Here are some quick examples of how to enter standalone datasets into the DESC
 data registry. By standalone we mean the data does not form part of a larger
 pipeline (i.e., has no dependencies); for pipeline datasets see the next
-section. In all cases we assume the variable ``DREGS_CONFIG`` has been set to
-the path described on the :ref:`Installation page <installation>`.
+section.
+
+In all cases we assume the DREGS configuration file is in your ``$HOME``
+directory and is named ``~/.config_reg_access``, *or*, you have set the
+environment variable ``DREGS_CONFIG`` to the full path of the DREGS
+configuration file (see the :ref:`Installation page <installation>` for more
+details). If neither of these cases are true, you will have to pass
+``config_file="/path/to/config"`` as an argument for the ``create_db_engine()``
+database connection function.
 
 Registering a dataset
 ---------------------
@@ -15,7 +22,8 @@ Using the ``dataregistry`` package
 
 One can enter datasets into the ``dataregistry`` directly via Python. This
 could be part of a standalone script to enter data (though the CLI might be
-more practical in this case, see below), or as an extension of your code.
+more practical in this case, see below), or as an extension of your Python
+code.
 
 To register a dataset use the ``Registrar`` class from the ``dataregistry``
 package (full documentation :ref:`here <registrar_class>`). For example:
@@ -27,8 +35,7 @@ package (full documentation :ref:`here <registrar_class>`). For example:
    import os
    
    # Establish connection to database
-   DREGS_CONFIG = os.path.join(os.getenv("HOME"), ".config_reg_access")
-   engine, dialect = create_db_engine(config_file=DREGS_CONFIG)
+   engine, dialect = create_db_engine()
    
    registrar = Registrar(
        engine, dialect, ownertypeenum.user, owner="user", schema_version=SCHEMA_VERSION
@@ -47,8 +54,8 @@ In this case we have copied the contents of the
 ``my_desc_project/my_desc_dataset`` in our ``user`` space within the data
 registry.
 
-``new_id`` will store the data registry ID for this dataset, if you need to
-link it to a execution later, for example.
+``new_id`` will store the data registry ID for this dataset, for example if you
+need to link it to a execution later.
 
 Using the `DREGS` CLI
 ~~~~~~~~~~~~~~~~~~~~~
@@ -122,8 +129,7 @@ using the CLI.
    import os
    
    # Establish connection to database
-   DREGS_CONFIG = os.path.join(os.getenv("HOME"), ".config_reg_access")
-   engine, dialect = create_db_engine(config_file=DREGS_CONFIG)
+   engine, dialect = create_db_engine()
    
    # Create query object
    q = Query(engine, dialect, schema_version=SCHEMA_VERSION)

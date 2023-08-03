@@ -55,10 +55,8 @@ To begin we need to get set up; importing the correct modules, referencing our
    from dataregistry.registrar import Registrar
    from dataregistry.db_basic import create_db_engine, ownertypeenum, SCHEMA_VERSION
 
-   DREGS_CONFIG = os.getenv("DREGS_CONFIG")
-
    # Establish connection to database
-   engine, dialect = create_db_engine(config_file=DREGS_CONFIG)
+   engine, dialect = create_db_engine()
 
    # Create Registrar object
    registrar = Registrar(
