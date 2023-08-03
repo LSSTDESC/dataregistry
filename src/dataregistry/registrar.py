@@ -307,9 +307,8 @@ class Registrar():
             print(f"Dataset with relative path {relative_path} exists and is not overwritable")
             return None
 
-        # deal with version string
-        special = version in ["major", "minor", "patch"]
-        if not special:
+        # Deal with version string (non-special case)
+        if version not in ["major", "minor", "patch"]:
             v_fields = _parse_version_string(version)
             version_string = version
         else:
