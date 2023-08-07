@@ -1,18 +1,32 @@
 import os
 import sys
 
-from dataregistry.db_basic import SCHEMA_VERSION, create_db_engine, ownertypeenum
-from dataregistry.registrar import Registrar
+from dataregistry import DREGS
 
-_lookup = {
-    "production": ownertypeenum.production,
-    "group": ownertypeenum.group,
-    "user": ownertypeenum.user,
-}
+_TEST_ROOT_DIR="DREGS_data"
+
+# Make root dir
+if not os.path.isdir(_TEST_ROOT_DIR):
+    os.makedirs(_TEST_ROOT_DIR)
+
+# Make a few dummy files to enter into database.
+if not os.path.isdir(os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/dummy_dir")):
+    os.makedirs(os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/dummy_dir"))
+
+if not os.path.isdir(os.path.join("dummy_dir")):
+    os.makedirs(os.path.join("dummy_dir"))
+
+with open(os.path.join("dummy_dir", "file1.txt"), "w") as f:
+    f.write("test")
+with open(os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/dummy_dir", "file1.txt"), "w") as f:
+    f.write("test")
+with open(os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/dummy_dir", "file2.txt"), "w") as f:
+    f.write("test")
+with open(os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/", "file1.txt"), "w") as f:
+    f.write("test")
 
 # Establish connection to database
-engine, dialect = create_db_engine()
-
+dregs = DREGS(root_dir=_TEST_ROOT_DIR)
 
 def _insert_alias_entry(name, dataset_id, owner_type, owner):
     """
@@ -35,12 +49,7 @@ def _insert_alias_entry(name, dataset_id, owner_type, owner):
         The alias ID for this new entry
     """
 
-    # Create Registrar object
-    registrar = Registrar(
-        engine, dialect, _lookup[owner_type], owner=owner, schema_version=SCHEMA_VERSION
-    )
-
-    new_id = registrar.register_dataset_alias(name, dataset_id,)
+    new_id = dregs.Registrar.register_dataset_alias(name, dataset_id)
 
     assert new_id is not None, "Trying to create a dataset alias that already exists"
     print(f"Created dataset alias entry with id {new_id}")
@@ -75,12 +84,7 @@ def _insert_execution_entry(
         The execution ID for this new entry
     """
 
-    # Create Registrar object
-    registrar = Registrar(
-        engine, dialect, _lookup[owner_type], owner=owner, schema_version=SCHEMA_VERSION
-    )
-
-    new_id = registrar.register_execution(
+    new_id = dregs.Registrar.register_execution(
         name,
         description=description,
         input_datasets=input_datasets,
@@ -144,16 +148,9 @@ def _insert_dataset_entry(
     is_overwritable = False
     creation_data = None
     make_sym_link = False
-    if owner is None:
-        owner = os.getenv("USER")
-
-    # Create Registrar object
-    registrar = Registrar(
-        engine, dialect, _lookup[owner_type], owner=owner, schema_version=SCHEMA_VERSION
-    )
 
     # Add new entry.
-    new_id = registrar.register_dataset(
+    new_id = dregs.Registrar.register_dataset(
         relpath,
         version,
         version_suffix=version_suffix,
@@ -165,6 +162,8 @@ def _insert_dataset_entry(
         is_dummy=is_dummy,
         execution_id=execution_id,
         verbose=True,
+        owner=owner,
+        owner_type=owner_type
     )
 
     assert new_id is not None, "Trying to create a dataset that already exists"
@@ -365,16 +364,16 @@ _insert_dataset_entry(
     None,
     "This is my second DESC dataset with real files",
     is_dummy=False,
-    old_location="../end_to_end_tests/",
+    old_location="dummy_dir",
 )
 
 # Test set 10
 # - Work with a real data already on location (i.e., old_location=None)
 _insert_dataset_entry(
-    "dummy_file1.txt",
+    "file1.txt",
     "0.0.1",
     "user",
-    "end_to_end_tests",
+    None,
     "This is my first DESC dataset with real files already on location",
     is_dummy=False,
     old_location=None,
@@ -384,7 +383,7 @@ _insert_dataset_entry(
     "dummy_dir",
     "0.0.1",
     "user",
-    "end_to_end_tests",
+    None,
     "This is my second DESC dataset with real files already on location",
     is_dummy=False,
     old_location=None,
