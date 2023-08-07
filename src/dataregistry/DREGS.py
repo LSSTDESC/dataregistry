@@ -64,15 +64,17 @@ class DREGS:
         value : -
             Comparison value
 
-        Example usage
-        -------------
-        f = gen_filter("dataset.name", "==", "my_dataset")
-        f = gen_filter("dataset.version_major", ">", 1)
-
         Returns
         -------
         - : namedtuple
             The filter tuple
+
+        Example
+        -------
+        .. code-block:: python
+        
+           f = gen_filter("dataset.name", "==", "my_dataset")
+           f = gen_filter("dataset.version_major", ">", 1)
         """
 
         return Filter(property_name, bin_op, value)

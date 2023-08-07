@@ -6,43 +6,33 @@ data registry. By standalone we mean the data does not form part of a larger
 pipeline (i.e., has no dependencies); for pipeline datasets see the next
 section.
 
-In all cases we assume the DREGS configuration file is in your ``$HOME``
-directory and is named ``~/.config_reg_access``, *or*, you have set the
-environment variable ``DREGS_CONFIG`` to the full path of the DREGS
-configuration file (see the :ref:`Installation page <installation>` for more
-details). If neither of these cases are true, you will have to pass
-``config_file="/path/to/config"`` as an argument for the ``create_db_engine()``
-database connection function.
+In all cases we assume the default DREGS configuration (see the
+:ref:`Installation page <installation>` for more details). 
 
 Registering a dataset
 ---------------------
 
+There are two ways to register a dataset within DREGS; using the
+``dataregistry`` package directly from within Python, or the `DREGS` CLI.
+
 Using the ``dataregistry`` package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-One can enter datasets into the ``dataregistry`` directly via Python. This
-could be part of a standalone script to enter data (though the CLI might be
-more practical in this case, see below), or as an extension of your Python
-code.
+First, establish a connection to the database using a ``DREGS`` class object
+(full details :ref:`here <dregs_class>`), then register a dataset using the
+``Registrar`` extension.
 
-To register a dataset use the ``Registrar`` class from the ``dataregistry``
-package (full documentation :ref:`here <registrar_class>`). For example:
+For example:
 
 .. code-block:: python
 
-   from dataregistry.db_basic import SCHEMA_VERSION, create_db_engine, ownertypeenum
-   from dataregistry.registrar import Registrar
-   import os
+   from dataregistry import DREGS
    
-   # Establish connection to database
-   engine, dialect = create_db_engine()
-   
-   registrar = Registrar(
-       engine, dialect, ownertypeenum.user, owner="user", schema_version=SCHEMA_VERSION
-   )
+   # Establish connection to database (using defaults)
+   dregs = DREGS()
    
    # Add new entry.
-   new_id = registrar.register_dataset(
+   new_id = dregs.Registrar.register_dataset(
        "my_desc_project/my_desc_dataset",
        "1.0.0",
        description="An output from some DESC code",
@@ -51,17 +41,27 @@ package (full documentation :ref:`here <registrar_class>`). For example:
 
 In this case we have copied the contents of the
 ``/path/at/nersc/to/the/dataset/`` directory at NERSC and registered it under
-``my_desc_project/my_desc_dataset`` in our ``user`` space within the data
-registry.
+``my_desc_project/my_desc_dataset`` within our DREGS user space. `1.0.0` is the
+datasets version string.
 
-``new_id`` will store the data registry ID for this dataset, for example if you
-need to link it to a execution later.
+A full list of ``Registrar.register_dataset`` options can be found :ref:`here
+<dregs_class>`.
+
+The variable ``new_id`` stores the data registry ID for this dataset (useful if
+you need to link it to an execution entry later).
+
+.. note::
+   If your DREGS configuration file is not located in the default location, and
+   you do not have ``DREGS_CONFIG`` set, you will have to pass the location of
+   your configuration file to the DREGS class on initialization, i.e., ``dregs
+   = DREGS(config_file="/path/to/config")``.
+
 
 Using the `DREGS` CLI
 ~~~~~~~~~~~~~~~~~~~~~
 
 One can alternatively enter datasets using the `DREGS` CLI tool (see :ref:`here
-<dregs_cli>` for full documentation on the tool).  
+<dregs_cli>` for more documentation on the CLI).  
 
 For example, say I have produced some data from my latest DESC publication that
 I want to archive/distribute via the data registry. My data is located at
@@ -119,24 +119,19 @@ Querying the data registry
 Currently, the only way to query the DESC data registry is via the
 ``dataregistry`` package.
 
-For example, say I want to query for the `my_paper_dataset` we entered above
+As an example, say I want to query for the `my_paper_dataset` we entered above
 using the CLI.
 
 .. code-block:: python
 
-   from dataregistry.query import Query, Filter
-   from dataregistry.db_basic import create_db_engine, ownertypeenum, SCHEMA_VERSION
-   import os
+   from dataregistry import DREGS
    
-   # Establish connection to database
-   engine, dialect = create_db_engine()
-   
-   # Create query object
-   q = Query(engine, dialect, schema_version=SCHEMA_VERSION)
+   # Establish connection to database (using defaults)
+   dregs = DREGS()
    
    # Query 1: Query dataset name
-   f = Filter('dataset.name', '==', 'my_paper_dataset')
-   results = q.find_datasets(['dataset.dataset_id', 'dataset.name', 'dataset.relative_path'], [f])
+   f = dregs.gen_filter('dataset.name', '==', 'my_paper_dataset')
+   results = dregs.Query.find_datasets(['dataset.dataset_id', 'dataset.name', 'dataset.relative_path'], [f])
 
 Which would return a SQL Alchemy results object containing our results. In our case this should be two entries, from the two versions of the dataset we entered above.
 
