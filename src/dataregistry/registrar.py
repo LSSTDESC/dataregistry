@@ -16,8 +16,8 @@ __all__ = ["Registrar"]
 # The root DREGS directory.
 _DEFAULT_ROOT_DIR = "/global/cfs/cdirs/desc-co/registry-beta"  # temporary
 
-class Registrar:
 
+class Registrar:
     def __init__(
         self, db_engine, dialect, schema_version=SCHEMA_VERSION, root_dir=None
     ):
@@ -45,7 +45,7 @@ class Registrar:
         # Database engine and dialect.
         self._engine = db_engine
         self._dialect = dialect
-        
+
         # Schema version we are using.
         if dialect == "sqlite":
             self._schema_version = None
@@ -60,8 +60,8 @@ class Registrar:
 
     def _find_previous(self, relative_path, dataset_table, owner, owner_type):
         """
-        Check to see if a dataset exists already in the registry, and if it is
-        overwritable.
+        Check to see if a dataset exists already in the registry, and if we are
+        allowed to overwrite it.
 
         Parameters
         ----------
@@ -93,7 +93,7 @@ class Registrar:
         with self._engine.connect() as conn:
             result = conn.execute(stmt)
             conn.commit()
-    
+
         # If the datasets are overwritable, log their ID, else return None
         previous = []
         for r in result:
@@ -137,9 +137,7 @@ class Registrar:
         """
 
         # Get destination directory in data registry.
-        dest = _form_dataset_path(
-            owner_type, owner, relative_path, self.root_dir
-        )
+        dest = _form_dataset_path(owner_type, owner, relative_path, self.root_dir)
 
         # Is the data already on location, or coming from somewhere new?
         if old_location:
@@ -166,11 +164,8 @@ class Registrar:
         if verbose:
             print(f"took {time.time()-tic:.2f}s")
 
+        # Copy data into data registry
         if old_location:
-            # copy to dest.  For directory do recursive copy
-            # for now always copy; don't try to handle sym link
-            # Assuming we don't want to copy any metadata (e.g.
-            # permissions)
             if verbose:
                 tic = time.time()
                 print(
@@ -196,7 +191,7 @@ class Registrar:
         locale=None,
         configuration=None,
         input_datasets=[],
-        max_config_length=10000
+        max_config_length=10000,
     ):
         """
         Register a new execution in the DESC data registry.
@@ -276,7 +271,7 @@ class Registrar:
         is_dummy=False,
         verbose=False,
         owner=None,
-        owner_type=None
+        owner_type=None,
     ):
         """
         Register a new dataset in the DESC data registry.
@@ -365,11 +360,9 @@ class Registrar:
         # Look for previous entries. Fail if not overwritable
         dataset_table = self._get_table_metadata("dataset")
         previous = self._find_previous(relative_path, dataset_table, owner, owner_type)
-        
+
         if previous is None:
-            print(
-                f"Dataset {relative_path} exists, and is not overwritable"
-            )
+            print(f"Dataset {relative_path} exists, and is not overwritable")
             return None
 
         # Deal with version string (non-special case)
