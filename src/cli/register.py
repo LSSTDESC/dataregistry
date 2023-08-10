@@ -8,6 +8,7 @@ _lookup = {
     "user": ownertypeenum.user,
 }
 
+
 def register_dataset(args):
     """
     Register a dataset in the DESC data registry.
