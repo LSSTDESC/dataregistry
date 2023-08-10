@@ -1,4 +1,3 @@
-from dataregistry.db_basic import ownertypeenum
 from dataregistry.registrar_util import _parse_version_string, _name_from_relpath, _form_dataset_path, get_directory_info
 import os
 
