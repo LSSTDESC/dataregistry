@@ -4,7 +4,7 @@ from datetime import datetime
 from shutil import copyfile, copytree
 from sqlalchemy import MetaData, Table, Column, insert, text, update, select
 from sqlalchemy.exc import DBAPIError, IntegrityError
-from dataregistry.db_basic import add_table_row, SCHEMA_VERSION, ownertypeenum
+from dataregistry.db_basic import add_table_row, SCHEMA_VERSION
 from dataregistry.registrar_util import _form_dataset_path, get_directory_info
 from dataregistry.registrar_util import _parse_version_string, _bump_version
 from dataregistry.registrar_util import _name_from_relpath
@@ -71,7 +71,7 @@ class Registrar:
             Link to the dataset table
         owner : str
             Owner of the dataset
-        owner_type : ownertypeenum
+        owner_type : str
 
         Returns
         -------
@@ -337,7 +337,6 @@ class Registrar:
             owner_type = "user"
         if owner_type not in ["user", "group", "production"]:
             raise ValueError(f"{owner_type} is not a valid owner_type")
-        owner_type = ownertypeenum(owner_type)
 
         # Establish the dataset owner
         if owner is None:

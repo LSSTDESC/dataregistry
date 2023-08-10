@@ -35,7 +35,7 @@ except:
     LITE_TYPES = {}
 
 from sqlalchemy.exc import DBAPIError, NoSuchColumnError
-from dataregistry.db_basic import add_table_row, SCHEMA_VERSION, ownertypeenum
+from dataregistry.db_basic import add_table_row, SCHEMA_VERSION
 from dataregistry.db_basic import TableMetadata
 from dataregistry.exceptions import *
 

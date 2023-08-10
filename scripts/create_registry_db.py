@@ -1,11 +1,10 @@
 import os
 import sys
-import enum
 import argparse
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Index, Float
-from sqlalchemy import ForeignKey, UniqueConstraint, Enum
-from dataregistry.db_basic import create_db_engine, TableCreator, ownertypeenum, dataorgenum, add_table_row, SCHEMA_VERSION
+from sqlalchemy import ForeignKey, UniqueConstraint
+from dataregistry.db_basic import create_db_engine, TableCreator, add_table_row, SCHEMA_VERSION
 from dataregistry.git_util import get_git_info
 from dataregistry import __version__
 
@@ -58,14 +57,14 @@ cols.append(Column("access_API", String(20)))
 # A way to associate a dataset with a program execution or "run"
 cols.append(Column("execution_id", Integer, ForeignKey("execution.execution_id")))
 cols.append(Column("description", String))
-cols.append(Column("owner_type", Enum(ownertypeenum), nullable=False))
+cols.append(Column("owner_type", String, nullable=False))
 # If ownership_type is 'production', then owner is always 'production'
 # If ownership_type is 'group', owner will be a group name
 # If ownership_type is 'user', owner will be a user name
 cols.append(Column("owner", String, nullable=False))
 
 # To store metadata about the dataset.
-cols.append(Column("data_org", Enum(dataorgenum), nullable=False))
+cols.append(Column("data_org", String, nullable=False))
 cols.append(Column("nfiles", Integer, nullable=False))
 cols.append(Column("total_disk_space", Float, nullable=False))
 tab_creator.define_table("dataset", cols,
