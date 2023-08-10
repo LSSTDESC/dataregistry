@@ -85,7 +85,7 @@ class Registrar:
             .where(
                 dataset_table.c.relative_path == relative_path,
                 dataset_table.c.owner == owner,
-                dataset_table.c.owner_type == owner_type.value,
+                dataset_table.c.owner_type == owner_type,
             )
             .order_by(dataset_table.c.dataset_id.desc())
         )
@@ -381,7 +381,7 @@ class Registrar:
         # Get dataset characteristics; copy if requested
         if not is_dummy:
             dataset_organization, num_files, total_size = self._handle_data(
-                relative_path, old_location, owner, owner_type.value, verbose
+                relative_path, old_location, owner, owner_type, verbose
             )
         else:
             dataset_organization = "dummy"
@@ -418,7 +418,7 @@ class Registrar:
         values["is_overwritable"] = is_overwritable
         values["is_overwritten"] = False
         values["register_date"] = datetime.now()
-        values["owner_type"] = owner_type.value
+        values["owner_type"] = owner_type
         values["owner"] = owner
         values["creator_uid"] = os.getenv("USER")
         values["data_org"] = dataset_organization
