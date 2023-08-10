@@ -137,7 +137,14 @@ class Registrar:
         """
 
         # Get destination directory in data registry.
-        dest = _form_dataset_path(owner_type, owner, relative_path, self.root_dir)
+        dest = _form_dataset_path(
+            self._dialect,
+            self._schema_version,
+            owner_type,
+            owner,
+            relative_path,
+            self.root_dir,
+        )
 
         # Is the data already on location, or coming from somewhere new?
         if old_location:
@@ -314,7 +321,7 @@ class Registrar:
             the data registry.
         copy : bool, optional
             True to copy data from ``old_location`` into the data registry
-            (default behaviour).  
+            (default behaviour).
             False to create a symlink.
         is_dummy : bool, optional
             True for "dummy" datasets (no data is copied, for testing purposes

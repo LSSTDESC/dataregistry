@@ -3,30 +3,39 @@ import sys
 
 from dataregistry import DREGS
 
-_TEST_ROOT_DIR="DREGS_data"
+_TEST_ROOT_DIR = "DREGS_data"
 
 # Make root dir
 if not os.path.isdir(_TEST_ROOT_DIR):
     os.makedirs(_TEST_ROOT_DIR)
 
-# Make a few dummy files to enter into database.
-if not os.path.isdir(os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/dummy_dir")):
-    os.makedirs(os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/dummy_dir"))
+# Establish connection to database
+dregs = DREGS(root_dir=_TEST_ROOT_DIR)
 
-if not os.path.isdir(os.path.join("dummy_dir")):
-    os.makedirs(os.path.join("dummy_dir"))
+# Make a few dummy files to enter into database.
+tmp = os.path.join(
+    _TEST_ROOT_DIR,
+    dregs.Registrar._dialect,
+    dregs.Registrar._schema_version,
+    "user",
+    os.getenv("USER"),
+)
+
+if not os.path.isdir(os.path.join(tmp, "dummy_dir")):
+    os.makedirs(os.path.join(tmp, "dummy_dir"))
+
+if not os.path.isdir("dummy_dir"):
+    os.makedirs("dummy_dir")
 
 with open(os.path.join("dummy_dir", "file1.txt"), "w") as f:
     f.write("test")
-with open(os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/dummy_dir", "file1.txt"), "w") as f:
+with open(os.path.join(tmp, "dummy_dir", "file1.txt"), "w") as f:
     f.write("test")
-with open(os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/dummy_dir", "file2.txt"), "w") as f:
+with open(os.path.join(tmp, "dummy_dir", "file2.txt"), "w") as f:
     f.write("test")
-with open(os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/", "file1.txt"), "w") as f:
+with open(os.path.join(tmp, "file1.txt"), "w") as f:
     f.write("test")
 
-# Establish connection to database
-dregs = DREGS(root_dir=_TEST_ROOT_DIR)
 
 def _insert_alias_entry(name, dataset_id, owner_type, owner):
     """
@@ -163,7 +172,7 @@ def _insert_dataset_entry(
         execution_id=execution_id,
         verbose=True,
         owner=owner,
-        owner_type=owner_type
+        owner_type=owner_type,
     )
 
     assert new_id is not None, "Trying to create a dataset that already exists"
