@@ -1,6 +1,12 @@
 from dataregistry.db_basic import ownertypeenum
-from dataregistry.registrar_util import _parse_version_string, _name_from_relpath, _form_dataset_path, get_directory_info
+from dataregistry.registrar_util import (
+    _parse_version_string,
+    _name_from_relpath,
+    _form_dataset_path,
+    get_directory_info,
+)
 import os
+
 
 def test_parse_version_string():
     """ Make sure version strings are parsed correctly """
@@ -30,6 +36,7 @@ def test_parse_version_string():
     assert tmp["minor"] == "8"
     assert tmp["patch"] == "9"
 
+
 def test_form_dataset_path():
     """
     Test dataset path construction
@@ -37,18 +44,27 @@ def test_form_dataset_path():
     Datasets should come back with the format:
         <root_dir>/<owner_type>/<owner>/<relative_path>
     """
-    
-    tmp = _form_dataset_path("production", "desc", "my/path", root_dir=None)
-    assert tmp == "production/production/my/path"
 
-    tmp = _form_dataset_path("production", "desc", "my/path", root_dir="my/root")
-    assert tmp == "my/root/production/production/my/path"
+    tmp = _form_dataset_path(
+        "sql_lite", "my_schema", "production", "desc", "my/path", root_dir=None
+    )
+    assert tmp == "sql_lite/my_schema/production/production/my/path"
 
-    tmp = _form_dataset_path("group", "desc", "my/path", root_dir=None)
-    assert tmp == "group/desc/my/path"
+    tmp = _form_dataset_path(
+        "postgres", "registry", "production", "desc", "my/path", root_dir="my/root"
+    )
+    assert tmp == "my/root/postgres/registry/production/production/my/path"
 
-    tmp = _form_dataset_path("user", "desc", "my/path", root_dir="/root/")
-    assert tmp == "/root/user/desc/my/path"
+    tmp = _form_dataset_path(
+        "postgres", "registry", "group", "desc", "my/path", root_dir=None
+    )
+    assert tmp == "postgres/registry/group/desc/my/path"
+
+    tmp = _form_dataset_path(
+        "postgres", "registry", "user", "desc", "my/path", root_dir="/root/"
+    )
+    assert tmp == "/root/postgres/registry/user/desc/my/path"
+
 
 def test_directory_info():
     """
@@ -61,10 +77,11 @@ def test_directory_info():
     assert num_files > 0
     assert total_size > 0
 
-def test_name_from_relpath():
-	""" Make sure names are exctracted from paths correctly """
 
-	assert _name_from_relpath("/testing/test") == "test"
-	assert _name_from_relpath("./testing/test") == "test"
-	assert _name_from_relpath("/testing/test/") == "test"
-	assert _name_from_relpath("test") == "test"
+def test_name_from_relpath():
+    """ Make sure names are exctracted from paths correctly """
+
+    assert _name_from_relpath("/testing/test") == "test"
+    assert _name_from_relpath("./testing/test") == "test"
+    assert _name_from_relpath("/testing/test/") == "test"
+    assert _name_from_relpath("test") == "test"
