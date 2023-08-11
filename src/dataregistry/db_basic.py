@@ -92,7 +92,7 @@ def create_db_engine(config_file=None, verbose=False):
     # Extract connection info from configuration file
     with open(_get_dregs_config(config_file, verbose)) as f:
         connection_parameters = yaml.safe_load(f)
-    
+
     driver = make_url(connection_parameters["sqlalchemy.url"]).drivername
     dialect = driver.split("+")[0]
 
@@ -102,6 +102,7 @@ def create_db_engine(config_file=None, verbose=False):
 class ownertypeenum(enum.Enum):
     production = "production"
     group = "group"
+    project = "project"
     user = "user"
 
 
