@@ -1,7 +1,7 @@
 import os
 
 from dataregistry.db_basic import SCHEMA_VERSION, create_db_engine
-from dataregistry.query import Filter, Query
+from dataregistry.query import Query
 from dataregistry.registrar import Registrar
 
 
@@ -48,33 +48,3 @@ class DREGS:
         self.Registrar = Registrar(
             engine, dialect, schema_version=self.schema_version, root_dir=root_dir
         )
-
-    def gen_filter(self, property_name, bin_op, value):
-        """
-        Generate a binary filter for a DREGS query.
-
-        These construct SQL WHERE clauses.
-
-        Parameters
-        ----------
-        property_name : str
-            Database property to be queried on
-        bin_op : str
-            Binary operation to perform, e.g., "==" or ">="
-        value : -
-            Comparison value
-
-        Returns
-        -------
-        - : namedtuple
-            The filter tuple
-
-        Example
-        -------
-        .. code-block:: python
-        
-           f = gen_filter("dataset.name", "==", "my_dataset")
-           f = gen_filter("dataset.version_major", ">", 1)
-        """
-
-        return Filter(property_name, bin_op, value)
