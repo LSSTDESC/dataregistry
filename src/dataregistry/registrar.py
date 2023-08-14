@@ -134,6 +134,8 @@ class Registrar:
             Total number of files making up dataset
         total_size : float
             Total disk space of dataset in bytes
+        ds_creation_date : datetime
+            When file or directory was created
         """
 
         # Get destination directory in data registry.
@@ -156,6 +158,9 @@ class Registrar:
         if verbose:
             tic = time.time()
             print("Collecting metadata...", end="")
+
+        ds_creation_date = datetime.fromtimestamp(os.path.getctime(loc))
+
         if dataset_organization == "directory":
             num_files, total_size = get_directory_info(loc)
         else:
@@ -181,7 +186,7 @@ class Registrar:
             if verbose:
                 print(f"took {time.time()-tic:.2f}")
 
-        return dataset_organization, num_files, total_size
+        return dataset_organization, num_files, total_size, ds_creation_date
 
     def register_execution(
         self,
@@ -381,13 +386,19 @@ class Registrar:
 
         # Get dataset characteristics; copy if requested
         if not is_dummy:
-            dataset_organization, num_files, total_size = self._handle_data(
+            (
+                dataset_organization,
+                num_files,
+                total_size,
+                ds_creation_date,
+            ) = self._handle_data(
                 relative_path, old_location, owner, owner_type.value, verbose
             )
         else:
             dataset_organization = "dummy"
             num_files = 0
             total_size = 0
+            ds_creation_date = None
 
         # If no execution_id is supplied, create a minimal entry
         if execution_id is None:
@@ -410,6 +421,9 @@ class Registrar:
             values["version_suffix"] = version_suffix
         if creation_date:
             values["dataset_creation_date"] = creation_date
+        else:
+            if ds_creation_date:
+                values["dataset_creation_date"] = ds_creation_date
         if description:
             values["description"] = description
         if execution_id:
