@@ -16,6 +16,8 @@ __all__ = ["Registrar"]
 # The root DREGS directory.
 _DEFAULT_ROOT_DIR = "/global/cfs/cdirs/desc-co/registry-beta"  # temporary
 
+# Default maximum allowed length of configuration file allowed to be ingested
+_DEFAULT_MAX_CONFIG = 10000
 
 class Registrar:
     def __init__(
@@ -199,7 +201,7 @@ class Registrar:
         locale=None,
         configuration=None,
         input_datasets=[],
-        max_config_length=10000,
+        max_config_length=_DEFAULT_MAX_CONFIG,
     ):
         """
         Register a new execution in the DESC data registry.
