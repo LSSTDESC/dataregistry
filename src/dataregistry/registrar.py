@@ -55,6 +55,9 @@ class Registrar:
         # Link to Table Metadata.
         self._metadata_getter = TableMetadata(self._schema_version, db_engine)
 
+        # Store user id
+        self._uid = os.getenv("USER")
+
     def _get_table_metadata(self, tbl):
         return self._metadata_getter.get(tbl)
 
@@ -233,7 +236,7 @@ class Registrar:
         if description:
             values["description"] = description
         values["register_date"] = datetime.now()
-        values["creator_uid"] = os.getenv("USER")
+        values["creator_uid"] = self._uid
 
         exec_table = self._get_table_metadata("execution")
         dependency_table = self._get_table_metadata("dependency")
@@ -346,7 +349,7 @@ class Registrar:
 
         # Establish the dataset owner
         if owner is None:
-            owner = os.getenv("USER")
+            owner = self._uid
         else:
             if owner_type == "production":
                 owner = "production"
@@ -435,7 +438,7 @@ class Registrar:
         values["register_date"] = datetime.now()
         values["owner_type"] = owner_type.value
         values["owner"] = owner
-        values["creator_uid"] = os.getenv("USER")
+        values["creator_uid"] = self._uid
         values["data_org"] = dataset_organization
         values["nfiles"] = num_files
         values["total_disk_space"] = total_size / 1024 / 1024  # Mb
@@ -477,7 +480,7 @@ class Registrar:
         values = {"alias": aliasname}
         values["dataset_id"] = dataset_id
         values["register_date"] = now
-        values["creator_uid"] = os.getenv("USER")
+        values["creator_uid"] = self._uid
 
         alias_table = self._get_table_metadata("dataset_alias")
         with self._engine.connect() as conn:
