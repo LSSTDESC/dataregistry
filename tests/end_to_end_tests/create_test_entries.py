@@ -269,14 +269,14 @@ dataset_id = _insert_dataset_entry(
     "This is a production dataset",
 )
 
-_insert_alias_entry("nice_dataset_name", dataset_id, "production", None)
+_insert_alias_entry("nice_dataset_name", dataset_id)
 
 # Test set 6
 # - Create a pipeline with multiple input and output datasets.
 
 # Stage 1 of my pipe line
 ex_id_1 = _insert_execution_entry(
-    "pipeline_stage_1", "The first stage of my pipeline", "user", None
+    "pipeline_stage_1", "The first stage of my pipeline"
 )
 dataset_id_1 = _insert_dataset_entry(
     "DESC/datasets/my_first_pipeline_stage1",
@@ -291,8 +291,6 @@ dataset_id_1 = _insert_dataset_entry(
 ex_id_2 = _insert_execution_entry(
     "pipeline_stage_2",
     "The second stage of my pipeline",
-    "user",
-    None,
     input_datasets=[dataset_id_1],
 )
 
@@ -318,8 +316,6 @@ dataset_id_3 = _insert_dataset_entry(
 ex_id_3 = _insert_execution_entry(
     "pipeline_stage_3",
     "The third stage of my pipeline",
-    "user",
-    None,
     input_datasets=[dataset_id_2, dataset_id_3],
 )
 
@@ -350,8 +346,6 @@ _insert_dataset_entry(
 _insert_execution_entry(
     "execution_with_configuration",
     "An execution with an input configuration file",
-    "user",
-    None,
     configuration="dummy_configuration_file.yaml",
 )
 
