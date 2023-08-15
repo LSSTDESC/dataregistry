@@ -7,7 +7,13 @@ from dataregistry.registrar import Registrar
 
 class DREGS:
     def __init__(
-        self, config_file=None, schema_version=None, root_dir=None, verbose=False
+        self,
+        owner=None,
+        owner_type=None,
+        config_file=None,
+        schema_version=None,
+        root_dir=None,
+        verbose=False,
     ):
         """
         Primary data registry (DREGS) wrapper class.
@@ -22,6 +28,12 @@ class DREGS:
 
         Parameters
         ----------
+        owner : str
+            To set the default owner for all registered datasets in this
+            instance.
+        owner_type : str
+            To set the default owner_type for all registered datasets in this
+            instance.
         config_file : str
             Path to config file, if None, default location is assumed.
         schema_version : str
@@ -46,5 +58,10 @@ class DREGS:
 
         # Create registrar object
         self.Registrar = Registrar(
-            engine, dialect, schema_version=self.schema_version, root_dir=root_dir
+            engine,
+            dialect,
+            owner=owner,
+            owner_type=owner_type,
+            schema_version=self.schema_version,
+            root_dir=root_dir,
         )

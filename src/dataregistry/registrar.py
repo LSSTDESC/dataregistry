@@ -19,9 +19,16 @@ _DEFAULT_ROOT_DIR = "/global/cfs/cdirs/desc-co/registry-beta"  # temporary
 # Default maximum allowed length of configuration file allowed to be ingested
 _DEFAULT_MAX_CONFIG = 10000
 
+
 class Registrar:
     def __init__(
-        self, db_engine, dialect, schema_version=SCHEMA_VERSION, root_dir=None
+        self,
+        db_engine,
+        dialect,
+        owner=None,
+        owner_type=None,
+        schema_version=SCHEMA_VERSION,
+        root_dir=None,
     ):
         """
         Class to register new datasets, executions and alias names.
@@ -31,6 +38,12 @@ class Registrar:
         db_engine : SQLAlchemy Engine object
         dialect : str
             Database backend (e.g. "postgresql")
+        owner : str
+            To set the default owner for all registered datasets in this
+            instance.
+        owner_type : str
+            To set the default owner_type for all registered datasets in this
+            instance.
         schema_version : str, optional
             Which database schema to connect to, defaults to SCHEMA_VERSION
         root_dir : str, optional
@@ -59,6 +72,10 @@ class Registrar:
 
         # Store user id
         self._uid = os.getenv("USER")
+
+        # Default owner and owner_type's
+        self._owner = owner
+        self._owner_type = owner_type
 
     def _get_table_metadata(self, tbl):
         return self._metadata_getter.get(tbl)
@@ -332,9 +349,12 @@ class Registrar:
         verbose : bool, optional
             Provide some additional output information
         owner : str, optional
-            Owner of the dataset. If None, defaults to $USER
+            Owner of the dataset. If None, defaults to what was set in
+            Registrar __init__, if that is also None, defaults to $USER.
         owner_type : str, optional
-            Owner type: "user" (default), "group", or "production"
+            Owner type: "user", "group", or "production". If None, defaults to
+            what was set in Registrar __init__, if that is also None, defaults
+            to "user".
 
         Returns
         -------
@@ -344,17 +364,22 @@ class Registrar:
 
         # Make sure the owner_type is legal
         if owner_type is None:
-            owner_type = "user"
+            if self._owner_type is not None:
+                owner_type = self._owner_type
+            else:
+                owner_type = "user"
         if owner_type not in ["user", "group", "production"]:
             raise ValueError(f"{owner_type} is not a valid owner_type")
         owner_type = ownertypeenum(owner_type)
 
         # Establish the dataset owner
         if owner is None:
-            owner = self._uid
-        else:
-            if owner_type == "production":
-                owner = "production"
+            if self._owner is not None:
+                owner = self._owner
+            else:
+                owner = self._uid
+        if owner_type == "production":
+            owner = "production"
 
         # Checks for production datasets
         if owner_type == "production":

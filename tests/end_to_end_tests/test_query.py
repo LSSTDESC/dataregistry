@@ -85,6 +85,15 @@ def test_query_dataset():
     for r in results:
         assert r.nfiles > 0, "Bad result from query d6"
 
+    # Query 7: See if global owner/owner_type allocation worked
+    f = dregs.Query.gen_filter(
+        "dataset.relative_path", "==", "DESC/datasets/global_user_dataset"
+    )
+    results = dregs.Query.find_datasets(["dataset.owner", "dataset.owner_type"], [f])
+    for r in results:
+        assert r.owner == "DESC group"
+        assert r.owner_type == "group"
+
 
 def test_query_dataset_alias():
     """ Test queries of dataset alias table """
