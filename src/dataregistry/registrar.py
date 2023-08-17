@@ -19,6 +19,8 @@ _DEFAULT_ROOT_DIR = "/global/cfs/cdirs/desc-co/registry-beta"  # temporary
 # Default maximum allowed length of configuration file allowed to be ingested
 _DEFAULT_MAX_CONFIG = 10000
 
+# Allowed owner types
+_OWNER_TYPES = {"user", "project", "group", "production"}
 
 class Registrar:
     def __init__(
@@ -368,7 +370,7 @@ class Registrar:
                 owner_type = self._owner_type
             else:
                 owner_type = "user"
-        if owner_type not in ["user", "group", "production"]:
+        if owner_type not in _OWNER_TYPES:
             raise ValueError(f"{owner_type} is not a valid owner_type")
 
         # Establish the dataset owner
@@ -421,7 +423,7 @@ class Registrar:
                 total_size,
                 ds_creation_date,
             ) = self._handle_data(
-                relative_path, old_location, owner, owner_type.value, verbose
+                relative_path, old_location, owner, owner_type, verbose
             )
         else:
             dataset_organization = "dummy"
