@@ -1,26 +1,27 @@
 Standalone datasets
 ===================
 
-Here are some quick examples of how to enter standalone datasets into the DESC
+Below are some quick examples of how to enter standalone datasets into the DESC
 data registry. By standalone we mean the data does not form part of a larger
-pipeline (i.e., has no dependencies); for pipeline datasets see the next
-section.
+pipeline (i.e., has no dependencies); for pipeline datasets that do have
+dependencies see the next section.
 
-In all cases we assume the default DREGS configuration (see the
-:ref:`Installation page <installation>` for more details). 
+In all the examples below we are assuming the default DREGS configuration (see
+the :ref:`Installation page <installation>` for more details). 
 
 Registering a dataset
 ---------------------
 
 There are two ways to register a dataset within DREGS; using the
-``dataregistry`` package directly from within Python, or the `DREGS` CLI.
+``dataregistry`` package directly from within Python, or via the DREGS CLI.
 
 Using the ``dataregistry`` package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-First, establish a connection to the database using a ``DREGS`` class object
-(full details :ref:`here <dregs_class>`), then register a dataset using the
-``Registrar`` extension.
+To register a dataset using the ``dataregistry`` package; first establish a
+connection to the database using a ``DREGS`` class object (full details
+:ref:`here <dregs_class>`), then register a dataset using the ``Registrar``
+extension.
 
 For example:
 
@@ -39,16 +40,32 @@ For example:
        old_location="/path/at/nersc/to/the/dataset/",
    )
 
-In this case we have copied the contents of the
-``/path/at/nersc/to/the/dataset/`` directory at NERSC and registered it under
-``my_desc_project/my_desc_dataset`` within our DREGS user space. `1.0.0` is the
-datasets version string.
+Here we have copied the contents of the ``/path/at/nersc/to/the/dataset/``
+directory and registered it under the relative path [#relpath]_
+``my_desc_project/my_desc_dataset`` (version `1.0.0`) in the data registry.
 
-A full list of ``Registrar.register_dataset`` options can be found :ref:`here
-<dregs_class>`.
+We have given the dataset a custom description, but all other optional fields
+for ``register_dataset`` have been left out, and therefore obtain the default
+values. Perhaps most importantly of these are ``owner`` and ``owner_type`` [#ownertype]_,
+which default to ``$USER`` and ``"user"`` respectively. A full list of
+``Registrar.register_dataset`` options can be found :ref:`here <dregs_class>`.
 
 The variable ``new_id`` stores the data registry ID for this dataset (useful if
 you need to link it to an execution entry later).
+
+If you are bulk registering a series of datasets at once you can set a
+universal ``owner`` and ``owner_type`` for the lifetime of the instance, e.g.,
+
+.. code-block:: python
+
+   from dataregistry import DREGS
+
+   # Establish connection to database (using set owner and owner_type)
+   dregs = DREGS(owner="DESC CO group", owner_type="group")
+
+All datasets registered during that instance will pick up the universal values
+for ``owner`` and ``owner_type``, however the values passed to
+``register_dataset`` directly will always take precedent.
 
 .. note::
    If your DREGS configuration file is not located in the default location, and
@@ -56,18 +73,24 @@ you need to link it to an execution entry later).
    your configuration file to the DREGS class on initialization, i.e., ``dregs
    = DREGS(config_file="/path/to/config")``.
 
+.. [#relpath] The full path of the dataset in the data registry is constructed
+   as follows
+   ``<DREGS_ROOT>/<owner_type>/<owner>/<relative_path>``
 
-Using the `DREGS` CLI
-~~~~~~~~~~~~~~~~~~~~~
+.. [#ownertype] The allowed ``owner_type``'s are "user", "project", "group" or
+   "production". 
 
-One can alternatively enter datasets using the `DREGS` CLI tool (see :ref:`here
+Using the DREGS CLI
+~~~~~~~~~~~~~~~~~~~
+
+One can alternatively enter datasets using the DREGS CLI tool (see :ref:`here
 <dregs_cli>` for more documentation on the CLI).  
 
 For example, say I have produced some data from my latest DESC publication that
 I want to archive/distribute via the data registry. My data is located at
 ``/some/place/at/nersc/my_paper_dataset/``, and I want to tag it as a
 production dataset owned by the `DESC Generic Working Group`. To do this I
-would run the `DREGS` CLI as follows:
+would run the DREGS CLI as follows:
 
 .. code-block:: bash
 
@@ -80,10 +103,10 @@ would run the `DREGS` CLI as follows:
       --description "Data from my_paper_dataset" 
 
 This will copy the entire ``/some/place/at/nersc/my_paper_dataset/`` directory
-into the data registry with the relative path ``<registry root>/production/DESC
-Generic Working Group/my_paper_dataset/``. As we did not specify a ``--name``
-for the dataset, the ``name`` column in the database will automatically be
-assigned as ``my_paper_dataset``. 
+into the data registry with the path ``<DREGS_ROOT>/production/DESC Generic
+Working Group/my_paper_dataset/``. As we did not specify a ``--name`` for the
+dataset, the ``name`` column in the database will automatically be assigned as
+``my_paper_dataset``. 
 
 Now say a few months later a bug has been discovered in the
 ``my_paper_dataset`` data and the entry needs to be updated. As we entered
