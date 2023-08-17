@@ -24,7 +24,7 @@ class DREGS:
         Links to the database is done automatically using the default
         assumptions (i.e., the users config file is in the default location and
         the schema to connect to and the root directory are the defaults.
-        However each can also be manually specified. 
+        However each can also be manually specified.
 
         Parameters
         ----------

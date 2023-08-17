@@ -22,6 +22,7 @@ _DEFAULT_MAX_CONFIG = 10000
 # Allowed owner types
 _OWNER_TYPES = {"user", "project", "group", "production"}
 
+
 class Registrar:
     def __init__(
         self,
@@ -343,7 +344,7 @@ class Registrar:
             the data registry.
         copy : bool, optional
             True to copy data from ``old_location`` into the data registry
-            (default behaviour).  
+            (default behaviour).
             False to create a symlink.
         is_dummy : bool, optional
             True for "dummy" datasets (no data is copied, for testing purposes
