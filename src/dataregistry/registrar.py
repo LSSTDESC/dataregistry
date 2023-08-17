@@ -16,10 +16,19 @@ __all__ = ["Registrar"]
 # The root DREGS directory.
 _DEFAULT_ROOT_DIR = "/global/cfs/cdirs/desc-co/registry-beta"  # temporary
 
+# Default maximum allowed length of configuration file allowed to be ingested
+_DEFAULT_MAX_CONFIG = 10000
+
 
 class Registrar:
     def __init__(
-        self, db_engine, dialect, schema_version=SCHEMA_VERSION, root_dir=None
+        self,
+        db_engine,
+        dialect,
+        owner=None,
+        owner_type=None,
+        schema_version=SCHEMA_VERSION,
+        root_dir=None,
     ):
         """
         Class to register new datasets, executions and alias names.
@@ -29,6 +38,12 @@ class Registrar:
         db_engine : SQLAlchemy Engine object
         dialect : str
             Database backend (e.g. "postgresql")
+        owner : str
+            To set the default owner for all registered datasets in this
+            instance.
+        owner_type : str
+            To set the default owner_type for all registered datasets in this
+            instance.
         schema_version : str, optional
             Which database schema to connect to, defaults to SCHEMA_VERSION
         root_dir : str, optional
@@ -54,6 +69,13 @@ class Registrar:
 
         # Link to Table Metadata.
         self._metadata_getter = TableMetadata(self._schema_version, db_engine)
+
+        # Store user id
+        self._uid = os.getenv("USER")
+
+        # Default owner and owner_type's
+        self._owner = owner
+        self._owner_type = owner_type
 
     def _get_table_metadata(self, tbl):
         return self._metadata_getter.get(tbl)
@@ -134,6 +156,8 @@ class Registrar:
             Total number of files making up dataset
         total_size : float
             Total disk space of dataset in bytes
+        ds_creation_date : datetime
+            When file or directory was created
         """
 
         # Get destination directory in data registry.
@@ -156,6 +180,9 @@ class Registrar:
         if verbose:
             tic = time.time()
             print("Collecting metadata...", end="")
+
+        ds_creation_date = datetime.fromtimestamp(os.path.getctime(loc))
+
         if dataset_organization == "directory":
             num_files, total_size = get_directory_info(loc)
         else:
@@ -181,7 +208,7 @@ class Registrar:
             if verbose:
                 print(f"took {time.time()-tic:.2f}")
 
-        return dataset_organization, num_files, total_size
+        return dataset_organization, num_files, total_size, ds_creation_date
 
     def register_execution(
         self,
@@ -191,7 +218,7 @@ class Registrar:
         locale=None,
         configuration=None,
         input_datasets=[],
-        max_config_length=10000,
+        max_config_length=_DEFAULT_MAX_CONFIG,
     ):
         """
         Register a new execution in the DESC data registry.
@@ -228,7 +255,7 @@ class Registrar:
         if description:
             values["description"] = description
         values["register_date"] = datetime.now()
-        values["creator_uid"] = os.getenv("USER")
+        values["creator_uid"] = self._uid
 
         exec_table = self._get_table_metadata("execution")
         dependency_table = self._get_table_metadata("dependency")
@@ -322,9 +349,12 @@ class Registrar:
         verbose : bool, optional
             Provide some additional output information
         owner : str, optional
-            Owner of the dataset. If None, defaults to $USER
+            Owner of the dataset. If None, defaults to what was set in
+            Registrar __init__, if that is also None, defaults to $USER.
         owner_type : str, optional
-            Owner type: "user" (default), "group", or "production"
+            Owner type: "user", "group", or "production". If None, defaults to
+            what was set in Registrar __init__, if that is also None, defaults
+            to "user".
 
         Returns
         -------
@@ -334,16 +364,21 @@ class Registrar:
 
         # Make sure the owner_type is legal
         if owner_type is None:
-            owner_type = "user"
+            if self._owner_type is not None:
+                owner_type = self._owner_type
+            else:
+                owner_type = "user"
         if owner_type not in ["user", "group", "production"]:
             raise ValueError(f"{owner_type} is not a valid owner_type")
 
         # Establish the dataset owner
         if owner is None:
-            owner = os.getenv("USER")
-        else:
-            if owner_type == "production":
-                owner = "production"
+            if self._owner is not None:
+                owner = self._owner
+            else:
+                owner = self._uid
+        if owner_type == "production":
+            owner = "production"
 
         # Checks for production datasets
         if owner_type == "production":
@@ -380,13 +415,19 @@ class Registrar:
 
         # Get dataset characteristics; copy if requested
         if not is_dummy:
-            dataset_organization, num_files, total_size = self._handle_data(
-                relative_path, old_location, owner, owner_type, verbose
+            (
+                dataset_organization,
+                num_files,
+                total_size,
+                ds_creation_date,
+            ) = self._handle_data(
+                relative_path, old_location, owner, owner_type.value, verbose
             )
         else:
             dataset_organization = "dummy"
             num_files = 0
             total_size = 0
+            ds_creation_date = None
 
         # If no execution_id is supplied, create a minimal entry
         if execution_id is None:
@@ -409,6 +450,9 @@ class Registrar:
             values["version_suffix"] = version_suffix
         if creation_date:
             values["dataset_creation_date"] = creation_date
+        else:
+            if ds_creation_date:
+                values["dataset_creation_date"] = ds_creation_date
         if description:
             values["description"] = description
         if execution_id:
@@ -420,7 +464,7 @@ class Registrar:
         values["register_date"] = datetime.now()
         values["owner_type"] = owner_type
         values["owner"] = owner
-        values["creator_uid"] = os.getenv("USER")
+        values["creator_uid"] = self._uid
         values["data_org"] = dataset_organization
         values["nfiles"] = num_files
         values["total_disk_space"] = total_size / 1024 / 1024  # Mb
@@ -462,7 +506,7 @@ class Registrar:
         values = {"alias": aliasname}
         values["dataset_id"] = dataset_id
         values["register_date"] = now
-        values["creator_uid"] = os.getenv("USER")
+        values["creator_uid"] = self._uid
 
         alias_table = self._get_table_metadata("dataset_alias")
         with self._engine.connect() as conn:

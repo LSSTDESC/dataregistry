@@ -1,13 +1,19 @@
 import os
 
 from dataregistry.db_basic import SCHEMA_VERSION, create_db_engine
-from dataregistry.query import Filter, Query
+from dataregistry.query import Query
 from dataregistry.registrar import Registrar
 
 
 class DREGS:
     def __init__(
-        self, config_file=None, schema_version=None, root_dir=None, verbose=False
+        self,
+        owner=None,
+        owner_type=None,
+        config_file=None,
+        schema_version=None,
+        root_dir=None,
+        verbose=False,
     ):
         """
         Primary data registry (DREGS) wrapper class.
@@ -22,6 +28,12 @@ class DREGS:
 
         Parameters
         ----------
+        owner : str
+            To set the default owner for all registered datasets in this
+            instance.
+        owner_type : str
+            To set the default owner_type for all registered datasets in this
+            instance.
         config_file : str
             Path to config file, if None, default location is assumed.
         schema_version : str
@@ -46,35 +58,10 @@ class DREGS:
 
         # Create registrar object
         self.Registrar = Registrar(
-            engine, dialect, schema_version=self.schema_version, root_dir=root_dir
+            engine,
+            dialect,
+            owner=owner,
+            owner_type=owner_type,
+            schema_version=self.schema_version,
+            root_dir=root_dir,
         )
-
-    def gen_filter(self, property_name, bin_op, value):
-        """
-        Generate a binary filter for a DREGS query.
-
-        These construct SQL WHERE clauses.
-
-        Parameters
-        ----------
-        property_name : str
-            Database property to be queried on
-        bin_op : str
-            Binary operation to perform, e.g., "==" or ">="
-        value : -
-            Comparison value
-
-        Returns
-        -------
-        - : namedtuple
-            The filter tuple
-
-        Example
-        -------
-        .. code-block:: python
-        
-           f = gen_filter("dataset.name", "==", "my_dataset")
-           f = gen_filter("dataset.version_major", ">", 1)
-        """
-
-        return Filter(property_name, bin_op, value)

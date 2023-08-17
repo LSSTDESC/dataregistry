@@ -3,15 +3,41 @@ import sys
 import argparse
 from dataregistry.db_basic import SCHEMA_VERSION
 from .register import register_dataset
+from .query import dregs_ls
 
+# -------------
+# The DREGS CLI
+# -------------
 parser = argparse.ArgumentParser(
     description="The DREGS CLI interface",
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
 )
 subparsers = parser.add_subparsers(title="subcommand", dest="subcommand")
 
+# ----------
+# Query (ls)
+# ----------
+
+# List your entries in the database
+arg_ls = subparsers.add_parser("ls", help="List your entries in the data registry")
+
+arg_ls.add_argument("--owner", help="List datasets for a given owner")
+arg_ls.add_argument(
+    "--owner_type",
+    help="List datasets for a given owner type",
+    choices=["user", "group", "production"],
+)
+arg_ls.add_argument("--config_file", help="Location of DREGS config file", type=str)
+arg_ls.add_argument("--all", help="List all datasets", action="store_true")
+
+# ------------------
+# Register a dataset
+# ------------------
+
 # Register a new database entry.
-arg_register = subparsers.add_parser("register", help="Register a new entry to the database")
+arg_register = subparsers.add_parser(
+    "register", help="Register a new entry to the database"
+)
 
 arg_register_sub = arg_register.add_subparsers(
     title="register what?", dest="register_type"
@@ -96,12 +122,19 @@ arg_register_dataset.add_argument(
     action="store_true",
 )
 arg_register_dataset.add_argument(
-    "--schema-version", default=f"{SCHEMA_VERSION}", help="Which schema to connect to",
+    "--schema-version",
+    default=f"{SCHEMA_VERSION}",
+    help="Which schema to connect to",
 )
 arg_register_dataset.add_argument(
-    "--locale", help="Location where dataset was produced", type=str, default="NERSC",
+    "--locale",
+    help="Location where dataset was produced",
+    type=str,
+    default="NERSC",
 )
-arg_register_dataset.add_argument("--owner", help="Owner of dataset. Defaults to $USER.")
+arg_register_dataset.add_argument(
+    "--owner", help="Owner of dataset. Defaults to $USER."
+)
 arg_register_dataset.add_argument(
     "--owner-type", choices=["production", "group", "user"], default="user"
 )
@@ -117,3 +150,7 @@ def main():
     if args.subcommand == "register":
         if args.register_type == "dataset":
             register_dataset(args)
+
+    # Query database entries
+    elif args.subcommand == "ls":
+        dregs_ls(args.owner, args.owner_type, args.all, args.config_file)

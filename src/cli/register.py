@@ -1,6 +1,7 @@
 import os
 from dataregistry import DREGS
 
+
 def register_dataset(args):
     """
     Register a dataset in the DESC data registry.

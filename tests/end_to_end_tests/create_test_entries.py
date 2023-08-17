@@ -3,14 +3,16 @@ import sys
 
 from dataregistry import DREGS
 
-_TEST_ROOT_DIR="DREGS_data"
+_TEST_ROOT_DIR = "DREGS_data"
 
 # Make root dir
 if not os.path.isdir(_TEST_ROOT_DIR):
     os.makedirs(_TEST_ROOT_DIR)
 
 # Make a few dummy files to enter into database.
-if not os.path.isdir(os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/dummy_dir")):
+if not os.path.isdir(
+    os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/dummy_dir")
+):
     os.makedirs(os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/dummy_dir"))
 
 if not os.path.isdir(os.path.join("dummy_dir")):
@@ -18,17 +20,25 @@ if not os.path.isdir(os.path.join("dummy_dir")):
 
 with open(os.path.join("dummy_dir", "file1.txt"), "w") as f:
     f.write("test")
-with open(os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/dummy_dir", "file1.txt"), "w") as f:
+with open(
+    os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/dummy_dir", "file1.txt"),
+    "w",
+) as f:
     f.write("test")
-with open(os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/dummy_dir", "file2.txt"), "w") as f:
+with open(
+    os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/dummy_dir", "file2.txt"),
+    "w",
+) as f:
     f.write("test")
-with open(os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/", "file1.txt"), "w") as f:
+with open(
+    os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/", "file1.txt"), "w"
+) as f:
     f.write("test")
 
 # Establish connection to database
 dregs = DREGS(root_dir=_TEST_ROOT_DIR)
 
-def _insert_alias_entry(name, dataset_id, owner_type, owner):
+def _insert_alias_entry(name, dataset_id):
     """
     Wrapper to create dataset alias entry
 
@@ -38,10 +48,6 @@ def _insert_alias_entry(name, dataset_id, owner_type, owner):
         Name of alias
     dataset_id : int
         Dataset we are assigning alias name to
-    owner_type : str
-        Either "production", "group", "user"
-    owner : str
-        Dataset owner
 
     Returns
     -------
@@ -58,7 +64,7 @@ def _insert_alias_entry(name, dataset_id, owner_type, owner):
 
 
 def _insert_execution_entry(
-    name, description, owner_type, owner, input_datasets=[], configuration=None
+    name, description, input_datasets=[], configuration=None
 ):
     """
     Wrapper to create execution entry
@@ -69,10 +75,6 @@ def _insert_execution_entry(
         Name of execution
     description : str
         Description of execution
-    owner_type : str
-        Either "production", "group", "user"
-    owner : str
-        Dataset owner
     intput_datasets : list
         List of dataset ids
     configuration : str
@@ -108,6 +110,7 @@ def _insert_dataset_entry(
     version_suffix=None,
     is_dummy=True,
     old_location=None,
+    which_dregs=None,
 ):
     """
     Wrapper to create dataset entry
@@ -136,12 +139,19 @@ def _insert_dataset_entry(
         True for dummy dataset (copies no data)
     old_location : str
         Path to data to be copied to data registry
+    which_dregs : DREGS object
+        In case we want to register using a custom DREGS object
 
     Returns
     -------
     new_id : int
         The dataset it created for this entry
     """
+
+    if which_dregs is None:
+        this_dregs = dregs
+    else:
+        this_dregs = which_dregs
 
     # Some defaults over all test datasets
     locale = "NERSC"
@@ -150,7 +160,7 @@ def _insert_dataset_entry(
     make_sym_link = False
 
     # Add new entry.
-    new_id = dregs.Registrar.register_dataset(
+    new_id = this_dregs.Registrar.register_dataset(
         relpath,
         version,
         version_suffix=version_suffix,
@@ -163,7 +173,7 @@ def _insert_dataset_entry(
         execution_id=execution_id,
         verbose=True,
         owner=owner,
-        owner_type=owner_type
+        owner_type=owner_type,
     )
 
     assert new_id is not None, "Trying to create a dataset that already exists"
@@ -259,14 +269,14 @@ dataset_id = _insert_dataset_entry(
     "This is a production dataset",
 )
 
-_insert_alias_entry("nice_dataset_name", dataset_id, "production", None)
+_insert_alias_entry("nice_dataset_name", dataset_id)
 
 # Test set 6
 # - Create a pipeline with multiple input and output datasets.
 
 # Stage 1 of my pipe line
 ex_id_1 = _insert_execution_entry(
-    "pipeline_stage_1", "The first stage of my pipeline", "user", None
+    "pipeline_stage_1", "The first stage of my pipeline"
 )
 dataset_id_1 = _insert_dataset_entry(
     "DESC/datasets/my_first_pipeline_stage1",
@@ -281,8 +291,6 @@ dataset_id_1 = _insert_dataset_entry(
 ex_id_2 = _insert_execution_entry(
     "pipeline_stage_2",
     "The second stage of my pipeline",
-    "user",
-    None,
     input_datasets=[dataset_id_1],
 )
 
@@ -308,8 +316,6 @@ dataset_id_3 = _insert_dataset_entry(
 ex_id_3 = _insert_execution_entry(
     "pipeline_stage_3",
     "The third stage of my pipeline",
-    "user",
-    None,
     input_datasets=[dataset_id_2, dataset_id_3],
 )
 
@@ -340,8 +346,6 @@ _insert_dataset_entry(
 _insert_execution_entry(
     "execution_with_configuration",
     "An execution with an input configuration file",
-    "user",
-    None,
     configuration="dummy_configuration_file.yaml",
 )
 
@@ -387,4 +391,17 @@ _insert_dataset_entry(
     "This is my second DESC dataset with real files already on location",
     is_dummy=False,
     old_location=None,
+)
+
+# Tests set 11
+# - Test global owner and owner types in the DREGS/Registar class
+dregs2 = DREGS(root_dir=_TEST_ROOT_DIR, owner="DESC group", owner_type="group")
+
+_insert_dataset_entry(
+    "DESC/datasets/global_user_dataset",
+    "0.0.1",
+    None,
+    None,
+    "This should be owned by 'DESC group' and have owner_type='group'",
+    which_dregs=dregs2
 )
