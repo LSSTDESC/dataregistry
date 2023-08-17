@@ -11,7 +11,7 @@ from dataregistry import __version__
 # The following should be adjusted whenever there is a change to the structure
 # of the database tables.
 _DB_VERSION_MAJOR = 1
-_DB_VERSION_MINOR = 0
+_DB_VERSION_MINOR = 1
 _DB_VERSION_PATCH = 0
 
 parser = argparse.ArgumentParser(description='''
