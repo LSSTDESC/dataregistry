@@ -19,6 +19,7 @@ It connects the user to the database, and serves as a wrapper to both the
    :members:
 
    .. automethod:: dataregistry.Registrar.register_dataset
+   .. automethod:: dataregistry.Registrar.get_owner_types
    .. automethod:: dataregistry.Registrar.register_execution
    .. automethod:: dataregistry.Registrar.register_dataset_alias
    .. automethod:: dataregistry.Query.find_datasets

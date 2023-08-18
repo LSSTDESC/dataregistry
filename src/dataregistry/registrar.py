@@ -4,7 +4,7 @@ from datetime import datetime
 from shutil import copyfile, copytree
 from sqlalchemy import MetaData, Table, Column, insert, text, update, select
 from sqlalchemy.exc import DBAPIError, IntegrityError
-from dataregistry.db_basic import add_table_row, SCHEMA_VERSION, ownertypeenum
+from dataregistry.db_basic import add_table_row, SCHEMA_VERSION
 from dataregistry.registrar_util import _form_dataset_path, get_directory_info
 from dataregistry.registrar_util import _parse_version_string, _bump_version
 from dataregistry.registrar_util import _name_from_relpath
@@ -18,6 +18,9 @@ _DEFAULT_ROOT_DIR = "/global/cfs/cdirs/desc-co/registry-beta"  # temporary
 
 # Default maximum allowed length of configuration file allowed to be ingested
 _DEFAULT_MAX_CONFIG = 10000
+
+# Allowed owner types
+_OWNER_TYPES = {"user", "project", "group", "production"}
 
 
 class Registrar:
@@ -77,6 +80,18 @@ class Registrar:
         self._owner = owner
         self._owner_type = owner_type
 
+    def get_owner_types(self):
+        """
+        Returns a list of allowed owner_types that can be registered within DREGS.
+
+        Returns
+        -------
+        - : set
+            Set of owner_types
+        """
+
+        return _OWNER_TYPES
+
     def _get_table_metadata(self, tbl):
         return self._metadata_getter.get(tbl)
 
@@ -93,7 +108,7 @@ class Registrar:
             Link to the dataset table
         owner : str
             Owner of the dataset
-        owner_type : ownertypeenum
+        owner_type : str
 
         Returns
         -------
@@ -107,7 +122,7 @@ class Registrar:
             .where(
                 dataset_table.c.relative_path == relative_path,
                 dataset_table.c.owner == owner,
-                dataset_table.c.owner_type == owner_type.value,
+                dataset_table.c.owner_type == owner_type,
             )
             .order_by(dataset_table.c.dataset_id.desc())
         )
@@ -341,7 +356,7 @@ class Registrar:
             the data registry.
         copy : bool, optional
             True to copy data from ``old_location`` into the data registry
-            (default behaviour).  
+            (default behaviour).
             False to create a symlink.
         is_dummy : bool, optional
             True for "dummy" datasets (no data is copied, for testing purposes
@@ -368,9 +383,8 @@ class Registrar:
                 owner_type = self._owner_type
             else:
                 owner_type = "user"
-        if owner_type not in ["user", "group", "production"]:
+        if owner_type not in _OWNER_TYPES:
             raise ValueError(f"{owner_type} is not a valid owner_type")
-        owner_type = ownertypeenum(owner_type)
 
         # Establish the dataset owner
         if owner is None:
@@ -422,7 +436,7 @@ class Registrar:
                 total_size,
                 ds_creation_date,
             ) = self._handle_data(
-                relative_path, old_location, owner, owner_type.value, verbose
+                relative_path, old_location, owner, owner_type, verbose
             )
         else:
             dataset_organization = "dummy"
@@ -463,7 +477,7 @@ class Registrar:
         values["is_overwritable"] = is_overwritable
         values["is_overwritten"] = False
         values["register_date"] = datetime.now()
-        values["owner_type"] = owner_type.value
+        values["owner_type"] = owner_type
         values["owner"] = owner
         values["creator_uid"] = self._uid
         values["data_org"] = dataset_organization

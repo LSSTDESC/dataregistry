@@ -1,7 +1,6 @@
 from sqlalchemy import engine_from_config
 from sqlalchemy.engine import make_url
-import enum
-from sqlalchemy import MetaData, Table, Enum, Column
+from sqlalchemy import MetaData, Table, Column
 from sqlalchemy import column, text, insert, select
 from sqlalchemy.exc import DBAPIError, IntegrityError
 import yaml
@@ -19,8 +18,6 @@ __all__ = [
     "TableCreator",
     "TableMetadata",
     "SCHEMA_VERSION",
-    "ownertypeenum",
-    "dataorgenum",
 ]
 
 
@@ -97,19 +94,6 @@ def create_db_engine(config_file=None, verbose=False):
     dialect = driver.split("+")[0]
 
     return engine_from_config(connection_parameters), dialect
-
-
-class ownertypeenum(enum.Enum):
-    production = "production"
-    group = "group"
-    project = "project"
-    user = "user"
-
-
-class dataorgenum(enum.Enum):
-    file = "file"
-    directory = "directory"
-    dummy = "dummy"
 
 
 def add_table_row(conn, table_meta, values, commit=True):
