@@ -80,6 +80,18 @@ class Registrar:
         self._owner = owner
         self._owner_type = owner_type
 
+    def get_owner_types(self):
+        """
+        Returns a list of allowed owner_types that can be registered within DREGS.
+
+        Returns
+        -------
+        - : set
+            Set of owner_types
+        """
+
+        return _OWNER_TYPES
+
     def _get_table_metadata(self, tbl):
         return self._metadata_getter.get(tbl)
 

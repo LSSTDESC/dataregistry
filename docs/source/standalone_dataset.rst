@@ -65,7 +65,7 @@ universal ``owner`` and ``owner_type`` for the lifetime of the instance, e.g.,
 
 All datasets registered during that instance will pick up the universal values
 for ``owner`` and ``owner_type``, however the values passed to
-``register_dataset`` directly will always take precedent.
+``register_dataset`` directly will always take precedence.
 
 .. note::
    If your DREGS configuration file is not located in the default location, and
