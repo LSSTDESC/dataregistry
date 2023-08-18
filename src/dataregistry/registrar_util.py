@@ -2,8 +2,6 @@ import os
 import re
 from sqlalchemy import MetaData, Table, Column, text, select
 
-from dataregistry.db_basic import ownertypeenum
-
 __all__ = [
     "_parse_version_string",
     "_bump_version",
@@ -62,7 +60,7 @@ def _form_dataset_path(owner_type, owner, relative_path, root_dir=None):
 
     Parameters
     ----------
-    owner_type : ownertypeenum
+    owner_type : str
         Type of dataset
     owner : str
         Owner of dataset

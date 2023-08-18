@@ -24,19 +24,12 @@ fed into the third stage as input and produces its own output dataset directory
 structure. Thus our three stages have a simple sequential linking structure;
 `Stage1 -> Stage2` and `Stage2 -> Stage3`.
 
-How then would we go about inputting this pipeline into the DESC data registry?
-Below is a graphical representation of the entries in `DREGS` we will need to
-create, which we go through step-by-step below.
+Below is a graphical representation of the setup.
 
 .. image:: _static/pipeline_example.png
    :alt: Image missing
 
-There are two ways to insert entries into the DESC data registry; via the
-`DREGS` Python package, or via the command line. 
-
-For the purpose of this example we will be storing all the data of our pipeline
-under our own user space (in `DREGS` nomenclature `owner_type = "user"`) under
-the relative path `./my-desc-pipeline`.
+How then would we go about inputting this pipeline into the DESC data registry?
 
 Option 1: Using the ``dataregistry`` Python package
 ---------------------------------------------------
@@ -44,87 +37,60 @@ Option 1: Using the ``dataregistry`` Python package
 The first option is to create the database entries using the ``dataregistry``
 Python package. 
 
-To begin we need to get set up; importing the correct modules, referencing our
-`DREGS` configuration file., connecting to the `DREGS` database, and creating a
-``Registrar`` object.
+To begin we need to get set up; importing the `DREGS` class. As with the
+standalone dataset example, we are assuming the default DREGS configuration
+(see the :ref:`Installation page <installation>` for more details).
 
 .. code-block:: python
 
-   import os
-   import sys
-   from dataregistry.registrar import Registrar
-   from dataregistry.db_basic import create_db_engine, ownertypeenum, SCHEMA_VERSION
+   from dataregistry import DREGS
 
-   # Establish connection to database
-   engine, dialect = create_db_engine()
-
-   # Create Registrar object
-   registrar = Registrar(
-       engine, dialect, _lookup[owner_type], owner=owner, schema_version=SCHEMA_VERSION
-   )
+   # Establish connection to database (using defaults) 
+   dregs = DREGS()
 
 Now we can enter our database entries, starting with an `execution` entry to
 represent the first stage of our pipeline.
 
 .. code-block:: python
 
-   name = "pipeline-stage-1"
-   description = "The first stage of my pipeline"
-
-   ex1_id = registrar.register_execution(
-       name,
-       description=description,
+   ex1_id = dregs.Registrar.register_execution(
+       "pipeline-stage-1",
+       description="The first stage of my pipeline",
    ) 
 
 where ``ex1_id`` is the `DREGS` index for this execution which we will reference later.
 
-Next, we register the datasets associated with the output of ``pipeline-stage-1``:
+Next, we register the datasets associated with the output of
+``pipeline-stage-1``. Each dataset by default (as we have not specified
+otherwise) will be entered with ``owner=$USER`` and ``owner_type=user``.  
 
 .. code-block:: python
 
-   name = "Dataset 1.1"
-   description = "A directory structure output from pipeline stage 1"
-   relpath = "my-first-pipeline/dataset_1p1/"
-   version = "0.0.1"
-   old_location = "/somewhere/on/machine/my-dataset/"
-
-   dataset_id1 = registrar.register_dataset(
-       relpath,
-       version,
-       description=description,
-       old_location=old_location,
+   dataset_id1 = dregs.Registrar.register_dataset(
+       "my-first-pipeline/dataset_1p1/",
+       "0.0.1",
+       description="A directory structure output from pipeline stage 1",
+       old_location="/somewhere/on/machine/my-dataset/",
        execution_id=ex1_id,
-       name=name,
+       name="Dataset 1.1",
    )
 
-   name = "Dataset 1.2"
-   description = "A file output from pipeline stage 1"
-   relpath = "my-first-pipeline/dataset_1p2.db"
-   version = "0.0.1"
-   old_location = "/somewhere/on/machine/other-datasets/database.db"
-
-   dataset_id2 = registrar.register_dataset(
-       relpath,
-       version,
-       description=description,
-       old_location=old_location,
+   dataset_id2 = dregs.Registrar.register_dataset(
+       "my-first-pipeline/dataset_1p2.db",
+       "0.0.1",
+       description="A file output from pipeline stage 1",
+       old_location="/somewhere/on/machine/other-datasets/database.db",
        execution_id=ex1_id,
-       name=name,
+       name="Dataset 1.2",
    )
 
-   name = "Dataset 1.3"
-   description = "Another file output from pipeline stage 1"
-   relpath = "my-first-pipeline/dataset_1p3.hdf5"
-   version = "0.0.1"
-   old_location = "/somewhere/on/machine/other-datasets/info.hdf5"
-
-   dataset_id3 = registrar.register_dataset(
-       relpath,
-       version,
-       description=description,
-       old_location=old_location,
+   dataset_id3 = dregs.Registrar.register_dataset(
+       "my-first-pipeline/dataset_1p3.hdf5",
+       "0.0.1",
+       description="Another file output from pipeline stage 1",
+       old_location="/somewhere/on/machine/other-datasets/info.hdf5",
        execution_id=ex1_id,
-       name=name,
+       name="Dataset 1.3",
    )
 
 Now, the `execution` for stage two of our pipeline. Note this will
@@ -132,56 +98,39 @@ automatically generate a dependency between the two executions.
 
 .. code-block:: python
 
-   name = "pipeline-stage-2"
-   description = "The second stage of my pipeline"
-
-   ex2_id = registrar.register_execution(
-       name,
-       description=description,
+   ex2_id = dregs.Registrar.register_execution(
+       "pipeline-stage-2",
+       description="The second stage of my pipeline",
        input_datasets=[dataset_id1,dataset_id2,dataset_id3],
    )
 
-and then to finish, we repeat the process for the remaining datasets
+and then to finish, we repeat the process for the remaining datasets and
+remaining execution.
 
 .. code-block:: python
 
-    name = "Dataset 2.1"
-    description = "A directory structure output from pipeline stage 2"
-    relpath = "my-first-pipeline/dataset_2p1"
-    version = "0.0.1"
-    old_location = "/somewhere/on/machine/my-second-dataset/"
- 
     dataset_id4 = registrar.register_dataset(
-        relpath,
-        version,
-        description=description,
-        old_location=old_location,
+        "my-first-pipeline/dataset_2p1",
+        "0.0.1",
+        description="A directory structure output from pipeline stage 2",
+        old_location="/somewhere/on/machine/my-second-dataset/",
         execution_id=ex2_id,
-        name=name,
+        name="Dataset 2.1",
     )
 
-    name = "pipeline-stage-3"
-    description = "The third stage of my pipeline"
- 
     ex3_id = registrar.register_execution(
-        name,
-        description=description,
+        "pipeline-stage-3",
+        description="The third stage of my pipeline",
         input_datasets=[dataset_id4],
     )
  
-    name = "Dataset 3.1"
-    description = "A directory structure output from pipeline stage 3"
-    relpath = "my-first-pipeline/dataset_3p1"
-    version = "0.0.1"
-    old_location = "/somewhere/on/machine/my-third-dataset/"
- 
     dataset_id5 = registrar.register_dataset(
-        relpath,
-        version,
-        description=description,
-        old_location=old_location,
+        "my-first-pipeline/dataset_3p1",
+        "0.0.1",
+        description="A directory structure output from pipeline stage 3",
+        old_location="/somewhere/on/machine/my-third-dataset/",
         execution_id=ex3_id,
-        name=name,
+        name="Dataset 3.1",
     )
 
 This process can be a bit cumbersome for entering data manually. However the

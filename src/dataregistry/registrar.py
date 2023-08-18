@@ -4,103 +4,150 @@ from datetime import datetime
 from shutil import copyfile, copytree
 from sqlalchemy import MetaData, Table, Column, insert, text, update, select
 from sqlalchemy.exc import DBAPIError, IntegrityError
-from dataregistry.db_basic import add_table_row, SCHEMA_VERSION, ownertypeenum
+from dataregistry.db_basic import add_table_row, SCHEMA_VERSION
 from dataregistry.registrar_util import _form_dataset_path, get_directory_info
 from dataregistry.registrar_util import _parse_version_string, _bump_version
 from dataregistry.registrar_util import _name_from_relpath
 from dataregistry.db_basic import TableMetadata
 from dataregistry.exceptions import *
 
-__all__ = ['Registrar']
-if os.getenv("DREGS_ROOT_DIR"):
-    _DEFAULT_ROOT_DIR = os.getenv("DREGS_ROOT_DIR")
-else:
-    _DEFAULT_ROOT_DIR = "/global/cfs/cdirs/desc-co/registry-beta" #temporary
+__all__ = ["Registrar"]
 
-class Registrar():
-    '''
-    Register new datasets, executions ("runs") or alias names
+# The root DREGS directory.
+_DEFAULT_ROOT_DIR = "/global/cfs/cdirs/desc-co/registry-beta"  # temporary
 
-    '''
-    def __init__(self, db_engine, dialect, owner_type, owner=None,
-                 schema_version=SCHEMA_VERSION):
-        '''
-        Create a new Registrar object. Note this call should be preceded
-        by a call to create_db_engine, which will return values for
-        db_engine and dialect.
+# Default maximum allowed length of configuration file allowed to be ingested
+_DEFAULT_MAX_CONFIG = 10000
+
+# Allowed owner types
+_OWNER_TYPES = {"user", "project", "group", "production"}
+
+
+class Registrar:
+    def __init__(
+        self,
+        db_engine,
+        dialect,
+        owner=None,
+        owner_type=None,
+        schema_version=SCHEMA_VERSION,
+        root_dir=None,
+    ):
+        """
+        Class to register new datasets, executions and alias names.
 
         Parameters
         ----------
-        db_engine :   sqlalchemy engine object
+        db_engine : SQLAlchemy Engine object
         dialect : str
-            identifies target db type (e.g. "postgresql")
-        owner_type : owenertypeenum
-            which of the allowed categories will be destination for
-            new dataset entries
+            Database backend (e.g. "postgresql")
         owner : str
-            Forms part of relative path of dataset location.
-            Always "production" for production databases.
-            Otherwise defaults to "."
-        schema_version : str
-            Which database schema to connect to.
-            Current default is 'registry_beta'
-        '''
+            To set the default owner for all registered datasets in this
+            instance.
+        owner_type : str
+            To set the default owner_type for all registered datasets in this
+            instance.
+        schema_version : str, optional
+            Which database schema to connect to, defaults to SCHEMA_VERSION
+        root_dir : str, optional
+            Root directory of the dataregistry on disk. If None, default to
+            _DEFAULT_ROOT_DIR
+        """
+
+        # Root directory on disk for data registry files
+        if root_dir is not None:
+            self.root_dir = root_dir
+        else:
+            self.root_dir = _DEFAULT_ROOT_DIR
+
+        # Database engine and dialect.
         self._engine = db_engine
         self._dialect = dialect
-        self._owner_type = owner_type.value
-        if owner is None:
-            owner = "."
-        self._owner = owner
-        if self._owner_type == ownertypeenum.production.value:
-            self._owner = "production"
+
+        # Schema version we are using.
         if dialect == "sqlite":
             self._schema_version = None
         else:
-            self._schema_version=schema_version
+            self._schema_version = schema_version
 
-        self._metadata_getter = TableMetadata(self._schema_version,
-                                              db_engine)
-        self._userid = os.getenv("USER")
-        self._root_dir = _DEFAULT_ROOT_DIR  # <-- should be site dependent
+        # Link to Table Metadata.
+        self._metadata_getter = TableMetadata(self._schema_version, db_engine)
+
+        # Store user id
+        self._uid = os.getenv("USER")
+
+        # Default owner and owner_type's
+        self._owner = owner
+        self._owner_type = owner_type
+
+    def get_owner_types(self):
+        """
+        Returns a list of allowed owner_types that can be registered within DREGS.
+
+        Returns
+        -------
+        - : set
+            Set of owner_types
+        """
+
+        return _OWNER_TYPES
 
     def _get_table_metadata(self, tbl):
         return self._metadata_getter.get(tbl)
 
-    # Should verify that argument is reasonable       <---
-    def set_root_dir(self, root_dir):
-        self._root_dir = root_dir
+    def _find_previous(self, relative_path, dataset_table, owner, owner_type):
+        """
+        Check to see if a dataset exists already in the registry, and if we are
+        allowed to overwrite it.
 
-    @property
-    def root_dir(self):
-        return self._root_dir
+        Parameters
+        ----------
+        relative_path : str
+            Relative path to dataset
+        dataset_table : SQLAlchemy Table object
+            Link to the dataset table
+        owner : str
+            Owner of the dataset
+        owner_type : str
 
-    def _find_previous(self, relative_path, dataset_table):
-        # First check if any entries already exist with the same relative_path
-        # and, if they do, if they are overwritable. If any are not, abort
-        stmt = select(dataset_table.c.dataset_id,
-                      dataset_table.c.is_overwritable)\
-                      .where(dataset_table.c.relative_path == relative_path,
-                             dataset_table.c.owner == self._owner,
-                             dataset_table.c.owner_type == self._owner_type)\
-                      .order_by(dataset_table.c.dataset_id.desc())
-        previous = []
+        Returns
+        -------
+        previous : list
+            List of dataset IDs that are overwritable
+        """
+
+        # Search for dataset in the registry.
+        stmt = (
+            select(dataset_table.c.dataset_id, dataset_table.c.is_overwritable)
+            .where(
+                dataset_table.c.relative_path == relative_path,
+                dataset_table.c.owner == owner,
+                dataset_table.c.owner_type == owner_type,
+            )
+            .order_by(dataset_table.c.dataset_id.desc())
+        )
+
         with self._engine.connect() as conn:
             result = conn.execute(stmt)
             conn.commit()
 
-            for r in result:
-                if not r.is_overwritable:
-                    return None
-                else:
-                    previous.append(r.dataset_id)
+        # If the datasets are overwritable, log their ID, else return None
+        previous = []
+        for r in result:
+            if not r.is_overwritable:
+                return None
+            else:
+                previous.append(r.dataset_id)
+
         return previous
 
-    def _handle_data(self, relative_path, old_location, verbose):
+    def _handle_data(self, relative_path, old_location, owner, owner_type, verbose):
         """
         Find characteristics of dataset (i.e., is it a file or directory, how
         many files and total disk space of the dataset).
 
-        If old_location is not None, copy the dataset into the data registry.
+        If old_location is not None, copy the dataset files and directories
+        into the data registry.
 
         Parameters
         ----------
@@ -109,6 +156,10 @@ class Registrar():
         old_location : str
             Location of data (if not already in the data registry root)
             Data will be copied from this location
+        owner : str
+            Owner of the dataset
+        owner_type : str
+            Owner type of the dataset
         verbose : bool
             True for extra output
 
@@ -125,8 +176,7 @@ class Registrar():
         """
 
         # Get destination directory in data registry.
-        dest =  _form_dataset_path(self._owner_type, self._owner,
-                                   relative_path, self._root_dir)
+        dest = _form_dataset_path(owner_type, owner, relative_path, self.root_dir)
 
         # Is the data already on location, or coming from somewhere new?
         if old_location:
@@ -156,14 +206,14 @@ class Registrar():
         if verbose:
             print(f"took {time.time()-tic:.2f}s")
 
+        # Copy data into data registry
         if old_location:
-            # copy to dest.  For directory do recursive copy
-            # for now always copy; don't try to handle sym link
-            # Assuming we don't want to copy any metadata (e.g.
-            # permissions)
             if verbose:
                 tic = time.time()
-                print(f"Copying {num_files} files ({total_size/1024/1024:.2f} Mb)...",end="")
+                print(
+                    f"Copying {num_files} files ({total_size/1024/1024:.2f} Mb)...",
+                    end="",
+                )
             if dataset_organization == "file":
                 # Create any intervening directories
                 os.makedirs(os.path.dirname(dest), exist_ok=True)
@@ -175,9 +225,16 @@ class Registrar():
 
         return dataset_organization, num_files, total_size, ds_creation_date
 
-    _MAX_CONFIG = 10000
-    def register_execution(self, name, description=None, execution_start=None,
-                           locale=None, configuration=None, input_datasets=[]):
+    def register_execution(
+        self,
+        name,
+        description=None,
+        execution_start=None,
+        locale=None,
+        configuration=None,
+        input_datasets=[],
+        max_config_length=_DEFAULT_MAX_CONFIG,
+    ):
         """
         Register a new execution in the DESC data registry.
 
@@ -188,13 +245,15 @@ class Registrar():
         description : str, optional
             Human readible description of execution
         execution_start : datetime, optional
-            FILL IN
+            Date the execution started
         locale : str, optional
             Where was the execution performed?
         configuration : str, optional
             Path to text file used to configure the execution
         input_datasets : list, optional
             List of dataset ids that were the input to this execution
+        max_config_length : int, optional
+            Maxiumum number of lines to read from a configuration file
 
         Returns
         -------
@@ -202,24 +261,30 @@ class Registrar():
             The execution ID of the new row relating to this entry
         """
 
-        values = {"name" : name}
-        if locale: values["locale"] = locale
-        if execution_start: values["execution_start"] = execution_start
-        if description: values["description"] = description
+        # Put the execution information together
+        values = {"name": name}
+        if locale:
+            values["locale"] = locale
+        if execution_start:
+            values["execution_start"] = execution_start
+        if description:
+            values["description"] = description
         values["register_date"] = datetime.now()
-        values["creator_uid"] = self._userid
+        values["creator_uid"] = self._uid
 
         exec_table = self._get_table_metadata("execution")
         dependency_table = self._get_table_metadata("dependency")
 
-        if configuration:   # read text file into a string
+        # Read configuration file. Enter contents as a raw string.
+        if configuration:
             # Maybe first check that file size isn't outrageous?
             with open(configuration) as f:
-                contents = f.read(Registrar._MAX_CONFIG)
+                contents = f.read(max_config_length)
                 # if len(contents) == _MAX_CONFIG:
                 #    issue truncation warning?
             values["configuration"] = contents
 
+        # Enter row into data registry database
         with self._engine.connect() as conn:
             my_id = add_table_row(conn, exec_table, values, commit=False)
 
@@ -232,12 +297,24 @@ class Registrar():
             conn.commit()
         return my_id
 
-    def register_dataset(self, relative_path, version,
-                         version_suffix=None, name=None, creation_date=None,
-                         description=None, execution_id=None,
-                         access_API=None,
-                         is_overwritable=False, old_location=None, copy=True,
-                         is_dummy=False, verbose=False):
+    def register_dataset(
+        self,
+        relative_path,
+        version,
+        version_suffix=None,
+        name=None,
+        creation_date=None,
+        description=None,
+        execution_id=None,
+        access_API=None,
+        is_overwritable=False,
+        old_location=None,
+        copy=True,
+        is_dummy=False,
+        verbose=False,
+        owner=None,
+        owner_type=None,
+    ):
         """
         Register a new dataset in the DESC data registry.
 
@@ -246,19 +323,15 @@ class Registrar():
         relative_path : str
             Destination for the dataset within the data registry. Path is
             relative to ``<registry root>/<owner_type>/<owner>``.
-            If the environment variable DREGS_ROOT is defined, this
-            value is used for ``<registry root>``.
-            Otherwise currently ``<registry root>`` defaults to
-            /global/cfs/cdirs/desc-co/registry-beta
         version : str
             Semantic version string of the format MAJOR.MINOR.PATCH *or*
-            a special flag "patch", "minor" or "major".
+            a special flag: "patch", "minor" or "major".
 
             When a special flag is used it automatically bumps the relative
             version for you (see examples for more details).
         version_suffix : str, optional
-            Optional suffix string to place at the end of the version string.
-            Cannot be used for production datasets.
+            Suffix string to place at the end of the version string. Cannot be
+            used for production datasets.
         name : str, optional
             Any convenient, evocative name for the human.
 
@@ -275,19 +348,28 @@ class Registrar():
         is_overwritable : bool, optional
             True if dataset may be overwritten (defaults to False).
 
-            Production datasets cannot be overwritten.
+            Note production datasets cannot be overwritten.
         old_location : str, optional
-            Absolute location of dataset to copy.
+            Absolute location of dataset to copy into the data registry.
 
-            If None dataset should already be at correct relative_path.
+            If None, dataset should already be at correct relative_path within
+            the data registry.
         copy : bool, optional
-            If true copy data from ``old_location`` to the database.
-            If False create a symlink (defaults to True).
-        is_dummy : bool
+            True to copy data from ``old_location`` into the data registry
+            (default behaviour).
+            False to create a symlink.
+        is_dummy : bool, optional
             True for "dummy" datasets (no data is copied, for testing purposes
             only)
-        verbose : bool
+        verbose : bool, optional
             Provide some additional output information
+        owner : str, optional
+            Owner of the dataset. If None, defaults to what was set in
+            Registrar __init__, if that is also None, defaults to $USER.
+        owner_type : str, optional
+            Owner type: "user", "group", or "production". If None, defaults to
+            what was set in Registrar __init__, if that is also None, defaults
+            to "user".
 
         Returns
         -------
@@ -295,21 +377,41 @@ class Registrar():
             The dataset ID of the new row relating to this entry (else None)
         """
 
-        if (self._owner_type == "production"):
+        # Make sure the owner_type is legal
+        if owner_type is None:
+            if self._owner_type is not None:
+                owner_type = self._owner_type
+            else:
+                owner_type = "user"
+        if owner_type not in _OWNER_TYPES:
+            raise ValueError(f"{owner_type} is not a valid owner_type")
+
+        # Establish the dataset owner
+        if owner is None:
+            if self._owner is not None:
+                owner = self._owner
+            else:
+                owner = self._uid
+        if owner_type == "production":
+            owner = "production"
+
+        # Checks for production datasets
+        if owner_type == "production":
             if is_overwritable:
                 raise ValueError("Cannot overwrite production entries")
             if version_suffix is not None:
                 raise ValueError("Production entries can't have version suffix")
 
-        dataset_table = self._get_table_metadata("dataset")
-
+        # If name not passed, automatically generate a name from the relative path
         if name is None:
             name = _name_from_relpath(relative_path)
 
         # Look for previous entries. Fail if not overwritable
-        previous = self._find_previous(relative_path, dataset_table)
+        dataset_table = self._get_table_metadata("dataset")
+        previous = self._find_previous(relative_path, dataset_table, owner, owner_type)
+
         if previous is None:
-            print(f"Dataset with relative path {relative_path} exists and is not overwritable")
+            print(f"Dataset {relative_path} exists, and is not overwritable")
             return None
 
         # Deal with version string (non-special case)
@@ -318,15 +420,24 @@ class Registrar():
             version_string = version
         else:
             # Generate new version fields based on previous entries
-            # with the same name field and same suffix
-            v_fields = _bump_version(name, version, version_suffix,
-                                     dataset_table, self._engine)
-            version_string = f"{v_fields['major']}.{v_fields['minor']}.{v_fields['patch']}"
+            # with the same name field and same suffix (i.e., bump)
+            v_fields = _bump_version(
+                name, version, version_suffix, dataset_table, self._engine
+            )
+            version_string = (
+                f"{v_fields['major']}.{v_fields['minor']}.{v_fields['patch']}"
+            )
 
         # Get dataset characteristics; copy if requested
         if not is_dummy:
-            dataset_organization, num_files, total_size, ds_creation_date = \
-                self._handle_data(relative_path, old_location, verbose)
+            (
+                dataset_organization,
+                num_files,
+                total_size,
+                ds_creation_date,
+            ) = self._handle_data(
+                relative_path, old_location, owner, owner_type, verbose
+            )
         else:
             dataset_organization = "dummy"
             num_files = 0
@@ -343,40 +454,47 @@ class Registrar():
             if execution_id is None:
                 return None
 
-        values  = {"name" : name}
+        # Pull the dataset properties together
+        values = {"name": name}
         values["relative_path"] = relative_path
         values["version_major"] = v_fields["major"]
         values["version_minor"] = v_fields["minor"]
         values["version_patch"] = v_fields["patch"]
         values["version_string"] = version_string
-        if version_suffix: values["version_suffix"] = version_suffix
+        if version_suffix:
+            values["version_suffix"] = version_suffix
         if creation_date:
             values["dataset_creation_date"] = creation_date
         else:
             if ds_creation_date:
                 values["dataset_creation_date"] = ds_creation_date
-        if description: values["description"] = description
-        if execution_id: values["execution_id"] = execution_id
-        if access_API: values["access_API"] = access_API
+        if description:
+            values["description"] = description
+        if execution_id:
+            values["execution_id"] = execution_id
+        if access_API:
+            values["access_API"] = access_API
         values["is_overwritable"] = is_overwritable
         values["is_overwritten"] = False
         values["register_date"] = datetime.now()
-        values["owner_type"] = self._owner_type
-        values["owner"] = self._owner
-        values["creator_uid"] = self._userid
+        values["owner_type"] = owner_type
+        values["owner"] = owner
+        values["creator_uid"] = self._uid
         values["data_org"] = dataset_organization
         values["nfiles"] = num_files
-        values["total_disk_space"] = total_size / 1024 / 1024 # Mb
+        values["total_disk_space"] = total_size / 1024 / 1024  # Mb
 
+        # Create a new row in the data registry database.
         with self._engine.connect() as conn:
-            prim_key = add_table_row(conn, dataset_table, values,
-                                     commit=False)
+            prim_key = add_table_row(conn, dataset_table, values, commit=False)
 
             if len(previous) > 0:
                 # Update previous rows, setting is_overwritten to True
-                update_stmt = update(dataset_table)\
-                    .where(dataset_table.c.dataset_id.in_(previous))\
+                update_stmt = (
+                    update(dataset_table)
+                    .where(dataset_table.c.dataset_id.in_(previous))
                     .values(is_overwritten=True)
+                )
                 conn.execute(update_stmt)
             conn.commit()
 
@@ -400,20 +518,24 @@ class Registrar():
         """
 
         now = datetime.now()
-        values = {"alias" : aliasname}
+        values = {"alias": aliasname}
         values["dataset_id"] = dataset_id
         values["register_date"] = now
-        values["creator_uid"] = self._userid
+        values["creator_uid"] = self._uid
 
         alias_table = self._get_table_metadata("dataset_alias")
         with self._engine.connect() as conn:
             prim_key = add_table_row(conn, alias_table, values)
 
             # Update any other alias rows which have been superseded
-            stmt = update(alias_table)\
-                .where(alias_table.c.alias == aliasname,
-                       alias_table.c.dataset_alias_id != prim_key)\
+            stmt = (
+                update(alias_table)
+                .where(
+                    alias_table.c.alias == aliasname,
+                    alias_table.c.dataset_alias_id != prim_key,
+                )
                 .values(supersede_date=now)
+            )
             conn.execute(stmt)
             conn.commit()
         return prim_key

@@ -35,7 +35,7 @@ except:
     LITE_TYPES = {}
 
 from sqlalchemy.exc import DBAPIError, NoSuchColumnError
-from dataregistry.db_basic import add_table_row, SCHEMA_VERSION, ownertypeenum
+from dataregistry.db_basic import add_table_row, SCHEMA_VERSION
 from dataregistry.db_basic import TableMetadata
 from dataregistry.exceptions import *
 
@@ -86,7 +86,7 @@ class Query:
     """
 
     def __init__(self, db_engine, dialect, schema_version=SCHEMA_VERSION):
-        '''
+        """
         Create a new Query object. Note this call should be preceded
         by a call to create_db_engine, which will return values for
         db_engine and dialect
@@ -99,7 +99,7 @@ class Query:
         schema_version : str
             Which database schema to connect to.
             Current default is 'registry_beta'
-        '''
+        """
         self._engine = db_engine
         self._dialect = dialect
         if dialect == "sqlite":
@@ -260,7 +260,11 @@ class Query:
         major, minor, patch      int   version numbers for db OR
         None, None, None     in case db is too old to contain provenance table
         """
-        return self._metadata.db_version_major, self._metadata.db_version_minor, self._metadata.db_version_patch
+        return (
+            self._metadata.db_version_major,
+            self._metadata.db_version_minor,
+            self._metadata.db_version_patch,
+        )
 
     def find_datasets(self, property_names=None, filters=[]):
         """
@@ -329,3 +333,33 @@ class Query:
                 return None
 
         return result
+
+    def gen_filter(self, property_name, bin_op, value):
+        """
+        Generate a binary filter for a DREGS query.
+
+        These construct SQL WHERE clauses.
+
+        Parameters
+        ----------
+        property_name : str
+            Database property to be queried on
+        bin_op : str
+            Binary operation to perform, e.g., "==" or ">="
+        value : -
+            Comparison value
+
+        Returns
+        -------
+        - : namedtuple
+            The Filter tuple
+
+        Example
+        -------
+        .. code-block:: python
+        
+           f = dregs.Query.gen_filter("dataset.name", "==", "my_dataset")
+           f = dregs.Query.gen_filter("dataset.version_major", ">", 1)
+        """
+
+        return Filter(property_name, bin_op, value)
