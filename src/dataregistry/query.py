@@ -85,32 +85,28 @@ class Query:
     Class implementing supported queries
     """
 
-    def __init__(self, db_engine, dialect, schema_version=SCHEMA_VERSION):
+    def __init__(self, db_connection):
         """
         Create a new Query object. Note this call should be preceded
-        by a call to create_db_engine, which will return values for
-        db_engine and dialect
+        by creation of a DbConnection object
 
         Parameters
         ----------
-        db_engine :   sqlalchemy engine object
-        dialect : str
-            identifies target db type (e.g. 'postgresql')
-        schema_version : str
-            Which database schema to connect to.
-            Current default is 'registry_beta'
+        db_connection : DbConnection object
+            Encompasses sqlalchemy engine, dialect (database backend)
+            and schema version
         """
-        self._engine = db_engine
-        self._dialect = dialect
-        if dialect == "sqlite":
+        self._engine = db_connection.engine
+        self._dialect = db_connection.dialect
+        if self._dialect == "sqlite":
             self._schema_version = None
         else:
-            self._schema_version = schema_version
+            self._schema_version = db_connection.schema
 
         # Do we need to know where the datasets actually are?  If so
         # we need a ROOT_DIR
 
-        self._metadata = TableMetadata(self._schema_version, db_engine)
+        self._metadata = TableMetadata(db_connection)
 
         # Get table definitions
         self._table_list = ["dataset", "execution", "dataset_alias", "dependency"]
@@ -357,7 +353,7 @@ class Query:
         Example
         -------
         .. code-block:: python
-        
+
            f = dregs.Query.gen_filter("dataset.name", "==", "my_dataset")
            f = dregs.Query.gen_filter("dataset.version_major", ">", 1)
         """

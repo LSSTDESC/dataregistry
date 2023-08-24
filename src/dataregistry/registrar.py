@@ -26,11 +26,9 @@ _OWNER_TYPES = {"user", "project", "group", "production"}
 class Registrar:
     def __init__(
         self,
-        db_engine,
-        dialect,
+        db_connection,
         owner=None,
         owner_type=None,
-        schema_version=SCHEMA_VERSION,
         root_dir=None,
     ):
         """
@@ -38,17 +36,15 @@ class Registrar:
 
         Parameters
         ----------
-        db_engine : SQLAlchemy Engine object
-        dialect : str
-            Database backend (e.g. "postgresql")
+        db_connection : DbConnection object
+            Encompasses sqlalchemy engine, dialect (database backend)
+            and schema version
         owner : str
             To set the default owner for all registered datasets in this
             instance.
         owner_type : str
             To set the default owner_type for all registered datasets in this
             instance.
-        schema_version : str, optional
-            Which database schema to connect to, defaults to SCHEMA_VERSION
         root_dir : str, optional
             Root directory of the dataregistry on disk. If None, default to
             _DEFAULT_ROOT_DIR
@@ -61,17 +57,10 @@ class Registrar:
             self.root_dir = _DEFAULT_ROOT_DIR
 
         # Database engine and dialect.
-        self._engine = db_engine
-        self._dialect = dialect
-
-        # Schema version we are using.
-        if dialect == "sqlite":
-            self._schema_version = None
-        else:
-            self._schema_version = schema_version
+        self._engine = db_connection.engine
 
         # Link to Table Metadata.
-        self._metadata_getter = TableMetadata(self._schema_version, db_engine)
+        self._metadata_getter = TableMetadata(db_connection)
 
         # Store user id
         self._uid = os.getenv("USER")

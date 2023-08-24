@@ -4,7 +4,7 @@ import argparse
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Index, Float
 from sqlalchemy import ForeignKey, UniqueConstraint
-from dataregistry.db_basic import create_db_engine, TableCreator, add_table_row, SCHEMA_VERSION
+from dataregistry.db_basic import DbConnection, TableCreator, add_table_row, SCHEMA_VERSION
 from dataregistry.git_util import get_git_info
 from dataregistry import __version__
 
@@ -20,13 +20,11 @@ parser.add_argument('--schema', help="name of schema to contain tables. Will be 
 parser.add_argument('--config', help="Path to the DREGS config file")
 
 args = parser.parse_args()
-schema = args.schema
 
-engine, dialect = create_db_engine(config_file=args.config)
-if dialect == 'sqlite':
-    schema = None
-
-tab_creator = TableCreator(engine, dialect, schema=schema)
+##engine, dialect = create_db_engine(config_file=args.config)
+db_connection = DbConnection(args.config, args.schema)
+##tab_creator = TableCreator(engine, dialect, schema=schema)
+tab_creator = TableCreator(db_connection)
 
 # Main table, a row per dataset
 cols = []
@@ -173,5 +171,5 @@ values["git_hash"] = git_hash
 values["repo_is_clean"] = is_clean
 values["update_method"] = "CREATE"
 
-with engine.connect() as conn:
+with db_connection.engine.connect() as conn:
     id = add_table_row(conn, provenance_table, values)
