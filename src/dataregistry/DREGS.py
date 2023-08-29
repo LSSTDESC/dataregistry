@@ -1,6 +1,6 @@
 import os
 
-from dataregistry.db_basic import SCHEMA_VERSION, DbConnection
+from dataregistry.db_basic import DbConnection
 from dataregistry.query import Query
 from dataregistry.registrar import Registrar
 
@@ -43,11 +43,6 @@ class DREGS:
         verbose : bool
             True for more output.
         """
-
-        # If no schema specified, go to the default one
-        if schema_version is None:
-            schema_version = SCHEMA_VERSION
-
         # Establish connection to database
         db_connection = DbConnection(config_file,
                                      schema=schema_version,

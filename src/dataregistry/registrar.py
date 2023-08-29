@@ -4,7 +4,7 @@ from datetime import datetime
 from shutil import copyfile, copytree
 from sqlalchemy import MetaData, Table, Column, insert, text, update, select
 from sqlalchemy.exc import DBAPIError, IntegrityError
-from dataregistry.db_basic import add_table_row, SCHEMA_VERSION
+from dataregistry.db_basic import add_table_row
 from dataregistry.registrar_util import _form_dataset_path, get_directory_info
 from dataregistry.registrar_util import _parse_version_string, _bump_version
 from dataregistry.registrar_util import _name_from_relpath
