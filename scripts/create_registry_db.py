@@ -4,15 +4,15 @@ import argparse
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Index, Float
 from sqlalchemy import ForeignKey, UniqueConstraint
-from dataregistry.db_basic import DbConnection, TableCreator, add_table_row, SCHEMA_VERSION
-from dataregistry.git_util import get_git_info
-from dataregistry import __version__
+from dataregistry.db_basic import DbConnection, TableCreator, SCHEMA_VERSION
+from dataregistry.db_basic import add_table_row, _insert_provenance
 
 # The following should be adjusted whenever there is a change to the structure
 # of the database tables.
 _DB_VERSION_MAJOR = 1
-_DB_VERSION_MINOR = 1
+_DB_VERSION_MINOR = 2
 _DB_VERSION_PATCH = 0
+_DB_VERSION_COMMENT = "Added comment column to Provenance table"
 
 parser = argparse.ArgumentParser(description='''
 Creates dataregistry tables in specified schema and connection information (config)''', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -119,7 +119,6 @@ cols.append(Column("input_id", Integer, ForeignKey("dataset.dataset_id")))
 cols.append(Column("execution_id", Integer, ForeignKey("execution.execution_id")))
 tab_creator.define_table("dependency", cols)
 
-
 # Keep track of code version creating the db
 # Create this table separately so that we have handle needed to
 # make an entry
@@ -139,37 +138,11 @@ cols.append(Column("repo_is_clean", Boolean, nullable=False))
 cols.append(Column("update_method", String(10), nullable=False))
 cols.append(Column("schema_enabled_date", DateTime, nullable=False))
 cols.append(Column("creator_uid", String(20), nullable=False))
+cols.append(Column("comment", String(250)))
 tab_creator.define_table("provenance", cols)
 
 tab_creator.create_all()
 
-# Now insert a row into the provenance table
-# First have to get metadata for the table we just created
-provenance_table = tab_creator.get_table_metadata("provenance")
-version_fields = __version__.split(".")
-patch = version_fields[2]
-suffix = None
-if "-" in patch:
-    subfields = patch.split("-")
-    patch = subfields[0]
-    suffix = "-".join(subfields[1:])
-
-values = dict()
-values["code_version_major"] = version_fields[0]
-values["code_version_minor"] = version_fields[1]
-values["code_version_patch"] = patch
-if suffix:
-    values["code_version_suffix"] = suffix
-values["db_version_major"] = _DB_VERSION_MAJOR
-values["db_version_minor"] = _DB_VERSION_MINOR
-values["db_version_patch"] = _DB_VERSION_PATCH
-values["schema_enabled_date"] = datetime.now()
-values["creator_uid"] = os.getenv("USER")
-pkg_root =  os.path.join(os.path.dirname(__file__), '..')
-git_hash, is_clean = get_git_info(pkg_root)
-values["git_hash"] = git_hash
-values["repo_is_clean"] = is_clean
-values["update_method"] = "CREATE"
-
-with db_connection.engine.connect() as conn:
-    id = add_table_row(conn, provenance_table, values)
+prov_id = _insert_provenance(db_connection, _DB_VERSION_MAJOR,
+                             _DB_VERSION_MINOR, _DB_VERSION_PATCH,
+                             "CREATE", comment=_DB_VERSION_COMMENT)
