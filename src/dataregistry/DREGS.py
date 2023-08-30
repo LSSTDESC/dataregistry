@@ -1,6 +1,6 @@
 import os
 
-from dataregistry.db_basic import SCHEMA_VERSION, create_db_engine
+from dataregistry.db_basic import DbConnection
 from dataregistry.query import Query
 from dataregistry.registrar import Registrar
 
@@ -43,25 +43,19 @@ class DREGS:
         verbose : bool
             True for more output.
         """
-
-        # If no schema specified, go to the default one
-        if schema_version is None:
-            self.schema_version = SCHEMA_VERSION
-        else:
-            self.schema_version = schema_version
-
         # Establish connection to database
-        engine, dialect = create_db_engine(config_file=config_file, verbose=verbose)
+        db_connection = DbConnection(config_file,
+                                     schema=schema_version,
+                                     verbose=verbose)
+        #engine, dialect = create_db_engine(config_file=config_file, verbose=verbose)
 
         # Create query object
-        self.Query = Query(engine, dialect, schema_version=self.schema_version)
+        self.Query = Query(db_connection)
 
         # Create registrar object
         self.Registrar = Registrar(
-            engine,
-            dialect,
+            db_connection,
             owner=owner,
             owner_type=owner_type,
-            schema_version=self.schema_version,
             root_dir=root_dir,
         )

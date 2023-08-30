@@ -1,5 +1,5 @@
 import os
-from dataregistry.db_basic import SCHEMA_VERSION, create_db_engine
+from dataregistry.db_basic import DbConnection
 from dataregistry.query import Filter, Query
 
 
@@ -22,10 +22,9 @@ def dregs_ls(owner, owner_type, show_all, dregs_config):
     """
 
     # Establish connection to database
-    engine, dialect = create_db_engine(config_file=dregs_config)
-
+    connection = DbConnection(dregs_config)
     # Create query object
-    q = Query(engine, dialect, schema_version=SCHEMA_VERSION)
+    q = Query(connection)
 
     # Filter on dataset owner and/or owner_type
     filters = []

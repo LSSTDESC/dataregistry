@@ -13,6 +13,7 @@ Low-level utility routines and classes for accessing the registry
 SCHEMA_VERSION = "registry_beta"
 
 __all__ = [
+    "DbConnection",
     "create_db_engine",
     "add_table_row",
     "TableCreator",
@@ -23,7 +24,7 @@ __all__ = [
 
 def _get_dregs_config(config_file=None, verbose=False):
     """
-    Located the DREGS configuration file.
+    Locate the DREGS configuration file.
 
     The code will check three scenarios, which are, in order of priority:
         - The config_file has been manually passed
@@ -107,13 +108,56 @@ def add_table_row(conn, table_meta, values, commit=True):
         conn.commit()
     return result.inserted_primary_key[0]
 
+class DbConnection:
+    def __init__(self, config_file, schema=None, verbose=False):
+        """
+        Simple class to act as container for connection
+
+        Parameters
+        ----------
+        config : str
+            Path to config file with low-level connection information.
+            If None, default location is assumed
+        schema : str
+            Schema to connect to.  If None, default schema is assumed
+        verbose : bool
+            If True, produce additional output
+    """
+        self._engine, self._dialect = create_db_engine(config_file=config_file,
+                                                       verbose=verbose)
+        if self._dialect == 'sqlite':
+            self._schema = None
+        else:
+            if schema is None:
+                self._schema = SCHEMA_VERSION
+            else:
+                self._schema = schema
+
+    @property
+    def engine(self):
+        return self._engine
+
+    @property
+    def dialect(self):
+        return self._dialect
+
+    @property
+    def schema(self):
+        return self._schema
 
 class TableCreator:
-    def __init__(self, engine, dialect, schema=SCHEMA_VERSION):
-        self._engine = engine
-        self._schema = schema
-        self._dialect = dialect
-        self._metadata = MetaData(schema=schema)
+    def __init__(self, db_connection):
+        """
+        Make it easy to create one or more tables
+
+        Parameters
+        ----------
+        dbConnection : a DbConnection object
+        """
+        self._engine = db_connection.engine
+        self._schema = db_connection.schema
+        self._dialect = db_connection.dialect
+        self._metadata = MetaData(schema=db_connection.schema)
 
     def define_table(self, name, columns, constraints=[]):
         """
@@ -190,16 +234,16 @@ class TableMetadata:
     Keep and dispense table metadata
     """
 
-    def __init__(self, schema, engine):
-        self._metadata = MetaData(schema=schema)
-        self._engine = engine
-        self._schema = schema
+    def __init__(self, db_connection):
+        self._metadata = MetaData(schema=db_connection.schema)
+        self._engine = db_connection.engine
+        self._schema = db_connection.schema
 
         # Load all existing tables
-        self._metadata.reflect(self._engine, schema)
+        self._metadata.reflect(self._engine, db_connection.schema)
 
         # Fetch and save db versioning if present
-        prov_name = ".".join([schema, "provenance"])
+        prov_name = ".".join([self._schema, "provenance"])
         if prov_name in self._metadata.tables:
             prov_table = self._metadata.tables[prov_name]
             cols = ["db_version_major", "db_version_minor", "db_version_patch"]
