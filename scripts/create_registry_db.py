@@ -131,8 +131,8 @@ cols.append(Column("code_version_suffix", String))
 cols.append(Column("db_version_major", Integer, nullable=False))
 cols.append(Column("db_version_minor", Integer, nullable=False))
 cols.append(Column("db_version_patch", Integer, nullable=False))
-cols.append(Column("git_hash", String, nullable=False))
-cols.append(Column("repo_is_clean", Boolean, nullable=False))
+cols.append(Column("git_hash", String, nullable=True))
+cols.append(Column("repo_is_clean", Boolean, nullable=True))
 # update method is always "CREATE" for this script.
 # Alternative could be "MODIFY" or "MIGRATE"
 cols.append(Column("update_method", String(10), nullable=False))
