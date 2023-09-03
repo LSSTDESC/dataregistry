@@ -9,6 +9,7 @@ from datetime import datetime
 from collections import namedtuple
 from dataregistry import __version__
 from dataregistry.git_util import get_git_info
+from git import InvalidGitRepositoryError
 
 """
 Low-level utility routines and classes for accessing the registry
@@ -327,9 +328,16 @@ def _insert_provenance(db_connection, db_version_major, db_version_minor,
     values["schema_enabled_date"] = datetime.now()
     values["creator_uid"] = os.getenv("USER")
     pkg_root =  os.path.join(os.path.dirname(__file__), '../..')
-    git_hash, is_clean = get_git_info(pkg_root)
-    values["git_hash"] = git_hash
-    values["repo_is_clean"] = is_clean
+
+    # If this is a git repo, save hash and state
+    try:
+        git_hash, is_clean = get_git_info(pkg_root)
+        values["git_hash"] = git_hash
+        values["repo_is_clean"] = is_clean
+    except InvalidGitRepositoryError as e:
+        # no git repo; this is an install. Code version is sufficient
+        pass
+
     values["update_method"] = update_method
     if comment is not None:
         values["comment"] = comment
