@@ -14,6 +14,7 @@ Some text introducing the software and what's in the docs.
    :maxdepth: 2
    :caption: Tutorials:
 
+   tutorial_setup
    tutorial_python
    tutorial_cli
 
