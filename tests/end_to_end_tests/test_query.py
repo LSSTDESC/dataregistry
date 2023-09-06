@@ -132,5 +132,5 @@ def test_db_version():
     """
     actual_major, actual_minor, actual_patch = dregs.Query.get_db_versioning()
     assert actual_major == 1, "db major version doesn't match expected"
-    assert actual_minor == 1, "db minor version doesn't match expected"
+    assert actual_minor == 2, "db minor version doesn't match expected"
     assert actual_patch == 0, "db patch version doesn't match expected"

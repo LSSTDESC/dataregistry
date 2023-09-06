@@ -5,7 +5,11 @@ from sqlalchemy import column, text, insert, select
 from sqlalchemy.exc import DBAPIError, IntegrityError
 import yaml
 import os
+from datetime import datetime
 from collections import namedtuple
+from dataregistry import __version__
+from dataregistry.git_util import get_git_info
+from git import InvalidGitRepositoryError
 
 """
 Low-level utility routines and classes for accessing the registry
@@ -234,7 +238,7 @@ class TableMetadata:
     Keep and dispense table metadata
     """
 
-    def __init__(self, db_connection):
+    def __init__(self, db_connection, get_db_version=True):
         self._metadata = MetaData(schema=db_connection.schema)
         self._engine = db_connection.engine
         self._schema = db_connection.schema
@@ -242,9 +246,9 @@ class TableMetadata:
         # Load all existing tables
         self._metadata.reflect(self._engine, db_connection.schema)
 
-        # Fetch and save db versioning if present
+        # Fetch and save db versioning if present and requested
         prov_name = ".".join([self._schema, "provenance"])
-        if prov_name in self._metadata.tables:
+        if prov_name in self._metadata.tables and get_db_version:
             prov_table = self._metadata.tables[prov_name]
             cols = ["db_version_major", "db_version_minor", "db_version_patch"]
             stmt = select(*[column(c) for c in cols])
@@ -284,3 +288,63 @@ class TableMetadata:
                 raise ValueError(f"No such table {tbl}")
 
         return self._metadata.tables[tbl]
+
+def _insert_provenance(db_connection, db_version_major, db_version_minor,
+                      db_version_patch, update_method, comment=None):
+    """
+    Write a row to the provenance table. Includes version of db schema,
+    version of code, etc.
+
+    Parameters
+    ----------
+    db_version_major  int
+    db_version_minor  int
+    db_version_patch  int
+    update_method     string     One of "create", "migrate"
+    comment           string     Optional. Briefly describe reason for new
+                                 version
+
+    Returns
+    -------
+    id of new row
+    """
+    version_fields = __version__.split(".")
+    patch = version_fields[2]
+    suffix = None
+    if "-" in patch:
+        subfields = patch.split("-")
+        patch = subfields[0]
+        suffix = "-".join(subfields[1:])
+
+    values = dict()
+    values["code_version_major"] = version_fields[0]
+    values["code_version_minor"] = version_fields[1]
+    values["code_version_patch"] = patch
+    if suffix:
+        values["code_version_suffix"] = suffix
+    values["db_version_major"] = db_version_major
+    values["db_version_minor"] = db_version_minor
+    values["db_version_patch"] = db_version_patch
+    values["schema_enabled_date"] = datetime.now()
+    values["creator_uid"] = os.getenv("USER")
+    pkg_root =  os.path.join(os.path.dirname(__file__), '../..')
+
+    # If this is a git repo, save hash and state
+    try:
+        git_hash, is_clean = get_git_info(pkg_root)
+        values["git_hash"] = git_hash
+        values["repo_is_clean"] = is_clean
+    except InvalidGitRepositoryError as e:
+        # no git repo; this is an install. Code version is sufficient
+        pass
+
+    values["update_method"] = update_method
+    if comment is not None:
+        values["comment"] = comment
+
+    prov_table = TableMetadata(db_connection,
+                               get_db_version=False).get("provenance")
+    with db_connection.engine.connect() as conn:
+        id = add_table_row(conn, prov_table, values)
+
+        return id
