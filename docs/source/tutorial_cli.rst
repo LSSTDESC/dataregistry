@@ -37,7 +37,7 @@ Typing
 will list all the metadata properties that can be associated with a dataset
 being registered. Similar to registering datasets using the ``dataregistry``
 package, the ``relative_path`` and ``version`` string properties are mandatory,
-which will always be the first two passed parameters to the ``dregs register
+which will always be the first two parameters passed to the ``dregs register
 dataset`` command respectively.  
 
 For example, say I have produced some data from my latest DESC publication that
