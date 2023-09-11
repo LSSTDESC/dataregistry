@@ -165,7 +165,14 @@ class Registrar:
         """
 
         # Get destination directory in data registry.
-        dest = _form_dataset_path(owner_type, owner, relative_path, self.root_dir)
+        dest = _form_dataset_path(
+            self._engine.dialect,
+            self._engine.schema_version,
+            owner_type,
+            owner,
+            relative_path,
+            self.root_dir,
+        )
 
         # Is the data already on location, or coming from somewhere new?
         if old_location:

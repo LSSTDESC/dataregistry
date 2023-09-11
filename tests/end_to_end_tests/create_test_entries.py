@@ -9,34 +9,33 @@ _TEST_ROOT_DIR = "DREGS_data"
 if not os.path.isdir(_TEST_ROOT_DIR):
     os.makedirs(_TEST_ROOT_DIR)
 
-# Make a few dummy files to enter into database.
-if not os.path.isdir(
-    os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/dummy_dir")
-):
-    os.makedirs(os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/dummy_dir"))
+# Establish connection to database
+dregs = DREGS(root_dir=_TEST_ROOT_DIR)
 
-if not os.path.isdir(os.path.join("dummy_dir")):
-    os.makedirs(os.path.join("dummy_dir"))
+# Make a few dummy files to enter into database.
+tmp = os.path.join(
+    _TEST_ROOT_DIR,
+    dregs.Registrar._dialect,
+    dregs.Registrar._schema_version,
+    "user",
+    os.getenv("USER"),
+)
+
+if not os.path.isdir(os.path.join(tmp, "dummy_dir")):
+    os.makedirs(os.path.join(tmp, "dummy_dir"))
+
+if not os.path.isdir("dummy_dir"):
+    os.makedirs("dummy_dir")
 
 with open(os.path.join("dummy_dir", "file1.txt"), "w") as f:
     f.write("test")
-with open(
-    os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/dummy_dir", "file1.txt"),
-    "w",
-) as f:
+with open(os.path.join(tmp, "dummy_dir", "file1.txt"), "w") as f:
     f.write("test")
-with open(
-    os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/dummy_dir", "file2.txt"),
-    "w",
-) as f:
+with open(os.path.join(tmp, "dummy_dir", "file2.txt"), "w") as f:
     f.write("test")
-with open(
-    os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/", "file1.txt"), "w"
-) as f:
+with open(os.path.join(tmp, "file1.txt"), "w") as f:
     f.write("test")
 
-# Establish connection to database
-dregs = DREGS(root_dir=_TEST_ROOT_DIR)
 
 def _insert_alias_entry(name, dataset_id):
     """
@@ -63,9 +62,7 @@ def _insert_alias_entry(name, dataset_id):
     return new_id
 
 
-def _insert_execution_entry(
-    name, description, input_datasets=[], configuration=None
-):
+def _insert_execution_entry(name, description, input_datasets=[], configuration=None):
     """
     Wrapper to create execution entry
 
@@ -275,9 +272,7 @@ _insert_alias_entry("nice_dataset_name", dataset_id)
 # - Create a pipeline with multiple input and output datasets.
 
 # Stage 1 of my pipe line
-ex_id_1 = _insert_execution_entry(
-    "pipeline_stage_1", "The first stage of my pipeline"
-)
+ex_id_1 = _insert_execution_entry("pipeline_stage_1", "The first stage of my pipeline")
 dataset_id_1 = _insert_dataset_entry(
     "DESC/datasets/my_first_pipeline_stage1",
     "0.0.1",
@@ -403,5 +398,5 @@ _insert_dataset_entry(
     None,
     None,
     "This should be owned by 'DESC group' and have owner_type='group'",
-    which_dregs=dregs2
+    which_dregs=dregs2,
 )

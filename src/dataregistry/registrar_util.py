@@ -51,7 +51,9 @@ def _parse_version_string(version, with_suffix=False):
     return d
 
 
-def _form_dataset_path(owner_type, owner, relative_path, root_dir=None):
+def _form_dataset_path(
+    dialect, schema, owner_type, owner, relative_path, root_dir=None
+):
     """
     Construct full (or relative) path to dataset in the data registry.
 
@@ -60,6 +62,10 @@ def _form_dataset_path(owner_type, owner, relative_path, root_dir=None):
 
     Parameters
     ----------
+    dialect : str
+        Database backend
+    schema : str
+        Database schema used
     owner_type : str
         Type of dataset
     owner : str
@@ -76,7 +82,7 @@ def _form_dataset_path(owner_type, owner, relative_path, root_dir=None):
     """
     if owner_type == "production":
         owner = "production"
-    to_return = os.path.join(owner_type, owner, relative_path)
+    to_return = os.path.join(dialect, schema, owner_type, owner, relative_path)
     if root_dir:
         to_return = os.path.join(root_dir, to_return)
     return to_return
@@ -181,17 +187,17 @@ def _name_from_relpath(relative_path):
     We use this when the dataset name is not explicitly defined, and we take it
     from the final directory if path.
 
-	e.g, /root/to/dataset/dir would return "dir"
+        e.g, /root/to/dataset/dir would return "dir"
 
-	Parameters
-	----------
-	relative_path : str
-		Path to dataset (can be relative or absolute)
+        Parameters
+        ----------
+        relative_path : str
+                Path to dataset (can be relative or absolute)
 
-	Returns
-	-------
-	name : str
-		Scraped name of dataset
+        Returns
+        -------
+        name : str
+                Scraped name of dataset
     """
 
     relpath = relative_path
