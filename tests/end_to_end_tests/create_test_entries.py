@@ -15,8 +15,8 @@ dregs = DREGS(root_dir=_TEST_ROOT_DIR)
 # Make a few dummy files to enter into database.
 tmp = os.path.join(
     _TEST_ROOT_DIR,
-    dregs.Registrar._dialect,
-    dregs.Registrar._schema_version,
+    dregs.Registrar._engine.dialect,
+    dregs.Registrar._engine.schema_version,
     "user",
     os.getenv("USER"),
 )
