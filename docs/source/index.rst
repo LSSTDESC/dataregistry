@@ -24,6 +24,7 @@ Some text introducing the software and what's in the docs.
 
    reference_python
    reference_cli
+   reference_schema
 
 .. toctree::
    :maxdepth: 2

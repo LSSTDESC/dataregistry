@@ -7,4 +7,10 @@ Notebooks.
 Getting started with DREGS
 --------------------------
 
-`Link to notebook <https://github.com/LSSTDESC/dataregistry/blob/main/docs/source/tutorial_notebooks/DREGS_tutorial_NERSC.ipynb>`_
+`Link to notebook <https://github.com/LSSTDESC/dataregistry/blob/main/docs/source/tutorial_notebooks/DREGS_tutorial_NERSC.ipynb>`__
+
+Working with pipeline datasets
+------------------------------
+
+`Link to notebook <https://github.com/LSSTDESC/dataregistry/blob/main/docs/source/tutorial_notebooks/pipline_datasets.ipynb>`__
+

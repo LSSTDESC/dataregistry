@@ -14,7 +14,7 @@ To check, type
 
 to display the list of available commands for ``dregs``.
 
-The full reference documentation for the DREGS CLI commands can be found
+The full reference documentation for the DREGS CLI command options can be found
 :ref:`here <dregs_cli>`, below we cover some example use cases.
 
 Registering a dataset
