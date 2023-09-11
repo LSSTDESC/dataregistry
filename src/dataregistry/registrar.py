@@ -56,8 +56,12 @@ class Registrar:
         else:
             self.root_dir = _DEFAULT_ROOT_DIR
 
-        # Database engine and dialect.
+        # Database engine.
         self._engine = db_connection.engine
+
+        # Database schema and backend
+        self._dialect = db_connection.dialect
+        self._schema = db_connection.schema
 
         # Link to Table Metadata.
         self._metadata_getter = TableMetadata(db_connection)
@@ -166,8 +170,8 @@ class Registrar:
 
         # Get destination directory in data registry.
         dest = _form_dataset_path(
-            self._engine.dialect,
-            self._engine.schema_version,
+            self._dialect,
+            self._schema,
             owner_type,
             owner,
             relative_path,
