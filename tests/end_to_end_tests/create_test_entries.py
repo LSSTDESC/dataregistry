@@ -16,7 +16,7 @@ dregs = DREGS(root_dir=_TEST_ROOT_DIR)
 tmp = os.path.join(
     _TEST_ROOT_DIR,
     dregs.Registrar._engine.dialect,
-    dregs.Registrar._engine.schema_version,
+    dregs.Registrar._engine.schema,
     "user",
     os.getenv("USER"),
 )
