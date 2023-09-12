@@ -319,7 +319,6 @@ class Query:
         with self._engine.connect() as conn:
             try:
                 result = conn.execute(stmt)
-                conn.commit()
             except DBAPIError as e:
                 print("Original error:")
                 print(e.StatementError.orig)
