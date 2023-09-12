@@ -5,9 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 dynamic = ["version"]
 name = "dataregistry"
-description = "Creation and user API for DESC data registry."
+description = "Creation and user API for DESC data registry (DREGS)."
 readme = "README.md"
-authors = [{ name = "Joanne Bogart", email = "jrb@slac.stanford.edu" }]
+authors = [
+    { name = "Joanne Bogart", email = "jrb@slac.stanford.edu" },
+    { name = "Stuart McAlpine", email = "stuart.mcalpine@fysik.su.se" }
+]
 license = { file = "LICENCE" }
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -17,7 +20,8 @@ dependencies = [
     'psycopg2',
     'sqlalchemy',
     'pyaml',
-    'GitPython'
+    'GitPython',
+    'pandas'
 ]
 requires-python = ">=3.7" # For setuptools >= 61.0 support
 

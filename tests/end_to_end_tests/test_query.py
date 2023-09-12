@@ -1,9 +1,37 @@
 import os
+import pandas as pd
+import sqlalchemy
 
 from dataregistry import DataRegistry
 
 # Establish connection to database
 datareg = DataRegistry(root_dir="DataRegistry_data")
+
+
+def test_query_return_format():
+    """ Test we get back correct data format from queries """
+
+    # Default, SQLAlchemy CursorResult
+    results = dregs.Query.find_datasets(
+        ["dataset.name", "dataset.version_string", "dataset.relative_path"], []
+    )
+    assert type(results) == sqlalchemy.engine.cursor.CursorResult
+
+    # Pandas DataFrame
+    results = dregs.Query.find_datasets(
+        ["dataset.name", "dataset.version_string", "dataset.relative_path"],
+        [],
+        return_format="dataframe",
+    )
+    assert type(results) == pd.DataFrame
+
+    # Property dictionary (each key is a property with a list for each row)
+    results = dregs.Query.find_datasets(
+        ["dataset.name", "dataset.version_string", "dataset.relative_path"],
+        [],
+        return_format="property_dict",
+    )
+    assert type(results) == dict
 
 
 def test_query_dataset_cli():

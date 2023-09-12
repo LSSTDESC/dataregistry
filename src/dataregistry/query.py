@@ -3,6 +3,7 @@ from datetime import datetime
 from collections import namedtuple
 from sqlalchemy import MetaData, Table, Column, text, select
 import sqlalchemy.sql.sqltypes as sqltypes
+import pandas as pd
 
 try:
     import sqlalchemy.dialects.postgresql as pgtypes
@@ -259,7 +260,9 @@ class Query:
             self._metadata.db_version_patch,
         )
 
-    def find_datasets(self, property_names=None, filters=[]):
+    def find_datasets(
+        self, property_names=None, filters=[], return_format="CursorResult"
+    ):
         """
         Get specified properties for datasets satisfying all filters
 
@@ -274,15 +277,26 @@ class Query:
 
         Parameters
         ----------
-        property_names : list (optional)
+        property_names : list, optional
             List of database columns to return (SELECT clause)
-        filters : list (optional)
+        filters : list, optional
             List of filters (WHERE clauses) to apply
+        return_format : str, optional
+            The format the query result is returned in.  Options are
+            "CursorResult" (SQLAlchemy default format), "DataFrame", or
+            "proprety_dict". Note this is not case sensitive.
 
         Returns
         -------
-        result : sqlAlchemy Result object
+        result : sqlAlchemy CursorResult object (default, depends on return_format)
         """
+
+        # Make sure return format is valid.
+        _allowed_return_formats = ["cursorresult", "dataframe", "property_dict"]
+        if return_format.lower() not in _allowed_return_formats:
+            raise ValueError(
+                f"{return_format} is a bad return format (valid={_allowed_return_formats})"
+            )
 
         # What tables are required for this query?
         tables_required, _, _ = self._parse_selected_columns(property_names)
@@ -323,6 +337,13 @@ class Query:
                 print("Original error:")
                 print(e.StatementError.orig)
                 return None
+
+        # Make sure we are working with the correct return format.
+        if return_format.lower() != "cursorresult":
+            result = pd.DataFrame(result)
+
+            if return_format.lower() == "property_dict":
+                result = result.to_dict("list")
 
         return result
 
