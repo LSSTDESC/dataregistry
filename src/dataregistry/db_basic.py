@@ -14,6 +14,7 @@ from git import InvalidGitRepositoryError
 """
 Low-level utility routines and classes for accessing the registry
 """
+
 SCHEMA_VERSION = "registry_beta"
 
 __all__ = [
@@ -33,13 +34,16 @@ def _get_dregs_config(config_file=None, verbose=False):
     The code will check three scenarios, which are, in order of priority:
         - The config_file has been manually passed
         - The DREGS_CONFIG env variable has been set
-        - The default location (the .config_reg_access file in HOME)
+        - The default location (the .config_reg_access file in $HOME)
+
+    If none of these are true, an exception is raised.
 
     Parameters
     ----------
-    config_file : str
+    config_file : str, optional
         Manually set the location of the config file
-    verbose : bool
+    verbose : bool, optional
+        True for more output
 
     Returns
     -------
@@ -79,16 +83,17 @@ def create_db_engine(config_file=None, verbose=False):
 
     Parameters
     ----------
-    config_file : str
+    config_file : str, optional
         Path to DREGS configuration file, contains connection details
-    verbose : bool
+    verbose : bool, optional
+        True for more output
 
     Returns
     -------
     - : SQLAlchemy Engine object
         Connection to the database
     dialect : str
-        Dialect of database, default postgres
+        Dialect of database (default is postgres)
     """
 
     # Extract connection info from configuration file
@@ -103,14 +108,33 @@ def create_db_engine(config_file=None, verbose=False):
 
 def add_table_row(conn, table_meta, values, commit=True):
     """
-    Generic insert, given connection, metadata for a table and
-    column values to be used.
-    Return primary key for new row if successful
+    Generic insert, given connection, metadata for a table and column values to
+    be used.
+
+    Parameters
+    ----------
+    conn : SQLAlchemy Engine object
+        Connection to the database
+    table_meta : TableMetadata object
+        Table we are inserting data into
+    values : dict
+        Properties to be entered
+    commit : bool, optional
+        True to commit changes to database (default True)
+
+    Returns
+    -------
+    - : int
+        Primary key for new row if successful
     """
+
     result = conn.execute(insert(table_meta), [values])
+
     if commit:
         conn.commit()
+
     return result.inserted_primary_key[0]
+
 
 class DbConnection:
     def __init__(self, config_file, schema=None, verbose=False):
@@ -122,14 +146,15 @@ class DbConnection:
         config : str
             Path to config file with low-level connection information.
             If None, default location is assumed
-        schema : str
+        schema : str, optional
             Schema to connect to.  If None, default schema is assumed
-        verbose : bool
+        verbose : bool, optional
             If True, produce additional output
-    """
-        self._engine, self._dialect = create_db_engine(config_file=config_file,
-                                                       verbose=verbose)
-        if self._dialect == 'sqlite':
+        """
+        self._engine, self._dialect = create_db_engine(
+            config_file=config_file, verbose=verbose
+        )
+        if self._dialect == "sqlite":
             self._schema = None
         else:
             if schema is None:
@@ -148,6 +173,7 @@ class DbConnection:
     @property
     def schema(self):
         return self._schema
+
 
 class TableCreator:
     def __init__(self, db_connection):
@@ -169,15 +195,21 @@ class TableCreator:
         so just stash definition in MetaData object.
 
         Parameters
-        name         string          table name
-        columns      list of sqlalchemy.Column objects
-        constraints  (optional) list of sqlalchemy.Constraint objects
+        ----------
+        name : str
+            The table name
+        columns : list
+            List of sqlalchemy.Column objects
+        constraints : list, optional
+            List of sqlalchemy.Constraint objects
 
-        returns     tbl, an sqlalchemy.Table object.
-                    User may instantiate immediately with
-                    sqlalchemy.Table.create  method
-
+        Returns
+        -------
+        tbl : sqlalchemy.Table object
+            User may instantiate immediately with sqlalchemy.Table.create
+            method
         """
+
         tbl = Table(name, self._metadata, *columns)
         for c in constraints:
             tbl.append_constraint(c)
@@ -185,7 +217,18 @@ class TableCreator:
         return tbl
 
     def create_table(self, name, columns, constraints=None):
-        """ Define and instantiate a single table """
+        """
+        Define and instantiate a single table.
+
+        Parameters
+        ----------
+        name : str
+            The table name
+        columns : list
+            List of sqlalchemy.Column objects
+        constraints : list, optional
+            List of sqlalchemy.Constraint objects
+        """
 
         tbl = define_table(self, name, columns, constraints)
         tbl.create(self._engine)
@@ -202,11 +245,29 @@ class TableCreator:
             print("Could not grant access to reg_reader")
 
     def get_table_metadata(self, table_name):
+        """
+        Return metadata for a particular table in the database.
+
+        Parameters
+        ----------
+        table_name : str
+
+        Returns
+        -------
+        - : Table object
+        """
+
         if not "." in table_name:
             table_name = ".".join([self._schema, table_name])
         return self._metadata.tables[table_name]
 
     def create_schema(self):
+        """
+        Create a new schema in the database (if it doesn't already exist).
+
+        Schema name is taken from `self._schema`.
+        """
+
         if self._dialect == "sqlite":
             return
         stmt = f"CREATE SCHEMA IF NOT EXISTS {self._schema}"
@@ -216,7 +277,12 @@ class TableCreator:
 
     def grant_reader_access(self, acct):
         """
-        Grant USAGE on schema, SELECT on tables to specified account
+        Grant USAGE on schema, SELECT on tables to specified account.
+
+        Parameters
+        ----------
+        acct : str
+            Name of account we are granting read access to.
         """
         if self._dialect == "sqlite":
             return
@@ -234,11 +300,18 @@ class TableCreator:
 
 
 class TableMetadata:
-    """
-    Keep and dispense table metadata
-    """
-
     def __init__(self, db_connection, get_db_version=True):
+        """
+        Keep and dispense table metadata
+
+        Parameters
+        ----------
+        db_connection : DbConnection object
+            Stores information about the DB connection
+        get_db_version : bool, optional
+            True to extract the DB version from the provinance table
+        """
+
         self._metadata = MetaData(schema=db_connection.schema)
         self._engine = db_connection.engine
         self._schema = db_connection.schema
@@ -289,24 +362,33 @@ class TableMetadata:
 
         return self._metadata.tables[tbl]
 
-def _insert_provenance(db_connection, db_version_major, db_version_minor,
-                      db_version_patch, update_method, comment=None):
+
+def _insert_provenance(
+    db_connection,
+    db_version_major,
+    db_version_minor,
+    db_version_patch,
+    update_method,
+    comment=None,
+):
     """
     Write a row to the provenance table. Includes version of db schema,
     version of code, etc.
 
     Parameters
     ----------
-    db_version_major  int
-    db_version_minor  int
-    db_version_patch  int
-    update_method     string     One of "create", "migrate"
-    comment           string     Optional. Briefly describe reason for new
-                                 version
+    db_version_major : int
+    db_version_minor : int
+    db_version_patch : int
+    update_method : str
+        One of "create", "migrate"
+    comment : str, optional
+        Briefly describe reason for new version
 
     Returns
     -------
-    id of new row
+    id : int
+        Id of new row in provenance table
     """
     version_fields = __version__.split(".")
     patch = version_fields[2]
@@ -327,7 +409,7 @@ def _insert_provenance(db_connection, db_version_major, db_version_minor,
     values["db_version_patch"] = db_version_patch
     values["schema_enabled_date"] = datetime.now()
     values["creator_uid"] = os.getenv("USER")
-    pkg_root =  os.path.join(os.path.dirname(__file__), '../..')
+    pkg_root = os.path.join(os.path.dirname(__file__), "../..")
 
     # If this is a git repo, save hash and state
     try:
@@ -342,8 +424,7 @@ def _insert_provenance(db_connection, db_version_major, db_version_minor,
     if comment is not None:
         values["comment"] = comment
 
-    prov_table = TableMetadata(db_connection,
-                               get_db_version=False).get("provenance")
+    prov_table = TableMetadata(db_connection, get_db_version=False).get("provenance")
     with db_connection.engine.connect() as conn:
         id = add_table_row(conn, prov_table, values)
 
