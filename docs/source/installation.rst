@@ -35,7 +35,7 @@ or, you can work within a Python virtual environment via
 
 .. code-block:: bash
 
-   module load python/3.9
+   module load python/3.10
    python3 -m venv ./dregs_env
 
 where ``./dregs_env`` is the path where the environment will be installed
@@ -44,6 +44,9 @@ where ``./dregs_env`` is the path where the environment will be installed
 .. code-block:: bash
 
    source <path to your env>/bin/activate
+
+Note the specific version of Python used above (``3.10``) is only an example,
+the ``dataregistry`` package is supported on Python versions ``>3.7``.
 
 Installing DREGS
 ~~~~~~~~~~~~~~~~

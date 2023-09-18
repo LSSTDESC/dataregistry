@@ -88,10 +88,11 @@ however have entered "1.0.1" here if you prefer).
 
 .. note::
 
-   Remember the relative paths in the data registry need to be unique, which is
-   why we could not have the relative path of the second entry match the first.
-   But for datasets only the ``name`` plus ``version`` has to be unique, which
-   is how we could associate them with the same ``name`` column.
+   Remember, if the dataset is non-overwritable, the relative paths in the data
+   registry need to be unique, which is why we could not have the relative path
+   of the second entry match the first.  But for datasets only the ``name``
+   plus ``version`` has to be unique, which is how we could associate them with
+   the same ``name`` column.
 
 Querying the data registry
 --------------------------
