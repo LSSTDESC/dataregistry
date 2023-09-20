@@ -9,12 +9,12 @@ PerlMutter).
 Main installation steps
 -----------------------
 
-Some of the libraries needed (``libpq-dev`` for the ``psycopg2`` package) are
-not natively available at NERSC, meaning the data registry cannot be easily
-installed standalone with *pip*.
+To install DREGS work within your own *conda* or Python virtual environment.
 
-Thus we need to work within a *conda* environment. If you do not have a *conda*
-environment already at NERSC, you can make a new one via 
+Creating a *conda* environment 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can make a new *conda* environment via 
 
 .. code-block:: bash
 
@@ -27,6 +27,29 @@ where ``./dregs_env`` is the path where the environment will be installed
 .. code-block:: bash
 
    conda activate <path to your env>
+
+Creating a Python venv
+~~~~~~~~~~~~~~~~~~~~~~
+
+or, you can work within a Python virtual environment via
+
+.. code-block:: bash
+
+   module load python/3.10
+   python3 -m venv ./dregs_env
+
+where ``./dregs_env`` is the path where the environment will be installed
+(change this as required). To activate the environment do
+
+.. code-block:: bash
+
+   source <path to your env>/bin/activate
+
+Note the specific version of Python used above (``3.10``) is only an example,
+the ``dataregistry`` package is supported on Python versions ``>3.7``.
+
+Installing DREGS
+~~~~~~~~~~~~~~~~
 
 Now we can install the DESC data registry software. First clone the GitHub
 repository
@@ -81,11 +104,3 @@ can ensure by doing
 .. code-block:: bash
 
    chmod 600 .pgpass
-
-.. note::
-
-   If for some reason you need the *DREGS config file* to be in another
-   location, you can let DREGS know about it by setting a ``DREGS_CONFIG``
-   environment variable with the full path of the config file. If neither of
-   these options are possible, there is always the option to manually specify
-   where the configuration file is during runtime.

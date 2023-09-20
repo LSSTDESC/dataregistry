@@ -12,10 +12,11 @@ Some text introducing the software and what's in the docs.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Examples:
+   :caption: Tutorials:
 
-   standalone_dataset
-   pipeline_dataset
+   tutorial_setup
+   tutorial_python
+   tutorial_cli
 
 .. toctree::
    :maxdepth: 2
@@ -23,6 +24,7 @@ Some text introducing the software and what's in the docs.
 
    reference_python
    reference_cli
+   reference_schema
 
 .. toctree::
    :maxdepth: 2
