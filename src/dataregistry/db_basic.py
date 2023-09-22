@@ -27,13 +27,13 @@ __all__ = [
 ]
 
 
-def _get_dregs_config(config_file=None, verbose=False):
+def _get_dataregistry_config(config_file=None, verbose=False):
     """
-    Locate the DREGS configuration file.
+    Locate the data registry configuration file.
 
     The code will check three scenarios, which are, in order of priority:
         - The config_file has been manually passed
-        - The DREGS_CONFIG env variable has been set
+        - The DATAREG_CONFIG env variable has been set
         - The default location (the .config_reg_access file in $HOME)
 
     If none of these are true, an exception is raised.
@@ -48,7 +48,7 @@ def _get_dregs_config(config_file=None, verbose=False):
     Returns
     -------
     config_file : str
-        Path to DREGS configuration file
+        Path to data registry configuration file
     """
 
     _default_loc = os.path.join(os.getenv("HOME"), ".config_reg_access")
@@ -56,35 +56,35 @@ def _get_dregs_config(config_file=None, verbose=False):
     # Case where the user has manually specified the location
     if config_file is not None:
         if verbose:
-            print(f"Using manually passed DREGS config file ({config_file})")
+            print(f"Using manually passed config file ({config_file})")
         return config_file
 
     # Case where the env variable is set
-    elif os.getenv("DREGS_CONFIG"):
+    elif os.getenv("DATAREG_CONFIG"):
         if verbose:
             print(
-                f"Using DREGS_CONFIG env for DREGS config file",
-                f"({os.getenv('DREGS_CONFIG')})",
+                f"Using DATAREG_CONFIG env var for config file",
+                f"({os.getenv('DATAREG_CONFIG')})",
             )
-        return os.getenv("DREGS_CONFIG")
+        return os.getenv("DATAREG_CONFIG")
 
     # Finally check default location in $HOME
     elif os.path.isfile(_default_loc):
         if verbose:
-            print("Using default location for DREGS config file", f"({_default_loc})")
+            print("Using default location for config file", f"({_default_loc})")
         return _default_loc
     else:
-        raise ValueError("Unable to located DREGS config file")
+        raise ValueError("Unable to located data registry config file")
 
 
 def create_db_engine(config_file=None, verbose=False):
     """
-    Establish connection to the DREGS database
+    Establish connection to the data registry database
 
     Parameters
     ----------
     config_file : str, optional
-        Path to DREGS configuration file, contains connection details
+        Path to data registry configuration file, contains connection details
     verbose : bool, optional
         True for more output
 
@@ -97,7 +97,7 @@ def create_db_engine(config_file=None, verbose=False):
     """
 
     # Extract connection info from configuration file
-    with open(_get_dregs_config(config_file, verbose)) as f:
+    with open(_get_dataregistry_config(config_file, verbose)) as f:
         connection_parameters = yaml.safe_load(f)
 
     driver = make_url(connection_parameters["sqlalchemy.url"]).drivername

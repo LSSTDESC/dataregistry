@@ -1,5 +1,5 @@
 import os
-from dataregistry import DREGS
+from dataregistry import DataRegistry
 
 
 def register_dataset(args):
@@ -12,10 +12,10 @@ def register_dataset(args):
     """
 
     # Connect to database.
-    dregs = DREGS(config_file=args.config_file, schema_version=args.schema_version)
+    datareg = DataRegistry(config_file=args.config_file, schema_version=args.schema_version)
 
     # Register new dataset.
-    new_id = dregs.Registrar.register_dataset(
+    new_id = datareg.Registrar.register_dataset(
         args.relative_path,
         args.version,
         name=args.name,

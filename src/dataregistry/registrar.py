@@ -13,7 +13,7 @@ from dataregistry.exceptions import *
 
 __all__ = ["Registrar"]
 
-# The root DREGS directory.
+# The root data registry directory.
 _DEFAULT_ROOT_DIR = "/global/cfs/cdirs/desc-co/registry-beta"  # temporary
 
 # Default maximum allowed length of configuration file allowed to be ingested
@@ -71,7 +71,8 @@ class Registrar:
 
     def get_owner_types(self):
         """
-        Returns a list of allowed owner_types that can be registered within DREGS.
+        Returns a list of allowed owner_types that can be registered within the
+        data registry.
 
         Returns
         -------

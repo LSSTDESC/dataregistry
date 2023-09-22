@@ -33,6 +33,6 @@ html_theme_options = {
 }
 
 html_static_path = ['_static']
-html_logo = '_static/DREGS_logo.png'
+html_logo = '_static/DREGS_logo_v2.png'
 
 autoclass_content = 'both'

@@ -13,8 +13,8 @@ def test_connect_manual():
 
 
 def test_connect_env():
-    """Test connection to database with DREGS_CONFIG env set"""
-    os.environ["DREGS_CONFIG"] = os.path.join(os.getenv("HOME"), ".config_reg_access")
+    """Test connection to database with DATAREG_CONFIG env set"""
+    os.environ["DATAREG_CONFIG"] = os.path.join(os.getenv("HOME"), ".config_reg_access")
     engine, dialect = create_db_engine(verbose=True)
     assert engine is not None
     assert dialect is not None

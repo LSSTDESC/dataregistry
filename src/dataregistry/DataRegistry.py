@@ -5,7 +5,7 @@ from dataregistry.query import Query
 from dataregistry.registrar import Registrar
 
 
-class DREGS:
+class DataRegistry:
     def __init__(
         self,
         owner=None,
@@ -16,7 +16,7 @@ class DREGS:
         verbose=False,
     ):
         """
-        Primary data registry (DREGS) wrapper class.
+        Primary data registry wrapper class.
 
         Class links to both the Registrar class, to registry new dataset, and
         the Query class, to query existing datasets.
@@ -39,7 +39,7 @@ class DREGS:
         schema_version : str
             Schema to connect to, if None, default schema is assumed.
         root_dir : str
-            Root directory for DREGS datasets, if None, default is assumed.
+            Root directory for datasets, if None, default is assumed.
         verbose : bool
             True for more output.
         """

@@ -328,7 +328,7 @@ class Query:
 
     def gen_filter(self, property_name, bin_op, value):
         """
-        Generate a binary filter for a DREGS query.
+        Generate a binary filter for a data registry query.
 
         These construct SQL WHERE clauses.
 
@@ -350,8 +350,8 @@ class Query:
         -------
         .. code-block:: python
 
-           f = dregs.Query.gen_filter("dataset.name", "==", "my_dataset")
-           f = dregs.Query.gen_filter("dataset.version_major", ">", 1)
+           f = datareg.Query.gen_filter("dataset.name", "==", "my_dataset")
+           f = datareg.Query.gen_filter("dataset.version_major", ">", 1)
         """
 
         return Filter(property_name, bin_op, value)
