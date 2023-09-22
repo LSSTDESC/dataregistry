@@ -4,9 +4,7 @@ Introduction
 What is the DESC data registry software?
 ----------------------------------------
 
-Call it DREGS for short.
-
-**What is is?**
+**What is it?**
 
 A means of keeping track of datasets: where they are, when they were
 produced, what precursor datasets they depend on, etc. 

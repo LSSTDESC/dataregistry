@@ -1,8 +1,8 @@
-The DREGS CLI
-=============
+The ``dataregistry`` CLI
+========================
 
-The DREGS Command Line Interface (CLI) is a convenient way to perform some
-basic tasks with the data registry directly from the command line.
+The ``dataregistry`` Command Line Interface (CLI) is a convenient way to
+perform some basic tasks with the data registry directly from the command line.
 
 First, make sure the ``dataregistry`` package is installed (see :ref:`here
 <installation>` for details), after which the ``dregs`` command will be available.
@@ -14,13 +14,13 @@ To check, type
 
 to display the list of available commands for ``dregs``.
 
-The full reference documentation for the DREGS CLI command options can be found
-:ref:`here <dregs_cli>`, below we cover some example use cases.
+The full reference documentation for the ``dataregistry`` CLI command options
+can be found :ref:`here <dregs_cli>`, below we cover some example use cases.
 
 Registering a dataset
 ---------------------
 
-Registering a dataset using the DREGS CLI is essentially identical to using the
+Registering a dataset using the CLI is essentially identical to using the
 ``dataregistry`` package from within Python (it is simply calling the
 ``Registrar.register_dataset()`` function with arguments from the command
 line).  Therefore reviewing the `first tutorial notebook
@@ -35,7 +35,7 @@ Typing
    dregs register dataset --help
 
 will list all the metadata properties that can be associated with a dataset
-being registered. Similar to registering datasets using the ``dataregistry``
+during registration. As when registering datasets using the ``dataregistry``
 package, the ``relative_path`` and ``version`` string properties are mandatory,
 which will always be the first two parameters passed to the ``dregs register
 dataset`` command respectively.  
@@ -44,7 +44,7 @@ For example, say I have produced some data from my latest DESC publication that
 I want to archive/distribute via the data registry. My data are located in the
 directory ``/some/place/at/nersc/my_paper_dataset/``, and I want to tag it as a
 production dataset owned by the `DESC Generic Working Group`. To do this I
-would run the DREGS CLI as follows:
+would run the CLI as follows:
 
 .. code-block:: bash
 
@@ -97,8 +97,8 @@ however have entered "1.0.1" here if you prefer).
 Querying the data registry
 --------------------------
 
-We can also do some simple querying via the DREGS CLI to see what datasets we,
-or others, have in the data registry.
+We can also do some simple querying via the CLI to see what datasets we, or
+others, have in the data registry.
 
 We can do this using the ``dregs ls`` command (type ``dregs ls --help`` for more
 info).
@@ -109,9 +109,9 @@ By default, typing
 
    dregs ls
 
-will list all the datasets registered in DREGS by "you" (i.e.,
-where ``owner == $USER``). To be more precise, you can specify the ``owner``
-and/or ``owner_type`` you want to list the datasets for. 
+will list all the datasets registered by "you" (i.e., where ``owner ==
+$USER``). To be more precise, you can specify the ``owner`` and/or
+``owner_type`` you want to list the datasets for. 
 
 For example, to see all the datasets from the DESC Generic Working Group we would do
 
