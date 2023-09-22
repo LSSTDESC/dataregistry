@@ -4,11 +4,13 @@ from dataregistry import DREGS
 
 # Establish connection to database
 dregs = DREGS(root_dir="DREGS_data")
-print("test_query:  DREGS type is ", type(dregs))
-print("test_query: Dialect is ", dregs.Query._dialect)
 
 def test_query_dataset_cli():
     """ Test queries for the dataset table entered from the CLI script """
+
+    # debug output
+    print("test_query:  DREGS type is ", type(dregs))
+    print("test_query: Dialect is ", dregs.Query._dialect)
 
     # Query 1: Make sure we find all datasets entered using the CLI
     f = dregs.Query.gen_filter("dataset.name", "==", "my_cli_dataset")
