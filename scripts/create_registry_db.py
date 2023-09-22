@@ -17,7 +17,7 @@ _DB_VERSION_COMMENT = "Added comment column to Provenance table"
 parser = argparse.ArgumentParser(description='''
 Creates dataregistry tables in specified schema and connection information (config)''', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--schema', help="name of schema to contain tables. Will be created if it doesn't already exist", default=f"{SCHEMA_VERSION}")
-parser.add_argument('--config', help="Path to the DREGS config file")
+parser.add_argument('--config', help="Path to the data registry config file")
 
 args = parser.parse_args()
 
