@@ -107,7 +107,7 @@ def test_query_dataset_alias():
         ["dataset.dataset_id", "dataset_alias.dataset_id"], [f]
     )
     if dregs.Query._dialect != 'sqlite':
-        assert lenresults.rowcount == 1, "Bad result from query da1"
+        assert results.rowcount == 1, "Bad result from query da1"
 
     # Make sure IDs match up
     for r in results:
