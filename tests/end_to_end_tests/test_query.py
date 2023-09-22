@@ -8,18 +8,12 @@ dregs = DREGS(root_dir="DREGS_data")
 def test_query_dataset_cli():
     """ Test queries for the dataset table entered from the CLI script """
 
-    # debug output
-    print("test_query:  DREGS type is ", type(dregs))
-    print("test_query: Dialect is ", dregs.Query._dialect)
-
     # Query 1: Make sure we find all datasets entered using the CLI
     f = dregs.Query.gen_filter("dataset.name", "==", "my_cli_dataset")
-    print("Filter type: ", type(f))
     results = dregs.Query.find_datasets(
         ["dataset.name", "dataset.version_string", "dataset.relative_path"], [f]
     )
-    print("test_query_dataset_cli: Found row count ", results.rowcount)
-    assert results.rowcount == 2, "Bad result from query dcli1"
+    assert len(results.all()) == 2, "Bad result from query dcli1"
 
 
 def test_query_dataset():
@@ -30,8 +24,7 @@ def test_query_dataset():
     results = dregs.Query.find_datasets(
         ["dataset.name", "dataset.version_string", "dataset.relative_path"], [f]
     )
-    print("test_query_dataset: Found row count ", results.rowcount)
-    assert results.rowcount == 4, "Bad result from query d1"
+    assert len(results.all()) == 4, "Bad result from query d1"
 
     # Make sure versions (from bump) are correct
     for r in results:
@@ -47,14 +40,14 @@ def test_query_dataset():
     # Query 2: Query on owner type
     f = dregs.Query.gen_filter("dataset.owner_type", "!=", "user")
     results = dregs.Query.find_datasets(["dataset.name"], [f])
-    assert results.rowcount > 0, f"Bad result from query d2 ({results.rowcount})"
+    assert len(results.all()) > 0, f"Bad result from query d2 ({results.rowcount})"
 
     # Query 3: Make sure auto generated name is correct
     f = dregs.Query.gen_filter(
         "dataset.relative_path", "==", "DESC/datasets/my_first_dataset"
     )
     results = dregs.Query.find_datasets(["dataset.name"], [f])
-    assert results.rowcount == 1, "Bad result from query d3"
+    assert len(results.all()) == 1, "Bad result from query d3"
     for r in results:
         assert r.name == "my_first_dataset", "Bad result from query d3"
 
@@ -63,7 +56,7 @@ def test_query_dataset():
         "dataset.relative_path", "==", "DESC/datasets/my_first_named_dataset"
     )
     results = dregs.Query.find_datasets(["dataset.name"], [f])
-    assert results.rowcount == 1, "Bad result from query d4"
+    assert len(results.all()) == 1, "Bad result from query d4"
     for r in results:
         assert r.name == "named_dataset", "Bad result from query d4"
 
@@ -72,7 +65,7 @@ def test_query_dataset():
     results = dregs.Query.find_datasets(
         ["dataset.name", "dataset.version_string", "dataset.relative_path"], [f]
     )
-    assert results.rowcount == 2, "Bad result from query d5"
+    assert len(results.all()) == 2, "Bad result from query d5"
 
     # Make sure versions (from bump) are correct
     for r in results:
@@ -109,7 +102,7 @@ def test_query_dataset_alias():
     results = dregs.Query.find_datasets(
         ["dataset.dataset_id", "dataset_alias.dataset_id"], [f]
     )
-    assert results.rowcount == 1, "Bad result from query da1"
+    assert len(results.all()) == 1, "Bad result from query da1"
 
     # Make sure IDs match up
     for r in results:
@@ -122,12 +115,12 @@ def test_query_execution():
     # Query 1: Find the dependencies of an execution
     f = dregs.Query.gen_filter("execution.name", "==", "pipeline_stage_3")
     results = dregs.Query.find_datasets(["execution.execution_id"], [f])
-    assert results.rowcount == 1, "Bad result from query ex1"
+    assert len(results.all()) == 1, "Bad result from query ex1"
 
     # Find dependencies for this execution
     f = dregs.Query.gen_filter("dependency.execution_id", "==", next(results)[0])
     results = dregs.Query.find_datasets(["dependency.input_id"], [f])
-    assert results.rowcount == 2, "Bad result from query dep1"
+    assert len(results.all()) == 2, "Bad result from query dep1"
 
 
 def test_db_version():
