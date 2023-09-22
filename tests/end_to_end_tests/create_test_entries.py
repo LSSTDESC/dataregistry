@@ -1,9 +1,9 @@
 import os
 import sys
 
-from dataregistry import DREGS
+from dataregistry import DataRegistry
 
-_TEST_ROOT_DIR = "DREGS_data"
+_TEST_ROOT_DIR = "DataRegistry_data"
 
 # Make root dir
 if not os.path.isdir(_TEST_ROOT_DIR):
@@ -36,7 +36,7 @@ with open(
     f.write("test")
 
 # Establish connection to database
-dregs = DREGS(root_dir=_TEST_ROOT_DIR)
+datareg = DataRegistry(root_dir=_TEST_ROOT_DIR)
 
 def _insert_alias_entry(name, dataset_id):
     """
@@ -55,7 +55,7 @@ def _insert_alias_entry(name, dataset_id):
         The alias ID for this new entry
     """
 
-    new_id = dregs.Registrar.register_dataset_alias(name, dataset_id)
+    new_id = datareg.Registrar.register_dataset_alias(name, dataset_id)
 
     assert new_id is not None, "Trying to create a dataset alias that already exists"
     print(f"Created dataset alias entry with id {new_id}")
@@ -86,7 +86,7 @@ def _insert_execution_entry(
         The execution ID for this new entry
     """
 
-    new_id = dregs.Registrar.register_execution(
+    new_id = datareg.Registrar.register_execution(
         name,
         description=description,
         input_datasets=input_datasets,
@@ -110,7 +110,7 @@ def _insert_dataset_entry(
     version_suffix=None,
     is_dummy=True,
     old_location=None,
-    which_dregs=None,
+    which_datareg=None,
 ):
     """
     Wrapper to create dataset entry
@@ -139,8 +139,8 @@ def _insert_dataset_entry(
         True for dummy dataset (copies no data)
     old_location : str
         Path to data to be copied to data registry
-    which_dregs : DREGS object
-        In case we want to register using a custom DREGS object
+    which_datareg : DataRegistry object
+        In case we want to register using a custom DataRegistry object
 
     Returns
     -------
@@ -148,10 +148,10 @@ def _insert_dataset_entry(
         The dataset it created for this entry
     """
 
-    if which_dregs is None:
-        this_dregs = dregs
+    if which_datareg is None:
+        this_datareg = datareg
     else:
-        this_dregs = which_dregs
+        this_datareg = which_datareg
 
     # Some defaults over all test datasets
     locale = "NERSC"
@@ -160,7 +160,7 @@ def _insert_dataset_entry(
     make_sym_link = False
 
     # Add new entry.
-    new_id = this_dregs.Registrar.register_dataset(
+    new_id = this_datareg.Registrar.register_dataset(
         relpath,
         version,
         version_suffix=version_suffix,
@@ -394,8 +394,8 @@ _insert_dataset_entry(
 )
 
 # Tests set 11
-# - Test global owner and owner types in the DREGS/Registar class
-dregs2 = DREGS(root_dir=_TEST_ROOT_DIR, owner="DESC group", owner_type="group")
+# - Test global owner and owner types in the DataRegistry/Registar class
+datareg2 = DataRegistry(root_dir=_TEST_ROOT_DIR, owner="DESC group", owner_type="group")
 
 _insert_dataset_entry(
     "DESC/datasets/global_user_dataset",
@@ -403,5 +403,5 @@ _insert_dataset_entry(
     None,
     None,
     "This should be owned by 'DESC group' and have owner_type='group'",
-    which_dregs=dregs2
+    which_datareg=datareg2
 )

@@ -73,7 +73,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      DREGS_CONFIG: "${{ github.workspace }}/config.txt"
+      DATAREG_CONFIG: "${{ github.workspace }}/config.txt"
 
     # Service containers to run with `runner-job`
     services:
@@ -124,12 +124,12 @@ jobs:
       # Make a dummy config file.
       - name: Create dummy config file
         run: |
-          echo "sqlalchemy.url : postgresql://postgres:postgres@localhost:5432/desc_data_registry" > $DREGS_CONFIG
+          echo "sqlalchemy.url : postgresql://postgres:postgres@localhost:5432/desc_data_registry" > $DATAREG_CONFIG
 
       # Create schema
       - name: Create data registry schema
         run: |
-          python scripts/create_registry_db.py --config $DREGS_CONFIG
+          python scripts/create_registry_db.py --config $DATAREG_CONFIG
 
       # Run CI tests
       - name: Run CI tests
@@ -139,7 +139,7 @@ jobs:
           # Register database entries using dataregistry package
           python create_test_entries.py
 
-          # Register more database entries using the dregs CLI
+          # Register more database entries using the CLI
           bash create_test_entries_cli.sh
 
           # Run some test queries
