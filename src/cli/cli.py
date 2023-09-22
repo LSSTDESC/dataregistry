@@ -5,11 +5,11 @@ from dataregistry.db_basic import SCHEMA_VERSION
 from .register import register_dataset
 from .query import dregs_ls
 
-# -------------
-# The DREGS CLI
-# -------------
+# ---------------------
+# The data registry CLI
+# ---------------------
 parser = argparse.ArgumentParser(
-    description="The DREGS CLI interface",
+    description="The data registry CLI interface",
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
 )
 subparsers = parser.add_subparsers(title="subcommand", dest="subcommand")
@@ -27,7 +27,7 @@ arg_ls.add_argument(
     help="List datasets for a given owner type",
     choices=["user", "group", "production"],
 )
-arg_ls.add_argument("--config_file", help="Location of DREGS config file", type=str)
+arg_ls.add_argument("--config_file", help="Location of data registry config file", type=str)
 arg_ls.add_argument("--all", help="List all datasets", action="store_true")
 
 # ------------------
@@ -139,7 +139,7 @@ arg_register_dataset.add_argument(
     "--owner-type", choices=["production", "group", "user"], default="user"
 )
 arg_register_dataset.add_argument(
-    "--config_file", help="Location of DREGS config file", type=str
+    "--config_file", help="Location of data registry config file", type=str
 )
 
 

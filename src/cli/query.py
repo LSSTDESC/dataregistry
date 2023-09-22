@@ -3,7 +3,7 @@ from dataregistry.db_basic import DbConnection
 from dataregistry.query import Filter, Query
 
 
-def dregs_ls(owner, owner_type, show_all, dregs_config):
+def dregs_ls(owner, owner_type, show_all, config):
     """
     Queries the data registry for datasets, displaying their relative paths.
 
@@ -17,19 +17,19 @@ def dregs_ls(owner, owner_type, show_all, dregs_config):
         Owner type to list dataset entries for
     show_all : bool
         True to show all datasets, no filters
-    dregs_config : str
-        Path to DREGS config file
+    config : str
+        Path to data registry config file
     """
 
     # Establish connection to database
-    connection = DbConnection(dregs_config)
+    connection = DbConnection(config)
     # Create query object
     q = Query(connection)
 
     # Filter on dataset owner and/or owner_type
     filters = []
 
-    print("\nDREGS query:",end=" ")
+    print("\nDataRegistry query:",end=" ")
     if not show_all:
         if owner_type is not None:
             filters.append(Filter("dataset.owner_type", "==", owner_type))
