@@ -157,6 +157,8 @@ class Query:
         format. If they are in <column_name> format the column name must be
         unique through all tables in the database.
 
+        If column_names is None, return all tables.
+
         Parameters
         ----------
         column_names : list
@@ -166,6 +168,13 @@ class Query:
         tables_required = set()
         column_list = []
         is_orderable_list = []
+
+        # In the case where column_names is None, we want all tables.
+        if column_names is None:
+            for t in self._table_list:
+                tables_required.add(t)
+
+            return tables_required, column_list, is_orderable_list
 
         # Determine the column name and table it comes from
         for p in column_names:
