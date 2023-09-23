@@ -34,8 +34,15 @@ def test_query_return_format():
     assert type(results) == dict
 
 
+def test_query_all():
+    """Test a query where no properties are chosen, i.e., 'return *"""
+    results = datareg.Query.find_datasets()
+
+    assert results is not None
+
+
 def test_query_dataset_cli():
-    """ Test queries for the dataset table entered from the CLI script """
+    """Test queries for the dataset table entered from the CLI script"""
 
     # Query 1: Make sure we find all datasets entered using the CLI
     f = datareg.Query.gen_filter("dataset.name", "==", "my_cli_dataset")
@@ -46,7 +53,7 @@ def test_query_dataset_cli():
 
 
 def test_query_dataset():
-    """ Test queries for the dataset table """
+    """Test queries for the dataset table"""
 
     # Query 1: Query on dataset name
     f = datareg.Query.gen_filter("dataset.name", "==", "bumped_dataset")
@@ -124,7 +131,7 @@ def test_query_dataset():
 
 
 def test_query_dataset_alias():
-    """ Test queries of dataset alias table """
+    """Test queries of dataset alias table"""
 
     # Query 1: Query on dataset alias
     f = datareg.Query.gen_filter("dataset_alias.alias", "==", "nice_dataset_name")
@@ -139,7 +146,7 @@ def test_query_dataset_alias():
 
 
 def test_query_execution():
-    """ Test queries of execution table """
+    """Test queries of execution table"""
 
     # Query 1: Find the dependencies of an execution
     f = datareg.Query.gen_filter("execution.name", "==", "pipeline_stage_3")
