@@ -165,16 +165,12 @@ class Query:
             String list of database columns
         """
 
+        if column_names is None:
+            raise ValueError("column_names cannot be None")
+
         tables_required = set()
         column_list = []
         is_orderable_list = []
-
-        # In the case where column_names is None, we want all tables.
-        if column_names is None:
-            for t in self._table_list:
-                tables_required.add(t)
-
-            return tables_required, column_list, is_orderable_list
 
         # Determine the column name and table it comes from
         for p in column_names:
@@ -293,9 +289,6 @@ class Query:
         result : sqlAlchemy Result object
         """
 
-        # What tables are required for this query?
-        tables_required, _, _ = self._parse_selected_columns(property_names)
-
         # Construct query
 
         # No properties requested, return all from dataset table (only)
@@ -304,6 +297,10 @@ class Query:
 
         # Return the selected properties.
         else:
+            # What tables are required for this query?
+            tables_required, _, _ = self._parse_selected_columns(property_names)
+
+            # Construct SELECT
             stmt = select(*[text(p) for p in property_names])
 
             # Create joins
