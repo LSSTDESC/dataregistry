@@ -157,11 +157,16 @@ class Query:
         format. If they are in <column_name> format the column name must be
         unique through all tables in the database.
 
+        column_names cannot be None.
+
         Parameters
         ----------
         column_names : list
             String list of database columns
         """
+
+        if column_names is None:
+            raise ValueError("column_names cannot be None")
 
         tables_required = set()
         column_list = []
@@ -284,9 +289,6 @@ class Query:
         result : sqlAlchemy Result object
         """
 
-        # What tables are required for this query?
-        tables_required, _, _ = self._parse_selected_columns(property_names)
-
         # Construct query
 
         # No properties requested, return all from dataset table (only)
@@ -295,6 +297,10 @@ class Query:
 
         # Return the selected properties.
         else:
+            # What tables are required for this query?
+            tables_required, _, _ = self._parse_selected_columns(property_names)
+
+            # Construct SELECT
             stmt = select(*[text(p) for p in property_names])
 
             # Create joins

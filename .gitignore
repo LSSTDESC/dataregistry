@@ -1,5 +1,5 @@
 # Directories created during CI
-tests/end_to_end_tests/DREGS_data/
+tests/end_to_end_tests/DataRegistry_data/
 tests/end_to_end_tests/dummy_dir/
 
 # Byte-compiled / optimized / DLL files
