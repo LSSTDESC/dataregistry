@@ -157,7 +157,7 @@ class Query:
         format. If they are in <column_name> format the column name must be
         unique through all tables in the database.
 
-        If column_names is None, return all tables.
+        column_names cannot be None.
 
         Parameters
         ----------
