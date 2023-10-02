@@ -320,7 +320,10 @@ class TableMetadata:
         self._metadata.reflect(self._engine, db_connection.schema)
 
         # Fetch and save db versioning if present and requested
-        prov_name = ".".join([self._schema, "provenance"])
+        if db_connection.dialect == "sqlite":
+            prov_name = "provenance"
+        else:
+            prov_name = ".".join([self._schema, "provenance"])
         if prov_name in self._metadata.tables and get_db_version:
             prov_table = self._metadata.tables[prov_name]
             cols = ["db_version_major", "db_version_minor", "db_version_patch"]
@@ -353,7 +356,8 @@ class TableMetadata:
 
     def get(self, tbl):
         if "." not in tbl:
-            tbl = ".".join([self._schema, tbl])
+            if self._schema:
+                tbl = ".".join([self._schema, tbl])
         if tbl not in self._metadata.tables.keys():
             try:
                 self._metadata.reflect(self._engine, only=[tbl])
