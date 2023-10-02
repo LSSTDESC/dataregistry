@@ -107,13 +107,13 @@ def add_table_row(conn, table_meta, values, commit=True):
 
 
 class DbConnection:
-    def __init__(self, config_file, schema=None, verbose=False):
+    def __init__(self, config_file=None, schema=None, verbose=False):
         """
         Simple class to act as container for connection
 
         Parameters
         ----------
-        config : str
+        config : str, optional
             Path to config file with low-level connection information.
             If None, default location is assumed
         schema : str, optional
