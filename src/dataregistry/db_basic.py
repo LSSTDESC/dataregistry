@@ -19,7 +19,6 @@ SCHEMA_VERSION = "registry_beta"
 
 __all__ = [
     "DbConnection",
-    "create_db_engine",
     "add_table_row",
     "TableCreator",
     "TableMetadata",
@@ -77,35 +76,6 @@ def _get_dataregistry_config(config_file=None, verbose=False):
         raise ValueError("Unable to located data registry config file")
 
 
-def create_db_engine(config_file=None, verbose=False):
-    """
-    Establish connection to the data registry database
-
-    Parameters
-    ----------
-    config_file : str, optional
-        Path to data registry configuration file, contains connection details
-    verbose : bool, optional
-        True for more output
-
-    Returns
-    -------
-    - : SQLAlchemy Engine object
-        Connection to the database
-    dialect : str
-        Dialect of database (default is postgres)
-    """
-
-    # Extract connection info from configuration file
-    with open(_get_dataregistry_config(config_file, verbose)) as f:
-        connection_parameters = yaml.safe_load(f)
-
-    driver = make_url(connection_parameters["sqlalchemy.url"]).drivername
-    dialect = driver.split("+")[0]
-
-    return engine_from_config(connection_parameters), dialect
-
-
 def add_table_row(conn, table_meta, values, commit=True):
     """
     Generic insert, given connection, metadata for a table and column values to
@@ -151,9 +121,18 @@ class DbConnection:
         verbose : bool, optional
             If True, produce additional output
         """
-        self._engine, self._dialect = create_db_engine(
-            config_file=config_file, verbose=verbose
-        )
+
+        # Extract connection info from configuration file
+        with open(_get_dataregistry_config(config_file, verbose)) as f:
+            connection_parameters = yaml.safe_load(f)
+
+        # Build the engine
+        self._engine = engine_from_config(connection_parameters)
+
+        # Pull out the working schema version
+        driver = make_url(connection_parameters["sqlalchemy.url"]).drivername
+        self._dialect = driver.split("+")[0]
+
         if self._dialect == "sqlite":
             self._schema = None
         else:
