@@ -21,9 +21,7 @@ parser.add_argument('--config', help="Path to the data registry config file")
 
 args = parser.parse_args()
 
-##engine, dialect = create_db_engine(config_file=args.config)
 db_connection = DbConnection(args.config, args.schema)
-##tab_creator = TableCreator(engine, dialect, schema=schema)
 tab_creator = TableCreator(db_connection)
 
 # Main table, a row per dataset
