@@ -44,14 +44,14 @@ class DataRegistry:
             True for more output.
         """
         # Establish connection to database
-        db_connection = DbConnection(
+        self.db_connection = DbConnection(
             config_file, schema=schema_version, verbose=verbose
         )
 
         # Create query object
-        self.Query = Query(db_connection)
+        self.Query = Query(self.db_connection)
 
         # Create registrar object
         self.Registrar = Registrar(
-            db_connection, owner=owner, owner_type=owner_type, root_dir=root_dir,
+            self.db_connection, owner=owner, owner_type=owner_type, root_dir=root_dir,
         )

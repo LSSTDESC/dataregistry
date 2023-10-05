@@ -35,10 +35,11 @@ for FILE in ["dummy_dir/file1.txt", "dummy_dir/file2.txt", "file1.txt"]:
 # Establish connection to database
 datareg = DataRegistry(root_dir=_TEST_ROOT_DIR)
 
-# Establish connection to production database
-datareg_prod = DataRegistry(
-    root_dir=_TEST_ROOT_DIR_PRODUCTION, schema_version="production"
-)
+# Establish connection to production database (if not sqllite)
+if datareg.db_connection.dialect != "sqllite":
+    datareg_prod = DataRegistry(
+        root_dir=_TEST_ROOT_DIR_PRODUCTION, schema_version="production"
+    )
 
 
 def _insert_alias_entry(name, dataset_id):
@@ -407,11 +408,12 @@ _insert_dataset_entry(
 
 # Test set 12
 # - Sommy dummy production datasets, going into the production schema
-_insert_dataset_entry(
-    "DESC/datasets/production_dataset_1",
-    "0.0.1",
-    "production",
-    None,
-    "This is production's first dataset",
-    which_datareg=datareg_prod,
-)
+if datareg.db_connection.dialect != "sqllite":
+    _insert_dataset_entry(
+        "DESC/datasets/production_dataset_1",
+        "0.0.1",
+        "production",
+        None,
+        "This is production's first dataset",
+        which_datareg=datareg_prod,
+    )
