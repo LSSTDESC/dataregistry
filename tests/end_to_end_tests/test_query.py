@@ -2,8 +2,20 @@ import os
 
 from dataregistry import DataRegistry
 
-# Establish connection to database
+# Establish connection to database (default schema)
 datareg = DataRegistry(root_dir="DataRegistry_data")
+
+# Establish connection to database (production schema)
+datareg_prod = DataRegistry(
+    root_dir="DataRegistry_data_production", schema_version="production"
+)
+
+
+def test_query_production():
+    """Test a query to the production schema"""
+    results = datareg_prod.Query.find_datasets()
+
+    assert results is not None
 
 
 def test_query_all():
