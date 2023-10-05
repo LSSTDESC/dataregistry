@@ -408,7 +408,7 @@ _insert_dataset_entry(
 
 # Test set 12
 # - Sommy dummy production datasets, going into the production schema
-if datareg.db_connection.dialect != "sqllite":
+if datareg.db_connection.dialect != "sqlite":
     _insert_dataset_entry(
         "DESC/datasets/production_dataset_1",
         "0.0.1",
