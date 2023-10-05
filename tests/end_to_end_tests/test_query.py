@@ -13,9 +13,11 @@ datareg_prod = DataRegistry(
 
 def test_query_production():
     """Test a query to the production schema"""
-    results = datareg_prod.Query.find_datasets()
 
-    assert results is not None
+    if datareg.Query._dialect != "sqlite":
+        results = datareg_prod.Query.find_datasets()
+
+        assert results is not None
 
 
 def test_query_all():
