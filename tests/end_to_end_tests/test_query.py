@@ -107,7 +107,7 @@ def test_query_dataset():
 
     # Query 8: Make sure dataset gets tagged as overwritten.
     for rel_path in ["file1.txt", "dummy_dir"]:
-        f = datareg.Query.gen_filter("dataset.relative_path", "==", "file1.txt")
+        f = datareg.Query.gen_filter("dataset.relative_path", "==", rel_path)
         results = datareg.Query.find_datasets(
             [
                 "dataset.version_patch",
