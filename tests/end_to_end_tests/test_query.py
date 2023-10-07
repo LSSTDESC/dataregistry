@@ -105,6 +105,27 @@ def test_query_dataset():
         assert r.owner == "DESC group"
         assert r.owner_type == "group"
 
+    # Query 8: Make sure dataset gets tagged as overwritten.
+    for rel_path in ["file1.txt", "dummy_dir"]:
+        f = datareg.Query.gen_filter("dataset.relative_path", "==", "file1.txt")
+        results = datareg.Query.find_datasets(
+            [
+                "dataset.version_patch",
+                "dataset.is_overwritable",
+                "dataset.is_overwritten",
+            ],
+            [f],
+        )
+        for r in results:
+            if r.version_patch == 1:
+                assert r.is_overwritable == True
+                assert r.is_overwritten == True
+            elif r.version_patch == 2:
+                assert r.is_overwritable == False
+                assert r.is_overwritten == False
+            else:
+                raise ValueError("Bad patch number")
+
 
 def test_query_dataset_alias():
     """Test queries of dataset alias table"""
