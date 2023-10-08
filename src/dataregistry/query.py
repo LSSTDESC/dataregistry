@@ -264,7 +264,7 @@ class Query:
             self._metadata.db_version_patch,
         )
 
-    def find_datasets(self, property_names=None, filters=[], verbose=True):
+    def find_datasets(self, property_names=None, filters=[], verbose=False):
         """
         Get specified properties for datasets satisfying all filters
 
