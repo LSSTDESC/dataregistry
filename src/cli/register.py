@@ -12,7 +12,9 @@ def register_dataset(args):
     """
 
     # Connect to database.
-    datareg = DataRegistry(config_file=args.config_file, schema_version=args.schema_version)
+    datareg = DataRegistry(
+        config_file=args.config_file, schema_version=args.schema_version
+    )
 
     # Register new dataset.
     new_id = datareg.Registrar.register_dataset(
@@ -25,7 +27,7 @@ def register_dataset(args):
         old_location=args.old_location,
         copy=(not args.make_symlink),
         is_dummy=args.is_dummy,
-        owner=args.owner
+        owner=args.owner,
     )
 
     print(f"Created dataset entry with id {new_id}")
