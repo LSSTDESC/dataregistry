@@ -264,7 +264,7 @@ class Query:
             self._metadata.db_version_patch,
         )
 
-    def find_datasets(self, property_names=None, filters=[]):
+    def find_datasets(self, property_names=None, filters=[], verbose=True):
         """
         Get specified properties for datasets satisfying all filters
 
@@ -279,10 +279,12 @@ class Query:
 
         Parameters
         ----------
-        property_names : list (optional)
+        property_names : list, optional
             List of database columns to return (SELECT clause)
-        filters : list (optional)
+        filters : list, optional
             List of filters (WHERE clauses) to apply
+        verbose : bool, optional
+            True for more output relating to the query
 
         Returns
         -------
@@ -320,6 +322,10 @@ class Query:
         if len(filters) > 0:
             for f in filters:
                 stmt = self._render_filter(f, stmt)
+
+        # Report the constructed SQL query
+        if verbose:
+            print(f"Executing query: {stmt}")
 
         # Execute the query
         with self._engine.connect() as conn:
