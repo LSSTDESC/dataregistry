@@ -3,11 +3,14 @@ from dataregistry.db_basic import DbConnection
 from dataregistry.query import Filter, Query
 
 
-def dregs_ls(owner, owner_type, show_all, config):
+def dregs_ls(owner, owner_type, show_all, config, schema):
     """
     Queries the data registry for datasets, displaying their relative paths.
 
     Can apply a "owner" and/or "owner_type" filter.
+
+    Note that the production schema will always be searched against, even if it
+    is not the passed `schema`.
 
     Parameters
     ----------
@@ -19,12 +22,23 @@ def dregs_ls(owner, owner_type, show_all, config):
         True to show all datasets, no filters
     config : str
         Path to data registry config file
+    schema : str
+        Which schema to search
     """
 
-    # Establish connection to database
-    connection = DbConnection(config)
+    # Establish connection to the regular schema
+    connection = DbConnection(config, schema=schema)
     # Create query object
     q = Query(connection)
+
+    # Establish connection to the production schema
+    if connection.schema != "production":
+        connection_prod = DbConnection(config, schema="production")
+        # Create production query object
+        q_prod = Query(connection_prod)
+    else:
+        connection_prod = None
+        q_prod = None
 
     # Filter on dataset owner and/or owner_type
     filters = []
@@ -43,27 +57,34 @@ def dregs_ls(owner, owner_type, show_all, config):
             filters.append(Filter("dataset.owner", "==", owner))
             print(f"owner=={owner}",end=" ")
     else:
-        print("all dataset", end=" ")
+        print("all datasets", end=" ")
 
-    # Query
-    results = q.find_datasets(
-        [
-            "dataset.name",
-            "dataset.version_string",
-            "dataset.relative_path",
-            "dataset.owner",
-            "dataset.owner_type",
-        ],
-        filters,
-    )
+    # Show the format out the output.
+    mystr = "Format : '[owner_type:owner] name : version_string -> relative_path'"
+    print(f"\n{mystr}")
+    print("-"*len(mystr))
 
-    print(f"({results.rowcount} results)")
+    # Loop over this schema and the production schema and print the results
+    for this_q, this_connection in zip([q,q_prod],[connection,connection_prod]):
+        if this_q is None:
+            continue
 
-    # Loop over each result and print.
-    if results.rowcount > 0:
-        print("Format : '[owner_type:owner] name : version_string -> relative_path'")
-        for r in results:
-            print(
-                f" - [{r.owner_type}:{r.owner}] {r.name} :",
-                f"v{r.version_string} -> {r.relative_path}",
-            )
+        # Query
+        results = this_q.find_datasets(
+            [
+                "dataset.name",
+                "dataset.version_string",
+                "dataset.relative_path",
+                "dataset.owner",
+                "dataset.owner_type",
+            ],
+            filters,
+        )
+
+        # Loop over each result and print.
+        if results.rowcount > 0:
+            for r in results:
+                print(
+                    f" - [{r.owner_type}:{r.owner}] {r.name} :",
+                    f"v{r.version_string} -> {r.relative_path}",
+                )

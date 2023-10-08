@@ -29,6 +29,8 @@ arg_ls.add_argument(
 )
 arg_ls.add_argument("--config_file", help="Location of data registry config file", type=str)
 arg_ls.add_argument("--all", help="List all datasets", action="store_true")
+arg_ls.add_argument("--schema", default=f"{SCHEMA_VERSION}", help="Which schema to connect to",
+)
 
 # ------------------
 # Register a dataset
@@ -122,7 +124,7 @@ arg_register_dataset.add_argument(
     action="store_true",
 )
 arg_register_dataset.add_argument(
-    "--schema-version",
+    "--schema_version",
     default=f"{SCHEMA_VERSION}",
     help="Which schema to connect to",
 )
@@ -153,4 +155,4 @@ def main():
 
     # Query database entries
     elif args.subcommand == "ls":
-        dregs_ls(args.owner, args.owner_type, args.all, args.config_file)
+        dregs_ls(args.owner, args.owner_type, args.all, args.config_file, args.schema)
