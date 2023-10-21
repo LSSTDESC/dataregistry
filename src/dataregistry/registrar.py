@@ -53,9 +53,9 @@ class Registrar:
 
         # Root directory on disk for data registry files
         if root_dir is not None:
-            self.root_dir = root_dir
+            self._root_dir = root_dir
         else:
-            self.root_dir = _DEFAULT_ROOT_DIR
+            self._root_dir = _DEFAULT_ROOT_DIR
 
         # Database engine and dialect.
         self._engine = db_connection.engine
@@ -76,7 +76,7 @@ class Registrar:
         Returns root dir used to form absolute path of a registered
         dataset
         """
-        return self.root_dir
+        return self._root_dir
 
     def get_owner_types(self):
         """
