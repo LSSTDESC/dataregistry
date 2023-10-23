@@ -98,7 +98,7 @@ class Query:
         """
         self._engine = db_connection.engine
         self._dialect = db_connection.dialect
-        self._schema_version = db_connection.schema
+        self._schema = db_connection.schema
 
         # Do we need to know where the datasets actually are?  If so
         # we need a ROOT_DIR
