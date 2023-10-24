@@ -60,7 +60,7 @@ jobs:
           echo "sqlalchemy.url : postgresql://postgres:postgres@localhost:5432/desc_data_registry" > $HOME/.config_reg_access
 
       # Create schema
-      - name: Create data registry schemas
+      - name: Create data registry default schema
         run: |
           python scripts/create_registry_db.py --config $HOME/.config_reg_access
 
@@ -127,7 +127,7 @@ jobs:
           echo "sqlalchemy.url : postgresql://postgres:postgres@localhost:5432/desc_data_registry" > $DATAREG_CONFIG
 
       # Create schema
-      - name: Create data registry schemas
+      - name: Create data registry default and production schema
         run: |
           python scripts/create_registry_db.py --config $DATAREG_CONFIG
           python scripts/create_registry_db.py --config $DATAREG_CONFIG --schema production
@@ -186,7 +186,7 @@ jobs:
           echo "sqlalchemy.url : sqlite:///${HOME}/registry.db" > $DATAREG_CONFIG
 
       # Create schema
-      - name: Create data registry schema
+      - name: Create data registry default schema
         run: |
           python scripts/create_registry_db.py --config $DATAREG_CONFIG
 

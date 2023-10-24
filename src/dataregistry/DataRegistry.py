@@ -44,7 +44,7 @@ class DataRegistry:
             True for more output.
         """
         # Establish connection to database
-        db_connection = DbConnection(
+        self.db_connection = DbConnection(
             config_file, schema=schema, verbose=verbose
         )
 
