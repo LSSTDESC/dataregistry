@@ -38,7 +38,7 @@ datareg = DataRegistry(root_dir=_TEST_ROOT_DIR)
 # Establish connection to production database (if not sqllite)
 if datareg.db_connection.dialect != "sqllite":
     datareg_prod = DataRegistry(
-        root_dir=_TEST_ROOT_DIR_PRODUCTION, schema_version="production"
+        root_dir=_TEST_ROOT_DIR_PRODUCTION, schema="production"
     )
 
 

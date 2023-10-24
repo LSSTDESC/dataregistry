@@ -7,7 +7,7 @@ datareg = DataRegistry(root_dir="DataRegistry_data")
 
 # Establish connection to database (production schema)
 datareg_prod = DataRegistry(
-    root_dir="DataRegistry_data_production", schema_version="production"
+    root_dir="DataRegistry_data_production", schema="production"
 )
 
 
