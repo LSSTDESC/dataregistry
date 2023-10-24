@@ -2,16 +2,16 @@ Getting set up
 ==============
 
 This section has some tutorials on how to get started using the
-``dataregistry`` Python package, and the "`dregs`" Command Line Interface.
+``dataregistry`` Python package, and the "``dregs``" Command Line Interface.
 
 Before we begin, make sure that you have the ``dataregistry`` package installed
-and available to you at NERSC (installation instructions `here
-<http://lsstdesc.org/dataregistry/installation.html>`__). This is generally
+and available to you at NERSC (installation instructions :ref:`here
+<installation>`). This is generally
 simplest within a Conda or Python virtual environment (note that the
 ``dataregistry`` is not yet part of the `desc-python` environment).
 
 Also, make sure you have completed the one-time-setup for the data registry
-(more details `here <http://lsstdesc.org/dataregistry/installation.html>`__),
+(more details :ref:`here <one-time-setup>`),
 namely:
 
 - You have added the database connection information in your
@@ -19,8 +19,10 @@ namely:
 - You have added your database authentication information in your ``~/.pgpass``
   file
 
-Working with notebooks interactively
-------------------------------------
+.. _interactive-notebooks:
+
+Working with the data registry tutorial notebooks interactively
+---------------------------------------------------------------
 
 The tutorial notebooks for the ``dataregistry`` package work as stand alone
 reference materials, however they can also be used interactively.
