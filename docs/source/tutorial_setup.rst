@@ -2,7 +2,7 @@ Getting set up
 ==============
 
 This section has some tutorials on how to get started using the
-``dataregistry`` Python package, and the CLI.
+``dataregistry`` Python package, and the "`dregs`" Command Line Interface.
 
 Before we begin, make sure that you have the ``dataregistry`` package installed
 and available to you at NERSC (installation instructions `here
@@ -10,8 +10,9 @@ and available to you at NERSC (installation instructions `here
 simplest within a Conda or Python virtual environment (note that the
 ``dataregistry`` is not yet part of the `desc-python` environment).
 
-Also, make sure you have completed the one-time-setup for DREGS (more details
-`here <http://lsstdesc.org/dataregistry/installation.html>`__), namely:
+Also, make sure you have completed the one-time-setup for the data registry
+(more details `here <http://lsstdesc.org/dataregistry/installation.html>`__),
+namely:
 
 - You have added the database connection information in your
   ``~/.config_reg_access`` file

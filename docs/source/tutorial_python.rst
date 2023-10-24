@@ -4,13 +4,9 @@ The ``dataregistry`` package
 The tutorials for the ``dataregistry`` package come in the form of Jupyter
 Notebooks.
 
-1) Getting started with DREGS
------------------------------
+1) Getting started with the data registry
+-----------------------------------------
 
-`Link to notebook <https://github.com/LSSTDESC/dataregistry/blob/main/docs/source/tutorial_notebooks/DREGS_tutorial_NERSC.ipynb>`__
+Part 1: `Link to notebook <https://github.com/LSSTDESC/dataregistry/blob/main/docs/source/tutorial_notebooks/getting_started.ipynb.ipynb>`__
 
-2) Working with pipeline datasets
----------------------------------
-
-`Link to notebook <https://github.com/LSSTDESC/dataregistry/blob/main/docs/source/tutorial_notebooks/pipline_datasets.ipynb>`__
-
+Part 2: `Link to notebook <https://github.com/LSSTDESC/dataregistry/blob/main/docs/source/tutorial_notebooks/getting_started_2.ipynb.ipynb>`__

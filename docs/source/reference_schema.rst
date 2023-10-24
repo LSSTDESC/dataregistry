@@ -1,7 +1,7 @@
 Database schema
 ===============
 
-A description of the DREGS database schema.
+A description of the database schema.
 
 .. image:: _static/schema_plot.png
    :alt: Image missing

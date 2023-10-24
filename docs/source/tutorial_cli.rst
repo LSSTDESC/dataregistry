@@ -24,7 +24,7 @@ Registering a dataset using the CLI is essentially identical to using the
 ``dataregistry`` package from within Python (it is simply calling the
 ``Registrar.register_dataset()`` function with arguments from the command
 line).  Therefore reviewing the `first tutorial notebook
-<https://github.com/LSSTDESC/dataregistry/blob/main/docs/source/tutorial_notebooks/DREGS_tutorial_NERSC.ipynb>`_
+<https://github.com/LSSTDESC/dataregistry/blob/main/docs/source/tutorial_notebooks/getting_started.ipynb.ipynb>`_
 is the best place to get familiar with the registration process and for
 descriptions of the associated dataset metadata.
 
