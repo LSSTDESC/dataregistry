@@ -2,14 +2,15 @@ import time
 import os
 from datetime import datetime
 from shutil import copyfile, copytree
-from sqlalchemy import MetaData, Table, Column, insert, text, update, select
-from sqlalchemy.exc import DBAPIError, IntegrityError
+# from sqlalchemy import MetaData, Table, Column, insert, text,
+from sqlalchemy import update, select
+# from sqlalchemy.exc import DBAPIError, IntegrityError
 from dataregistry.db_basic import add_table_row
 from dataregistry.registrar_util import _form_dataset_path, get_directory_info
 from dataregistry.registrar_util import _parse_version_string, _bump_version
 from dataregistry.registrar_util import _name_from_relpath
 from dataregistry.db_basic import TableMetadata
-from dataregistry.exceptions import *
+# from dataregistry.exceptions import *
 
 __all__ = ["Registrar"]
 
@@ -68,6 +69,14 @@ class Registrar:
         # Default owner and owner_type's
         self._owner = owner
         self._owner_type = owner_type
+
+    @property
+    def root_dir(self):
+        """
+        Returns root dir used to form absolute path of a registered
+        dataset
+        """
+        return self.root_dir
 
     def get_owner_types(self):
         """
