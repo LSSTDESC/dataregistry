@@ -12,9 +12,7 @@ def register_dataset(args):
     """
 
     # Connect to database.
-    datareg = DataRegistry(
-        config_file=args.config_file, schema_version=args.schema_version
-    )
+    datareg = DataRegistry(config_file=args.config_file, schema=args.schema)
 
     # Register new dataset.
     new_id = datareg.Registrar.register_dataset(

@@ -112,6 +112,7 @@ def _insert_dataset_entry(
     version_suffix=None,
     is_dummy=True,
     old_location=None,
+    is_overwritable=False,
     which_datareg=None,
 ):
     """
@@ -157,7 +158,6 @@ def _insert_dataset_entry(
 
     # Some defaults over all test datasets
     locale = "NERSC"
-    is_overwritable = False
     creation_data = None
     make_sym_link = False
 
@@ -176,6 +176,7 @@ def _insert_dataset_entry(
         verbose=True,
         owner=owner,
         owner_type=owner_type,
+        is_overwritable=is_overwritable
     )
 
     assert new_id is not None, "Trying to create a dataset that already exists"
@@ -381,6 +382,17 @@ _insert_dataset_entry(
     "This is my first DESC dataset with real files already on location",
     is_dummy=False,
     old_location=None,
+    is_overwritable=True,
+)
+
+_insert_dataset_entry(
+    "file1.txt",
+    "0.0.2",
+    "user",
+    None,
+    "This is my first DESC dataset with real files already on location (updated)",
+    is_dummy=False,
+    old_location=None,
 )
 
 _insert_dataset_entry(
@@ -389,6 +401,17 @@ _insert_dataset_entry(
     "user",
     None,
     "This is my second DESC dataset with real files already on location",
+    is_dummy=False,
+    old_location=None,
+    is_overwritable=True,
+)
+
+_insert_dataset_entry(
+    "dummy_dir",
+    "0.0.2",
+    "user",
+    None,
+    "This is my second DESC dataset with real files already on location (updated)",
     is_dummy=False,
     old_location=None,
 )
