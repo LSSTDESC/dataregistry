@@ -99,7 +99,7 @@ class Query:
         """
         self._engine = db_connection.engine
         self._dialect = db_connection.dialect
-        self._schema_version = db_connection.schema
+        self._schema = db_connection.schema
 
         # Do we need to know where the datasets actually are?  If so
         # we need a ROOT_DIR
@@ -158,13 +158,16 @@ class Query:
         format. If they are in <column_name> format the column name must be
         unique through all tables in the database.
 
-        If column_names is None, return all tables.
+        column_names cannot be None.
 
         Parameters
         ----------
         column_names : list
             String list of database columns
         """
+
+        if column_names is None:
+            raise ValueError("column_names cannot be None")
 
         tables_required = set()
         column_list = []

@@ -122,7 +122,7 @@ arg_register_dataset.add_argument(
     action="store_true",
 )
 arg_register_dataset.add_argument(
-    "--schema-version",
+    "--schema",
     default=f"{SCHEMA_VERSION}",
     help="Which schema to connect to",
 )

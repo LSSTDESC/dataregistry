@@ -11,7 +11,7 @@ class DataRegistry:
         owner=None,
         owner_type=None,
         config_file=None,
-        schema_version=None,
+        schema=None,
         root_dir=None,
         verbose=False,
     ):
@@ -36,7 +36,7 @@ class DataRegistry:
             instance.
         config_file : str
             Path to config file, if None, default location is assumed.
-        schema_version : str
+        schema : str
             Schema to connect to, if None, default schema is assumed.
         root_dir : str
             Root directory for datasets, if None, default is assumed.
@@ -44,18 +44,14 @@ class DataRegistry:
             True for more output.
         """
         # Establish connection to database
-        db_connection = DbConnection(config_file,
-                                     schema=schema_version,
-                                     verbose=verbose)
-        #engine, dialect = create_db_engine(config_file=config_file, verbose=verbose)
+        db_connection = DbConnection(
+            config_file, schema=schema, verbose=verbose
+        )
 
         # Create query object
         self.Query = Query(db_connection)
 
         # Create registrar object
         self.Registrar = Registrar(
-            db_connection,
-            owner=owner,
-            owner_type=owner_type,
-            root_dir=root_dir,
+            db_connection, owner=owner, owner_type=owner_type, root_dir=root_dir,
         )

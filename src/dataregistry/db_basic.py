@@ -19,7 +19,6 @@ SCHEMA_VERSION = "registry_beta"
 
 __all__ = [
     "DbConnection",
-    "create_db_engine",
     "add_table_row",
     "TableCreator",
     "TableMetadata",
@@ -77,35 +76,6 @@ def _get_dataregistry_config(config_file=None, verbose=False):
         raise ValueError("Unable to located data registry config file")
 
 
-def create_db_engine(config_file=None, verbose=False):
-    """
-    Establish connection to the data registry database
-
-    Parameters
-    ----------
-    config_file : str, optional
-        Path to data registry configuration file, contains connection details
-    verbose : bool, optional
-        True for more output
-
-    Returns
-    -------
-    - : SQLAlchemy Engine object
-        Connection to the database
-    dialect : str
-        Dialect of database (default is postgres)
-    """
-
-    # Extract connection info from configuration file
-    with open(_get_dataregistry_config(config_file, verbose)) as f:
-        connection_parameters = yaml.safe_load(f)
-
-    driver = make_url(connection_parameters["sqlalchemy.url"]).drivername
-    dialect = driver.split("+")[0]
-
-    return engine_from_config(connection_parameters), dialect
-
-
 def add_table_row(conn, table_meta, values, commit=True):
     """
     Generic insert, given connection, metadata for a table and column values to
@@ -137,13 +107,13 @@ def add_table_row(conn, table_meta, values, commit=True):
 
 
 class DbConnection:
-    def __init__(self, config_file, schema=None, verbose=False):
+    def __init__(self, config_file=None, schema=None, verbose=False):
         """
         Simple class to act as container for connection
 
         Parameters
         ----------
-        config : str
+        config : str, optional
             Path to config file with low-level connection information.
             If None, default location is assumed
         schema : str, optional
@@ -151,9 +121,18 @@ class DbConnection:
         verbose : bool, optional
             If True, produce additional output
         """
-        self._engine, self._dialect = create_db_engine(
-            config_file=config_file, verbose=verbose
-        )
+
+        # Extract connection info from configuration file
+        with open(_get_dataregistry_config(config_file, verbose)) as f:
+            connection_parameters = yaml.safe_load(f)
+
+        # Build the engine
+        self._engine = engine_from_config(connection_parameters)
+
+        # Pull out the working schema version
+        driver = make_url(connection_parameters["sqlalchemy.url"]).drivername
+        self._dialect = driver.split("+")[0]
+
         if self._dialect == "sqlite":
             self._schema = None
         else:
@@ -320,7 +299,10 @@ class TableMetadata:
         self._metadata.reflect(self._engine, db_connection.schema)
 
         # Fetch and save db versioning if present and requested
-        prov_name = ".".join([self._schema, "provenance"])
+        if db_connection.dialect == "sqlite":
+            prov_name = "provenance"
+        else:
+            prov_name = ".".join([self._schema, "provenance"])
         if prov_name in self._metadata.tables and get_db_version:
             prov_table = self._metadata.tables[prov_name]
             cols = ["db_version_major", "db_version_minor", "db_version_patch"]
@@ -353,7 +335,8 @@ class TableMetadata:
 
     def get(self, tbl):
         if "." not in tbl:
-            tbl = ".".join([self._schema, tbl])
+            if self._schema:
+                tbl = ".".join([self._schema, tbl])
         if tbl not in self._metadata.tables.keys():
             try:
                 self._metadata.reflect(self._engine, only=[tbl])
