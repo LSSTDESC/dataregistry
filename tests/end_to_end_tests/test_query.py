@@ -65,14 +65,14 @@ def test_query_dataset():
 
     # Make sure versions (from bump) are correct
     for r in results:
-        if r.relative_path == "DESC/datasets/bumped_dataset":
-            assert r.version_string == "0.0.1"
-        elif r.relative_path == "DESC/datasets/bumped_dataset_2":
-            assert r.version_string == "0.0.2"
-        elif r.relative_path == "DESC/datasets/bumped_dataset_3":
-            assert r.version_string == "0.1.0"
-        elif r.relative_path == "DESC/datasets/bumped_dataset_4":
-            assert r.version_string == "1.0.0"
+        if getattr(r, "dataset.relative_path") == "DESC/datasets/bumped_dataset":
+            assert getattr(r, "dataset.version_string") == "0.0.1"
+        elif getattr(r, "dataset.relative_path") == "DESC/datasets/bumped_dataset_2":
+            assert getattr(r, "dataset.version_string") == "0.0.2"
+        elif getattr(r, "dataset.relative_path") == "DESC/datasets/bumped_dataset_3":
+            assert getattr(r, "dataset.version_string") == "0.1.0"
+        elif getattr(r, "dataset.relative_path") == "DESC/datasets/bumped_dataset_4":
+            assert getattr(r, "dataset.version_string") == "1.0.0"
 
     # Query 2: Query on owner type
     f = datareg.Query.gen_filter("dataset.owner_type", "!=", "user")
@@ -87,7 +87,7 @@ def test_query_dataset():
     if datareg.Query._dialect != "sqlite":
         assert results.rowcount == 1, "Bad result from query d3"
     for r in results:
-        assert r.name == "my_first_dataset", "Bad result from query d3"
+        assert getattr(r, "dataset.name") == "my_first_dataset", "Bad result from query d3"
 
     # Query 4: Make sure manual name is correct
     f = datareg.Query.gen_filter(
@@ -97,7 +97,7 @@ def test_query_dataset():
     if datareg.Query._dialect != "sqlite":
         assert results.rowcount == 1, "Bad result from query d4"
     for r in results:
-        assert r.name == "named_dataset", "Bad result from query d4"
+        assert getattr(r, "dataset.name") == "named_dataset", "Bad result from query d4"
 
     # Query 5: Query on version suffix
     f = datareg.Query.gen_filter("dataset.version_suffix", "==", "test-suffix")
@@ -109,10 +109,10 @@ def test_query_dataset():
 
     # Make sure versions (from bump) are correct
     for r in results:
-        if r.relative_path == "DESC/datasets/my_first_suffix_dataset":
-            assert r.version_string == "0.0.1"
-        elif r.relative_path == "DESC/datasets/my_first_suffix_dataset_bumped":
-            assert r.version_string == "0.1.0"
+        if getattr(r, "dataset.relative_path") == "DESC/datasets/my_first_suffix_dataset":
+            assert getattr(r, "dataset.version_string") == "0.0.1"
+        elif getattr(r, "dataset.relative_path") == "DESC/datasets/my_first_suffix_dataset_bumped":
+            assert getattr(r, "dataset.version_string") == "0.1.0"
 
     # Query 6: Make sure non dummy entries have a non-zero amount of files
     f = datareg.Query.gen_filter("dataset.data_org", "!=", "dummy")
@@ -122,7 +122,7 @@ def test_query_dataset():
 
     # Make sure nfiles > 0
     for r in results:
-        assert r.nfiles > 0, "Bad result from query d6"
+        assert getattr(r, "dataset.nfiles") > 0, "Bad result from query d6"
 
     # Query 7: See if global owner/owner_type allocation worked
     f = datareg.Query.gen_filter(
@@ -130,8 +130,8 @@ def test_query_dataset():
     )
     results = datareg.Query.find_datasets(["dataset.owner", "dataset.owner_type"], [f])
     for r in results:
-        assert r.owner == "DESC group"
-        assert r.owner_type == "group"
+        assert getattr(r, "dataset.owner") == "DESC group"
+        assert getattr(r, "dataset.owner_type") == "group"
 
     # Query 8: Make sure dataset gets tagged as overwritten.
     for rel_path in ["file1.txt", "dummy_dir"]:
@@ -145,12 +145,12 @@ def test_query_dataset():
             [f],
         )
         for r in results:
-            if r.version_patch == 1:
-                assert r.is_overwritable == True
-                assert r.is_overwritten == True
-            elif r.version_patch == 2:
-                assert r.is_overwritable == False
-                assert r.is_overwritten == False
+            if getattr(r, "dataset.version_patch") == 1:
+                assert getattr(r, "dataset.is_overwritable") == True
+                assert getattr(r, "dataset.is_overwritten") == True
+            elif getattr(r, "dataset.version_patch") == 2:
+                assert getattr(r, "dataset.is_overwritable") == False
+                assert getattr(r, "dataset.is_overwritten") == False
             else:
                 raise ValueError("Bad patch number")
 

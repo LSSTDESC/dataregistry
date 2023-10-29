@@ -158,7 +158,7 @@ class Query:
         format. If they are in <column_name> format the column name must be
         unique through all tables in the database.
 
-        column_names cannot be None.
+        If column_names is None, all columns from the dataset table will be selected.
 
         Parameters
         ----------
@@ -167,7 +167,7 @@ class Query:
         """
 
         if column_names is None:
-            raise ValueError("column_names cannot be None")
+            column_names = [x.table.name + "." + x.name for x in self._tables["dataset"].c]
 
         tables_required = set()
         column_list = []
