@@ -12,13 +12,13 @@ def test_query_return_format():
     """ Test we get back correct data format from queries """
 
     # Default, SQLAlchemy CursorResult
-    results = dregs.Query.find_datasets(
+    results = datareg.Query.find_datasets(
         ["dataset.name", "dataset.version_string", "dataset.relative_path"], []
     )
     assert type(results) == sqlalchemy.engine.cursor.CursorResult
 
     # Pandas DataFrame
-    results = dregs.Query.find_datasets(
+    results = datareg.Query.find_datasets(
         ["dataset.name", "dataset.version_string", "dataset.relative_path"],
         [],
         return_format="dataframe",
@@ -26,7 +26,7 @@ def test_query_return_format():
     assert type(results) == pd.DataFrame
 
     # Property dictionary (each key is a property with a list for each row)
-    results = dregs.Query.find_datasets(
+    results = datareg.Query.find_datasets(
         ["dataset.name", "dataset.version_string", "dataset.relative_path"],
         [],
         return_format="property_dict",
