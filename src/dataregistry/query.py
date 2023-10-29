@@ -179,7 +179,6 @@ class Query:
 
         # Determine the column name and table it comes from
         for p in column_names:
-
             # Case of <table_name>.<column_name> format
             if "." in p:
                 if len(p.split(".")) != 2:
@@ -308,7 +307,7 @@ class Query:
             )
 
         # What tables are required for this query?
-        tables_required, _, _ = self._parse_selected_columns(property_names)
+        tables_required, column_list, _ = self._parse_selected_columns(property_names)
 
         # Construct query
 
@@ -318,7 +317,7 @@ class Query:
 
         # Return the selected properties.
         else:
-            stmt = select(*[text(p) for p in property_names])
+            stmt = select(*[p.label(p.table.name + "." + p.name) for p in column_list])
 
             # Create joins
             if len(tables_required) > 1:
