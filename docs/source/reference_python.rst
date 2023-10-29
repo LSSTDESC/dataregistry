@@ -2,7 +2,7 @@ The ``dataregistry`` package
 ============================
 
 Reference documentation for the core objects within the ``dataregistry``
-package.  Demonstrations of their usage can be found in the tutorials section.
+package.  Demonstrations of their usage can be found in the :ref:`tutorials section <tutorials-python>`.
 
 .. _dataregistry_class:
 

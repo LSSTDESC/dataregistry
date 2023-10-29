@@ -1,3 +1,5 @@
+.. _tutorials-cli:
+
 The ``dataregistry`` CLI
 ========================
 

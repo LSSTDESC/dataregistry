@@ -6,7 +6,7 @@ The ``dregs`` CLI
 The DESC data registry also comes with a Command Line Interface (CLI) tool,
 ``dregs``,  which can perform some simple actions.
 
-See the tutorials section for a demonstration of its usage.
+See the :ref:`tutorials section <tutorials-cli>` for a demonstration of its usage.
 
 Registering a new entry in the database
 ---------------------------------------
