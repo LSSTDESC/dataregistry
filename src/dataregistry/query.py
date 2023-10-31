@@ -1,6 +1,4 @@
-# from datetime import datetime
 from collections import namedtuple
-# from sqlalchemy import MetaData, Table, Column,
 from sqlalchemy import text, select
 import sqlalchemy.sql.sqltypes as sqltypes
 from dataregistry.registrar import _DEFAULT_ROOT_DIR
@@ -397,6 +395,10 @@ class Query:
                                                      'dataset.relative_path'],
                                      filters=[('dataset.dataset_id', '==',
                                                dataset_id)])
-        row = results.fetchone()
-        return _form_dataset_path(row[0], row[1], row[2],
-                                  root_dir=self._root_dir)
+        row = results.first()
+        if row:
+            return _form_dataset_path(row[0], row[1], row[2],
+                                      root_dir=self._root_dir)
+        else:
+            print(f'No dataset with dataset_id={dataset_id}')
+            return None
