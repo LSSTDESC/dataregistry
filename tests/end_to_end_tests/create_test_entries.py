@@ -112,6 +112,12 @@ def _insert_dataset_entry(
     old_location=None,
     is_overwritable=False,
     which_datareg=None,
+    execution_name=None,
+    execution_description=None,
+    execution_start=None,
+    execution_locale=None,
+    execution_configuration=None,
+    input_datasets=[],
 ):
     """
     Wrapper to create dataset entry
@@ -142,6 +148,18 @@ def _insert_dataset_entry(
         Path to data to be copied to data registry
     which_datareg : DataRegistry object
         In case we want to register using a custom DataRegistry object
+    execution_name : str, optional
+            Typically pipeline name or program name
+    execution_description : str, optional
+        Human readible description of execution
+    execution_start : datetime, optional
+        Date the execution started
+    execution_locale : str, optional
+        Where was the execution performed?
+    execution_configuration : str, optional
+        Path to text file used to configure the execution
+    input_datasets : list, optional
+        List of dataset ids that were the input to this execution
 
     Returns
     -------
@@ -174,7 +192,13 @@ def _insert_dataset_entry(
         verbose=True,
         owner=owner,
         owner_type=owner_type,
-        is_overwritable=is_overwritable
+        is_overwritable=is_overwritable,
+        execution_name=execution_name,
+        execution_description=execution_description,
+        execution_start=execution_start,
+        execution_locale=execution_locale,
+        execution_configuration=execution_configuration,
+        input_datasets=input_datasets
     )
 
     assert new_id is not None, "Trying to create a dataset that already exists"
@@ -416,7 +440,7 @@ _insert_dataset_entry(
     old_location=None,
 )
 
-# Tests set 11
+# Test set 11
 # - Test global owner and owner types in the DataRegistry/Registar class
 datareg2 = DataRegistry(root_dir=_TEST_ROOT_DIR, owner="DESC group", owner_type="group")
 
@@ -427,4 +451,18 @@ _insert_dataset_entry(
     None,
     "This should be owned by 'DESC group' and have owner_type='group'",
     which_datareg=datareg2
+)
+
+# Test set 12
+# - Testing execution creation directly through dataset registration
+_insert_dataset_entry(
+    "DESC/datasets/execution_test",
+    "0.0.1",
+    None,
+    None,
+    "This should have a more descriptive execution",
+    execution_name="Overwrite execution auto name",
+    execution_description="Overwrite execution auto description",
+    execution_locale="TestMachine",
+    input_datasets=[dataset_id_1],
 )

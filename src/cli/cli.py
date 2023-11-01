@@ -27,7 +27,9 @@ arg_ls.add_argument(
     help="List datasets for a given owner type",
     choices=["user", "group", "production"],
 )
-arg_ls.add_argument("--config_file", help="Location of data registry config file", type=str)
+arg_ls.add_argument(
+    "--config_file", help="Location of data registry config file", type=str
+)
 arg_ls.add_argument("--all", help="List all datasets", action="store_true")
 
 # ------------------
@@ -122,15 +124,10 @@ arg_register_dataset.add_argument(
     action="store_true",
 )
 arg_register_dataset.add_argument(
-    "--schema",
-    default=f"{SCHEMA_VERSION}",
-    help="Which schema to connect to",
+    "--schema", default=f"{SCHEMA_VERSION}", help="Which schema to connect to",
 )
 arg_register_dataset.add_argument(
-    "--locale",
-    help="Location where dataset was produced",
-    type=str,
-    default="NERSC",
+    "--locale", help="Location where dataset was produced", type=str, default="NERSC",
 )
 arg_register_dataset.add_argument(
     "--owner", help="Owner of dataset. Defaults to $USER."
@@ -140,6 +137,30 @@ arg_register_dataset.add_argument(
 )
 arg_register_dataset.add_argument(
     "--config_file", help="Location of data registry config file", type=str
+)
+arg_register_dataset.add_argument(
+    "--execution_name", help="Typically pipeline name or program name", type=str
+)
+arg_register_dataset.add_argument(
+    "--execution_description", help="Human readible description of execution", type=str
+)
+arg_register_dataset.add_argument(
+    "--execution_start", help="Date the execution started"
+)
+arg_register_dataset.add_argument(
+    "--execution_locale", help="Where was the execution performed?", type=str
+)
+arg_register_dataset.add_argument(
+    "--execution_configuration",
+    help="Path to text file used to configure the execution",
+    type=str,
+)
+arg_register_dataset.add_argument(
+    "--input_datasets",
+    help="List of dataset ids that were the input to this execution",
+    type=int,
+    default=[],
+    nargs="+",
 )
 
 

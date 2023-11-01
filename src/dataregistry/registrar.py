@@ -25,11 +25,7 @@ _OWNER_TYPES = {"user", "project", "group", "production"}
 
 class Registrar:
     def __init__(
-        self,
-        db_connection,
-        owner=None,
-        owner_type=None,
-        root_dir=None,
+        self, db_connection, owner=None, owner_type=None, root_dir=None,
     ):
         """
         Class to register new datasets, executions and alias names.
@@ -304,6 +300,12 @@ class Registrar:
         verbose=False,
         owner=None,
         owner_type=None,
+        execution_name=None,
+        execution_description=None,
+        execution_start=None,
+        execution_locale=None,
+        execution_configuration=None,
+        input_datasets=[],
     ):
         """
         Register a new dataset in the DESC data registry.
@@ -360,6 +362,18 @@ class Registrar:
             Owner type: "user", "group", or "production". If None, defaults to
             what was set in Registrar __init__, if that is also None, defaults
             to "user".
+        execution_name : str, optional
+            Typically pipeline name or program name
+        execution_description : str, optional
+            Human readible description of execution
+        execution_start : datetime, optional
+            Date the execution started
+        execution_locale : str, optional
+            Where was the execution performed?
+        execution_configuration : str, optional
+            Path to text file used to configure the execution
+        input_datasets : list, optional
+            List of dataset ids that were the input to this execution
 
         Returns
         -------
@@ -436,11 +450,20 @@ class Registrar:
 
         # If no execution_id is supplied, create a minimal entry
         if execution_id is None:
-            ex_name = f"for_dataset_{name}-{version_string}"
-            if version_suffix:
-                ex_name = f"{ex_name}-{version_suffix}"
-            descr = "Fabricated execution for dataset"
-            execution_id = self.register_execution(ex_name, description=descr)
+            if execution_name is None:
+                execution_name = f"for_dataset_{name}-{version_string}"
+                if version_suffix:
+                    execution_name = f"{execution_name}-{version_suffix}"
+            if execution_description is None:
+                execution_description = "Fabricated execution for dataset"
+            execution_id = self.register_execution(
+                execution_name,
+                description=execution_description,
+                execution_start=execution_start,
+                locale=execution_locale,
+                configuration=execution_configuration,
+                input_datasets=input_datasets,
+            )
             if execution_id is None:
                 return None
 

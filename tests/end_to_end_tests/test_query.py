@@ -126,6 +126,34 @@ def test_query_dataset():
             else:
                 raise ValueError("Bad patch number")
 
+    # Query 9: Check dataset execution is made correctly
+    f = datareg.Query.gen_filter(
+        "dataset.relative_path", "==", "DESC/datasets/execution_test"
+    )
+    results = datareg.Query.find_datasets(["dataset.execution_id"], [f])
+
+    ex_id = results.fetchone().execution_id
+    f = datareg.Query.gen_filter("execution.execution_id", "==", ex_id)
+    results = datareg.Query.find_datasets(
+        ["execution.name", "execution.description"], [f]
+    )
+
+    for r in results:
+        assert r.name == "Overwrite execution auto name"
+        assert r.description == "Overwrite execution auto description"
+
+    f = datareg.Query.gen_filter(
+        "dataset.relative_path", "==", "DESC/datasets/my_first_pipeline_stage1"
+    )
+    results = datareg.Query.find_datasets(["dataset.dataset_id"], [f])
+    input_id = results.fetchone()[0]
+
+    f = datareg.Query.gen_filter("dependency.execution_id", "==", ex_id)
+    results = datareg.Query.find_datasets(["dependency.input_id"], [f])
+
+    for r in results:
+        assert r.input_id == input_id
+
 
 def test_query_dataset_alias():
     """Test queries of dataset alias table"""
