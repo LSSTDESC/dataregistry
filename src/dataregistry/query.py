@@ -1,8 +1,9 @@
-import os
-from datetime import datetime
 from collections import namedtuple
-from sqlalchemy import MetaData, Table, Column, text, select
+from sqlalchemy import text, select
 import sqlalchemy.sql.sqltypes as sqltypes
+from dataregistry.registrar import _DEFAULT_ROOT_DIR
+from dataregistry.registrar_util import _form_dataset_path
+from dataregistry.exceptions import DataRegistryNYI, DataRegistryException
 
 try:
     import sqlalchemy.dialects.postgresql as pgtypes
@@ -35,9 +36,7 @@ except:
     LITE_TYPES = {}
 
 from sqlalchemy.exc import DBAPIError, NoSuchColumnError
-from dataregistry.db_basic import add_table_row, SCHEMA_VERSION
 from dataregistry.db_basic import TableMetadata
-from dataregistry.exceptions import *
 
 __all__ = ["Query", "Filter"]
 
@@ -85,7 +84,7 @@ class Query:
     Class implementing supported queries
     """
 
-    def __init__(self, db_connection):
+    def __init__(self, db_connection, root_dir=None):
         """
         Create a new Query object. Note this call should be preceded
         by creation of a DbConnection object
@@ -95,10 +94,16 @@ class Query:
         db_connection : DbConnection object
             Encompasses sqlalchemy engine, dialect (database backend)
             and schema version
+        root_dir : str
+            Used to form absolute path of dataset. Use default if not
+            supplied
         """
         self._engine = db_connection.engine
         self._dialect = db_connection.dialect
         self._schema = db_connection.schema
+        if not root_dir:
+            root_dir = _DEFAULT_ROOT_DIR
+        self._root_dir = root_dir
 
         # Do we need to know where the datasets actually are?  If so
         # we need a ROOT_DIR
@@ -279,9 +284,9 @@ class Query:
 
         Parameters
         ----------
-        property_names : list (optional)
+        property_names : list of str (optional)
             List of database columns to return (SELECT clause)
-        filters : list (optional)
+        filters : list of Filter (optional)
             List of filters (WHERE clauses) to apply
 
         Returns
@@ -361,3 +366,39 @@ class Query:
         """
 
         return Filter(property_name, bin_op, value)
+
+    def get_dataset_absolute_path(self, dataset_id, schema=None):
+        """
+        Return full absolute path of specified dataset
+
+        Parameters
+        ----------
+        dataset_id : int
+            Identifies dataset
+        schema : str
+            Defaults to current schema, but may also be "production"
+
+        Returns
+        -------
+        abs_path : str
+        """
+
+        if not schema:
+            schema = self._schema
+
+        # Fetch absolute path, owner type and owner for the dataset
+        if schema != self._schema:
+            raise DataRegistryNYI("schema != default is not yet supported")
+
+        results = self.find_datasets(property_names=['dataset.owner_type',
+                                                     'dataset.owner',
+                                                     'dataset.relative_path'],
+                                     filters=[('dataset.dataset_id', '==',
+                                               dataset_id)])
+        row = results.first()
+        if row:
+            return _form_dataset_path(row[0], row[1], row[2],
+                                      root_dir=self._root_dir)
+        else:
+            print(f'No dataset with dataset_id={dataset_id}')
+            return None
