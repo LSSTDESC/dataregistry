@@ -163,7 +163,7 @@ def _insert_dataset_entry(
 
     Returns
     -------
-    new_id : int
+    dataset_id : int
         The dataset it created for this entry
     """
 
@@ -178,7 +178,7 @@ def _insert_dataset_entry(
     make_sym_link = False
 
     # Add new entry.
-    new_id = this_datareg.Registrar.register_dataset(
+    dataset_id, execution_id = this_datareg.Registrar.register_dataset(
         relpath,
         version,
         version_suffix=version_suffix,
@@ -204,7 +204,7 @@ def _insert_dataset_entry(
     assert new_id is not None, "Trying to create a dataset that already exists"
     print(f"Created dataset entry with id {new_id}")
 
-    return new_id
+    return dataset_id
 
 
 # Test set 1

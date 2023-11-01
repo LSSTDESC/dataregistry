@@ -379,6 +379,8 @@ class Registrar:
         -------
         prim_key : int
             The dataset ID of the new row relating to this entry (else None)
+        execution_id : int
+            The execution ID associated with the dataset
         """
 
         # Make sure the owner_type is legal
@@ -464,8 +466,6 @@ class Registrar:
                 configuration=execution_configuration,
                 input_datasets=input_datasets,
             )
-            if execution_id is None:
-                return None
 
         # Pull the dataset properties together
         values = {"name": name}
@@ -511,7 +511,7 @@ class Registrar:
                 conn.execute(update_stmt)
             conn.commit()
 
-        return prim_key
+        return prim_key, execution_id
 
     def register_dataset_alias(self, aliasname, dataset_id):
         """
