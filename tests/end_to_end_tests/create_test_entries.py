@@ -201,8 +201,9 @@ def _insert_dataset_entry(
         input_datasets=input_datasets
     )
 
-    assert new_id is not None, "Trying to create a dataset that already exists"
-    print(f"Created dataset entry with id {new_id}")
+    assert dataset_id is not None, "Trying to create a dataset that already exists"
+    assert execution_id is not None, "Trying to create a execution that already exists"
+    print(f"Created dataset entry with id {dataset_id}")
 
     return dataset_id
 
