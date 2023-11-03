@@ -102,7 +102,10 @@ The dataset_alias table
      - ID of dataset this is an alias for
      - int
    * - ``supersede_date``
-     - ???
+     - If a new entry has been added to the table with the same alias name (but
+       different dataset_id), the old entry will be superseded. ``supersede_date``
+       in the old entry tracks when this happened. If the entry has not been
+       superseded, ``supersede_date`` will be None
      - datetime
    * - ``register_date``
      - Date the dataset was registered
@@ -189,7 +192,10 @@ The execution_alias table
      - Date the execution was registered
      - datetime
    * - ``supersede_date``
-     - ???
+     - If a new entry has been added to the table with the same alias name (but
+       different dataset_id), the old entry will be superseded. ``supersede_date``
+       in the old entry tracks when this happened. If the entry has not been
+       superseded, ``supersede_date`` will be None
      - datetime
    * - ``creator_uid``
      - `uid` (user id) of the person that registered the dataset

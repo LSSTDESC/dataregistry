@@ -6,7 +6,7 @@ The ``dataregistry`` package
 The tutorials for the ``dataregistry`` package come in the form of Jupyter
 Notebooks.
 
-These can be run interactively at NERSC (see :ref:`here
+These tutorial notebooks can be run interactively at NERSC (see :ref:`here
 <interactive-notebooks>` for more info), or serve as standalone reference
 material by viewing the notebooks on GitHub. 
 
