@@ -2,14 +2,15 @@ import time
 import os
 from datetime import datetime
 from shutil import copyfile, copytree
-from sqlalchemy import MetaData, Table, Column, insert, text, update, select
-from sqlalchemy.exc import DBAPIError, IntegrityError
+# from sqlalchemy import MetaData, Table, Column, insert, text,
+from sqlalchemy import update, select
+# from sqlalchemy.exc import DBAPIError, IntegrityError
 from dataregistry.db_basic import add_table_row
 from dataregistry.registrar_util import _form_dataset_path, get_directory_info
 from dataregistry.registrar_util import _parse_version_string, _bump_version
 from dataregistry.registrar_util import _name_from_relpath
 from dataregistry.db_basic import TableMetadata
-from dataregistry.exceptions import *
+# from dataregistry.exceptions import *
 
 __all__ = ["Registrar"]
 
@@ -48,9 +49,9 @@ class Registrar:
 
         # Root directory on disk for data registry files
         if root_dir is not None:
-            self.root_dir = root_dir
+            self._root_dir = root_dir
         else:
-            self.root_dir = _DEFAULT_ROOT_DIR
+            self._root_dir = _DEFAULT_ROOT_DIR
 
         # Database engine and dialect.
         self._engine = db_connection.engine
@@ -64,6 +65,14 @@ class Registrar:
         # Default owner and owner_type's
         self._owner = owner
         self._owner_type = owner_type
+
+    @property
+    def root_dir(self):
+        """
+        Returns root dir used to form absolute path of a registered
+        dataset
+        """
+        return self._root_dir
 
     def get_owner_types(self):
         """
@@ -300,6 +309,12 @@ class Registrar:
         verbose=False,
         owner=None,
         owner_type=None,
+        execution_name=None,
+        execution_description=None,
+        execution_start=None,
+        execution_locale=None,
+        execution_configuration=None,
+        input_datasets=[],
     ):
         """
         Register a new dataset in the DESC data registry.
@@ -356,11 +371,25 @@ class Registrar:
             Owner type: "user", "group", or "production". If None, defaults to
             what was set in Registrar __init__, if that is also None, defaults
             to "user".
+        execution_name : str, optional
+            Typically pipeline name or program name
+        execution_description : str, optional
+            Human readible description of execution
+        execution_start : datetime, optional
+            Date the execution started
+        execution_locale : str, optional
+            Where was the execution performed?
+        execution_configuration : str, optional
+            Path to text file used to configure the execution
+        input_datasets : list, optional
+            List of dataset ids that were the input to this execution
 
         Returns
         -------
         prim_key : int
             The dataset ID of the new row relating to this entry (else None)
+        execution_id : int
+            The execution ID associated with the dataset
         """
 
         # Make sure the owner_type is legal
@@ -432,13 +461,20 @@ class Registrar:
 
         # If no execution_id is supplied, create a minimal entry
         if execution_id is None:
-            ex_name = f"for_dataset_{name}-{version_string}"
-            if version_suffix:
-                ex_name = f"{ex_name}-{version_suffix}"
-            descr = "Fabricated execution for dataset"
-            execution_id = self.register_execution(ex_name, description=descr)
-            if execution_id is None:
-                return None
+            if execution_name is None:
+                execution_name = f"for_dataset_{name}-{version_string}"
+                if version_suffix:
+                    execution_name = f"{execution_name}-{version_suffix}"
+            if execution_description is None:
+                execution_description = "Fabricated execution for dataset"
+            execution_id = self.register_execution(
+                execution_name,
+                description=execution_description,
+                execution_start=execution_start,
+                locale=execution_locale,
+                configuration=execution_configuration,
+                input_datasets=input_datasets,
+            )
 
         # Pull the dataset properties together
         values = {"name": name}
@@ -484,7 +520,7 @@ class Registrar:
                 conn.execute(update_stmt)
             conn.commit()
 
-        return prim_key
+        return prim_key, execution_id
 
     def register_dataset_alias(self, aliasname, dataset_id):
         """

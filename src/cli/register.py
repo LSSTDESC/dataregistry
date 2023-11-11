@@ -26,6 +26,12 @@ def register_dataset(args):
         copy=(not args.make_symlink),
         is_dummy=args.is_dummy,
         owner=args.owner,
+        execution_name=args.execution_name,
+        execution_description=args.execution_description,
+        execution_start=args.execution_start,
+        execution_locale=args.execution_locale,
+        execution_configuration=args.execution_configuration,
+        input_datasets=args.input_datasets
     )
 
     print(f"Created dataset entry with id {new_id}")

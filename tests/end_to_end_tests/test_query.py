@@ -154,6 +154,34 @@ def test_query_dataset():
             else:
                 raise ValueError("Bad patch number")
 
+    # Query 9: Check dataset execution is made correctly
+    f = datareg.Query.gen_filter(
+        "dataset.relative_path", "==", "DESC/datasets/execution_test"
+    )
+    results = datareg.Query.find_datasets(["dataset.execution_id"], [f])
+
+    ex_id = results.fetchone().execution_id
+    f = datareg.Query.gen_filter("execution.execution_id", "==", ex_id)
+    results = datareg.Query.find_datasets(
+        ["execution.name", "execution.description"], [f]
+    )
+
+    for r in results:
+        assert r.name == "Overwrite execution auto name"
+        assert r.description == "Overwrite execution auto description"
+
+    f = datareg.Query.gen_filter(
+        "dataset.relative_path", "==", "DESC/datasets/my_first_pipeline_stage1"
+    )
+    results = datareg.Query.find_datasets(["dataset.dataset_id"], [f])
+    input_id = results.fetchone()[0]
+
+    f = datareg.Query.gen_filter("dependency.execution_id", "==", ex_id)
+    results = datareg.Query.find_datasets(["dependency.input_id"], [f])
+
+    for r in results:
+        assert r.input_id == input_id
+
 
 def test_query_dataset_alias():
     """Test queries of dataset alias table"""
@@ -196,3 +224,15 @@ def test_db_version():
     assert actual_major == 1, "db major version doesn't match expected"
     assert actual_minor == 2, "db minor version doesn't match expected"
     assert actual_patch == 0, "db patch version doesn't match expected"
+
+
+def test_get_dataset_absolute_path():
+    """Test the generation of the full absolute path of a dataset"""
+
+    _TEST_ROOT_DIR = "DataRegistry_data"
+    dset_relpath = "DESC/datasets/group1_dataset_1"
+    dset_ownertype = "group"
+    dset_owner = "group1"
+    v = datareg.Query.get_dataset_absolute_path(7)
+
+    assert v == os.path.join(_TEST_ROOT_DIR, dset_ownertype, dset_owner, dset_relpath)

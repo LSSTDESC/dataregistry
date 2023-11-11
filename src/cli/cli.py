@@ -138,6 +138,30 @@ arg_register_dataset.add_argument(
 arg_register_dataset.add_argument(
     "--config_file", help="Location of data registry config file", type=str
 )
+arg_register_dataset.add_argument(
+    "--execution_name", help="Typically pipeline name or program name", type=str
+)
+arg_register_dataset.add_argument(
+    "--execution_description", help="Human readible description of execution", type=str
+)
+arg_register_dataset.add_argument(
+    "--execution_start", help="Date the execution started"
+)
+arg_register_dataset.add_argument(
+    "--execution_locale", help="Where was the execution performed?", type=str
+)
+arg_register_dataset.add_argument(
+    "--execution_configuration",
+    help="Path to text file used to configure the execution",
+    type=str,
+)
+arg_register_dataset.add_argument(
+    "--input_datasets",
+    help="List of dataset ids that were the input to this execution",
+    type=int,
+    default=[],
+    nargs="+",
+)
 
 
 def main():
