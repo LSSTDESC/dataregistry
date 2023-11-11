@@ -173,13 +173,6 @@ class Query:
         column_list = []
         is_orderable_list = []
 
-        # In the case where column_names is None, we want all tables.
-        if column_names is None:
-            for t in self._table_list:
-                tables_required.add(t)
-
-            return tables_required, column_list, is_orderable_list
-
         # Determine the column name and table it comes from
         for p in column_names:
             # Case of <table_name>.<column_name> format
@@ -299,7 +292,8 @@ class Query:
 
         Returns
         -------
-        result : sqlAlchemy CursorResult object (default, depends on return_format)
+        result : CursorResult, dict, or DataFrame (depending on `return_format`)
+            Requested property values
         """
 
         # Make sure return format is valid.
@@ -309,7 +303,7 @@ class Query:
                 f"{return_format} is a bad return format (valid={_allowed_return_formats})"
             )
 
-        # What tables are required for this query?
+        # What tables and what columns are required for this query?
         tables_required, column_list, _ = self._parse_selected_columns(property_names)
 
         # Construct query
