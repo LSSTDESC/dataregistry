@@ -25,11 +25,7 @@ _OWNER_TYPES = {"user", "project", "group", "production"}
 
 class Registrar:
     def __init__(
-        self,
-        db_connection,
-        owner=None,
-        owner_type=None,
-        root_dir=None,
+        self, db_connection, owner=None, owner_type=None, root_dir=None,
     ):
         """
         Class to register new datasets, executions and alias names.

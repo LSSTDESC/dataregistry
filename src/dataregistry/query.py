@@ -167,7 +167,9 @@ class Query:
         """
 
         if column_names is None:
-            column_names = [x.table.name + "." + x.name for x in self._tables["dataset"].c]
+            column_names = [
+                x.table.name + "." + x.name for x in self._tables["dataset"].c
+            ]
 
         tables_required = set()
         column_list = []

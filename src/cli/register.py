@@ -25,7 +25,7 @@ def register_dataset(args):
         old_location=args.old_location,
         copy=(not args.make_symlink),
         is_dummy=args.is_dummy,
-        owner=args.owner
+        owner=args.owner,
     )
 
     print(f"Created dataset entry with id {new_id}")
