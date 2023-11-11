@@ -2,20 +2,20 @@ The ``dataregistry`` package
 ============================
 
 Reference documentation for the core objects within the ``dataregistry``
-package.  Demonstrations of their usage can be found in the tutorials section.
+package.  Demonstrations of their usage can be found in the :ref:`tutorials section <tutorials-python>`.
 
-.. _dregs_class:
+.. _dataregistry_class:
 
-The DREGS class
----------------
+The DataRegistry class
+----------------------
 
-The ``DREGS`` class is the primary front end to the ``dataregistry`` package.
+The ``DataRegistry`` class is the primary front end to the ``dataregistry`` package.
 This should be the only object users have to import to their code. 
 
 It connects the user to the database, and serves as a wrapper to both the
 ``Registrar`` and ``Query`` classes.
 
-.. autoclass:: dataregistry.DREGS
+.. autoclass:: dataregistry.DataRegistry
    :members:
 
    .. automethod:: dataregistry.Registrar.register_dataset

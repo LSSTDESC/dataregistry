@@ -74,6 +74,8 @@ by typing
 
 If you see the current package version printed to the console, success!
 
+.. _one-time-setup:
+
 Authenticating with the database
 --------------------------------
 
