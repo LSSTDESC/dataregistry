@@ -412,15 +412,21 @@ class Query:
         if schema != self._schema:
             raise DataRegistryNYI("schema != default is not yet supported")
 
-        results = self.find_datasets(property_names=['dataset.owner_type',
-                                                     'dataset.owner',
-                                                     'dataset.relative_path'],
-                                     filters=[('dataset.dataset_id', '==',
-                                               dataset_id)])
-        row = results.first()
-        if row:
-            return _form_dataset_path(row[0], row[1], row[2],
-                                      root_dir=self._root_dir)
+        results = self.find_datasets(
+            property_names=[
+                "dataset.owner_type",
+                "dataset.owner",
+                "dataset.relative_path",
+            ],
+            filters=[("dataset.dataset_id", "==", dataset_id)],
+        )
+        if len(results["dataset.owner_type"]) == 1:
+            return _form_dataset_path(
+                results["dataset.owner_type"][0],
+                results["dataset.owner"][0],
+                results["dataset.relative_path"][0],
+                root_dir=self._root_dir,
+            )
         else:
-            print(f'No dataset with dataset_id={dataset_id}')
+            print(f"No dataset with dataset_id={dataset_id}")
             return None

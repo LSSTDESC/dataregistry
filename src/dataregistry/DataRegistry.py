@@ -46,8 +46,7 @@ class DataRegistry:
 
         # Create registrar object
         self.Registrar = Registrar(
-            db_connection, owner=owner, owner_type=owner_type,
-            root_dir=root_dir,
+            db_connection, owner=owner, owner_type=owner_type, root_dir=root_dir,
         )
 
         # Create query object
