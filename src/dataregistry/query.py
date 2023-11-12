@@ -1,6 +1,7 @@
 from collections import namedtuple
 from sqlalchemy import text, select
 import sqlalchemy.sql.sqltypes as sqltypes
+import pandas as pd
 from dataregistry.registrar import _DEFAULT_ROOT_DIR
 from dataregistry.registrar_util import _form_dataset_path
 from dataregistry.exceptions import DataRegistryNYI, DataRegistryException
@@ -162,7 +163,7 @@ class Query:
         format. If they are in <column_name> format the column name must be
         unique through all tables in the database.
 
-        column_names cannot be None.
+        If column_names is None, all columns from the dataset table will be selected.
 
         Parameters
         ----------
@@ -171,7 +172,9 @@ class Query:
         """
 
         if column_names is None:
-            raise ValueError("column_names cannot be None")
+            column_names = [
+                x.table.name + "." + x.name for x in self._tables["dataset"].c
+            ]
 
         tables_required = set()
         column_list = []
@@ -179,7 +182,6 @@ class Query:
 
         # Determine the column name and table it comes from
         for p in column_names:
-
             # Case of <table_name>.<column_name> format
             if "." in p:
                 if len(p.split(".")) != 2:
@@ -269,7 +271,9 @@ class Query:
             self._metadata.db_version_patch,
         )
 
-    def find_datasets(self, property_names=None, filters=[]):
+    def find_datasets(
+        self, property_names=None, filters=[], return_format="property_dict"
+    ):
         """
         Get specified properties for datasets satisfying all filters
 
@@ -284,15 +288,30 @@ class Query:
 
         Parameters
         ----------
-        property_names : list of str (optional)
+        property_names : list, optional
             List of database columns to return (SELECT clause)
-        filters : list of Filter (optional)
+        filters : list, optional
             List of filters (WHERE clauses) to apply
+        return_format : str, optional
+            The format the query result is returned in.  Options are
+            "CursorResult" (SQLAlchemy default format), "DataFrame", or
+            "proprety_dict". Note this is not case sensitive.
 
         Returns
         -------
-        result : sqlAlchemy Result object
+        result : CursorResult, dict, or DataFrame (depending on `return_format`)
+            Requested property values
         """
+
+        # Make sure return format is valid.
+        _allowed_return_formats = ["cursorresult", "dataframe", "property_dict"]
+        if return_format.lower() not in _allowed_return_formats:
+            raise ValueError(
+                f"{return_format} is a bad return format (valid={_allowed_return_formats})"
+            )
+
+        # What tables and what columns are required for this query?
+        tables_required, column_list, _ = self._parse_selected_columns(property_names)
 
         # Construct query
 
@@ -302,11 +321,7 @@ class Query:
 
         # Return the selected properties.
         else:
-            # What tables are required for this query?
-            tables_required, _, _ = self._parse_selected_columns(property_names)
-
-            # Construct SELECT
-            stmt = select(*[text(p) for p in property_names])
+            stmt = select(*[p.label(p.table.name + "." + p.name) for p in column_list])
 
             # Create joins
             if len(tables_required) > 1:
@@ -334,6 +349,13 @@ class Query:
                 print("Original error:")
                 print(e.StatementError.orig)
                 return None
+
+        # Make sure we are working with the correct return format.
+        if return_format.lower() != "cursorresult":
+            result = pd.DataFrame(result)
+
+            if return_format.lower() == "property_dict":
+                result = result.to_dict("list")
 
         return result
 
@@ -390,15 +412,21 @@ class Query:
         if schema != self._schema:
             raise DataRegistryNYI("schema != default is not yet supported")
 
-        results = self.find_datasets(property_names=['dataset.owner_type',
-                                                     'dataset.owner',
-                                                     'dataset.relative_path'],
-                                     filters=[('dataset.dataset_id', '==',
-                                               dataset_id)])
-        row = results.first()
-        if row:
-            return _form_dataset_path(row[0], row[1], row[2],
-                                      root_dir=self._root_dir)
+        results = self.find_datasets(
+            property_names=[
+                "dataset.owner_type",
+                "dataset.owner",
+                "dataset.relative_path",
+            ],
+            filters=[("dataset.dataset_id", "==", dataset_id)],
+        )
+        if len(results["dataset.owner_type"]) == 1:
+            return _form_dataset_path(
+                results["dataset.owner_type"][0],
+                results["dataset.owner"][0],
+                results["dataset.relative_path"][0],
+                root_dir=self._root_dir,
+            )
         else:
-            print(f'No dataset with dataset_id={dataset_id}')
+            print(f"No dataset with dataset_id={dataset_id}")
             return None
