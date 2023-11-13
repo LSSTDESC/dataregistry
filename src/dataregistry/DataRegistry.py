@@ -1,6 +1,11 @@
 from dataregistry.db_basic import DbConnection
 from dataregistry.query import Query
 from dataregistry.registrar import Registrar
+import yaml
+import os
+
+_HERE = os.path.dirname(__file__)
+_SITE_CONFIG_PATH = os.path.join(_HERE, "site_config", "site_rootdir.yaml")
 
 
 class DataRegistry:
@@ -41,17 +46,49 @@ class DataRegistry:
         verbose : bool
             True for more output.
         """
+
+        # Work out the location of the root directory
+        root_dir = self._get_root_dir(root_dir)
+
         # Establish connection to database
         db_connection = DbConnection(config_file, schema=schema, verbose=verbose)
 
         # Create registrar object
         self.Registrar = Registrar(
-            db_connection, owner=owner, owner_type=owner_type, root_dir=root_dir,
+            db_connection,
+            root_dir,
+            owner=owner,
+            owner_type=owner_type,
         )
 
         # Create query object
-        self.Query = Query(db_connection, root_dir=self.Registrar.root_dir)
+        self.Query = Query(db_connection, root_dir)
 
-    @property
-    def root_dir(self):
-        return self.Registrar.root_dir
+    def _get_root_dir(self, root_dir):
+        """
+        What is the location of the root_dir we are pairing with?
+
+        Either this is a predefined "site", such as "NERSC", or a manually
+        passed path to the desired root directory. If `root_dir` is None then
+        "NERSC" is used as the default.
+
+        Parameters
+        ----------
+        root_dir : str
+
+        Returns
+        -------
+        - : str
+            Path to root directory
+        """
+
+        # Load the site config yaml file
+        with open(_SITE_CONFIG_PATH) as f:
+            data = yaml.safe_load(f)
+
+        if root_dir is None:
+            return data["nersc"]
+        elif root_dir.lower() in data.keys():
+            return data[root_dir.lower()]
+        else:
+            return root_dir
