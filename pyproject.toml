@@ -38,4 +38,4 @@ where = ["src"]
 dregs = "cli.cli:main"
 
 [tool.setuptools.package-data]
-"pycosmoview" = ["site_config/site_rootdir.yaml"]
+"dataregistry" = ["site_config/site_rootdir.yaml"]
