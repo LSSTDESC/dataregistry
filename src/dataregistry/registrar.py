@@ -55,6 +55,7 @@ class Registrar:
 
         # Database engine and dialect.
         self._engine = db_connection.engine
+        self._schema = db_connection.schema
 
         # Link to Table Metadata.
         self._metadata_getter = TableMetadata(db_connection)
@@ -167,7 +168,7 @@ class Registrar:
             owner_type,
             owner,
             relative_path,
-            schema=self._engine.schema,
+            schema=self._schema,
             root_dir=self._root_dir,
         )
 
