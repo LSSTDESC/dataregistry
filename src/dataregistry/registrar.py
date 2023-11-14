@@ -164,7 +164,11 @@ class Registrar:
 
         # Get destination directory in data registry.
         dest = _form_dataset_path(
-            owner_type, owner, relative_path, root_dir=self._root_dir
+            owner_type,
+            owner,
+            relative_path,
+            schema=self._engine.schema,
+            root_dir=self._root_dir,
         )
 
         # Is the data already on location, or coming from somewhere new?
