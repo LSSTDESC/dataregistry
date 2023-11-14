@@ -2,18 +2,23 @@ import os
 import sys
 
 from dataregistry import DataRegistry
+from dataregistry.db_basic import SCHEMA_VERSION
 
 _TEST_ROOT_DIR = "DataRegistry_data"
 
 # Make root dir
-if not os.path.isdir(_TEST_ROOT_DIR):
-    os.makedirs(_TEST_ROOT_DIR)
+if not os.path.isdir(os.path.join(_TEST_ROOT_DIR, SCHEMA_VERSION)):
+    os.makedirs(os.path.join(_TEST_ROOT_DIR, SCHEMA_VERSION))
 
 # Make a few dummy files to enter into database.
 if not os.path.isdir(
-    os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/dummy_dir")
+    os.path.join(_TEST_ROOT_DIR, SCHEMA_VERSION, f"user/{os.getenv('USER')}/dummy_dir")
 ):
-    os.makedirs(os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/dummy_dir"))
+    os.makedirs(
+        os.path.join(
+            _TEST_ROOT_DIR, SCHEMA_VERSION, f"user/{os.getenv('USER')}/dummy_dir"
+        )
+    )
 
 if not os.path.isdir(os.path.join("dummy_dir")):
     os.makedirs(os.path.join("dummy_dir"))
@@ -21,22 +26,36 @@ if not os.path.isdir(os.path.join("dummy_dir")):
 with open(os.path.join("dummy_dir", "file1.txt"), "w") as f:
     f.write("test")
 with open(
-    os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/dummy_dir", "file1.txt"),
+    os.path.join(
+        _TEST_ROOT_DIR,
+        SCHEMA_VERSION,
+        f"user/{os.getenv('USER')}/dummy_dir",
+        "file1.txt",
+    ),
     "w",
 ) as f:
     f.write("test")
 with open(
-    os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/dummy_dir", "file2.txt"),
+    os.path.join(
+        _TEST_ROOT_DIR,
+        SCHEMA_VERSION,
+        f"user/{os.getenv('USER')}/dummy_dir",
+        "file2.txt",
+    ),
     "w",
 ) as f:
     f.write("test")
 with open(
-    os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/", "file1.txt"), "w"
+    os.path.join(
+        _TEST_ROOT_DIR, SCHEMA_VERSION, f"user/{os.getenv('USER')}/", "file1.txt"
+    ),
+    "w",
 ) as f:
     f.write("test")
 
 # Establish connection to database
-datareg = DataRegistry(root_dir=_TEST_ROOT_DIR)
+datareg = DataRegistry(root_dir=_TEST_ROOT_DIR, schema=SCHEMA_VERSION)
+
 
 def _insert_alias_entry(name, dataset_id):
     """
@@ -63,9 +82,7 @@ def _insert_alias_entry(name, dataset_id):
     return new_id
 
 
-def _insert_execution_entry(
-    name, description, input_datasets=[], configuration=None
-):
+def _insert_execution_entry(name, description, input_datasets=[], configuration=None):
     """
     Wrapper to create execution entry
 
@@ -198,7 +215,7 @@ def _insert_dataset_entry(
         execution_start=execution_start,
         execution_locale=execution_locale,
         execution_configuration=execution_configuration,
-        input_datasets=input_datasets
+        input_datasets=input_datasets,
     )
 
     assert dataset_id is not None, "Trying to create a dataset that already exists"
@@ -301,9 +318,7 @@ _insert_alias_entry("nice_dataset_name", dataset_id)
 # - Create a pipeline with multiple input and output datasets.
 
 # Stage 1 of my pipe line
-ex_id_1 = _insert_execution_entry(
-    "pipeline_stage_1", "The first stage of my pipeline"
-)
+ex_id_1 = _insert_execution_entry("pipeline_stage_1", "The first stage of my pipeline")
 dataset_id_1 = _insert_dataset_entry(
     "DESC/datasets/my_first_pipeline_stage1",
     "0.0.1",
@@ -443,7 +458,12 @@ _insert_dataset_entry(
 
 # Test set 11
 # - Test global owner and owner types in the DataRegistry/Registar class
-datareg2 = DataRegistry(root_dir=_TEST_ROOT_DIR, owner="DESC group", owner_type="group")
+datareg2 = DataRegistry(
+    root_dir=_TEST_ROOT_DIR,
+    schema=SCHEMA_VERSION,
+    owner="DESC group",
+    owner_type="group",
+)
 
 _insert_dataset_entry(
     "DESC/datasets/global_user_dataset",
@@ -451,7 +471,7 @@ _insert_dataset_entry(
     None,
     None,
     "This should be owned by 'DESC group' and have owner_type='group'",
-    which_datareg=datareg2
+    which_datareg=datareg2,
 )
 
 # Test set 12

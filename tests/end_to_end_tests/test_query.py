@@ -3,13 +3,14 @@ import pandas as pd
 import sqlalchemy
 
 from dataregistry import DataRegistry
+from dataregistry.db_basic import SCHEMA_VERSION
 
 # Establish connection to database
 datareg = DataRegistry(root_dir="DataRegistry_data")
 
 
 def test_query_return_format():
-    """ Test we get back correct data format from queries """
+    """Test we get back correct data format from queries"""
 
     # Default, SQLAlchemy CursorResult
     results = datareg.Query.find_datasets(
@@ -29,7 +30,8 @@ def test_query_return_format():
 
     # Property dictionary (each key is a property with a list for each row)
     results = datareg.Query.find_datasets(
-        ["dataset.name", "dataset.version_string", "dataset.relative_path"], [],
+        ["dataset.name", "dataset.version_string", "dataset.relative_path"],
+        [],
     )
     assert type(results) == dict
 
@@ -233,4 +235,6 @@ def test_get_dataset_absolute_path():
     dset_owner = "group1"
     v = datareg.Query.get_dataset_absolute_path(7)
 
-    assert v == os.path.join(_TEST_ROOT_DIR, dset_ownertype, dset_owner, dset_relpath)
+    assert v == os.path.join(
+        _TEST_ROOT_DIR, SCHEMA_VERSION, dset_ownertype, dset_owner, dset_relpath
+    )
