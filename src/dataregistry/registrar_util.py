@@ -73,6 +73,8 @@ def _form_dataset_path(owner_type, owner, relative_path, schema=None, root_dir=N
         Schema we are connected to
     root_dir : str, optional
         Root directory of data registry
+    dialect : str, optional
+        SQL dialect, e.g postgres or sqlite
 
     Returns
     -------
@@ -80,16 +82,13 @@ def _form_dataset_path(owner_type, owner, relative_path, schema=None, root_dir=N
         Full (or relative) path of dataset in the data registry
     """
 
-    # Need both schema and root_dir to form full path.
-    if (schema is not None) or (root_dir is not None):
-        if (schema is None) or (root_dir is None):
-            raise ValueError("Need both schema and root_dir to form path")
-
     if owner_type == "production":
         owner = "production"
     to_return = os.path.join(owner_type, owner, relative_path)
+    if schema:
+        to_return = os.path.join(schema, to_return)
     if root_dir:
-        to_return = os.path.join(root_dir, schema, to_return)
+        to_return = os.path.join(root_dir, to_return)
     return to_return
 
 
