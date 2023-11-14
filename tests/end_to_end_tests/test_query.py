@@ -235,6 +235,11 @@ def test_get_dataset_absolute_path():
     dset_owner = "group1"
     v = datareg.Query.get_dataset_absolute_path(7)
 
-    assert v == os.path.join(
-        _TEST_ROOT_DIR, SCHEMA_VERSION, dset_ownertype, dset_owner, dset_relpath
-    )
+    if datareg.Query._dialect == "sqlite":
+        assert v == os.path.join(
+            _TEST_ROOT_DIR, dset_ownertype, dset_owner, dset_relpath
+        )
+    else:
+        assert v == os.path.join(
+            _TEST_ROOT_DIR, SCHEMA_VERSION, dset_ownertype, dset_owner, dset_relpath
+        )

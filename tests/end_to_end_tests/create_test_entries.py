@@ -6,17 +6,25 @@ from dataregistry.db_basic import SCHEMA_VERSION
 
 _TEST_ROOT_DIR = "DataRegistry_data"
 
+# Establish connection to database
+datareg = DataRegistry(root_dir=_TEST_ROOT_DIR, schema=SCHEMA_VERSION)
+
+if datareg.Query._dialect != "sqlite":
+    _TMP_DIR = os.path.join(_TEST_ROOT_DIR, SCHEMA_VERSION)
+else:
+    _TMP_DIR = _TEST_ROOT_DIR
+
 # Make root dir
-if not os.path.isdir(os.path.join(_TEST_ROOT_DIR, SCHEMA_VERSION)):
-    os.makedirs(os.path.join(_TEST_ROOT_DIR, SCHEMA_VERSION))
+if not os.path.isdir(_TMP_DIR):
+    os.makedirs(_TMP_DIR)
 
 # Make a few dummy files to enter into database.
 if not os.path.isdir(
-    os.path.join(_TEST_ROOT_DIR, SCHEMA_VERSION, f"user/{os.getenv('USER')}/dummy_dir")
+    os.path.join(_TMP_DIR, f"user/{os.getenv('USER')}/dummy_dir")
 ):
     os.makedirs(
         os.path.join(
-            _TEST_ROOT_DIR, SCHEMA_VERSION, f"user/{os.getenv('USER')}/dummy_dir"
+            _TMP_DIR, f"user/{os.getenv('USER')}/dummy_dir"
         )
     )
 
@@ -27,8 +35,7 @@ with open(os.path.join("dummy_dir", "file1.txt"), "w") as f:
     f.write("test")
 with open(
     os.path.join(
-        _TEST_ROOT_DIR,
-        SCHEMA_VERSION,
+        _TMP_DIR,
         f"user/{os.getenv('USER')}/dummy_dir",
         "file1.txt",
     ),
@@ -37,8 +44,7 @@ with open(
     f.write("test")
 with open(
     os.path.join(
-        _TEST_ROOT_DIR,
-        SCHEMA_VERSION,
+        _TMP_DIR,
         f"user/{os.getenv('USER')}/dummy_dir",
         "file2.txt",
     ),
@@ -47,15 +53,11 @@ with open(
     f.write("test")
 with open(
     os.path.join(
-        _TEST_ROOT_DIR, SCHEMA_VERSION, f"user/{os.getenv('USER')}/", "file1.txt"
+        _TMP_DIR, f"user/{os.getenv('USER')}/", "file1.txt"
     ),
     "w",
 ) as f:
     f.write("test")
-
-# Establish connection to database
-datareg = DataRegistry(root_dir=_TEST_ROOT_DIR, schema=SCHEMA_VERSION)
-
 
 def _insert_alias_entry(name, dataset_id):
     """
