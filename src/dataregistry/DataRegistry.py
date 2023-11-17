@@ -1,5 +1,3 @@
-import os
-
 from dataregistry.db_basic import DbConnection
 from dataregistry.query import Query
 from dataregistry.registrar import Registrar
@@ -55,3 +53,10 @@ class DataRegistry:
         self.Registrar = Registrar(
             self.db_connection, owner=owner, owner_type=owner_type, root_dir=root_dir,
         )
+
+        # Create query object
+        self.Query = Query(self.db_connection, root_dir=self.Registrar.root_dir)
+
+    @property
+    def root_dir(self):
+        return self.Registrar.root_dir

@@ -1,3 +1,5 @@
+.. _tutorials-cli:
+
 The ``dataregistry`` CLI
 ========================
 
@@ -24,7 +26,7 @@ Registering a dataset using the CLI is essentially identical to using the
 ``dataregistry`` package from within Python (it is simply calling the
 ``Registrar.register_dataset()`` function with arguments from the command
 line).  Therefore reviewing the `first tutorial notebook
-<https://github.com/LSSTDESC/dataregistry/blob/main/docs/source/tutorial_notebooks/DREGS_tutorial_NERSC.ipynb>`_
+<https://github.com/LSSTDESC/dataregistry/blob/main/docs/source/tutorial_notebooks/getting_started.ipynb>`_
 is the best place to get familiar with the registration process and for
 descriptions of the associated dataset metadata.
 
@@ -43,7 +45,7 @@ dataset`` command respectively.
 For example, say I have produced some data from my latest DESC publication that
 I want to archive/distribute via the data registry. My data are located in the
 directory ``/some/place/at/nersc/my_paper_dataset/``, and I want to tag it as a
-production dataset owned by the `DESC Generic Working Group`. To do this I
+project dataset owned by the `DESC Generic Working Group`. To do this I
 would run the CLI as follows:
 
 .. code-block:: bash
@@ -52,23 +54,24 @@ would run the CLI as follows:
       my_paper_dataset \
       1.0.0 \
       --old-location /some/place/at/nersc/my_paper_dataset/ \
-      --owner_type production \
+      --owner_type project \
       --owner "DESC Generic Working Group" \
       --description "Data from my_paper_dataset" 
 
 This will recursively copy the ``/some/place/at/nersc/my_paper_dataset/``
-directory into the data registry under the relative path ``my_paper_dataset``.
-As we did not specify a ``--name`` for the dataset, the ``name`` column in the
-database will automatically be assigned as ``my_paper_dataset`` (and all other
-properties we did not specify will keep their default values). 
+directory into the data registry shared space under the relative path
+``my_paper_dataset``.  As we did not specify a ``--name`` for the dataset, the
+``name`` column in the database will automatically be assigned as
+``my_paper_dataset`` (and all other properties we did not specify will keep
+their default values). 
 
 Updating a dataset
 ------------------
 
 Now say a few months later a bug has been discovered in the
-``my_paper_dataset`` data and the entry needs to be updated. As we entered
-``my_paper_dataset`` as a production dataset we cannot directly overwrite the
-data, however we can create a new version of the dataset as follows.
+``my_paper_dataset`` data and the entry needs to be updated. As we did not
+deliberately specify that ``my_paper_dataset`` could be overwritten during the
+initial registration, we need to create a new version of the dataset.
 
 .. code-block:: bash
 
@@ -76,7 +79,7 @@ data, however we can create a new version of the dataset as follows.
       my_paper_dataset_updated \
       patch \
       --old-location /some/place/at/nersc/my_paper_dataset_updated/ \
-      --owner_type production \
+      --owner_type project \
       --owner "DESC Generic Working Group" \
       --description "Data from my_paper_dataset describing bugfix" \
       --name my_paper_dataset
