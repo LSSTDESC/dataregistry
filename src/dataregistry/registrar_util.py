@@ -181,17 +181,17 @@ def _name_from_relpath(relative_path):
     We use this when the dataset name is not explicitly defined, and we take it
     from the final directory if path.
 
-	e.g, /root/to/dataset/dir would return "dir"
+        e.g, /root/to/dataset/dir would return "dir"
 
-	Parameters
-	----------
-	relative_path : str
-		Path to dataset (can be relative or absolute)
+        Parameters
+        ----------
+        relative_path : str
+                Path to dataset (can be relative or absolute)
 
-	Returns
-	-------
-	name : str
-		Scraped name of dataset
+        Returns
+        -------
+        name : str
+                Scraped name of dataset
     """
 
     relpath = relative_path

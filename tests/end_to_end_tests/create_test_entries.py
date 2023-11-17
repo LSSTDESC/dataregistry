@@ -4,39 +4,43 @@ import sys
 from dataregistry import DataRegistry
 
 _TEST_ROOT_DIR = "DataRegistry_data"
+_TEST_ROOT_DIR_PRODUCTION = "DataRegistry_data_production"
 
-# Make root dir
-if not os.path.isdir(_TEST_ROOT_DIR):
-    os.makedirs(_TEST_ROOT_DIR)
+# Make root dirs
+for DIR in [_TEST_ROOT_DIR, _TEST_ROOT_DIR_PRODUCTION]:
+    if not os.path.isdir(DIR):
+        os.makedirs(DIR)
 
 # Make a few dummy files to enter into database.
-if not os.path.isdir(
-    os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/dummy_dir")
-):
-    os.makedirs(os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/dummy_dir"))
+# This is so we can test copying actual files (i.e., dummy=False)
+for DIR in [
+    os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/dummy_dir"),
+    "dummy_dir",
+]:
+    if not os.path.isdir(DIR):
+        os.makedirs(DIR)
 
-if not os.path.isdir(os.path.join("dummy_dir")):
-    os.makedirs(os.path.join("dummy_dir"))
-
+# This is an example file not already in the data registry space
 with open(os.path.join("dummy_dir", "file1.txt"), "w") as f:
     f.write("test")
-with open(
-    os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/dummy_dir", "file1.txt"),
-    "w",
-) as f:
-    f.write("test")
-with open(
-    os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/dummy_dir", "file2.txt"),
-    "w",
-) as f:
-    f.write("test")
-with open(
-    os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}/", "file1.txt"), "w"
-) as f:
-    f.write("test")
+
+# These are example files already in the registry space, just need registered.
+for FILE in ["dummy_dir/file1.txt", "dummy_dir/file2.txt", "file1.txt"]:
+    with open(
+        os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}", FILE),
+        "w",
+    ) as f:
+        f.write("test")
 
 # Establish connection to database
 datareg = DataRegistry(root_dir=_TEST_ROOT_DIR)
+
+# Establish connection to production database (if not sqllite)
+if datareg.db_connection.dialect != "sqllite":
+    datareg_prod = DataRegistry(
+        root_dir=_TEST_ROOT_DIR_PRODUCTION, schema="production"
+    )
+
 
 def _insert_alias_entry(name, dataset_id):
     """
@@ -63,9 +67,7 @@ def _insert_alias_entry(name, dataset_id):
     return new_id
 
 
-def _insert_execution_entry(
-    name, description, input_datasets=[], configuration=None
-):
+def _insert_execution_entry(name, description, input_datasets=[], configuration=None):
     """
     Wrapper to create execution entry
 
@@ -278,21 +280,21 @@ _insert_dataset_entry(
 )
 
 _insert_dataset_entry(
-    "DESC/datasets/production_dataset_1",
+    "DESC/datasets/project_dataset_1",
     "0.0.1",
-    "production",
-    None,
-    "This is production's first dataset",
+    "project",
+    "myproject",
+    "This is myproject's first dataset",
 )
 
 # Test set 5
 # - Create dataset aliases
 dataset_id = _insert_dataset_entry(
-    "DESC/datasets/production_dataset_with_horrible_name",
+    "DESC/datasets/project_dataset_with_horrible_name",
     "0.0.1",
-    "production",
-    None,
-    "This is a production dataset",
+    "project",
+    "myproject",
+    "This is a project dataset",
 )
 
 _insert_alias_entry("nice_dataset_name", dataset_id)
@@ -301,9 +303,7 @@ _insert_alias_entry("nice_dataset_name", dataset_id)
 # - Create a pipeline with multiple input and output datasets.
 
 # Stage 1 of my pipe line
-ex_id_1 = _insert_execution_entry(
-    "pipeline_stage_1", "The first stage of my pipeline"
-)
+ex_id_1 = _insert_execution_entry("pipeline_stage_1", "The first stage of my pipeline")
 dataset_id_1 = _insert_dataset_entry(
     "DESC/datasets/my_first_pipeline_stage1",
     "0.0.1",
@@ -451,10 +451,21 @@ _insert_dataset_entry(
     None,
     None,
     "This should be owned by 'DESC group' and have owner_type='group'",
-    which_datareg=datareg2
+    which_datareg=datareg2,
 )
 
 # Test set 12
+# - Sommy dummy production datasets, going into the production schema
+if datareg.db_connection.dialect != "sqlite":
+    _insert_dataset_entry(
+        "DESC/datasets/production_dataset_1",
+        "0.0.1",
+        "production",
+        None,
+        "This is production's first dataset",
+        which_datareg=datareg_prod,
+    )
+
 # - Testing execution creation directly through dataset registration
 _insert_dataset_entry(
     "DESC/datasets/execution_test",
