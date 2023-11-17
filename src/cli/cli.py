@@ -129,10 +129,15 @@ arg_register_dataset.add_argument(
     action="store_true",
 )
 arg_register_dataset.add_argument(
-    "--schema", default=f"{SCHEMA_VERSION}", help="Which schema to connect to",
+    "--schema",
+    default=f"{SCHEMA_VERSION}",
+    help="Which schema to connect to",
 )
 arg_register_dataset.add_argument(
-    "--locale", help="Location where dataset was produced", type=str, default="NERSC",
+    "--locale",
+    help="Location where dataset was produced",
+    type=str,
+    default="NERSC",
 )
 arg_register_dataset.add_argument(
     "--owner", help="Owner of dataset. Defaults to $USER."

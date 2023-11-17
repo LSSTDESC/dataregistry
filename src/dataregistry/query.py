@@ -272,7 +272,11 @@ class Query:
         )
 
     def find_datasets(
-        self, property_names=None, filters=[], verbose=False, return_format="property_dict"
+        self,
+        property_names=None,
+        filters=[],
+        verbose=False,
+        return_format="property_dict",
     ):
         """
         Get specified properties for datasets satisfying all filters
