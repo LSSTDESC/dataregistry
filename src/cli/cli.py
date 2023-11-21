@@ -36,6 +36,10 @@ arg_ls.add_argument(
     default=f"{SCHEMA_VERSION}",
     help="Which schema to connect to",
 )
+arg_ls.add_argument("--root_dir", help="Location of the root_dir", type=str)
+arg_ls.add_argument(
+    "--site", help="Get the root_dir through a pre-defined 'site'", type=str
+)
 
 # ------------------
 # Register a dataset
@@ -172,6 +176,12 @@ arg_register_dataset.add_argument(
     default=[],
     nargs="+",
 )
+arg_register_dataset.add_argument(
+    "--root_dir", help="Location of the root_dir", type=str
+)
+arg_register_dataset.add_argument(
+    "--site", help="Get the root_dir through a pre-defined 'site'", type=str
+)
 
 
 def main():
@@ -184,4 +194,4 @@ def main():
 
     # Query database entries
     elif args.subcommand == "ls":
-        dregs_ls(args.owner, args.owner_type, args.all, args.config_file, args.schema)
+        dregs_ls(args)
