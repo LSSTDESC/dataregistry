@@ -4,12 +4,15 @@ import sqlalchemy
 
 from dataregistry import DataRegistry
 
+_TEST_ROOT_DIR = "DataRegistry_data"
+_TEST_ROOT_DIR_PRODUCTION = "DataRegistry_data_production"
+
 # Establish connection to database (default schema)
-datareg = DataRegistry(root_dir="DataRegistry_data")
+datareg = DataRegistry(root_dir=_TEST_ROOT_DIR)
 
 # Establish connection to database (production schema)
 datareg_prod = DataRegistry(
-    root_dir="DataRegistry_data_production", schema="production"
+    root_dir=_TEST_ROOT_DIR_PRODUCTION, schema="production"
 )
 
 
@@ -241,7 +244,6 @@ def test_db_version():
 def test_get_dataset_absolute_path():
     """Test the generation of the full absolute path of a dataset"""
 
-    _TEST_ROOT_DIR = "DataRegistry_data"
     dset_relpath = "DESC/datasets/group1_dataset_1"
     dset_ownertype = "group"
     dset_owner = "group1"
