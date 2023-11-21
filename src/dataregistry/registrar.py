@@ -55,6 +55,7 @@ class Registrar:
 
         # Database engine and dialect.
         self._engine = db_connection.engine
+        self._schema = db_connection.schema
 
         # Link to Table Metadata.
         self._metadata_getter = TableMetadata(db_connection)
@@ -410,6 +411,15 @@ class Registrar:
                 raise ValueError("Cannot overwrite production entries")
             if version_suffix is not None:
                 raise ValueError("Production entries can't have version suffix")
+            if self._schema != "production":
+                raise ValueError(
+                    "Only the production schema can handle owner_type='production'"
+                )
+        else:
+            if self._schema == "production":
+                raise ValueError(
+                    "Only the production schema can handle owner_type='production'"
+                )
 
         # If name not passed, automatically generate a name from the relative path
         if name is None:

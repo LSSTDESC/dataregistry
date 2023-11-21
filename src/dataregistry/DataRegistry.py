@@ -51,7 +51,10 @@ class DataRegistry:
         root_dir = self._get_root_dir(root_dir)
 
         # Establish connection to database
-        db_connection = DbConnection(config_file, schema=schema, verbose=verbose)
+        self.db_connection = DbConnection(config_file, schema=schema, verbose=verbose)
+
+        # Create query object
+        self.Query = Query(self.db_connection)
 
         # Create registrar object
         self.Registrar = Registrar(
