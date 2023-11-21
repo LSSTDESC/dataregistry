@@ -15,7 +15,7 @@ _ENV_SITE = "/test/dir"
         (None, "nersc", _NERSC_SITE),
         (None, None, _ENV_SITE),
         (None, None, _NERSC_SITE),
-        (_TEST_ROOT_DIR, _NERSC_SITE, _TEST_ROOT_DIR),
+        (_TEST_ROOT_DIR, "nersc", _TEST_ROOT_DIR),
     ],
 )
 def test_root_dir_manual(root_dir, site, ans):

@@ -105,16 +105,28 @@ class DataRegistry:
         with open(_SITE_CONFIG_PATH) as f:
             data = yaml.safe_load(f)
 
-        if root_dir is not None:
-            return root_dir
-        elif (site is not None) and (self.db_connection._dialect != "sqlite"):
-            assert site.lower() in data.keys(), "Bad site selected"
-            return data[site.lower()]
-        elif os.getenv("DATAREG_SITE"):
-            return os.getenv("DATAREG_SITE")
-        else:
-            if self.db_connection._dialect == "sqlite":
-                raise ValueError(
-                    "Must pass a root_dir, or set $DATAREG_SITE for Sqlite"
-                )
-            return data["nersc"]
+        # Find out what the root_dir should be
+        if root_dir is None:
+            if site is not None:
+                if site.lower() not in data.keys():
+                    raise ValueError(f"{site} is not a valid site")
+                root_dir = data[site.lower()]
+            elif os.getenv("DATAREG_SITE"):
+                root_dir = os.getenv("DATAREG_SITE")
+            else:
+                if self.db_connection._dialect == "sqlite":
+                    raise ValueError(
+                        "For Sqlite, must pass root_dir or set $DATAREG_SITE"
+                    )
+                else:
+                    root_dir = data["nersc"]
+
+        if self.db_connection._dialect == "sqlite":
+            # root_dir cannot equal a site path when using Sqlite
+            for a, v in data.items():
+                if root_dir == v:
+                    raise ValueError(
+                        "Cannot have `root_dir` equal to a pre-defined site when using Sqlite"
+                    )
+
+        return root_dir
