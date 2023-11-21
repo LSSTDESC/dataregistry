@@ -55,11 +55,11 @@ class DataRegistry:
             data registry's default data location at NERSC.
         """
 
-        # Work out the location of the root directory
-        root_dir = self._get_root_dir(root_dir, site)
-
         # Establish connection to database
         self.db_connection = DbConnection(config_file, schema=schema, verbose=verbose)
+
+        # Work out the location of the root directory
+        root_dir = self._get_root_dir(root_dir, site)
 
         # Create registrar object
         self.Registrar = Registrar(
@@ -82,6 +82,9 @@ class DataRegistry:
             - If env DATAREG_SITE is set, use that.
             - Else use `site="nersc"`.
 
+        All `site`s are assumed to be postgres. Sqlite users must manually
+        specify the `root_dir.
+
         Parameters
         ----------
         root_dir : str
@@ -93,16 +96,25 @@ class DataRegistry:
             Path to root directory
         """
 
+        # Sqlite cannot work with `site`s
+        if self.db_connection._dialect == "sqlite":
+            if site is not None:
+                raise ValueError("Site's not allowed with Sqlite")
+
         # Load the site config yaml file
         with open(_SITE_CONFIG_PATH) as f:
             data = yaml.safe_load(f)
 
         if root_dir is not None:
             return root_dir
-        elif site is not None:
+        elif (site is not None) and (self.db_connection._dialect != "sqlite"):
             assert site.lower() in data.keys(), "Bad site selected"
             return data[site.lower()]
         elif os.getenv("DATAREG_SITE"):
             return os.getenv("DATAREG_SITE")
         else:
+            if self.db_connection._dialect == "sqlite":
+                raise ValueError(
+                    "Must pass a root_dir, or set $DATAREG_SITE for Sqlite"
+                )
             return data["nersc"]
