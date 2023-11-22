@@ -13,7 +13,7 @@ _ENV_SITE = "nersc"
     [
         (_TEST_ROOT_DIR, None, False, _TEST_ROOT_DIR),
         (None, "nersc", False, _NERSC_SITE),
-        (None, None, True, _ENV_SITE),
+        (None, None, True, _NERSC_SITE),
         (None, None, False, _NERSC_SITE),
         (_TEST_ROOT_DIR, "nersc", False, _TEST_ROOT_DIR),
         (_TEST_ROOT_DIR, "nersc", True, _TEST_ROOT_DIR),
