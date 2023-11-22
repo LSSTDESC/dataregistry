@@ -9,7 +9,7 @@ _ENV_SITE = "/test/dir"
 
 
 @pytest.mark.parametrize(
-    "root_dir,site,ans",
+    "root_dir,site,set_env_var,ans",
     [
         (_TEST_ROOT_DIR, None, False, _TEST_ROOT_DIR),
         (None, "nersc", False, _NERSC_SITE),
