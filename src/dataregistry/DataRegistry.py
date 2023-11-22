@@ -96,37 +96,34 @@ class DataRegistry:
             Path to root directory
         """
 
-        # Sqlite cannot work with `site`s
-        if self.db_connection._dialect == "sqlite":
-            if site is not None:
-                raise ValueError("Site's not allowed with Sqlite")
-
         # Load the site config yaml file
         with open(_SITE_CONFIG_PATH) as f:
             data = yaml.safe_load(f)
 
-        # Find out what the root_dir should be
-        if root_dir is None:
-            if site is not None:
-                if site.lower() not in data.keys():
-                    raise ValueError(f"{site} is not a valid site")
-                root_dir = data[site.lower()]
-            elif os.getenv("DATAREG_SITE"):
-                root_dir = os.getenv("DATAREG_SITE")
+        # Sqlite case
+        if self.db_connection._dialect == "sqlite":
+            # Sqlite cannot work with `site`s, must pass a `root_dir`
+            if root_dir is None:
+                raise ValueError("Must pass a `root_dir` using Sqlite")
             else:
-                if self.db_connection._dialect == "sqlite":
-                    raise ValueError(
-                        "For Sqlite, must pass root_dir or set $DATAREG_SITE"
-                    )
+                # root_dir cannot equal a site path when using Sqlite
+                for a, v in data.items():
+                    if root_dir == v:
+                        raise ValueError(
+                            "`root_dir` must not equal a pre-defined site with Sqlite"
+                        )
+            return root_dir
+            
+        # Non Sqlite case
+        else:
+            if root_dir is None:
+                if site is not None:
+                    if site.lower() not in data.keys():
+                        raise ValueError(f"{site} is not a valid site")
+                    root_dir = data[site.lower()]
+                elif os.getenv("DATAREG_SITE"):
+                    root_dir = data[os.getenv("DATAREG_SITE").lower()]
                 else:
                     root_dir = data["nersc"]
 
-        if self.db_connection._dialect == "sqlite":
-            # root_dir cannot equal a site path when using Sqlite
-            for a, v in data.items():
-                if root_dir == v:
-                    raise ValueError(
-                        "Cannot have `root_dir` equal to a pre-defined site when using Sqlite"
-                    )
-
-        return root_dir
+            return root_dir

@@ -14,6 +14,21 @@ def dregs_ls(args):
     Parameters
     ----------
     args : argparse object
+
+    args.owner : str
+        Owner to list dataset entries for
+    args.owner_type : str
+        Owner type to list dataset entries for
+    args.all : bool
+        True to show all datasets, no filters
+    args.config_file : str
+        Path to data registry config file
+    args.schema : str
+        Which schema to search
+    args.root_dir : str
+        Path to root_dir
+    args.site : str
+        Look up root_dir using a site
     """
 
     # Establish connection to the regular schema
