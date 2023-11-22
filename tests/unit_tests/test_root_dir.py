@@ -5,7 +5,7 @@ import yaml
 
 _TEST_ROOT_DIR = "DataRegistry_data"
 _NERSC_SITE = "/global/cfs/cdirs/desc-co/registry-beta"
-_ENV_SITE = "/test/dir"
+_ENV_SITE = "nersc"
 
 
 @pytest.mark.parametrize(
