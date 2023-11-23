@@ -252,6 +252,8 @@ db_connection = DbConnection(args.config, args.schema)
 
 # Create the schemas
 for schema in [args.schema, "production"]:
+    if SCHEMA == "production" and args.no_production:
+        continue
     stmt = f"CREATE SCHEMA IF NOT EXISTS {schema}"
     with db_connection.engine.connect() as conn:
         conn.execute(text(stmt))
