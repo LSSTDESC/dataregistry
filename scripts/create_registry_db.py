@@ -251,13 +251,14 @@ args = parser.parse_args()
 db_connection = DbConnection(args.config, args.schema)
 
 # Create the schemas
-for SCHEMA in [args.schema, "production"]:
-    if SCHEMA == "production" and args.no_production:
-        continue
-    stmt = f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}"
-    with db_connection.engine.connect() as conn:
-        conn.execute(text(stmt))
-        conn.commit()
+if db_connection.dialect != "sqlite":
+    for SCHEMA in [args.schema, "production"]:
+        if SCHEMA == "production" and args.no_production:
+            continue
+        stmt = f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}"
+        with db_connection.engine.connect() as conn:
+            conn.execute(text(stmt))
+            conn.commit()
 
 for SCHEMA in [args.schema, "production"]:
     if SCHEMA == "production" and args.no_production:
