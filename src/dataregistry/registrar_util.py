@@ -55,7 +55,9 @@ def _form_dataset_path(owner_type, owner, relative_path, root_dir=None):
     """
     Construct full (or relative) path to dataset in the data registry.
 
-    Path will have the format:
+    Path will have the format if `root_dir` is None:
+        <owner_type>/<owner>/<relative_path>
+    or if `root_dir` is not None:
         <root_dir>/<owner_type>/<owner>/<relative_path>
 
     Parameters

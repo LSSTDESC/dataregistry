@@ -9,10 +9,27 @@ def register_dataset(args):
     Parameters
     ----------
     args : argparse object
+    
+    args.config_file : str
+        Path to data registry config file
+    args.schema : str
+        Which schema to search
+    args.root_dir : str
+        Path to root_dir
+    args.site : str
+        Look up root_dir using a site
+
+    Information about the arguments that go into `register_dataset` can be
+    found in `src/cli/cli.py` or by running `dregs --help`.
     """
 
     # Connect to database.
-    datareg = DataRegistry(config_file=args.config_file, schema=args.schema)
+    datareg = DataRegistry(
+        config_file=args.config_file,
+        schema=args.schema,
+        root_dir=args.root_dir,
+        site=args.site,
+    )
 
     # Register new dataset.
     new_id = datareg.Registrar.register_dataset(

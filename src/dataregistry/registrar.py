@@ -17,9 +17,6 @@ from dataregistry.db_basic import TableMetadata
 
 __all__ = ["Registrar"]
 
-# The root data registry directory.
-_DEFAULT_ROOT_DIR = "/global/cfs/cdirs/desc-co/registry-beta"  # temporary
-
 # Default maximum allowed length of configuration file allowed to be ingested
 _DEFAULT_MAX_CONFIG = 10000
 
@@ -31,9 +28,9 @@ class Registrar:
     def __init__(
         self,
         db_connection,
+        root_dir,
         owner=None,
         owner_type=None,
-        root_dir=None,
     ):
         """
         Class to register new datasets, executions and alias names.
@@ -43,22 +40,18 @@ class Registrar:
         db_connection : DbConnection object
             Encompasses sqlalchemy engine, dialect (database backend)
             and schema version
+        root_dir : str
+            Root directory of the dataregistry on disk
         owner : str
             To set the default owner for all registered datasets in this
             instance.
         owner_type : str
             To set the default owner_type for all registered datasets in this
             instance.
-        root_dir : str, optional
-            Root directory of the dataregistry on disk. If None, default to
-            _DEFAULT_ROOT_DIR
         """
 
         # Root directory on disk for data registry files
-        if root_dir is not None:
-            self._root_dir = root_dir
-        else:
-            self._root_dir = _DEFAULT_ROOT_DIR
+        self._root_dir = root_dir
 
         # Database engine and dialect.
         self._engine = db_connection.engine
@@ -73,14 +66,6 @@ class Registrar:
         # Default owner and owner_type's
         self._owner = owner
         self._owner_type = owner_type
-
-    @property
-    def root_dir(self):
-        """
-        Returns root dir used to form absolute path of a registered
-        dataset
-        """
-        return self._root_dir
 
     def get_owner_types(self):
         """
@@ -179,7 +164,9 @@ class Registrar:
         """
 
         # Get destination directory in data registry.
-        dest = _form_dataset_path(owner_type, owner, relative_path, self.root_dir)
+        dest = _form_dataset_path(
+            owner_type, owner, relative_path, root_dir=self._root_dir
+        )
 
         # Is the data already on location, or coming from somewhere new?
         if old_location:

@@ -1,9 +1,8 @@
 import os
-from dataregistry.db_basic import DbConnection
-from dataregistry.query import Filter, Query
+from dataregistry import DataRegistry
 
 
-def dregs_ls(owner, owner_type, show_all, config, schema):
+def dregs_ls(args):
     """
     Queries the data registry for datasets, displaying their relative paths.
 
@@ -14,48 +13,61 @@ def dregs_ls(owner, owner_type, show_all, config, schema):
 
     Parameters
     ----------
-    owner : str
+    args : argparse object
+
+    args.owner : str
         Owner to list dataset entries for
-    owner_type : str
+    args.owner_type : str
         Owner type to list dataset entries for
-    show_all : bool
+    args.all : bool
         True to show all datasets, no filters
-    config : str
+    args.config_file : str
         Path to data registry config file
-    schema : str
+    args.schema : str
         Which schema to search
+    args.root_dir : str
+        Path to root_dir
+    args.site : str
+        Look up root_dir using a site
     """
 
     # Establish connection to the regular schema
-    connection = DbConnection(config, schema=schema)
-    # Create query object
-    q = Query(connection)
+    datareg = DataRegistry(
+        config_file=args.config_file,
+        schema=args.schema,
+        root_dir=args.root_dir,
+        site=args.site,
+    )
 
     # Establish connection to the production schema
-    if connection.schema != "production":
-        connection_prod = DbConnection(config, schema="production")
-        # Create production query object
-        q_prod = Query(connection_prod)
+    if datareg.db_connection.schema != "production":
+        datareg_prod = DataRegistry(
+            config_file=args.config_file,
+            schema="production",
+            root_dir=args.root_dir,
+            site=args.site,
+        )
     else:
-        connection_prod = None
-        q_prod = None
+        datareg_prod = None
 
     # Filter on dataset owner and/or owner_type
     filters = []
 
     print("\nDataRegistry query:", end=" ")
-    if not show_all:
-        if owner_type is not None:
-            filters.append(Filter("dataset.owner_type", "==", owner_type))
-            print(f"owner_type=={owner_type}", end=" ")
+    if not args.all:
+        if args.owner_type is not None:
+            filters.append(Filter("dataset.owner_type", "==", args.owner_type))
+            print(f"owner_type=={args.owner_type}", end=" ")
 
-        if owner is None:
-            if owner_type is None:
-                filters.append(Filter("dataset.owner", "==", os.getenv("USER")))
+        if args.owner is None:
+            if args.owner_type is None:
+                filters.append(
+                    datareg.Query.gen_filter("dataset.owner", "==", os.getenv("USER"))
+                )
                 print(f"owner=={os.getenv('USER')}", end=" ")
         else:
-            filters.append(Filter("dataset.owner", "==", owner))
-            print(f"owner=={owner}", end=" ")
+            filters.append(datareg.Query.gen_filter("dataset.owner", "==", args.owner))
+            print(f"owner=={args.owner}", end=" ")
     else:
         print("all datasets", end=" ")
 
@@ -65,12 +77,12 @@ def dregs_ls(owner, owner_type, show_all, config, schema):
     print("-" * len(mystr))
 
     # Loop over this schema and the production schema and print the results
-    for this_q, this_connection in zip([q, q_prod], [connection, connection_prod]):
-        if this_q is None:
+    for this_datareg in [datareg, datareg_prod]:
+        if this_datareg is None:
             continue
 
         # Query
-        results = this_q.find_datasets(
+        results = this_datareg.Query.find_datasets(
             [
                 "dataset.name",
                 "dataset.version_string",
@@ -79,12 +91,19 @@ def dregs_ls(owner, owner_type, show_all, config, schema):
                 "dataset.owner_type",
             ],
             filters,
+            return_format="CursorResult",
         )
 
         # Loop over each result and print.
         if results.rowcount > 0:
             for r in results:
+                tmp_name = getattr(r, "dataset.name")
+                tmp_vs = getattr(r, "dataset.version_string")
+                tmp_path = getattr(r, "dataset.relative_path")
+                tmp_owner = getattr(r, "dataset.owner")
+                tmp_owner_type = getattr(r, "dataset.owner_type")
+
                 print(
-                    f" - [{r.owner_type}:{r.owner}] {r.name} :",
-                    f"v{r.version_string} -> {r.relative_path}",
+                    f" - [{tmp_owner_type}:{tmp_owner}] {tmp_name} :",
+                    f"v{tmp_vs} -> {tmp_path}",
                 )

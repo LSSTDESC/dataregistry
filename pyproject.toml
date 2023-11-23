@@ -36,3 +36,6 @@ where = ["src"]
 
 [project.scripts]
 dregs = "cli.cli:main"
+
+[tool.setuptools.package-data]
+"dataregistry" = ["site_config/site_rootdir.yaml"]

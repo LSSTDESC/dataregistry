@@ -2,9 +2,9 @@ from collections import namedtuple
 from sqlalchemy import text, select
 import sqlalchemy.sql.sqltypes as sqltypes
 import pandas as pd
-from dataregistry.registrar import _DEFAULT_ROOT_DIR
 from dataregistry.registrar_util import _form_dataset_path
 from dataregistry.exceptions import DataRegistryNYI, DataRegistryException
+import os
 
 try:
     import sqlalchemy.dialects.postgresql as pgtypes
@@ -85,7 +85,7 @@ class Query:
     Class implementing supported queries
     """
 
-    def __init__(self, db_connection, root_dir=None):
+    def __init__(self, db_connection, root_dir):
         """
         Create a new Query object. Note this call should be preceded
         by creation of a DbConnection object
@@ -96,18 +96,12 @@ class Query:
             Encompasses sqlalchemy engine, dialect (database backend)
             and schema version
         root_dir : str
-            Used to form absolute path of dataset. Use default if not
-            supplied
+            Used to form absolute path of dataset
         """
         self._engine = db_connection.engine
         self._dialect = db_connection.dialect
         self._schema = db_connection.schema
-        if not root_dir:
-            root_dir = _DEFAULT_ROOT_DIR
         self._root_dir = root_dir
-
-        # Do we need to know where the datasets actually are?  If so
-        # we need a ROOT_DIR
 
         self._metadata = TableMetadata(db_connection)
 
