@@ -22,6 +22,11 @@ Both schemas have the same layout, containing six tables:
 
 Base = declarative_base()
 
+def _get_ForeignKey_str(schema, table, row):
+    if schema is None:
+        return f"{table}.{row}"
+    else:
+        return f"{schema}.{table}.{row}"
 
 def _Provenance(schema):
     """Keeps track of database/schema versions."""
@@ -90,7 +95,7 @@ def _ExecutionAlias(schema):
     rows = {
         "execution_alias_id": Column("execution_alias_id", Integer, primary_key=True),
         "alias": Column(String, nullable=False),
-        "execution_id": Column(Integer, ForeignKey(f"{SCHEMA}.execution.execution_id")),
+        "execution_id": Column(Integer, ForeignKey(_get_ForeignKey_str(schema, "execution", "execution_id"))),
         "supersede_date": Column(DateTime, default=None),
         "register_date": Column(DateTime, nullable=False),
         "creator_uid": Column(String(20), nullable=False),
@@ -118,7 +123,7 @@ def _DatasetAlias(schema):
     rows = {
         "dataset_alias_id": Column(Integer, primary_key=True),
         "alias": Column(String, nullable=False),
-        "dataset_id": Column(Integer, ForeignKey(f"{schema}.dataset.dataset_id")),
+        "dataset_id": Column(Integer, ForeignKey(_get_ForeignKey_str(schema, "dataset", "dataset_id"))),
         "supersede_date": Column(DateTime, default=None),
         "register_date": Column(DateTime, nullable=False),
         "creator_uid": Column(String(20), nullable=False),
@@ -166,7 +171,7 @@ def _Dataset(schema):
         # might include "gcr-catalogs", "skyCatalogs"
         "access_API": Column("access_API", String(20)),
         # A way to associate a dataset with a program execution or "run"
-        "execution_id": Column(Integer, ForeignKey(f"{schema}.execution.execution_id")),
+        "execution_id": Column(Integer, ForeignKey(_get_ForeignKey_str(schema, "execution", "execution_id"))),
         "description": Column(String),
         "owner_type": Column(String, nullable=False),
         # If ownership_type is 'production', then owner is always 'production'
@@ -195,7 +200,7 @@ def _Dataset(schema):
     return Model
 
 
-def _Dependency(schema, no_production):
+def _Dependency(schema, has_production):
     """Links datasets through "dependencies"."""
 
     class_name = f"{schema}_dependency"
@@ -204,14 +209,14 @@ def _Dependency(schema, no_production):
     rows = {
         "dependency_id": Column(Integer, primary_key=True),
         "register_date": Column(DateTime, nullable=False),
-        "execution_id": Column(Integer, ForeignKey(f"{schema}.execution.execution_id")),
-        "input_id": Column(Integer, ForeignKey(f"{schema}.dataset.dataset_id")),
+        "execution_id": Column(Integer, ForeignKey(_get_ForeignKey_str(schema, "execution", "execution_id"))),
+        "input_id": Column(Integer, ForeignKey(_get_ForeignKey_str(schema, "dataset", "dataset_id"))),
     }
 
     # Add link to production schema.
-    if not no_production:
+    if has_production:
         rows["input_id_production"] = Column(
-            Integer, ForeignKey(f"production.dataset.dataset_id")
+            Integer, ForeignKey(_get_ForeignKey_str("production", "dataset", "dataset_id"))
         )
 
     #        #if SCHEMA != "production":
@@ -231,6 +236,7 @@ _DB_VERSION_MINOR = 2
 _DB_VERSION_PATCH = 0
 _DB_VERSION_COMMENT = "Added comment column to Provenance table"
 
+# Parse command line arguments
 parser = argparse.ArgumentParser(
     description="""
 Creates dataregistry tables in specified schema and connection information (config)""",
@@ -245,37 +251,42 @@ parser.add_argument("--config", help="Path to the data registry config file")
 parser.add_argument(
     "--no_production", help="Do not create the production schema", action="store_true"
 )
-
 args = parser.parse_args()
 
+# Connect to database
 db_connection = DbConnection(args.config, args.schema)
 
-# Create the schemas
+# What schemas are we working with?
 if db_connection.dialect != "sqlite":
-    for SCHEMA in [args.schema, "production"]:
-        if SCHEMA == "production" and args.no_production:
-            continue
-        stmt = f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}"
-        with db_connection.engine.connect() as conn:
-            conn.execute(text(stmt))
-            conn.commit()
+    SCHEMA_LIST = [args.schema, "production"]
+else:
+    SCHEMA_LIST = [None]
+if args.no_production and "production" in SCHEMA_LIST:
+    SCHEMA_LIST.remove("production")
 
-for SCHEMA in [args.schema, "production"]:
-    if SCHEMA == "production" and args.no_production:
+# Create the schemas
+for SCHEMA in SCHEMA_LIST:
+    if SCHEMA is None:
         continue
+    stmt = f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}"
+    with db_connection.engine.connect() as conn:
+        conn.execute(text(stmt))
+        conn.commit()
+
+# Create the tables
+for SCHEMA in SCHEMA_LIST:
     _Dataset(SCHEMA)
     _DatasetAlias(SCHEMA)
-    _Dependency(SCHEMA, args.no_production)
+    _Dependency(SCHEMA, "production" in SCHEMA_LIST)
     _Execution(SCHEMA)
     _ExecutionAlias(SCHEMA)
     _Provenance(SCHEMA)
 
-# Create the tables
+# Generate the database
 Base.metadata.create_all(db_connection.engine)
 
-for SCHEMA in [args.schema, "production"]:
-    if SCHEMA == "production" and args.no_production:
-        continue
+# Add initial procenance information
+for SCHEMA in SCHEMA_LIST:
     prov_id = _insert_provenance(
         DbConnection(args.config, SCHEMA),
         _DB_VERSION_MAJOR,
