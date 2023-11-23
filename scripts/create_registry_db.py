@@ -251,10 +251,10 @@ args = parser.parse_args()
 db_connection = DbConnection(args.config, args.schema)
 
 # Create the schemas
-for schema in [args.schema, "production"]:
+for SCHEMA in [args.schema, "production"]:
     if SCHEMA == "production" and args.no_production:
         continue
-    stmt = f"CREATE SCHEMA IF NOT EXISTS {schema}"
+    stmt = f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}"
     with db_connection.engine.connect() as conn:
         conn.execute(text(stmt))
         conn.commit()
@@ -272,11 +272,11 @@ for SCHEMA in [args.schema, "production"]:
 # Create the tables
 Base.metadata.create_all(db_connection.engine)
 
-for schema in [args.schema, "production"]:
+for SCHEMA in [args.schema, "production"]:
     if SCHEMA == "production" and args.no_production:
         continue
     prov_id = _insert_provenance(
-        DbConnection(args.config, schema),
+        DbConnection(args.config, SCHEMA),
         _DB_VERSION_MAJOR,
         _DB_VERSION_MINOR,
         _DB_VERSION_PATCH,
