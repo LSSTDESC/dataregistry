@@ -24,7 +24,7 @@ Base = declarative_base()
 
 
 def _Provenance(schema):
-    """ Keeps track of database/schema versions. """
+    """Keeps track of database/schema versions."""
 
     class_name = f"{schema}_provenance"
 
@@ -56,7 +56,7 @@ def _Provenance(schema):
 
 
 def _Execution(schema):
-    """ Stores executions, which datasets can be linked to. """
+    """Stores executions, which datasets can be linked to."""
 
     class_name = f"{schema}_execution"
 
@@ -82,7 +82,7 @@ def _Execution(schema):
 
 
 def _ExecutionAlias(schema):
-    """ To asscociate an alias to an execution. """
+    """To asscociate an alias to an execution."""
 
     class_name = f"{schema}_execution_alias"
 
@@ -108,17 +108,18 @@ def _ExecutionAlias(schema):
     Model = type(class_name, (Base,), {**rows, **meta})
     return Model
 
+
 def _DatasetAlias(schema):
-    """ To asscociate an alias to a dataset. """
+    """To asscociate an alias to a dataset."""
 
     class_name = f"{schema}_dataset_alias"
 
     # Rows
     rows = {
-            "dataset_alias_id": Column(Integer, primary_key=True),
-    "alias": Column(String, nullable=False),
+        "dataset_alias_id": Column(Integer, primary_key=True),
+        "alias": Column(String, nullable=False),
         "dataset_id": Column(Integer, ForeignKey(f"{schema}.dataset.dataset_id")),
-        "supersede_date": Column(DateTime,  default=None),
+        "supersede_date": Column(DateTime, default=None),
         "register_date": Column(DateTime, nullable=False),
         "creator_uid": Column(String(20), nullable=False),
     }
@@ -127,8 +128,7 @@ def _DatasetAlias(schema):
     meta = {
         "__tablename__": "dataset_alias",
         "__table_args__": (
-            UniqueConstraint("alias", "register_date",
-                                           name="dataset_u_register"),
+            UniqueConstraint("alias", "register_date", name="dataset_u_register"),
             {"schema": schema},
         ),
     }
@@ -136,8 +136,9 @@ def _DatasetAlias(schema):
     Model = type(class_name, (Base,), {**rows, **meta})
     return Model
 
+
 def _Dataset(schema):
-    """ Primary table, stores dataset information. """
+    """Primary table, stores dataset information."""
 
     class_name = f"{schema}_dataset"
 
@@ -194,8 +195,8 @@ def _Dataset(schema):
     return Model
 
 
-def _Dependency(schema):
-    """ Links datasets through "dependencies". """
+def _Dependency(schema, no_production):
+    """Links datasets through "dependencies"."""
 
     class_name = f"{schema}_dependency"
 
@@ -205,10 +206,14 @@ def _Dependency(schema):
         "register_date": Column(DateTime, nullable=False),
         "execution_id": Column(Integer, ForeignKey(f"{schema}.execution.execution_id")),
         "input_id": Column(Integer, ForeignKey(f"{schema}.dataset.dataset_id")),
-        "input_id_production": Column(
-            Integer, ForeignKey(f"production.dataset.dataset_id")
-        ),
     }
+
+    # Add link to production schema.
+    if not no_production:
+        rows["input_id_production"] = Column(
+            Integer, ForeignKey(f"production.dataset.dataset_id")
+        )
+
     #        #if SCHEMA != "production":
     #        #    table1 = relationship('production.dataset', foreign_keys=[input_id_production])
 
@@ -237,6 +242,9 @@ parser.add_argument(
     default=f"{SCHEMA_VERSION}",
 )
 parser.add_argument("--config", help="Path to the data registry config file")
+parser.add_argument(
+    "--no_production", help="Do not create the production schema", action="store_true"
+)
 
 args = parser.parse_args()
 
@@ -250,9 +258,11 @@ for schema in [args.schema, "production"]:
         conn.commit()
 
 for SCHEMA in [args.schema, "production"]:
+    if SCHEMA == "production" and args.no_production:
+        continue
     _Dataset(SCHEMA)
     _DatasetAlias(SCHEMA)
-    _Dependency(SCHEMA)
+    _Dependency(SCHEMA, args.no_production)
     _Execution(SCHEMA)
     _ExecutionAlias(SCHEMA)
     _Provenance(SCHEMA)
@@ -261,7 +271,8 @@ for SCHEMA in [args.schema, "production"]:
 Base.metadata.create_all(db_connection.engine)
 
 for schema in [args.schema, "production"]:
-
+    if SCHEMA == "production" and args.no_production:
+        continue
     prov_id = _insert_provenance(
         DbConnection(args.config, schema),
         _DB_VERSION_MAJOR,
