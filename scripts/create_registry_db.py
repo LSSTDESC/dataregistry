@@ -5,7 +5,7 @@ from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Index, Float
 from sqlalchemy import ForeignKey, UniqueConstraint, text
 from sqlalchemy.orm import relationship, declarative_base
-from dataregistry.db_basic import DbConnection, TableCreator, SCHEMA_VERSION
+from dataregistry.db_basic import DbConnection, SCHEMA_VERSION
 from dataregistry.db_basic import add_table_row, _insert_provenance
 
 """
@@ -234,10 +234,7 @@ def _Dependency(schema, has_production):
             Integer,
             ForeignKey(_get_ForeignKey_str("production", "dataset", "dataset_id")),
         )
-
-    #        #if SCHEMA != "production":
-    #        #    table1 = relationship('production.dataset', foreign_keys=[input_id_production])
-
+    
     # Table metadata
     meta = {"__tablename__": "dependency", "__table_args__": {"schema": schema}}
 
@@ -281,12 +278,21 @@ if args.no_production and "production" in SCHEMA_LIST:
     SCHEMA_LIST.remove("production")
 
 # Create the schemas
+acct = "reg_reader"
 for SCHEMA in SCHEMA_LIST:
     if SCHEMA is None:
         continue
-    stmt = f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}"
     with db_connection.engine.connect() as conn:
+        # Create schema
+        stmt = f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}"
         conn.execute(text(stmt))
+
+        # Grant reg_reader access
+        usage_priv = f"GRANT USAGE ON SCHEMA {SCHEMA} to {acct}"
+        select_priv = f"GRANT SELECT ON ALL TABLES IN SCHEMA {SCHEMA} to {acct}"
+        conn.execute(text(usage_priv))
+        conn.execute(text(select_priv))
+
         conn.commit()
 
 # Create the tables
@@ -301,8 +307,8 @@ for SCHEMA in SCHEMA_LIST:
 # Generate the database
 Base.metadata.create_all(db_connection.engine)
 
-# Add initial procenance information
 for SCHEMA in SCHEMA_LIST:
+    # Add initial procenance information
     prov_id = _insert_provenance(
         DbConnection(args.config, SCHEMA),
         _DB_VERSION_MAJOR,
