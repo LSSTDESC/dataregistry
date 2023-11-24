@@ -285,7 +285,8 @@ for SCHEMA in SCHEMA_LIST:
         # Create schema
         stmt = f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}"
         conn.execute(text(stmt))
-
+        conn.commit()
+        
 # Grant reg_reader access
 acct = "reg_reader"
 for SCHEMA in SCHEMA_LIST:
