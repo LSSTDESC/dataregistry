@@ -278,7 +278,6 @@ if args.no_production and "production" in SCHEMA_LIST:
     SCHEMA_LIST.remove("production")
 
 # Create the schemas
-acct = "reg_reader"
 for SCHEMA in SCHEMA_LIST:
     if SCHEMA is None:
         continue
@@ -287,13 +286,22 @@ for SCHEMA in SCHEMA_LIST:
         stmt = f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}"
         conn.execute(text(stmt))
 
-        # Grant reg_reader access
-        usage_priv = f"GRANT USAGE ON SCHEMA {SCHEMA} to {acct}"
-        select_priv = f"GRANT SELECT ON ALL TABLES IN SCHEMA {SCHEMA} to {acct}"
-        conn.execute(text(usage_priv))
-        conn.execute(text(select_priv))
+# Grant reg_reader access
+acct = "reg_reader"
+for SCHEMA in SCHEMA_LIST:
+    if SCHEMA is None:
+        continue
+    try:
+        with db_connection.engine.connect() as conn:
+            # Grant reg_reader access
+            usage_priv = f"GRANT USAGE ON SCHEMA {SCHEMA} to {acct}"
+            select_priv = f"GRANT SELECT ON ALL TABLES IN SCHEMA {SCHEMA} to {acct}"
+            conn.execute(text(usage_priv))
+            conn.execute(text(select_priv))
 
-        conn.commit()
+            conn.commit()
+    except:
+        print(f"Could not grant access to {acct} on schema {SCHEMA}")
 
 # Create the tables
 for SCHEMA in SCHEMA_LIST:
