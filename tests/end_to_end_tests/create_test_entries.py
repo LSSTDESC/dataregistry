@@ -37,9 +37,7 @@ datareg = DataRegistry(root_dir=_TEST_ROOT_DIR)
 
 # Establish connection to production database (if not sqllite)
 if datareg.db_connection.dialect != "sqllite":
-    datareg_prod = DataRegistry(
-        root_dir=_TEST_ROOT_DIR_PRODUCTION, schema="production"
-    )
+    datareg_prod = DataRegistry(root_dir=_TEST_ROOT_DIR_PRODUCTION, schema="production")
 
 
 def _insert_alias_entry(name, dataset_id):
@@ -120,7 +118,7 @@ def _insert_dataset_entry(
     execution_locale=None,
     execution_configuration=None,
     input_datasets=[],
-    input_production_datasets=[]
+    input_production_datasets=[],
 ):
     """
     Wrapper to create dataset entry

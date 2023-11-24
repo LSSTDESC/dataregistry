@@ -228,19 +228,19 @@ def test_query_execution():
     assert len(results["dependency.input_id"]) == 2, "Bad result from query dep1"
 
     # Query 2: Find production dependencies of an execution
-    f = datareg.Query.gen_filter("execution.name", "==", "production_id_test")
-    results = datareg.Query.find_datasets(["execution.execution_id"], [f])
     if datareg.Query._dialect != "sqlite":
+        f = datareg.Query.gen_filter("execution.name", "==", "production_id_test")
+        results = datareg.Query.find_datasets(["execution.execution_id"], [f])
         assert len(results["execution.execution_id"]) == 1, "Bad result from query ex1"
 
-    # Find dependencies for this execution
-    f = datareg.Query.gen_filter(
-        "dependency.execution_id", "==", results["execution.execution_id"][0]
-    )
-    results = datareg.Query.find_datasets(["dependency.input_production_id"], [f])
-    assert (
-        len(results["dependency.input_production_id"]) == 1
-    ), "Bad result from query dep2"
+        # Find dependencies for this execution
+        f = datareg.Query.gen_filter(
+            "dependency.execution_id", "==", results["execution.execution_id"][0]
+        )
+        results = datareg.Query.find_datasets(["dependency.input_production_id"], [f])
+        assert (
+            len(results["dependency.input_production_id"]) == 1
+        ), "Bad result from query dep2"
 
 
 def test_db_version():
