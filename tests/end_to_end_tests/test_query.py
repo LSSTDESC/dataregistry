@@ -11,9 +11,7 @@ _TEST_ROOT_DIR_PRODUCTION = "DataRegistry_data_production"
 datareg = DataRegistry(root_dir=_TEST_ROOT_DIR)
 
 # Establish connection to database (production schema)
-datareg_prod = DataRegistry(
-    root_dir=_TEST_ROOT_DIR_PRODUCTION, schema="production"
-)
+datareg_prod = DataRegistry(root_dir=_TEST_ROOT_DIR_PRODUCTION, schema="production")
 
 
 def test_query_production():
@@ -26,7 +24,7 @@ def test_query_production():
 
 
 def test_query_return_format():
-    """ Test we get back correct data format from queries """
+    """Test we get back correct data format from queries"""
 
     # Default, SQLAlchemy CursorResult
     results = datareg.Query.find_datasets(
@@ -46,7 +44,8 @@ def test_query_return_format():
 
     # Property dictionary (each key is a property with a list for each row)
     results = datareg.Query.find_datasets(
-        ["dataset.name", "dataset.version_string", "dataset.relative_path"], [],
+        ["dataset.name", "dataset.version_string", "dataset.relative_path"],
+        [],
     )
     assert type(results) == dict
 
@@ -227,6 +226,21 @@ def test_query_execution():
     )
     results = datareg.Query.find_datasets(["dependency.input_id"], [f])
     assert len(results["dependency.input_id"]) == 2, "Bad result from query dep1"
+
+    # Query 2: Find production dependencies of an execution
+    f = datareg.Query.gen_filter("execution.name", "==", "production_id_test")
+    results = datareg.Query.find_datasets(["execution.execution_id"], [f])
+    if datareg.Query._dialect != "sqlite":
+        assert len(results["execution.execution_id"]) == 1, "Bad result from query ex1"
+
+    # Find dependencies for this execution
+    f = datareg.Query.gen_filter(
+        "dependency.execution_id", "==", results["execution.execution_id"][0]
+    )
+    results = datareg.Query.find_datasets(["dependency.input_production_id"], [f])
+    assert (
+        len(results["dependency.input_production_id"]) == 1
+    ), "Bad result from query dep2"
 
 
 def test_db_version():

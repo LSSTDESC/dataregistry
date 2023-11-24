@@ -223,6 +223,7 @@ class Registrar:
         locale=None,
         configuration=None,
         input_datasets=[],
+        input_production_datasets=[],
         max_config_length=_DEFAULT_MAX_CONFIG,
     ):
         """
@@ -242,6 +243,8 @@ class Registrar:
             Path to text file used to configure the execution
         input_datasets : list, optional
             List of dataset ids that were the input to this execution
+        input_production_datasets : list, optional
+            List of production dataset ids that were the input to this execution
         max_config_length : int, optional
             Maxiumum number of lines to read from a configuration file
 
@@ -284,6 +287,14 @@ class Registrar:
                 values["input_id"] = d
                 values["execution_id"] = my_id
                 add_table_row(conn, dependency_table, values, commit=False)
+
+            # handle production dependencies
+            for d in input_production_datasets:
+                values["register_date"] = datetime.now()
+                values["input_production_id"] = d
+                values["execution_id"] = my_id
+                add_table_row(conn, dependency_table, values, commit=False)
+
             conn.commit()
         return my_id
 
@@ -310,6 +321,7 @@ class Registrar:
         execution_locale=None,
         execution_configuration=None,
         input_datasets=[],
+        input_production_datasets=[]
     ):
         """
         Register a new dataset in the DESC data registry.
@@ -378,6 +390,8 @@ class Registrar:
             Path to text file used to configure the execution
         input_datasets : list, optional
             List of dataset ids that were the input to this execution
+        input_production_datasets : list, optional
+            List of production dataset ids that were the input to this execution
 
         Returns
         -------
@@ -478,6 +492,7 @@ class Registrar:
                 locale=execution_locale,
                 configuration=execution_configuration,
                 input_datasets=input_datasets,
+                input_production_datasets=input_production_datasets
             )
 
         # Pull the dataset properties together

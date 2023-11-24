@@ -22,11 +22,13 @@ Both schemas have the same layout, containing six tables:
 
 Base = declarative_base()
 
+
 def _get_ForeignKey_str(schema, table, row):
     if schema is None:
         return f"{table}.{row}"
     else:
         return f"{schema}.{table}.{row}"
+
 
 def _Provenance(schema):
     """Keeps track of database/schema versions."""
@@ -95,7 +97,10 @@ def _ExecutionAlias(schema):
     rows = {
         "execution_alias_id": Column("execution_alias_id", Integer, primary_key=True),
         "alias": Column(String, nullable=False),
-        "execution_id": Column(Integer, ForeignKey(_get_ForeignKey_str(schema, "execution", "execution_id"))),
+        "execution_id": Column(
+            Integer,
+            ForeignKey(_get_ForeignKey_str(schema, "execution", "execution_id")),
+        ),
         "supersede_date": Column(DateTime, default=None),
         "register_date": Column(DateTime, nullable=False),
         "creator_uid": Column(String(20), nullable=False),
@@ -123,7 +128,9 @@ def _DatasetAlias(schema):
     rows = {
         "dataset_alias_id": Column(Integer, primary_key=True),
         "alias": Column(String, nullable=False),
-        "dataset_id": Column(Integer, ForeignKey(_get_ForeignKey_str(schema, "dataset", "dataset_id"))),
+        "dataset_id": Column(
+            Integer, ForeignKey(_get_ForeignKey_str(schema, "dataset", "dataset_id"))
+        ),
         "supersede_date": Column(DateTime, default=None),
         "register_date": Column(DateTime, nullable=False),
         "creator_uid": Column(String(20), nullable=False),
@@ -171,7 +178,10 @@ def _Dataset(schema):
         # might include "gcr-catalogs", "skyCatalogs"
         "access_API": Column("access_API", String(20)),
         # A way to associate a dataset with a program execution or "run"
-        "execution_id": Column(Integer, ForeignKey(_get_ForeignKey_str(schema, "execution", "execution_id"))),
+        "execution_id": Column(
+            Integer,
+            ForeignKey(_get_ForeignKey_str(schema, "execution", "execution_id")),
+        ),
         "description": Column(String),
         "owner_type": Column(String, nullable=False),
         # If ownership_type is 'production', then owner is always 'production'
@@ -209,14 +219,20 @@ def _Dependency(schema, has_production):
     rows = {
         "dependency_id": Column(Integer, primary_key=True),
         "register_date": Column(DateTime, nullable=False),
-        "execution_id": Column(Integer, ForeignKey(_get_ForeignKey_str(schema, "execution", "execution_id"))),
-        "input_id": Column(Integer, ForeignKey(_get_ForeignKey_str(schema, "dataset", "dataset_id"))),
+        "execution_id": Column(
+            Integer,
+            ForeignKey(_get_ForeignKey_str(schema, "execution", "execution_id")),
+        ),
+        "input_id": Column(
+            Integer, ForeignKey(_get_ForeignKey_str(schema, "dataset", "dataset_id"))
+        ),
     }
 
     # Add link to production schema.
     if has_production:
-        rows["input_id_production"] = Column(
-            Integer, ForeignKey(_get_ForeignKey_str("production", "dataset", "dataset_id"))
+        rows["input_production_id"] = Column(
+            Integer,
+            ForeignKey(_get_ForeignKey_str("production", "dataset", "dataset_id")),
         )
 
     #        #if SCHEMA != "production":

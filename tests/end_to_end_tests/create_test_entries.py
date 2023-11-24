@@ -120,6 +120,7 @@ def _insert_dataset_entry(
     execution_locale=None,
     execution_configuration=None,
     input_datasets=[],
+    input_production_datasets=[]
 ):
     """
     Wrapper to create dataset entry
@@ -162,6 +163,8 @@ def _insert_dataset_entry(
         Path to text file used to configure the execution
     input_datasets : list, optional
         List of dataset ids that were the input to this execution
+    input_production_datasets : list, optional
+        List of production dataset ids that were the input to this execution
 
     Returns
     -------
@@ -200,7 +203,8 @@ def _insert_dataset_entry(
         execution_start=execution_start,
         execution_locale=execution_locale,
         execution_configuration=execution_configuration,
-        input_datasets=input_datasets
+        input_datasets=input_datasets,
+        input_production_datasets=input_production_datasets,
     )
 
     assert dataset_id is not None, "Trying to create a dataset that already exists"
@@ -457,13 +461,25 @@ _insert_dataset_entry(
 # Test set 12
 # - Sommy dummy production datasets, going into the production schema
 if datareg.db_connection.dialect != "sqlite":
-    _insert_dataset_entry(
+    prod_id_1 = _insert_dataset_entry(
         "DESC/datasets/production_dataset_1",
         "0.0.1",
         "production",
         None,
         "This is production's first dataset",
         which_datareg=datareg_prod,
+    )
+
+    _insert_dataset_entry(
+        "DESC/datasets/execution_test_production",
+        "0.0.1",
+        None,
+        None,
+        "This should have a more descriptive execution",
+        execution_name="production_id_test",
+        execution_description="Overwrite execution auto description production",
+        execution_locale="TestMachine",
+        input_production_datasets=[prod_id_1],
     )
 
 # - Testing execution creation directly through dataset registration
