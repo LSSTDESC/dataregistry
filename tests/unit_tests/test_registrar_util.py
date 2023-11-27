@@ -1,8 +1,16 @@
-from dataregistry.registrar_util import _parse_version_string, _name_from_relpath, _form_dataset_path, get_directory_info
+from dataregistry.registrar_util import (
+    _parse_version_string,
+    _name_from_relpath,
+    _form_dataset_path,
+    get_directory_info,
+    _read_configuration_file,
+)
 import os
+import pytest
+
 
 def test_parse_version_string():
-    """ Make sure version strings are parsed correctly """
+    """Make sure version strings are parsed correctly"""
 
     # Test case with no version suffix
     tmp = _parse_version_string("1.2.3")
@@ -29,6 +37,7 @@ def test_parse_version_string():
     assert tmp["minor"] == "8"
     assert tmp["patch"] == "9"
 
+
 def test_form_dataset_path():
     """
     Test dataset path construction
@@ -36,7 +45,7 @@ def test_form_dataset_path():
     Datasets should come back with the format:
         <root_dir>/<owner_type>/<owner>/<relative_path>
     """
-    
+
     tmp = _form_dataset_path("production", "desc", "my/path", root_dir=None)
     assert tmp == "production/production/my/path"
 
@@ -49,6 +58,7 @@ def test_form_dataset_path():
     tmp = _form_dataset_path("user", "desc", "my/path", root_dir="/root/")
     assert tmp == "/root/user/desc/my/path"
 
+
 def test_directory_info():
     """
     Test getting number of files and disk space usage from a directory.
@@ -60,10 +70,54 @@ def test_directory_info():
     assert num_files > 0
     assert total_size > 0
 
-def test_name_from_relpath():
-	""" Make sure names are exctracted from paths correctly """
 
-	assert _name_from_relpath("/testing/test") == "test"
-	assert _name_from_relpath("./testing/test") == "test"
-	assert _name_from_relpath("/testing/test/") == "test"
-	assert _name_from_relpath("test") == "test"
+def test_name_from_relpath():
+    """Make sure names are exctracted from paths correctly"""
+
+    assert _name_from_relpath("/testing/test") == "test"
+    assert _name_from_relpath("./testing/test") == "test"
+    assert _name_from_relpath("/testing/test/") == "test"
+    assert _name_from_relpath("test") == "test"
+
+
+@pytest.fixture
+def dummy_dir(tmpdir):
+    """Make a temp directory to store dummy config files"""
+    return tmpdir
+
+
+def _make_dummy_config(tmpdir, nlines):
+    """Create a dummy config file in temp directory"""
+
+    file_path = os.path.join(tmpdir, "dummy_config.txt")
+
+    # Write nlines into the dummy file
+    with open(file_path, "w") as file:
+        for i in range(nlines):
+            file.write(f"I am line {i}\n")
+
+    return file_path
+
+
+@pytest.mark.parametrize("nlines,max_config_length,ans", [(10, 10, 10), (100, 10, 10)])
+def test_read_file(dummy_dir, nlines, max_config_length, ans):
+    """Test reading in configuration file, and check truncation warning"""
+
+    # Make sure we warn when truncating
+    if nlines > max_config_length:
+        with pytest.warns(UserWarning, match="Configuration file is longer"):
+            content = _read_configuration_file(
+                _make_dummy_config(dummy_dir, nlines), max_config_length
+            )
+        assert len(content) == ans
+
+    # Usual case
+    else:
+        content = _read_configuration_file(
+            _make_dummy_config(dummy_dir, nlines), max_config_length
+        )
+        assert len(content) == ans
+
+    # Make sure we raise an exception when the file doesn't exist
+    with pytest.raises(FileNotFoundError, match="not found"):
+        _read_configuration_file("i_dont_exist.txt", 10)

@@ -10,7 +10,7 @@ from sqlalchemy import update, select
 from dataregistry.db_basic import add_table_row
 from dataregistry.registrar_util import _form_dataset_path, get_directory_info
 from dataregistry.registrar_util import _parse_version_string, _bump_version
-from dataregistry.registrar_util import _name_from_relpath
+from dataregistry.registrar_util import _name_from_relpath, _read_configuration_file 
 from dataregistry.db_basic import TableMetadata
 
 # from dataregistry.exceptions import *
@@ -270,12 +270,7 @@ class Registrar:
 
         # Read configuration file. Enter contents as a raw string.
         if configuration:
-            # Maybe first check that file size isn't outrageous?
-            with open(configuration) as f:
-                contents = f.read(max_config_length)
-                # if len(contents) == _MAX_CONFIG:
-                #    issue truncation warning?
-            values["configuration"] = contents
+            values["configuration"] = _read_configuration_file(configuration, max_config_length)
 
         # Enter row into data registry database
         with self._engine.connect() as conn:
@@ -308,6 +303,7 @@ class Registrar:
         description=None,
         execution_id=None,
         access_API=None,
+        access_API_configuration=None,
         is_overwritable=False,
         old_location=None,
         copy=True,
@@ -321,7 +317,8 @@ class Registrar:
         execution_locale=None,
         execution_configuration=None,
         input_datasets=[],
-        input_production_datasets=[]
+        input_production_datasets=[],
+        max_config_length=_DEFAULT_MAX_CONFIG,
     ):
         """
         Register a new dataset in the DESC data registry.
@@ -353,6 +350,8 @@ class Registrar:
             Used to associate dataset with a particular execution
         access_API : str, optional
             Hint as to how to read the data
+        access_API_configuration : str
+            Path to configuration file for `access_API`
         is_overwritable : bool, optional
             True if dataset may be overwritten (defaults to False).
 
@@ -392,6 +391,8 @@ class Registrar:
             List of dataset ids that were the input to this execution
         input_production_datasets : list, optional
             List of production dataset ids that were the input to this execution
+        max_config_length : int, optional
+            Maxiumum number of lines to read from a configuration file
 
         Returns
         -------
@@ -515,6 +516,8 @@ class Registrar:
             values["execution_id"] = execution_id
         if access_API:
             values["access_API"] = access_API
+        if access_API_configuration:
+            values["access_API_configuration"] = _read_configuration_file(access_API_configuration, max_config_length)
         values["is_overwritable"] = is_overwritable
         values["is_overwritten"] = False
         values["register_date"] = datetime.now()
