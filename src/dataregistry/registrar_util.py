@@ -1,6 +1,7 @@
 import os
 import re
 from sqlalchemy import MetaData, Table, Column, text, select
+from shutil import copyfile, copytree, rmtree
 
 __all__ = [
     "_parse_version_string",
@@ -8,6 +9,7 @@ __all__ = [
     "_form_dataset_path",
     "get_directory_info",
     "_name_from_relpath",
+    "_copy_data",
 ]
 VERSION_SEPARATOR = "."
 _nonneg_int_re = "0|[1-9][0-9]*"
@@ -207,3 +209,43 @@ def _name_from_relpath(relative_path):
         name = base
 
     return name
+
+def _copy_data(dataset_organization, source, dest):
+    """
+    Copy data from one location to another (for ingesting directories and files
+    into the `root_dir` shared space.
+
+    Note prior to this, in `_handle_data`, it has already been check that
+    `source` exists, so we do not have to check again.
+
+    Parameters
+    ----------
+    dataset_organization : str
+        The dataset organization, either "file" or "directory"
+    source : str
+        Path of source file or directory
+    dest : str
+        Destination we are copying to
+    """
+
+    # Copy a single file
+    if dataset_organization == "file":
+        # Create any intervening directories
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+
+        # Copy the file
+        copyfile(source, dest)
+
+    # Copy a single directory (and subdirectories)
+    elif dataset_organization == "directory":
+        # If the directory already exists, need to delete it first
+        if os.path.isdir(dest):
+            rmtree(dest)
+
+        # Copy the directory
+        copytree(source, dest, copy_function=copyfile)
+
+    else:
+        raise ValueError(f"{dataset_organization} is bad dataset_organization")
+
+

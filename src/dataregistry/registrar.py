@@ -1,7 +1,6 @@
 import time
 import os
 from datetime import datetime
-from shutil import copyfile, copytree
 
 # from sqlalchemy import MetaData, Table, Column, insert, text,
 from sqlalchemy import update, select
@@ -10,7 +9,7 @@ from sqlalchemy import update, select
 from dataregistry.db_basic import add_table_row
 from dataregistry.registrar_util import _form_dataset_path, get_directory_info
 from dataregistry.registrar_util import _parse_version_string, _bump_version
-from dataregistry.registrar_util import _name_from_relpath
+from dataregistry.registrar_util import _name_from_relpath, _copy_data
 from dataregistry.db_basic import TableMetadata
 
 # from dataregistry.exceptions import *
@@ -204,12 +203,7 @@ class Registrar:
                     f"Copying {num_files} files ({total_size/1024/1024:.2f} Mb)...",
                     end="",
                 )
-            if dataset_organization == "file":
-                # Create any intervening directories
-                os.makedirs(os.path.dirname(dest), exist_ok=True)
-                copyfile(old_location, dest)
-            elif dataset_organization == "directory":
-                copytree(old_location, dest, copy_function=copyfile)
+            _copy_data(dataset_organization, old_location, dest)
             if verbose:
                 print(f"took {time.time()-tic:.2f}")
 
