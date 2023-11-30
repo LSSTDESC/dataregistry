@@ -192,6 +192,8 @@ def _Dataset(schema):
         "data_org": Column("data_org", String, nullable=False),
         "nfiles": Column("nfiles", Integer, nullable=False),
         "total_disk_space": Column("total_disk_space", Float, nullable=False),
+        # What `root_dir` was the data originially ingested into
+        "register_root_dir": Column(String, nullable=False),
     }
 
     # Table metadata

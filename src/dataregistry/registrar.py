@@ -524,6 +524,7 @@ class Registrar:
         values["data_org"] = dataset_organization
         values["nfiles"] = num_files
         values["total_disk_space"] = total_size / 1024 / 1024  # Mb
+        values["register_root_dir"] = self._root_dir
 
         # Create a new row in the data registry database.
         with self._engine.connect() as conn:
