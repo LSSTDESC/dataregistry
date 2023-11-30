@@ -4,6 +4,9 @@ import pytest
 import yaml
 
 _TEST_ROOT_DIR = "DataRegistry_data"
+
+# Have hard coded these here, they need to match what is in the
+# `site_config/site_rootdir.yaml` file
 _NERSC_SITE = "/global/cfs/cdirs/desc-co/registry-beta"
 _ENV_SITE = "nersc"
 
@@ -21,7 +24,14 @@ _ENV_SITE = "nersc"
     ],
 )
 def test_root_dir_manual(root_dir, site, set_env_var, ans):
-    """Test various ways of passing the root_dir"""
+    """
+    Test various ways of passing the root_dir
+
+    - Manually by passing `root_dir` to `DataRegistry`
+    - Through a "site" reference string
+    - Through setting the $DATAREG_SITE environment variable
+    - The default (passing None), which should give the NERSC site
+    """
 
     # Case where we are using the DATAREG_SITE env variable
     if set_env_var:
