@@ -35,8 +35,8 @@ for FILE in ["dummy_dir/file1.txt", "dummy_dir/file2.txt", "file1.txt"]:
 # Establish connection to database
 datareg = DataRegistry(root_dir=_TEST_ROOT_DIR)
 
-# Establish connection to production database (if not sqllite)
-if datareg.db_connection.dialect != "sqllite":
+# Establish connection to production database (if not sqlite)
+if datareg.db_connection.dialect != "sqlite":
     datareg_prod = DataRegistry(root_dir=_TEST_ROOT_DIR_PRODUCTION, schema="production")
 
 

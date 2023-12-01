@@ -4,7 +4,7 @@ import argparse
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Index, Float
 from sqlalchemy import ForeignKey, UniqueConstraint, text
-from sqlalchemy.orm import relationship, declarative_base
+from sqlalchemy.orm import relationship, DeclarativeBase
 from dataregistry.db_basic import DbConnection, SCHEMA_VERSION
 from dataregistry.db_basic import add_table_row, _insert_provenance
 
@@ -20,8 +20,8 @@ Both schemas have the same layout, containing six tables:
     - "provenance"      : Contains information about the database/schema 
 """
 
-Base = declarative_base()
-
+class Base(DeclarativeBase):
+    pass
 
 def _get_ForeignKey_str(schema, table, row):
     if schema is None:
