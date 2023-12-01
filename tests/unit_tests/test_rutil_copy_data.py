@@ -28,7 +28,7 @@ def dummy_file(tmp_path):
     return tmp_src_dir, tmp_dest_dir
 
 
-def test_copy_data(dummy_file):
+def test_copy_file(dummy_file):
     """
     Test copying files and directories
 
@@ -41,17 +41,29 @@ def test_copy_data(dummy_file):
     for i in range(2):
         _copy_data(
             "file",
-            tmp_src_dir / "dummy_standalone_file.txt",
-            tmp_dest_dir / "dummy_standalone_file.txt",
+            str(tmp_src_dir / "dummy_standalone_file.txt"),
+            str(tmp_dest_dir / "dummy_standalone_file.txt"),
         )
 
         p = tmp_dest_dir / "dummy_standalone_file.txt"
         assert os.path.isfile(p)
         assert p.read_text() == "dummy stand alone file"
 
+
+def test_copy_directory(dummy_file):
+    """
+    Test copying files and directories
+
+    Each test is looped twice, the 2nd emulating overwriting a dataset.
+    """
+
+    tmp_src_dir, tmp_dest_dir = dummy_file
+
     # Copy a single directory from source to destination
     for i in range(2):
-        _copy_data("directory", tmp_src_dir / "tmpdir", tmp_dest_dir / "tmpdir")
+        _copy_data(
+            "directory", str(tmp_src_dir / "tmpdir"), str(tmp_dest_dir / "tmpdir")
+        )
 
         assert os.path.isdir(tmp_dest_dir / "tmpdir")
         assert os.path.isdir(tmp_dest_dir / "tmpdir" / "tmpdir2")
