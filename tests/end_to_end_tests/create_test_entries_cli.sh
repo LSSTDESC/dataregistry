@@ -19,8 +19,10 @@ dregs register dataset my_cli_dataset3 "1.2.3" --is_dummy \
     --root_dir "DataRegistry_data"
 
 # A production dataset
-dregs register dataset my_production_cli_dataset "0.1.2" \
-    --owner_type "production" \
-    --is_dummy \
-    --root_dir "DataRegistry_data" \
-    --schema "production"
+if [ "$DATAREG_BACKEND" = "postgres" ]; then
+  dregs register dataset my_production_cli_dataset "0.1.2" \
+      --owner_type "production" \
+      --is_dummy \
+      --root_dir "DataRegistry_data" \
+      --schema "production"
+fi
