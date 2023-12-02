@@ -517,6 +517,9 @@ class Registrar:
             values["access_API"] = access_API
         values["is_overwritable"] = is_overwritable
         values["is_overwritten"] = False
+        values["is_external_link"] = False
+        values["is_archived"] = False
+        values["is_valid"] = True
         values["register_date"] = datetime.now()
         values["owner_type"] = owner_type
         values["owner"] = owner

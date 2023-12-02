@@ -244,7 +244,7 @@ dataset:
     description: "User provided description of the dataset"
   is_valid:
     type: "Boolean"
-    default: True
+    nullable: False
     description: "False if, e.g., copy failed"
   execution_id:
     type: "Integer"
@@ -255,17 +255,17 @@ dataset:
     description: "Execution this dataset is linked to"
   is_overwritten:
     type: "Boolean"
-    default: False
+    nullable: False
     description: "True if the original data for this dataset has been overwritten at some point. This would have required that `is_overwritable` was set to true on the original dataset"
   is_overwritable:
     type: "Boolean"
-    default: False
+    nullable: False
     description: "True means this dataset can be overwritten in the future"
   is_external_link:
     type: "Boolean"
-    default: False
+    nullable: False
     description: "True if an external link"
   is_archived:
     type: "Boolean"
-    default: False
+    nullablee: False
     description: "True if dataset is archived"

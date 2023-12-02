@@ -2,7 +2,7 @@ import os
 import sys
 import argparse
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Index, Float
+from sqlalchemy import Column, ColumnDefault, Integer, String, DateTime, Boolean, Index, Float
 from sqlalchemy import ForeignKey, UniqueConstraint, text
 from sqlalchemy.orm import relationship, DeclarativeBase
 from dataregistry.db_basic import DbConnection, SCHEMA_VERSION
@@ -54,6 +54,7 @@ def _get_rows(schema, table):
 
     return_dict = {}
     for column in schema_yaml[table].keys():
+
         # Special case where row has a foreign key
         if schema_yaml[table][column]["foreign_key"]:
             if schema_yaml[table][column]["foreign_key_schema"] == "self":

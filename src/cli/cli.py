@@ -4,6 +4,7 @@ import argparse
 from dataregistry.db_basic import SCHEMA_VERSION
 from .register import register_dataset
 from .query import dregs_ls
+from dataregistry.schema import load_schema
 
 # ---------------------
 # The data registry CLI
