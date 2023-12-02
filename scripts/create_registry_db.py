@@ -22,12 +22,19 @@ Both schemas have the same layout, containing six tables:
 """
 
 # Conversion from string types in `schema.yaml` to SQLAlchemy
-_TYPE_TRANSLATE = {"String": String, "Integer": Integer, "DateTime": DateTime,
-        "StringShort": String(20), "StringLong": String(250), "Boolean": Boolean,
-        "Float": Float}
+_TYPE_TRANSLATE = {
+    "String": String,
+    "Integer": Integer,
+    "DateTime": DateTime,
+    "StringShort": String(20),
+    "StringLong": String(250),
+    "Boolean": Boolean,
+    "Float": Float,
+}
 
 # Load the schema from the `schema.yaml` file
 schema_yaml = load_schema()
+
 
 def _get_rows(schema, table):
     """
@@ -38,7 +45,7 @@ def _get_rows(schema, table):
     ----------
     schema : str
     table : str
-    
+
     Returns
     -------
     return_dict : dict
@@ -47,35 +54,59 @@ def _get_rows(schema, table):
 
     return_dict = {}
     for column in schema_yaml[table].keys():
-
         # Special case where row has a foreign key
         if schema_yaml[table][column]["foreign_key"]:
             if schema_yaml[table][column]["foreign_key_schema"] == "self":
                 schema_yaml[table][column]["foreign_key_schema"] = schema
 
-            return_dict[column] = Column(column,
-                    _TYPE_TRANSLATE[schema_yaml[table][column]["type"]],
-                    ForeignKey(_get_ForeignKey_str(
+            return_dict[column] = Column(
+                column,
+                _TYPE_TRANSLATE[schema_yaml[table][column]["type"]],
+                ForeignKey(
+                    _get_ForeignKey_str(
                         schema_yaml[table][column]["foreign_key_schema"],
-                    schema_yaml[table][column]["foreign_key_table"],
-                    schema_yaml[table][column]["foreign_key_row"])),
-                    primary_key=schema_yaml[table][column]["primary_key"],
-                    nullable=schema_yaml[table][column]["nullable"],
+                        schema_yaml[table][column]["foreign_key_table"],
+                        schema_yaml[table][column]["foreign_key_row"],
+                    )
+                ),
+                primary_key=schema_yaml[table][column]["primary_key"],
+                nullable=schema_yaml[table][column]["nullable"],
             )
 
         # Normal case
         else:
-            return_dict[column] = Column(column, 
-                    _TYPE_TRANSLATE[schema_yaml[table][column]["type"]],
-                    primary_key=schema_yaml[table][column]["primary_key"],
-                    nullable=schema_yaml[table][column]["nullable"])
+            return_dict[column] = Column(
+                column,
+                _TYPE_TRANSLATE[schema_yaml[table][column]["type"]],
+                primary_key=schema_yaml[table][column]["primary_key"],
+                nullable=schema_yaml[table][column]["nullable"],
+            )
 
     return return_dict
+
 
 class Base(DeclarativeBase):
     pass
 
+
 def _get_ForeignKey_str(schema, table, row):
+    """
+    Get the string reference to the "<shema>.<table>.<row>" a foreign key will
+    point to.
+
+    The schema address will only be included for postgres backends.
+
+    Parameters
+    ---------
+    schema : str
+    table : str
+    row : str
+
+    Returns
+    -------
+    - : str
+    """
+
     if schema is None:
         return f"{table}.{row}"
     else:
@@ -189,7 +220,7 @@ def _Dependency(schema, has_production):
     # Remove link to production schema.
     if not has_production:
         del rows["input_production_id"]
-    
+
     # Table metadata
     meta = {"__tablename__": "dependency", "__table_args__": {"schema": schema}}
 
@@ -241,7 +272,7 @@ for SCHEMA in SCHEMA_LIST:
         stmt = f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}"
         conn.execute(text(stmt))
         conn.commit()
-        
+
 # Grant reg_reader access
 acct = "reg_reader"
 for SCHEMA in SCHEMA_LIST:
