@@ -9,7 +9,7 @@ def register_dataset(args):
     Parameters
     ----------
     args : argparse object
-    
+
     args.config_file : str
         Path to data registry config file
     args.schema : str
@@ -43,6 +43,7 @@ def register_dataset(args):
         copy=(not args.make_symlink),
         is_dummy=args.is_dummy,
         owner=args.owner,
+        owner_type=args.owner_type,
         execution_name=args.execution_name,
         execution_description=args.execution_description,
         execution_start=args.execution_start,

@@ -176,8 +176,9 @@ dataset:
     description: "Unique identifier for this dataset"
   name:
     type: "String"
-    description: "User given name for this dataset"
+    description: "Any convenient, evocative name for the human. Note the combination of name, version and version_suffix must be unique. If None name is generated from the relative path."
     nullable: False
+    cli_optional: True
   relative_path:
     type: "String"
     description: "Relative path storing the data, relative to `<root_dir>`"
@@ -196,14 +197,16 @@ dataset:
     nullable: False
   version_suffix:
     type: "String"
-    description: "Optional version suffix"
+    description: "Optional version suffix to place at the end of the version string. Cannot be used for production datasets."
+    cli_optional: True
   version_string:
     type: "String"
     description: "Version string"
     nullable: False
-  dataset_creation_date:
+  creation_date:
     type: "DateTime"
     description: "Dataset creation date"
+    cli_optional: True
   register_date:
     type: "DateTime"
     description: "Date the dataset was registered"
@@ -215,14 +218,19 @@ dataset:
   access_API:
     type: "StringShort"
     description: "Describes the software that can read the dataset (e.g., 'gcr-catalogs', 'skyCatalogs')"
+    cli_optional: True
   owner:
     type: "String"
-    description: "Owner of the dataset"
+    description: "Owner of the dataset (defaults to $USER)"
     nullable: False
+    cli_optional: True
   owner_type:
     type: "String"
     description: "Datasets owner type, can be 'user', 'group', 'project' or 'production'."
     nullable: False
+    choices: ["user", "group", "project", "production"]
+    cli_default: "user"
+    cli_optional: True
   data_org:
     type: "String"
     description: "Dataset organisation ('file' or 'directory')"
@@ -241,7 +249,8 @@ dataset:
     nullable: False
   description:
     type: "String"
-    description: "User provided description of the dataset"
+    description: "User provided human-readable description of the dataset"
+    cli_optional: True
   is_valid:
     type: "Boolean"
     nullable: False
@@ -253,6 +262,7 @@ dataset:
     foreign_key_table: "execution"
     foreign_key_row: "execution_id"
     description: "Execution this dataset is linked to"
+    cli_optional: True
   is_overwritten:
     type: "Boolean"
     nullable: False
@@ -261,6 +271,7 @@ dataset:
     type: "Boolean"
     nullable: False
     description: "True means this dataset can be overwritten in the future"
+    cli_optional: True
   is_external_link:
     type: "Boolean"
     nullable: False
