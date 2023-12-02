@@ -1,0 +1,271 @@
+---
+execution:
+  execution_id:
+    type: "Integer"
+    primary_key: True
+    description: "Unique identifier for execution"
+  description:
+    type: "String"
+    description: "Short description of execution"
+  register_date:
+    type: "DateTime"
+    description: "When was the execution registered in the database"
+    nullable: False
+  execution_start:
+    type: "DateTime"
+    description: "When was the execution performed at `locale`"
+  name:
+    type: "String"
+    description: "Identifies the code executed (e.g., could be pipeline name)"
+  locale:
+    type: "String"
+    description: "Site where the code was run (e.g., NERSC)"
+  configuration:
+    type: "String"
+    description: "Path to execution configuration file (txt, YAML, TOML, etc). Ingested as raw text"
+  creator_uid:
+    type: "StringShort"
+    description: "UID of person who registered the entry"
+    nullable: False
+
+provenance:
+  provenance_id:
+    type: "Integer"
+    primary_key: True
+    description: "Unique identifier for this provenance entry"
+  code_version_major:
+    type: "Integer"
+    description: "Major version of code when this schema was created"
+    nullable: False
+  code_version_minor:
+    type: "Integer"
+    description: "Minor version of code when this schema was created"
+    nullable: False
+  code_version_patch:
+    type: "Integer"
+    description: "Patch version of code when this schema was created"
+    nullable: False
+  code_version_suffix:
+    type: "String"
+    description: "Version suffix of code when this schema was created"
+  creator_uid:
+    type: "StringShort"
+    description: "UID of person who registered the entry"
+    nullable: False
+  db_version_major:
+    type: "Integer"
+    description: "Major version of schema"
+    nullable: False
+  db_version_minor:
+    type: "Integer"
+    description: "Minor version of schema"
+    nullable: False
+  db_version_patch:
+    type: "Integer"
+    description: "Patch version of schema"
+    nullable: False
+  git_hash:
+    type: "String"
+    description: "Git hash at time of schema creation"
+  repo_is_clean:
+    type: "Boolean"
+    description: "Was git repo clean at schema creation?"
+  update_method:
+    type: "String"
+    description: "What type of schema update does this entry relate to ('CREATE','MODIFY','MIGRATE')"
+    nullable: False
+  schema_enabled_date:
+    type: "DateTime"
+    description: "Date schema was created/updated"
+    nullable: False
+  comment:
+    type: "StringLong"
+    description: "Comment relating to new provenance entry"
+
+execution_alias:
+  execution_alias_id:
+    description: "Unique identifier for execution alias"
+    type: "Integer"
+    primary_key: True
+  supersede_date:
+    type: "DateTime"
+    description: "If a new entry has been added to the table with the same alias name (but different `dataset_id`), the old entry will be superseded. `supersede_date` in the old entry tracks when this happened. If the entry has not been superseded, `supersede_date` will be None"
+  creator_uid:
+    type: "StringShort"
+    description: "UID of person who registered the entry"
+    nullable: False
+  register_date:
+    type: "DateTime"
+    description: "Date the execution alias was registered"
+    nullable: False
+  alias:
+    type: "String"
+    description: "User given execution alias name"
+    nullable: False
+  execution_id:
+    type: "Integer"
+    foreign_key: True
+    foreign_key_schema: "self"
+    foreign_key_table: "execution"
+    foreign_key_row: "execution_id"
+    description: "Execution this alias is linked to"
+
+dataset_alias:
+  dataset_alias_id:
+    description: "Unique identifier for dataset alias"
+    type: "Integer"
+    primary_key: True
+  supersede_date:
+    type: "DateTime"
+    description: "If a new entry has been added to the table with the same alias name (but different `dataset_id`), the old entry will be superseded. `supersede_date` in the old entry tracks when this happened. If the entry has not been superseded, `supersede_date` will be None"
+  creator_uid:
+    type: "StringShort"
+    description: "UID of person who registered the entry"
+    nullable: False
+  register_date:
+    type: "DateTime"
+    description: "Date the dataset alias was registered"
+    nullable: False
+  alias:
+    type: "String"
+    description: "User given dataset alias name"
+    nullable: False
+  dataset_id:
+    type: "Integer"
+    foreign_key: True
+    foreign_key_schema: "self"
+    foreign_key_table: "dataset"
+    foreign_key_row: "dataset_id"
+    description: "Dataset this alias is linked to"
+
+dependency:
+  dependency_id:
+    description: "Unique identifier for dependency"
+    type: "Integer"
+    primary_key: True
+  register_date:
+    type: "DateTime"
+    description: "Date the dependency was registered"
+    nullable: False
+  input_id:
+    type: "Integer"
+    foreign_key: True
+    foreign_key_schema: "self"
+    foreign_key_table: "dataset"
+    foreign_key_row: "dataset_id"
+    description: "Dataset this dependency is linked to"
+  input_production_id:
+    type: "Integer"
+    foreign_key: True
+    foreign_key_schema: "production"
+    foreign_key_table: "dataset"
+    foreign_key_row: "dataset_id"
+    description: "Production dataset this dependency is linked to"
+  execution_id:
+    type: "Integer"
+    foreign_key: True
+    foreign_key_schema: "self"
+    foreign_key_table: "execution"
+    foreign_key_row: "execution_id"
+    description: "Execution this dependency is linked to"
+
+dataset:
+  dataset_id:
+    type: "Integer"
+    primary_key: True
+    description: "Unique identifier for this dataset"
+  name:
+    type: "String"
+    description: "User given name for this dataset"
+    nullable: False
+  relative_path:
+    type: "String"
+    description: "Relative path storing the data, relative to `<root_dir>`"
+    nullable: False
+  version_major:
+    type: "Integer"
+    description: "Major version in semantic string (i.e., X.x.x)"
+    nullable: False
+  version_minor:
+    type: "Integer"
+    description: "Minor version in semantic string (i.e., x.X.x)"
+    nullable: False
+  version_patch:
+    type: "Integer"
+    description: "Patch version in semantic string (i.e., x.x.X)"
+    nullable: False
+  version_suffix:
+    type: "String"
+    description: "Optional version suffix"
+  version_string:
+    type: "String"
+    description: "Version string"
+    nullable: False
+  dataset_creation_date:
+    type: "DateTime"
+    description: "Dataset creation date"
+  register_date:
+    type: "DateTime"
+    description: "Date the dataset was registered"
+    nullable: False
+  creator_uid:
+    type: "StringShort"
+    description: "UID of person who registered the entry"
+    nullable: False
+  access_API:
+    type: "StringShort"
+    description: "Describes the software that can read the dataset (e.g., 'gcr-catalogs', 'skyCatalogs')"
+  owner:
+    type: "String"
+    description: "Owner of the dataset"
+    nullable: False
+  owner_type:
+    type: "String"
+    description: "Datasets owner type, can be 'user', 'group', 'project' or 'production'."
+    nullable: False
+  data_org:
+    type: "String"
+    description: "Dataset organisation ('file' or 'directory')"
+    nullable: False
+  nfiles:
+    type: "Integer"
+    description: "How many files are in the dataset"
+    nullable: False
+  total_disk_space:
+    type: "Float"
+    description: "Total disk spaced used by the dataset"
+    nullable: False
+  register_root_dir:
+    type: "String"
+    description: "The `root_dir` the dataset was originally ingested into"
+    nullable: False
+  description:
+    type: "String"
+    description: "User provided description of the dataset"
+  is_valid:
+    type: "Boolean"
+    default: True
+    description: "False if, e.g., copy failed"
+  execution_id:
+    type: "Integer"
+    foreign_key: True
+    foreign_key_schema: "self"
+    foreign_key_table: "execution"
+    foreign_key_row: "execution_id"
+    description: "Execution this dataset is linked to"
+  is_overwritten:
+    type: "Boolean"
+    default: False
+    description: "True if the original data for this dataset has been overwritten at some point. This would have required that `is_overwritable` was set to true on the original dataset"
+  is_overwritable:
+    type: "Boolean"
+    default: False
+    description: "True means this dataset can be overwritten in the future"
+  is_external_link:
+    type: "Boolean"
+    default: False
+    description: "True if an external link"
+  is_archived:
+    type: "Boolean"
+    default: False
+    description: "True if dataset is archived"

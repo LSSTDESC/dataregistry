@@ -7,6 +7,7 @@ from sqlalchemy import ForeignKey, UniqueConstraint, text
 from sqlalchemy.orm import relationship, DeclarativeBase
 from dataregistry.db_basic import DbConnection, SCHEMA_VERSION
 from dataregistry.db_basic import add_table_row, _insert_provenance
+from dataregistry.schema import load_schema
 
 """
 A script to create the default dataregistry schema and the production schema.
@@ -19,6 +20,57 @@ Both schemas have the same layout, containing six tables:
     - "dependancy"      : Tracks dependencies between datasets
     - "provenance"      : Contains information about the database/schema 
 """
+
+# Conversion from string types in `schema.yaml` to SQLAlchemy
+_TYPE_TRANSLATE = {"String": String, "Integer": Integer, "DateTime": DateTime,
+        "StringShort": String(20), "StringLong": String(250), "Boolean": Boolean,
+        "Float": Float}
+
+# Load the schema from the `schema.yaml` file
+schema_yaml = load_schema()
+
+def _get_rows(schema, table):
+    """
+    Build the SQLAlchemy `Column` list for this table from the information in
+    the `schema.yaml` file.
+
+    Parameters
+    ----------
+    schema : str
+    table : str
+    
+    Returns
+    -------
+    return_dict : dict
+        SQLAlchemy Column entries for each table row
+    """
+
+    return_dict = {}
+    for column in schema_yaml[table].keys():
+
+        # Special case where row has a foreign key
+        if schema_yaml[table][column]["foreign_key"]:
+            if schema_yaml[table][column]["foreign_key_schema"] == "self":
+                schema_yaml[table][column]["foreign_key_schema"] = schema
+
+            return_dict[column] = Column(column,
+                    _TYPE_TRANSLATE[schema_yaml[table][column]["type"]],
+                    ForeignKey(_get_ForeignKey_str(
+                        schema_yaml[table][column]["foreign_key_schema"],
+                    schema_yaml[table][column]["foreign_key_table"],
+                    schema_yaml[table][column]["foreign_key_row"])),
+                    primary_key=schema_yaml[table][column]["primary_key"],
+                    nullable=schema_yaml[table][column]["nullable"],
+            )
+
+        # Normal case
+        else:
+            return_dict[column] = Column(column, 
+                    _TYPE_TRANSLATE[schema_yaml[table][column]["type"]],
+                    primary_key=schema_yaml[table][column]["primary_key"],
+                    nullable=schema_yaml[table][column]["nullable"])
+
+    return return_dict
 
 class Base(DeclarativeBase):
     pass
@@ -35,25 +87,8 @@ def _Provenance(schema):
 
     class_name = f"{schema}_provenance"
 
-    # Rows
-    rows = {
-        "provenance_id": Column("provenance_id", Integer, primary_key=True),
-        "code_version_major": Column("code_version_major", Integer, nullable=False),
-        "code_version_minor": Column("code_version_minor", Integer, nullable=False),
-        "code_version_patch": Column("code_version_patch", Integer, nullable=False),
-        "code_version_suffix": Column("code_version_suffix", String),
-        "db_version_major": Column("db_version_major", Integer, nullable=False),
-        "db_version_minor": Column("db_version_minor", Integer, nullable=False),
-        "db_version_patch": Column("db_version_patch", Integer, nullable=False),
-        "git_hash": Column("git_hash", String, nullable=True),
-        "repo_is_clean": Column("repo_is_clean", Boolean, nullable=True),
-        # update method is always "CREATE" for this script.
-        # Alternative could be "MODIFY" or "MIGRATE"
-        "update_method": Column("update_method", String(10), nullable=False),
-        "schema_enabled_date": Column("schema_enabled_date", DateTime, nullable=False),
-        "creator_uid": Column("creator_uid", String(20), nullable=False),
-        "comment": Column("comment", String(250)),
-    }
+    # Load rows from `schema.yaml` file
+    rows = _get_rows(schema, "provenance")
 
     # Table metadata
     meta = {"__tablename__": "provenance", "__table_args__": {"schema": schema}}
@@ -67,19 +102,8 @@ def _Execution(schema):
 
     class_name = f"{schema}_execution"
 
-    # Rows
-    rows = {
-        "execution_id": Column("execution_id", Integer, primary_key=True),
-        "description": Column("description", String),
-        "register_date": Column("register_date", DateTime, nullable=False),
-        "execution_start": Column("execution_start", DateTime),
-        # name is meant to identify the code executed.  E.g., could be pipeline name
-        "name": Column("name", String),
-        # locale is, e.g. site where code was run
-        "locale": Column("locale", String),
-        "configuration": Column("configuration", String),
-        "creator_uid": Column("creator_uid", String(20), nullable=False),
-    }
+    # Load rows from `schema.yaml` file
+    rows = _get_rows(schema, "execution")
 
     # Table metadata
     meta = {"__tablename__": "execution", "__table_args__": {"schema": schema}}
@@ -93,18 +117,8 @@ def _ExecutionAlias(schema):
 
     class_name = f"{schema}_execution_alias"
 
-    # Rows
-    rows = {
-        "execution_alias_id": Column("execution_alias_id", Integer, primary_key=True),
-        "alias": Column(String, nullable=False),
-        "execution_id": Column(
-            Integer,
-            ForeignKey(_get_ForeignKey_str(schema, "execution", "execution_id")),
-        ),
-        "supersede_date": Column(DateTime, default=None),
-        "register_date": Column(DateTime, nullable=False),
-        "creator_uid": Column(String(20), nullable=False),
-    }
+    # Load rows from `schema.yaml` file
+    rows = _get_rows(schema, "execution_alias")
 
     # Table metadata
     meta = {
@@ -124,17 +138,8 @@ def _DatasetAlias(schema):
 
     class_name = f"{schema}_dataset_alias"
 
-    # Rows
-    rows = {
-        "dataset_alias_id": Column(Integer, primary_key=True),
-        "alias": Column(String, nullable=False),
-        "dataset_id": Column(
-            Integer, ForeignKey(_get_ForeignKey_str(schema, "dataset", "dataset_id"))
-        ),
-        "supersede_date": Column(DateTime, default=None),
-        "register_date": Column(DateTime, nullable=False),
-        "creator_uid": Column(String(20), nullable=False),
-    }
+    # Load rows from `schema.yaml` file
+    rows = _get_rows(schema, "dataset_alias")
 
     # Table metadata
     meta = {
@@ -154,47 +159,8 @@ def _Dataset(schema):
 
     class_name = f"{schema}_dataset"
 
-    # Rows
-    rows = {
-        "dataset_id": Column(Integer, primary_key=True),
-        "name": Column(String, nullable=False),
-        "relative_path": Column(String, nullable=False),
-        "version_major": Column(Integer, nullable=False),
-        "version_minor": Column(Integer, nullable=False),
-        "version_patch": Column(Integer, nullable=False),
-        "version_string": Column(String, nullable=False),
-        "version_suffix": Column(String),
-        "dataset_creation_date": Column(DateTime),
-        "is_archived": Column(Boolean, default=False),
-        "is_external_link": Column(Boolean, default=False),
-        "is_overwritable": Column(Boolean, default=False),
-        "is_overwritten": Column(Boolean, default=False),
-        "is_valid": Column(Boolean, default=True),  # False if, e.g., copy failed
-        # The following are boilerplate, included in all or most tables
-        "register_date": Column(DateTime, nullable=False),
-        "creator_uid": Column(String(20), nullable=False),
-        # Make access_API a string for now, but it could be an enumeration or
-        # a foreign key into another table.   Possible values for the column
-        # might include "gcr-catalogs", "skyCatalogs"
-        "access_API": Column("access_API", String(20)),
-        # A way to associate a dataset with a program execution or "run"
-        "execution_id": Column(
-            Integer,
-            ForeignKey(_get_ForeignKey_str(schema, "execution", "execution_id")),
-        ),
-        "description": Column(String),
-        "owner_type": Column(String, nullable=False),
-        # If ownership_type is 'production', then owner is always 'production'
-        # If ownership_type is 'group', owner will be a group name
-        # If ownership_type is 'user', owner will be a user name
-        "owner": Column(String, nullable=False),
-        # To store metadata about the dataset.
-        "data_org": Column("data_org", String, nullable=False),
-        "nfiles": Column("nfiles", Integer, nullable=False),
-        "total_disk_space": Column("total_disk_space", Float, nullable=False),
-        # What `root_dir` was the data originially ingested into
-        "register_root_dir": Column(String, nullable=False),
-    }
+    # Load rows from `schema.yaml` file
+    rows = _get_rows(schema, "dataset")
 
     # Table metadata
     meta = {
@@ -217,25 +183,12 @@ def _Dependency(schema, has_production):
 
     class_name = f"{schema}_dependency"
 
-    # Rows
-    rows = {
-        "dependency_id": Column(Integer, primary_key=True),
-        "register_date": Column(DateTime, nullable=False),
-        "execution_id": Column(
-            Integer,
-            ForeignKey(_get_ForeignKey_str(schema, "execution", "execution_id")),
-        ),
-        "input_id": Column(
-            Integer, ForeignKey(_get_ForeignKey_str(schema, "dataset", "dataset_id"))
-        ),
-    }
+    # Load rows from `schema.yaml` file
+    rows = _get_rows(schema, "dependency")
 
-    # Add link to production schema.
-    if has_production:
-        rows["input_production_id"] = Column(
-            Integer,
-            ForeignKey(_get_ForeignKey_str("production", "dataset", "dataset_id")),
-        )
+    # Remove link to production schema.
+    if not has_production:
+        del rows["input_production_id"]
     
     # Table metadata
     meta = {"__tablename__": "dependency", "__table_args__": {"schema": schema}}
