@@ -219,8 +219,8 @@ def _read_configuration_file(configuration_file, max_config_length):
     configuration_file : str
         Path to configuration file
     max_config_length : int
-        Maximum number of rows to read. Files above this length will be
-        truncated.
+        Maximum number of characters to read from file. Files beyond this limit
+        will be truncated (with a warning message).
 
     Returns
     -------
@@ -231,7 +231,7 @@ def _read_configuration_file(configuration_file, max_config_length):
     if not os.path.isfile(configuration_file):
         raise FileNotFoundError(f"{configuration_file} not found")
 
-    # Open configuration file and read up to max_config_length lines
+    # Open configuration file and read up to max_config_length characters
     with open(configuration_file) as f:
         contents = f.read(max_config_length)
 

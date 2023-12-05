@@ -72,7 +72,7 @@ def test_directory_info():
 
 
 def test_name_from_relpath():
-    """Make sure names are exctracted from paths correctly"""
+    """Make sure names are extracted from paths correctly"""
 
     assert _name_from_relpath("/testing/test") == "test"
     assert _name_from_relpath("./testing/test") == "test"
@@ -80,41 +80,49 @@ def test_name_from_relpath():
     assert _name_from_relpath("test") == "test"
 
 
-@pytest.fixture
-def dummy_dir(tmpdir):
-    """Make a temp directory to store dummy config files"""
-    return tmpdir
+def _make_dummy_config(tmpdir, nchars):
+    """
+    Create a dummy config file in temp directory
 
+    Parameters
+    ----------
+    tmpdir : py.path.local object (pytest @fixture)
+        Temporary directory we can store test config files to
+    nchars : int
+        Number of characters to put in temp config file
 
-def _make_dummy_config(tmpdir, nlines):
-    """Create a dummy config file in temp directory"""
+    Returns
+    -------
+    file_path : str
+        Path to temporary config file we can read
+    """
 
     file_path = os.path.join(tmpdir, "dummy_config.txt")
 
-    # Write nlines into the dummy file
+    # Write nchars characters into the dummy file
     with open(file_path, "w") as file:
-        for i in range(nlines):
-            file.write(f"I am line {i}\n")
+        for i in range(nchars):
+            file.write(f"X")
 
     return file_path
 
 
-@pytest.mark.parametrize("nlines,max_config_length,ans", [(10, 10, 10), (100, 10, 10)])
-def test_read_file(dummy_dir, nlines, max_config_length, ans):
+@pytest.mark.parametrize("nchars,max_config_length,ans", [(10, 10, 10), (100, 10, 10)])
+def test_read_file(tmpdir, nchars, max_config_length, ans):
     """Test reading in configuration file, and check truncation warning"""
 
     # Make sure we warn when truncating
-    if nlines > max_config_length:
+    if nchars > max_config_length:
         with pytest.warns(UserWarning, match="Configuration file is longer"):
             content = _read_configuration_file(
-                _make_dummy_config(dummy_dir, nlines), max_config_length
+                _make_dummy_config(tmpdir, nchars), max_config_length
             )
         assert len(content) == ans
 
     # Usual case
     else:
         content = _read_configuration_file(
-            _make_dummy_config(dummy_dir, nlines), max_config_length
+            _make_dummy_config(tmpdir, nchars), max_config_length
         )
         assert len(content) == ans
 

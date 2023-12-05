@@ -350,7 +350,7 @@ class Registrar:
             Used to associate dataset with a particular execution
         access_API : str, optional
             Hint as to how to read the data
-        access_API_configuration : str
+        access_API_configuration : str, optional
             Path to configuration file for `access_API`
         is_overwritable : bool, optional
             True if dataset may be overwritten (defaults to False).
