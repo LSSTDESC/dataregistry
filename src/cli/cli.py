@@ -73,29 +73,29 @@ arg_register_sub = arg_register.add_subparsers(
 arg_register_dataset = arg_register_sub.add_parser("dataset", help="Register a dataset")
 
 # Get some information from the `schema.yaml` file
-for row in schema_data["dataset"]:
+for column in schema_data["dataset"]:
     # Any default?
-    if schema_data["dataset"][row]["cli_default"] is not None:
-        default = schema_data["dataset"][row]["cli_default"]
+    if schema_data["dataset"][column]["cli_default"] is not None:
+        default = schema_data["dataset"][column]["cli_default"]
         default_str = f" (default={default})"
     else:
         default = None
         default_str = ""
 
     # Restricted to choices?
-    if schema_data["dataset"][row]["choices"] is not None:
-        choices = schema_data["dataset"][row]["choices"]
+    if schema_data["dataset"][column]["choices"] is not None:
+        choices = schema_data["dataset"][column]["choices"]
     else:
         choices = None
 
     # Add flag
-    if schema_data["dataset"][row]["cli_optional"]:
+    if schema_data["dataset"][column]["cli_optional"]:
         arg_register_dataset.add_argument(
-            "--" + row,
-            help=schema_data["dataset"][row]["description"] + default_str,
+            "--" + column,
+            help=schema_data["dataset"][column]["description"] + default_str,
             default=default,
             choices=choices,
-            type=_TYPE_TRANSLATE[schema_data["dataset"][row]["type"]],
+            type=_TYPE_TRANSLATE[schema_data["dataset"][column]["type"]],
         )
 
 # Entries unique to registering the dataset using the CLI

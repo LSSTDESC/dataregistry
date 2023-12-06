@@ -2,11 +2,20 @@ import os
 import sys
 import argparse
 from datetime import datetime
-from sqlalchemy import Column, ColumnDefault, Integer, String, DateTime, Boolean, Index, Float
+from sqlalchemy import (
+    Column,
+    ColumnDefault,
+    Integer,
+    String,
+    DateTime,
+    Boolean,
+    Index,
+    Float,
+)
 from sqlalchemy import ForeignKey, UniqueConstraint, text
 from sqlalchemy.orm import relationship, DeclarativeBase
 from dataregistry.db_basic import DbConnection, SCHEMA_VERSION
-from dataregistry.db_basic import add_table_row, _insert_provenance
+from dataregistry.db_basic import _insert_provenance
 from dataregistry.schema import load_schema
 
 """
@@ -36,7 +45,7 @@ _TYPE_TRANSLATE = {
 schema_yaml = load_schema()
 
 
-def _get_rows(schema, table):
+def _get_column_definitions(schema, table):
     """
     Build the SQLAlchemy `Column` list for this table from the information in
     the `schema.yaml` file.
@@ -49,13 +58,12 @@ def _get_rows(schema, table):
     Returns
     -------
     return_dict : dict
-        SQLAlchemy Column entries for each table row
+        SQLAlchemy Column entries for each table
     """
 
     return_dict = {}
     for column in schema_yaml[table].keys():
-
-        # Special case where row has a foreign key
+        # Special case where column has a foreign key
         if schema_yaml[table][column]["foreign_key"]:
             if schema_yaml[table][column]["foreign_key_schema"] == "self":
                 schema_yaml[table][column]["foreign_key_schema"] = schema
@@ -67,7 +75,7 @@ def _get_rows(schema, table):
                     _get_ForeignKey_str(
                         schema_yaml[table][column]["foreign_key_schema"],
                         schema_yaml[table][column]["foreign_key_table"],
-                        schema_yaml[table][column]["foreign_key_row"],
+                        schema_yaml[table][column]["foreign_key_column"],
                     )
                 ),
                 primary_key=schema_yaml[table][column]["primary_key"],
@@ -90,9 +98,9 @@ class Base(DeclarativeBase):
     pass
 
 
-def _get_ForeignKey_str(schema, table, row):
+def _get_ForeignKey_str(schema, table, column):
     """
-    Get the string reference to the "<shema>.<table>.<row>" a foreign key will
+    Get the string reference to the "<shema>.<table>.<column>" a foreign key will
     point to.
 
     The schema address will only be included for postgres backends.
@@ -101,7 +109,7 @@ def _get_ForeignKey_str(schema, table, row):
     ---------
     schema : str
     table : str
-    row : str
+    column : str
 
     Returns
     -------
@@ -109,9 +117,9 @@ def _get_ForeignKey_str(schema, table, row):
     """
 
     if schema is None:
-        return f"{table}.{row}"
+        return f"{table}.{column}"
     else:
-        return f"{schema}.{table}.{row}"
+        return f"{schema}.{table}.{column}"
 
 
 def _Provenance(schema):
@@ -119,13 +127,13 @@ def _Provenance(schema):
 
     class_name = f"{schema}_provenance"
 
-    # Load rows from `schema.yaml` file
-    rows = _get_rows(schema, "provenance")
+    # Load columns from `schema.yaml` file
+    columns = _get_column_definitions(schema, "provenance")
 
     # Table metadata
     meta = {"__tablename__": "provenance", "__table_args__": {"schema": schema}}
 
-    Model = type(class_name, (Base,), {**rows, **meta})
+    Model = type(class_name, (Base,), {**columns, **meta})
     return Model
 
 
@@ -134,13 +142,13 @@ def _Execution(schema):
 
     class_name = f"{schema}_execution"
 
-    # Load rows from `schema.yaml` file
-    rows = _get_rows(schema, "execution")
+    # Load columns from `schema.yaml` file
+    columns = _get_column_definitions(schema, "execution")
 
     # Table metadata
     meta = {"__tablename__": "execution", "__table_args__": {"schema": schema}}
 
-    Model = type(class_name, (Base,), {**rows, **meta})
+    Model = type(class_name, (Base,), {**columns, **meta})
     return Model
 
 
@@ -149,8 +157,8 @@ def _ExecutionAlias(schema):
 
     class_name = f"{schema}_execution_alias"
 
-    # Load rows from `schema.yaml` file
-    rows = _get_rows(schema, "execution_alias")
+    # Load columns from `schema.yaml` file
+    columns = _get_column_definitions(schema, "execution_alias")
 
     # Table metadata
     meta = {
@@ -161,7 +169,7 @@ def _ExecutionAlias(schema):
         ),
     }
 
-    Model = type(class_name, (Base,), {**rows, **meta})
+    Model = type(class_name, (Base,), {**columns, **meta})
     return Model
 
 
@@ -170,8 +178,8 @@ def _DatasetAlias(schema):
 
     class_name = f"{schema}_dataset_alias"
 
-    # Load rows from `schema.yaml` file
-    rows = _get_rows(schema, "dataset_alias")
+    # Load columns from `schema.yaml` file
+    columns = _get_column_definitions(schema, "dataset_alias")
 
     # Table metadata
     meta = {
@@ -182,7 +190,7 @@ def _DatasetAlias(schema):
         ),
     }
 
-    Model = type(class_name, (Base,), {**rows, **meta})
+    Model = type(class_name, (Base,), {**columns, **meta})
     return Model
 
 
@@ -191,8 +199,8 @@ def _Dataset(schema):
 
     class_name = f"{schema}_dataset"
 
-    # Load rows from `schema.yaml` file
-    rows = _get_rows(schema, "dataset")
+    # Load columns from `schema.yaml` file
+    columns = _get_column_definitions(schema, "dataset")
 
     # Table metadata
     meta = {
@@ -206,7 +214,7 @@ def _Dataset(schema):
         ),
     }
 
-    Model = type(class_name, (Base,), {**rows, **meta})
+    Model = type(class_name, (Base,), {**columns, **meta})
     return Model
 
 
@@ -215,17 +223,17 @@ def _Dependency(schema, has_production):
 
     class_name = f"{schema}_dependency"
 
-    # Load rows from `schema.yaml` file
-    rows = _get_rows(schema, "dependency")
+    # Load columns from `schema.yaml` file
+    columns = _get_column_definitions(schema, "dependency")
 
     # Remove link to production schema.
     if not has_production:
-        del rows["input_production_id"]
+        del columns["input_production_id"]
 
     # Table metadata
     meta = {"__tablename__": "dependency", "__table_args__": {"schema": schema}}
 
-    Model = type(class_name, (Base,), {**rows, **meta})
+    Model = type(class_name, (Base,), {**columns, **meta})
     return Model
 
 

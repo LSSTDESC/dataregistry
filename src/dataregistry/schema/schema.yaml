@@ -107,7 +107,7 @@ execution_alias:
     foreign_key: True
     foreign_key_schema: "self"
     foreign_key_table: "execution"
-    foreign_key_row: "execution_id"
+    foreign_key_column: "execution_id"
     description: "Execution this alias is linked to"
 
 dataset_alias:
@@ -135,7 +135,7 @@ dataset_alias:
     foreign_key: True
     foreign_key_schema: "self"
     foreign_key_table: "dataset"
-    foreign_key_row: "dataset_id"
+    foreign_key_column: "dataset_id"
     description: "Dataset this alias is linked to"
 
 dependency:
@@ -152,21 +152,21 @@ dependency:
     foreign_key: True
     foreign_key_schema: "self"
     foreign_key_table: "dataset"
-    foreign_key_row: "dataset_id"
-    description: "Dataset this dependency is linked to"
+    foreign_key_column: "dataset_id"
+    description: "Dataset this dependency is linked to (for every dependency, this, or `input_production_id`, must be non-null)"
   input_production_id:
     type: "Integer"
     foreign_key: True
     foreign_key_schema: "production"
     foreign_key_table: "dataset"
-    foreign_key_row: "dataset_id"
-    description: "Production dataset this dependency is linked to"
+    foreign_key_column: "dataset_id"
+    description: "Production dataset this dependency is linked to (for every dependency, this, or `input_id`, must be non-null)"
   execution_id:
     type: "Integer"
     foreign_key: True
     foreign_key_schema: "self"
     foreign_key_table: "execution"
-    foreign_key_row: "execution_id"
+    foreign_key_column: "execution_id"
     description: "Execution this dependency is linked to"
 
 dataset:
@@ -260,7 +260,7 @@ dataset:
     foreign_key: True
     foreign_key_schema: "self"
     foreign_key_table: "execution"
-    foreign_key_row: "execution_id"
+    foreign_key_column: "execution_id"
     description: "Execution this dataset is linked to"
     cli_optional: True
   is_overwritten:
@@ -278,5 +278,5 @@ dataset:
     description: "True if an external link"
   is_archived:
     type: "Boolean"
-    nullablee: False
+    nullable: False
     description: "True if dataset is archived"
