@@ -177,6 +177,8 @@ def _Dataset(schema):
         # a foreign key into another table.   Possible values for the column
         # might include "gcr-catalogs", "skyCatalogs"
         "access_API": Column("access_API", String(20)),
+        # Optional configuration file associated with access API
+        "access_API_configuration": Column("configuration", String),
         # A way to associate a dataset with a program execution or "run"
         "execution_id": Column(
             Integer,

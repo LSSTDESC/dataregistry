@@ -119,6 +119,7 @@ def _insert_dataset_entry(
     execution_configuration=None,
     input_datasets=[],
     input_production_datasets=[],
+    access_API_configuration=None,
 ):
     """
     Wrapper to create dataset entry
@@ -163,6 +164,8 @@ def _insert_dataset_entry(
         List of dataset ids that were the input to this execution
     input_production_datasets : list, optional
         List of production dataset ids that were the input to this execution
+    access_API_configuration : str, optional
+        Configuration file for access API
 
     Returns
     -------
@@ -203,6 +206,7 @@ def _insert_dataset_entry(
         execution_configuration=execution_configuration,
         input_datasets=input_datasets,
         input_production_datasets=input_production_datasets,
+        access_API_configuration=access_API_configuration,
     )
 
     assert dataset_id is not None, "Trying to create a dataset that already exists"
@@ -220,6 +224,7 @@ _insert_dataset_entry(
     "user",
     None,
     "This is my first DESC dataset",
+    access_API_configuration="dummy_configuration_file.yaml",
 )
 
 # Test set 2
