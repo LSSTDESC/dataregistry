@@ -229,22 +229,19 @@ class Registrar:
         """
         Register a new execution in the DESC data registry.
 
+        Any args marked with '**' share their name with the associated column
+        in the registry schema. Descriptions of what these columns are can be
+        found in `schema.yaml` or the documentation.
+
         Parameters
         ----------
-        name : str
-            Typically pipeline name or program name
-        description : str, optional
-            Human readible description of execution
-        execution_start : datetime, optional
-            Date the execution started
-        locale : str, optional
-            Where was the execution performed?
-        configuration : str, optional
-            Path to text file used to configure the execution
-        input_datasets : list, optional
-            List of dataset ids that were the input to this execution
-        input_production_datasets : list, optional
-            List of production dataset ids that were the input to this execution
+        name** : str
+        description** : str, optional
+        execution_start** : datetime, optional
+        locale** : str, optional
+        configuration** : str, optional
+        input_datasets** : list, optional
+        input_production_datasets** : list, optional
         max_config_length : int, optional
             Maxiumum number of lines to read from a configuration file
 
@@ -323,39 +320,21 @@ class Registrar:
         """
         Register a new dataset in the DESC data registry.
 
+        Any args marked with '**' share their name with the associated column
+        in the registry schema. Descriptions of what these columns are can be
+        found in `schema.yaml` or the documentation.
+
         Parameters
         ----------
-        relative_path : str
-            Destination for the dataset within the data registry. Path is
-            relative to ``<registry root>/<owner_type>/<owner>``.
-        version : str
-            Semantic version string of the format MAJOR.MINOR.PATCH *or*
-            a special flag: "patch", "minor" or "major".
-
-            When a special flag is used it automatically bumps the relative
-            version for you (see examples for more details).
-        version_suffix : str, optional
-            Suffix string to place at the end of the version string. Cannot be
-            used for production datasets.
-        name : str, optional
-            Any convenient, evocative name for the human.
-
-            Note the combination of name, version and version_suffix must be
-            unique.
-        creation_date : datetime, optional
-            Manually set creation date of dataset
-        description : str, optional
-            Human-readable description of dataset
-        execution_id : int, optional
-            Used to associate dataset with a particular execution
-        access_API : str, optional
-            Hint as to how to read the data
-        access_API_configuration : str, optional
-            Path to configuration file for `access_API`
-        is_overwritable : bool, optional
-            True if dataset may be overwritten (defaults to False).
-
-            Note production datasets cannot be overwritten.
+        relative_path** : str
+        version** : str
+        version_suffix** : str, optional
+        name** : str, optional
+        creation_date** : datetime, optional
+        description** : str, optional
+        execution_id** : int, optional
+        access_API** : str, optional
+        is_overwritable** : bool, optional
         old_location : str, optional
             Absolute location of dataset to copy into the data registry.
 
@@ -370,23 +349,13 @@ class Registrar:
             only)
         verbose : bool, optional
             Provide some additional output information
-        owner : str, optional
-            Owner of the dataset. If None, defaults to what was set in
-            Registrar __init__, if that is also None, defaults to $USER.
-        owner_type : str, optional
-            Owner type: "user", "group", or "production". If None, defaults to
-            what was set in Registrar __init__, if that is also None, defaults
-            to "user".
-        execution_name : str, optional
-            Typically pipeline name or program name
-        execution_description : str, optional
-            Human readible description of execution
-        execution_start : datetime, optional
-            Date the execution started
-        execution_locale : str, optional
-            Where was the execution performed?
-        execution_configuration : str, optional
-            Path to text file used to configure the execution
+        owner** : str, optional
+        owner_type** : str, optional
+        execution_name** : str, optional
+        execution_description** : str, optional
+        execution_start** : datetime, optional
+        execution_locale** : str, optional
+        execution_configuration** : str, optional
         input_datasets : list, optional
             List of dataset ids that were the input to this execution
         input_production_datasets : list, optional
@@ -506,10 +475,10 @@ class Registrar:
         if version_suffix:
             values["version_suffix"] = version_suffix
         if creation_date:
-            values["dataset_creation_date"] = creation_date
+            values["creation_date"] = creation_date
         else:
             if ds_creation_date:
-                values["dataset_creation_date"] = ds_creation_date
+                values["creation_date"] = ds_creation_date
         if description:
             values["description"] = description
         if execution_id:
@@ -520,6 +489,9 @@ class Registrar:
             values["access_API_configuration"] = _read_configuration_file(access_API_configuration, max_config_length)
         values["is_overwritable"] = is_overwritable
         values["is_overwritten"] = False
+        values["is_external_link"] = False
+        values["is_archived"] = False
+        values["is_valid"] = True
         values["register_date"] = datetime.now()
         values["owner_type"] = owner_type
         values["owner"] = owner
@@ -549,12 +521,14 @@ class Registrar:
         """
         Register a new dataset alias in the DESC data registry.
 
+        Any args marked with '**' share their name with the associated column
+        in the registry schema. Descriptions of what these columns are can be
+        found in `schema.yaml` or the documentation.
+
         Parameters
         ----------
-        aliasname : str
-            Human readible alias for the dataset
-        dataset_id : int
-            Existing dataset ID to attach dataset alias to
+        aliasname** : str
+        dataset_id** : int
 
         Returns
         -------

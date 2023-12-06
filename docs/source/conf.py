@@ -5,7 +5,8 @@ extensions = [
     "sphinx_rtd_theme",
     "sphinx.ext.autodoc",
     'sphinx.ext.napoleon',
-    'sphinxcontrib.autoprogram'
+    'sphinxcontrib.autoprogram',
+    'sphinxcontrib.datatemplates'
 ]
 
 project = 'DESC data management'
@@ -36,3 +37,9 @@ html_static_path = ['_static']
 html_logo = '_static/DREGS_logo_v2.png'
 
 autoclass_content = 'both'
+
+templates_path = ['templates']
+
+html_css_files = [
+    'css/custom.css',
+]

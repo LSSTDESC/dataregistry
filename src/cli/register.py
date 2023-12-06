@@ -9,7 +9,7 @@ def register_dataset(args):
     Parameters
     ----------
     args : argparse object
-    
+
     args.config_file : str
         Path to data registry config file
     args.schema : str
@@ -38,11 +38,15 @@ def register_dataset(args):
         name=args.name,
         version_suffix=args.version_suffix,
         creation_date=args.creation_date,
+        access_API=args.access_API,
+        execution_id=args.execution_id,
+        is_overwritable=args.is_overwritable,
         description=args.description,
         old_location=args.old_location,
         copy=(not args.make_symlink),
         is_dummy=args.is_dummy,
         owner=args.owner,
+        owner_type=args.owner_type,
         execution_name=args.execution_name,
         execution_description=args.execution_description,
         execution_start=args.execution_start,
