@@ -505,10 +505,10 @@ class Registrar:
         if version_suffix:
             values["version_suffix"] = version_suffix
         if creation_date:
-            values["dataset_creation_date"] = creation_date
+            values["creation_date"] = creation_date
         else:
             if ds_creation_date:
-                values["dataset_creation_date"] = ds_creation_date
+                values["creation_date"] = ds_creation_date
         if description:
             values["description"] = description
         if execution_id:

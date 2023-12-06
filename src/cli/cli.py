@@ -74,28 +74,31 @@ arg_register_dataset = arg_register_sub.add_parser("dataset", help="Register a d
 
 # Get some information from the `schema.yaml` file
 for column in schema_data["dataset"]:
+    extra_args = {}
+
     # Any default?
     if schema_data["dataset"][column]["cli_default"] is not None:
-        default = schema_data["dataset"][column]["cli_default"]
-        default_str = f" (default={default})"
+        extra_args["default"] = schema_data["dataset"][column]["cli_default"]
+        default_str = f" (default={extra_args['default']})"
     else:
-        default = None
         default_str = ""
 
     # Restricted to choices?
     if schema_data["dataset"][column]["choices"] is not None:
-        choices = schema_data["dataset"][column]["choices"]
+        extra_args["choices"] = schema_data["dataset"][column]["choices"]
+
+    # Is this a boolean flag?
+    if schema_data["dataset"][column]["type"] == "Boolean":
+        extra_args["action"] = "store_true"
     else:
-        choices = None
+        extra_args["type"] = _TYPE_TRANSLATE[schema_data["dataset"][column]["type"]]
 
     # Add flag
     if schema_data["dataset"][column]["cli_optional"]:
         arg_register_dataset.add_argument(
             "--" + column,
             help=schema_data["dataset"][column]["description"] + default_str,
-            default=default,
-            choices=choices,
-            type=_TYPE_TRANSLATE[schema_data["dataset"][column]["type"]],
+            **extra_args,
         )
 
 # Entries unique to registering the dataset using the CLI

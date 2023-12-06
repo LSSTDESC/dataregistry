@@ -16,7 +16,11 @@ dregs register dataset my_cli_dataset3 "1.2.3" --is_dummy \
     --owner "DESC" \
     --owner_type "group" \
     --version_suffix "test" \
-    --root_dir "DataRegistry_data"
+    --root_dir "DataRegistry_data" \
+    --creation_date "2020-01-01" \
+    --input_datasets 1 2 \
+    --execution_name "I have given the execution a name" \
+    --is_overwritable
 
 # A production dataset
 if [ "$DATAREG_BACKEND" = "postgres" ]; then
