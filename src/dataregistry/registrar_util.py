@@ -1,5 +1,6 @@
 import os
 import re
+import warnings
 from sqlalchemy import MetaData, Table, Column, text, select
 
 __all__ = [
@@ -207,3 +208,37 @@ def _name_from_relpath(relative_path):
         name = base
 
     return name
+
+
+def _read_configuration_file(configuration_file, max_config_length):
+    """
+    Read a text, YAML, TOML, etc, configuration file.
+
+    Parameters
+    ----------
+    configuration_file : str
+        Path to configuration file
+    max_config_length : int
+        Maximum number of characters to read from file. Files beyond this limit
+        will be truncated (with a warning message).
+
+    Returns
+    -------
+    contents : str
+    """
+
+    # Make sure file exists
+    if not os.path.isfile(configuration_file):
+        raise FileNotFoundError(f"{configuration_file} not found")
+
+    # Open configuration file and read up to max_config_length characters
+    with open(configuration_file) as f:
+        contents = f.read(max_config_length)
+
+    if len(contents) == max_config_length:
+        warnings.warn(
+            "Configuration file is longer than `max_config_length`, truncated",
+            UserWarning,
+        )
+
+    return contents
