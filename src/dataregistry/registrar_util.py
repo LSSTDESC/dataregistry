@@ -284,9 +284,11 @@ def _copy_data(dataset_organization, source, dest, do_checksum=True):
             if os.path.exists(dest):
                 rmtree(dest)
             os.rename(temp_dest, dest)
-        
-        print(f"Something went wrong during data copying, aborting."
-              "Note an entry in the registry database will still have"
-              "been created")
+
+        print(
+            f"Something went wrong during data copying, aborting."
+            "Note an entry in the registry database will still have"
+            "been created"
+        )
 
         raise Exception(e)
