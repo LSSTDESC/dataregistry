@@ -237,11 +237,6 @@ def _copy_data(dataset_organization, source, dest, do_checksum=True):
         Destination we are copying to
     do_checksum : bool
         When overwriting files, do a checksum with the old and new file
-
-    Returns
-    -------
-    - : bool
-        True if copy was successfull, False if something went wrong
     """
 
     def _compute_checksum(file_path):
@@ -284,13 +279,14 @@ def _copy_data(dataset_organization, source, dest, do_checksum=True):
             else:
                 rmtree(temp_dest)
 
-        return True
-
     except Exception as e:
         if os.path.exists(temp_dest):
             if os.path.exists(dest):
                 rmtree(dest)
             os.rename(temp_dest, dest)
         
-        print(f"Something went wrong during copy ({e}), aborting...")
-        return False
+        print(f"Something went wrong during data copying, aborting."
+              "Note an entry in the registry database will still have"
+              "been created")
+
+        raise Exception(e)

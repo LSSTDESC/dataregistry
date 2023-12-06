@@ -205,13 +205,13 @@ class Registrar:
                     f"Copying {num_files} files ({total_size/1024/1024:.2f} Mb)...",
                     end="",
                 )
-            success = _copy_data(dataset_organization, old_location, dest)
+            _copy_data(dataset_organization, old_location, dest)
             if verbose:
                 print(f"took {time.time()-tic:.2f}")
         else:
             success = True
 
-        return dataset_organization, num_files, total_size, ds_creation_date, success
+        return dataset_organization, num_files, total_size, ds_creation_date
 
     def register_execution(
         self,
@@ -488,6 +488,9 @@ class Registrar:
         values["owner_type"] = owner_type
         values["owner"] = owner
         values["creator_uid"] = self._uid
+
+        # We tentatively start with an "invalid" dataset in the database. This
+        # will be upgraded to True if the data copying (if any) was successful.
         values["is_valid"] = False
 
         # Create a new row in the data registry database.
@@ -511,7 +514,6 @@ class Registrar:
                 num_files,
                 total_size,
                 ds_creation_date,
-                copy_success,
             ) = self._handle_data(
                 relative_path, old_location, owner, owner_type, verbose
             )
@@ -520,29 +522,24 @@ class Registrar:
             num_files = 0
             total_size = 0
             ds_creation_date = None
-            copy_success = True
 
         # Copy was successful, update the entry with dataset metadata
-        if copy_success:
-            with self._engine.connect() as conn:
-                update_stmt = (
-                    update(dataset_table)
-                    .where(dataset_table.c.dataset_id == prim_key)
-                    .values(
-                        data_org=dataset_organization,
-                        nfiles=num_files,
-                        total_disk_space=total_size / 1024 / 1024,
-                        dataset_creation_date=ds_creation_date,
-                        is_valid=True,
-                    )
+        with self._engine.connect() as conn:
+            update_stmt = (
+                update(dataset_table)
+                .where(dataset_table.c.dataset_id == prim_key)
+                .values(
+                    data_org=dataset_organization,
+                    nfiles=num_files,
+                    total_disk_space=total_size / 1024 / 1024,
+                    dataset_creation_date=ds_creation_date,
+                    is_valid=True,
                 )
-                conn.execute(update_stmt)
-                conn.commit()
+            )
+            conn.execute(update_stmt)
+            conn.commit()
 
-            return prim_key, execution_id
-
-        else:
-            raise Exception("Copying data was not successfull")
+        return prim_key, execution_id
 
     def register_dataset_alias(self, aliasname, dataset_id):
         """
