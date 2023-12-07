@@ -138,13 +138,13 @@ jobs:
           cd tests/end_to_end_tests
 
           # Register database entries using dataregistry package
-          python create_test_entries.py
+          #python create_test_entries.py
 
           # Register more database entries using the CLI
           bash create_test_entries_cli.sh
 
           # Run some test queries
-          pytest -v test_query.py
+          pytest -v test_query.py create_test_entries.py
 
   sqlite-end-to-end-tests:
     runs-on: ubuntu-latest
