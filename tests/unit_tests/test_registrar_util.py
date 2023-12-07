@@ -9,6 +9,7 @@ import os
 import pytest
 
 
+
 def test_parse_version_string():
     """Make sure version strings are parsed correctly"""
 
@@ -49,14 +50,19 @@ def test_form_dataset_path():
     tmp = _form_dataset_path("production", "desc", "my/path", root_dir=None)
     assert tmp == "production/production/my/path"
 
-    tmp = _form_dataset_path("production", "desc", "my/path", root_dir="my/root")
-    assert tmp == "my/root/production/production/my/path"
+    tmp = _form_dataset_path(
+        "production", "desc", "my/path", schema="myschema", root_dir="my/root"
+    )
+    assert tmp == "my/root/myschema/production/production/my/path"
 
-    tmp = _form_dataset_path("group", "desc", "my/path", root_dir=None)
+    tmp = _form_dataset_path("group", "desc", "my/path")
     assert tmp == "group/desc/my/path"
 
-    tmp = _form_dataset_path("user", "desc", "my/path", root_dir="/root/")
-    assert tmp == "/root/user/desc/my/path"
+    tmp = _form_dataset_path(
+        "user", "desc", "my/path", schema="myschema", root_dir="/root/"
+    )
+    assert tmp == "/root/myschema/user/desc/my/path"
+
 
 
 def test_directory_info():
@@ -78,7 +84,6 @@ def test_name_from_relpath():
     assert _name_from_relpath("./testing/test") == "test"
     assert _name_from_relpath("/testing/test/") == "test"
     assert _name_from_relpath("test") == "test"
-
 
 def _make_dummy_config(tmpdir, nchars):
     """

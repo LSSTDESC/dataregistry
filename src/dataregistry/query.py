@@ -429,6 +429,7 @@ class Query:
                 results["dataset.owner_type"][0],
                 results["dataset.owner"][0],
                 results["dataset.relative_path"][0],
+                schema=schema,
                 root_dir=self._root_dir,
             )
         else:

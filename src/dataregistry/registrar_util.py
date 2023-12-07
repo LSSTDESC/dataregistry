@@ -55,14 +55,15 @@ def _parse_version_string(version, with_suffix=False):
     return d
 
 
-def _form_dataset_path(owner_type, owner, relative_path, root_dir=None):
+def _form_dataset_path(owner_type, owner, relative_path, schema=None, root_dir=None):
     """
     Construct full (or relative) path to dataset in the data registry.
 
-    Path will have the format if `root_dir` is None:
+    When schema and root_dir are not None, the full path is returned:
+        <root_dir>/<schema>/<owner_type>/<owner>/<relative_path>
+
+    When schema and root_dir are ommited, the relative path is returned:
         <owner_type>/<owner>/<relative_path>
-    or if `root_dir` is not None:
-        <root_dir>/<owner_type>/<owner>/<relative_path>
 
     Parameters
     ----------
@@ -72,17 +73,24 @@ def _form_dataset_path(owner_type, owner, relative_path, root_dir=None):
         Owner of dataset
     relative_path : str
         Relative path within the data registry
-    root_dir : str
+    schema : str, optional
+        Schema we are connected to
+    root_dir : str, optional
         Root directory of data registry
+    dialect : str, optional
+        SQL dialect, e.g postgres or sqlite
 
     Returns
     -------
     to_return : str
-        Full path of dataset in the data registry
+        Full (or relative) path of dataset in the data registry
     """
+
     if owner_type == "production":
         owner = "production"
     to_return = os.path.join(owner_type, owner, relative_path)
+    if schema:
+        to_return = os.path.join(schema, to_return)
     if root_dir:
         to_return = os.path.join(root_dir, to_return)
     return to_return
