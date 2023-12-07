@@ -1,5 +1,6 @@
 import os
 import sys
+import yaml
 
 from dataregistry import DataRegistry
 from dataregistry.db_basic import SCHEMA_VERSION
@@ -9,7 +10,21 @@ import pytest
 
 @pytest.fixture
 def dummy_file(tmp_path):
-    """Create some dummy (temporary) files and directories"""
+    """
+    Create some dummy (temporary) files and directories
+
+    Parameters
+    ----------
+    tmp_path : pathlib.Path object
+
+    Returns
+    -------
+    tmp_src_dir : pathlib.Path object
+        Temporary files we are going to be copying into the registry will be
+        created in here
+    tmp_root_dir : pathlib.Path object
+        Temporary root_dir for the registry we can copy files to
+    """
 
     # Temp dir for files that we copy files from (old_location)
     tmp_src_dir = tmp_path / "source"
@@ -34,6 +49,17 @@ def dummy_file(tmp_path):
     p = tmp_root_dir / f"{SCHEMA_VERSION}/user/{os.getenv('USER')}"
     f = p / "file1.txt"
     f.write_text("i am another dummy file (but on location)")
+
+    # Make a dummy configuration yaml file
+    data = {
+        "run_by": "somebody",
+        "software_version": {"major": 1, "minor": 1, "patch": 0},
+        "an_important_list": [1, 2, 3],
+    }
+
+    # Write the data to the YAML file
+    with open(tmp_src_dir / "dummy_configuration_file.yaml", "w") as file:
+        yaml.dump(data, file, default_flow_style=False)
 
     return tmp_src_dir, tmp_root_dir
 
@@ -681,7 +707,7 @@ def test_execution_config_file(dummy_file):
         datareg,
         "execution_with_configuration",
         "An execution with an input configuration file",
-        configuration="dummy_configuration_file.yaml",
+        configuration=str(tmp_src_dir / "dummy_configuration_file.yaml"),
     )
 
     # Query
@@ -748,7 +774,10 @@ def test_dataset_with_execution(dummy_file):
     assert results.rowcount == 1
     for r in results:
         assert getattr(r, "execution.name") == "Overwrite execution auto name"
-        assert getattr(r, "execution.description") == "Overwrite execution auto description"
+        assert (
+            getattr(r, "execution.description")
+            == "Overwrite execution auto description"
+        )
         assert getattr(r, "execution.locale") == "TestMachine"
         ex_id_1 = getattr(r, "execution.execution_id")
 
@@ -769,17 +798,37 @@ def test_dataset_with_execution(dummy_file):
         assert getattr(r, "dependency.execution_id") == ex_id_1
 
 
-    # if datareg.Query._dialect != "sqlite":
-    ## These are example files already in the registry space, just need registered.
-    # for FILE in ["dummy_dir/file1.txt", "dummy_dir/file2.txt", "file1.txt"]:
-    #    with open(
-    #        os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}", FILE),
-    #        "w",
-    #    ) as f:
-    #        f.write("test")
+def test_get_dataset_absolute_path(dummy_file):
+    """
+    Test the generation of the full absolute path of a dataset using the
+    `Query.get_dataset_absolute_path` function
+    """
 
-    # Establish connection to production database (if not sqllite)
-    # if datareg.db_connection.dialect != "sqllite":
-    #    datareg_prod = DataRegistry(
-    #        root_dir=str(tmp_root_dir), schema="production"
-    #    )
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    dset_relpath = "DESC/datasets/get_dataset_absolute_path_test"
+    dset_ownertype = "group"
+    dset_owner = "group1"
+
+    # Make a basic entry
+    d_id_1 = _insert_dataset_entry(
+        datareg,
+        dset_relpath,
+        "0.0.1",
+        dset_ownertype,
+        dset_owner,
+        "Test the Query.get_dataset_absolute_path function",
+    )
+
+    v = datareg.Query.get_dataset_absolute_path(d_id_1)
+
+    if datareg.Query._dialect == "sqlite":
+        assert v == os.path.join(
+            str(tmp_root_dir), dset_ownertype, dset_owner, dset_relpath
+        )
+    else:
+        assert v == os.path.join(
+            str(tmp_root_dir), SCHEMA_VERSION, dset_ownertype, dset_owner, dset_relpath
+        )
