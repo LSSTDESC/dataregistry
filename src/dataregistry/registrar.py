@@ -465,11 +465,6 @@ class Registrar:
         values["version_string"] = version_string
         if version_suffix:
             values["version_suffix"] = version_suffix
-        if creation_date:
-            values["creation_date"] = creation_date
-        else:
-            if ds_creation_date:
-                values["creation_date"] = ds_creation_date
         if description:
             values["description"] = description
         if execution_id:
@@ -524,6 +519,10 @@ class Registrar:
             num_files = 0
             total_size = 0
             ds_creation_date = None
+
+        # Case where use is overwriting the dateset `creation_date`
+        if creation_date:
+            ds_creation_date = creation_date
 
         # Copy was successful, update the entry with dataset metadata
         with self._engine.connect() as conn:
