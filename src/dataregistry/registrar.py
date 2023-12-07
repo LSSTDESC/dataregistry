@@ -1,7 +1,6 @@
 import time
 import os
 from datetime import datetime
-from shutil import copyfile, copytree
 
 # from sqlalchemy import MetaData, Table, Column, insert, text,
 from sqlalchemy import update, select
@@ -10,7 +9,7 @@ from sqlalchemy import update, select
 from dataregistry.db_basic import add_table_row
 from dataregistry.registrar_util import _form_dataset_path, get_directory_info
 from dataregistry.registrar_util import _parse_version_string, _bump_version
-from dataregistry.registrar_util import _name_from_relpath
+from dataregistry.registrar_util import _name_from_relpath, _copy_data
 from dataregistry.db_basic import TableMetadata
 
 # from dataregistry.exceptions import *
@@ -161,6 +160,8 @@ class Registrar:
             Total disk space of dataset in bytes
         ds_creation_date : datetime
             When file or directory was created
+        success : bool
+            True if data copy was successful, else False
         """
 
         # Get destination directory in data registry.
@@ -208,14 +209,11 @@ class Registrar:
                     f"Copying {num_files} files ({total_size/1024/1024:.2f} Mb)...",
                     end="",
                 )
-            if dataset_organization == "file":
-                # Create any intervening directories
-                os.makedirs(os.path.dirname(dest), exist_ok=True)
-                copyfile(old_location, dest)
-            elif dataset_organization == "directory":
-                copytree(old_location, dest, copy_function=copyfile)
+            _copy_data(dataset_organization, old_location, dest)
             if verbose:
                 print(f"took {time.time()-tic:.2f}")
+        else:
+            success = True
 
         return dataset_organization, num_files, total_size, ds_creation_date
 
@@ -318,6 +316,10 @@ class Registrar:
         """
         Register a new dataset in the DESC data registry.
 
+        First, the dataset entry is created in the database. If success, the
+        data is then copied (if `old_location` was provided). Only if both
+        steps are successful will there be a permanent entry in the registry.
+
         Parameters
         ----------
         relative_path : str
@@ -373,7 +375,7 @@ class Registrar:
         execution_name : str, optional
             Typically pipeline name or program name
         execution_description : str, optional
-            Human readible description of execution
+            Human readable description of execution
         execution_start : datetime, optional
             Date the execution started
         execution_locale : str, optional
@@ -415,6 +417,15 @@ class Registrar:
                 raise ValueError("Cannot overwrite production entries")
             if version_suffix is not None:
                 raise ValueError("Production entries can't have version suffix")
+            if self._schema != "production":
+                raise ValueError(
+                    "Only the production schema can handle owner_type='production'"
+                )
+        else:
+            if self._schema == "production":
+                raise ValueError(
+                    "Only the production schema can handle owner_type='production'"
+                )
 
         # If name not passed, automatically generate a name from the relative path
         if name is None:
@@ -442,22 +453,6 @@ class Registrar:
                 f"{v_fields['major']}.{v_fields['minor']}.{v_fields['patch']}"
             )
 
-        # Get dataset characteristics; copy if requested
-        if not is_dummy:
-            (
-                dataset_organization,
-                num_files,
-                total_size,
-                ds_creation_date,
-            ) = self._handle_data(
-                relative_path, old_location, owner, owner_type, verbose
-            )
-        else:
-            dataset_organization = "dummy"
-            num_files = 0
-            total_size = 0
-            ds_creation_date = None
-
         # If no execution_id is supplied, create a minimal entry
         if execution_id is None:
             if execution_name is None:
@@ -476,8 +471,7 @@ class Registrar:
             )
 
         # Pull the dataset properties together
-        values = {"name": name}
-        values["relative_path"] = relative_path
+        values = {"name": name, "relative_path": relative_path}
         values["version_major"] = v_fields["major"]
         values["version_minor"] = v_fields["minor"]
         values["version_patch"] = v_fields["patch"]
@@ -486,9 +480,6 @@ class Registrar:
             values["version_suffix"] = version_suffix
         if creation_date:
             values["dataset_creation_date"] = creation_date
-        else:
-            if ds_creation_date:
-                values["dataset_creation_date"] = ds_creation_date
         if description:
             values["description"] = description
         if execution_id:
@@ -501,9 +492,10 @@ class Registrar:
         values["owner_type"] = owner_type
         values["owner"] = owner
         values["creator_uid"] = self._uid
-        values["data_org"] = dataset_organization
-        values["nfiles"] = num_files
-        values["total_disk_space"] = total_size / 1024 / 1024  # Mb
+
+        # We tentatively start with an "invalid" dataset in the database. This
+        # will be upgraded to True if the data copying (if any) was successful.
+        values["is_valid"] = False
 
         # Create a new row in the data registry database.
         with self._engine.connect() as conn:
@@ -517,6 +509,38 @@ class Registrar:
                     .values(is_overwritten=True)
                 )
                 conn.execute(update_stmt)
+            conn.commit()
+
+        # Get dataset characteristics; copy to `root_dir` if requested
+        if not is_dummy:
+            (
+                dataset_organization,
+                num_files,
+                total_size,
+                ds_creation_date,
+            ) = self._handle_data(
+                relative_path, old_location, owner, owner_type, verbose
+            )
+        else:
+            dataset_organization = "dummy"
+            num_files = 0
+            total_size = 0
+            ds_creation_date = None
+
+        # Copy was successful, update the entry with dataset metadata
+        with self._engine.connect() as conn:
+            update_stmt = (
+                update(dataset_table)
+                .where(dataset_table.c.dataset_id == prim_key)
+                .values(
+                    data_org=dataset_organization,
+                    nfiles=num_files,
+                    total_disk_space=total_size / 1024 / 1024,
+                    dataset_creation_date=ds_creation_date,
+                    is_valid=True,
+                )
+            )
+            conn.execute(update_stmt)
             conn.commit()
 
         return prim_key, execution_id

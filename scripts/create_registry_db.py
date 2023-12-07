@@ -60,9 +60,9 @@ cols.append(Column("owner_type", String, nullable=False))
 cols.append(Column("owner", String, nullable=False))
 
 # To store metadata about the dataset.
-cols.append(Column("data_org", String, nullable=False))
-cols.append(Column("nfiles", Integer, nullable=False))
-cols.append(Column("total_disk_space", Float, nullable=False))
+cols.append(Column("data_org", String))
+cols.append(Column("nfiles", Integer))
+cols.append(Column("total_disk_space", Float))
 tab_creator.define_table("dataset", cols,
                          [Index("relative_path", "owner", "owner_type"),
                           UniqueConstraint("name", "version_string",

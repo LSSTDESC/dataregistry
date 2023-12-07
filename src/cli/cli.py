@@ -31,6 +31,15 @@ arg_ls.add_argument(
     "--config_file", help="Location of data registry config file", type=str
 )
 arg_ls.add_argument("--all", help="List all datasets", action="store_true")
+arg_ls.add_argument(
+    "--schema",
+    default=f"{SCHEMA_VERSION}",
+    help="Which schema to connect to",
+)
+arg_ls.add_argument("--root_dir", help="Location of the root_dir", type=str)
+arg_ls.add_argument(
+    "--site", help="Get the root_dir through a pre-defined 'site'", type=str
+)
 
 # ------------------
 # Register a dataset
@@ -124,10 +133,15 @@ arg_register_dataset.add_argument(
     action="store_true",
 )
 arg_register_dataset.add_argument(
-    "--schema", default=f"{SCHEMA_VERSION}", help="Which schema to connect to",
+    "--schema",
+    default=f"{SCHEMA_VERSION}",
+    help="Which schema to connect to",
 )
 arg_register_dataset.add_argument(
-    "--locale", help="Location where dataset was produced", type=str, default="NERSC",
+    "--locale",
+    help="Location where dataset was produced",
+    type=str,
+    default="NERSC",
 )
 arg_register_dataset.add_argument(
     "--owner", help="Owner of dataset. Defaults to $USER."
@@ -162,6 +176,12 @@ arg_register_dataset.add_argument(
     default=[],
     nargs="+",
 )
+arg_register_dataset.add_argument(
+    "--root_dir", help="Location of the root_dir", type=str
+)
+arg_register_dataset.add_argument(
+    "--site", help="Get the root_dir through a pre-defined 'site'", type=str
+)
 
 
 def main():
@@ -174,4 +194,4 @@ def main():
 
     # Query database entries
     elif args.subcommand == "ls":
-        dregs_ls(args.owner, args.owner_type, args.all, args.config_file)
+        dregs_ls(args)

@@ -3,63 +3,42 @@ import sys
 
 from dataregistry import DataRegistry
 from dataregistry.db_basic import SCHEMA_VERSION
+from dataregistry.registrar import _OWNER_TYPES
+import pytest
 
-_TEST_ROOT_DIR = "DataRegistry_data"
 
-# Establish connection to database
-datareg = DataRegistry(root_dir=_TEST_ROOT_DIR, schema=SCHEMA_VERSION)
+@pytest.fixture
+def dummy_file(tmp_path):
+    """Create some dummy (temporary) files and directories"""
 
-if datareg.Query._dialect != "sqlite":
-    _TMP_DIR = os.path.join(_TEST_ROOT_DIR, SCHEMA_VERSION)
-else:
-    _TMP_DIR = _TEST_ROOT_DIR
+    # Temp dir for files that we copy files from (old_location)
+    tmp_src_dir = tmp_path / "source"
+    tmp_src_dir.mkdir()
 
-# Make root dir
-if not os.path.isdir(_TMP_DIR):
-    os.makedirs(_TMP_DIR)
+    f = tmp_src_dir / "file1.txt"
+    f.write_text("i am a dummy file")
 
-# Make a few dummy files to enter into database.
-if not os.path.isdir(
-    os.path.join(_TMP_DIR, f"user/{os.getenv('USER')}/dummy_dir")
-):
-    os.makedirs(
-        os.path.join(
-            _TMP_DIR, f"user/{os.getenv('USER')}/dummy_dir"
-        )
-    )
+    p = tmp_src_dir / "directory1"
+    p.mkdir()
+    f = p / "file2.txt"
+    f.write_text("i am another dummy file")
 
-if not os.path.isdir(os.path.join("dummy_dir")):
-    os.makedirs(os.path.join("dummy_dir"))
+    # Temp root_dir of the registry
+    tmp_root_dir = tmp_path / "root_dir"
+    p = tmp_root_dir / f"{SCHEMA_VERSION}/user/{os.getenv('USER')}/dummy_dir"
+    p.mkdir(parents=True)
 
-with open(os.path.join("dummy_dir", "file1.txt"), "w") as f:
-    f.write("test")
-with open(
-    os.path.join(
-        _TMP_DIR,
-        f"user/{os.getenv('USER')}/dummy_dir",
-        "file1.txt",
-    ),
-    "w",
-) as f:
-    f.write("test")
-with open(
-    os.path.join(
-        _TMP_DIR,
-        f"user/{os.getenv('USER')}/dummy_dir",
-        "file2.txt",
-    ),
-    "w",
-) as f:
-    f.write("test")
-with open(
-    os.path.join(
-        _TMP_DIR, f"user/{os.getenv('USER')}/", "file1.txt"
-    ),
-    "w",
-) as f:
-    f.write("test")
+    f = p / "file1.txt"
+    f.write_text("i am another dummy file (but on location in a dir)")
 
-def _insert_alias_entry(name, dataset_id):
+    p = tmp_root_dir / f"{SCHEMA_VERSION}/user/{os.getenv('USER')}"
+    f = p / "file1.txt"
+    f.write_text("i am another dummy file (but on location)")
+
+    return tmp_src_dir, tmp_root_dir
+
+
+def _insert_alias_entry(datareg, name, dataset_id):
     """
     Wrapper to create dataset alias entry
 
@@ -84,7 +63,9 @@ def _insert_alias_entry(name, dataset_id):
     return new_id
 
 
-def _insert_execution_entry(name, description, input_datasets=[], configuration=None):
+def _insert_execution_entry(
+    datareg, name, description, input_datasets=[], configuration=None
+):
     """
     Wrapper to create execution entry
 
@@ -119,6 +100,7 @@ def _insert_execution_entry(name, description, input_datasets=[], configuration=
 
 
 def _insert_dataset_entry(
+    datareg,
     relpath,
     version,
     owner_type,
@@ -186,18 +168,13 @@ def _insert_dataset_entry(
         The dataset it created for this entry
     """
 
-    if which_datareg is None:
-        this_datareg = datareg
-    else:
-        this_datareg = which_datareg
-
     # Some defaults over all test datasets
     locale = "NERSC"
     creation_data = None
     make_sym_link = False
 
     # Add new entry.
-    dataset_id, execution_id = this_datareg.Registrar.register_dataset(
+    dataset_id, execution_id = datareg.Registrar.register_dataset(
         relpath,
         version,
         version_suffix=version_suffix,
@@ -227,265 +204,583 @@ def _insert_dataset_entry(
     return dataset_id
 
 
-# Test set 1
-# - Auto create name for us
-_insert_dataset_entry(
-    "DESC/datasets/my_first_dataset",
-    "0.0.1",
-    "user",
-    None,
-    "This is my first DESC dataset",
+def test_simple_query(dummy_file):
+    """Make a simple entry, and make sure the query returns the correct result"""
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    # Add entry
+    d_id = _insert_dataset_entry(
+        datareg,
+        "DESC/datasets/my_first_dataset",
+        "0.0.1",
+        "user",
+        None,
+        "This is my first DESC dataset",
+    )
+
+    # Query
+    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.Query.find_datasets(
+        [
+            "dataset.name",
+            "dataset.version_string",
+            "dataset.owner",
+            "dataset.owner_type",
+            "dataset.description",
+            "dataset.version_major",
+            "dataset.version_minor",
+            "dataset.version_patch",
+            "dataset.relative_path",
+            "dataset.version_suffix",
+            "dataset.data_org",
+        ],
+        [f],
+        return_format="cursorresult",
+    )
+
+    assert results.rowcount == 1
+    for r in results:
+        assert getattr(r, "dataset.name") == "my_first_dataset"
+        assert getattr(r, "dataset.version_string") == "0.0.1"
+        assert getattr(r, "dataset.version_major") == 0
+        assert getattr(r, "dataset.version_minor") == 0
+        assert getattr(r, "dataset.version_patch") == 1
+        assert getattr(r, "dataset.owner") == os.getenv("USER")
+        assert getattr(r, "dataset.owner_type") == "user"
+        assert getattr(r, "dataset.description") == "This is my first DESC dataset"
+        assert getattr(r, "dataset.relative_path") == "DESC/datasets/my_first_dataset"
+        assert getattr(r, "dataset.version_suffix") == None
+        assert getattr(r, "dataset.data_org") == "dummy"
+
+
+def test_manual_name_and_vsuffix(dummy_file):
+    """Test setting the name and version suffix manually"""
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    # Add entry
+    d_id = _insert_dataset_entry(
+        datareg,
+        "DESC/datasets/my_second_dataset",
+        "0.0.1",
+        "user",
+        None,
+        "This is my first DESC dataset",
+        name="custom name",
+        version_suffix="custom_suffix",
+    )
+
+    # Query
+    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.Query.find_datasets(
+        ["dataset.name", "dataset.version_suffix"], [f], return_format="cursorresult"
+    )
+
+    assert results.rowcount == 1
+    for r in results:
+        assert getattr(r, "dataset.name") == "custom name"
+        assert getattr(r, "dataset.version_suffix") == "custom_suffix"
+
+
+@pytest.mark.parametrize(
+    "v_type,ans,name",
+    [
+        ("major", "1.0.0", "my_first_dataset"),
+        ("minor", "0.1.0", "my_first_dataset"),
+        ("patch", "0.0.2", "my_first_dataset"),
+        ("patch", "0.0.1", "my_second_dataset"),
+    ],
 )
+def test_dataset_bumping(dummy_file, v_type, ans, name):
+    """
+    Test bumping a dataset and make sure the new version is correct.
 
-# Test set 2
-# - Manual name
-_insert_dataset_entry(
-    "DESC/datasets/my_first_named_dataset",
-    "0.0.1",
-    "user",
-    None,
-    "This is my first named DESC dataset",
-    name="named_dataset",
+    Tests bumping datasets with and without a version suffix.
+    """
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    # Add entry
+    d_id = _insert_dataset_entry(
+        datareg,
+        f"DESC/datasets/bumped_dataset_{v_type}_{name}",
+        v_type,
+        "user",
+        None,
+        "This is my first bumped DESC dataset",
+        name=name,
+    )
+
+    # Query
+    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.Query.find_datasets(
+        ["dataset.name", "dataset.version_string"], [f], return_format="cursorresult"
+    )
+
+    assert results.rowcount == 1
+    for r in results:
+        assert getattr(r, "dataset.name") == name
+        assert getattr(r, "dataset.version_string") == ans
+
+
+@pytest.mark.parametrize("owner_type", ["user", "group", "project"])
+def test_owner_types(dummy_file, owner_type):
+    """Test the different owner types"""
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    # Add entry
+    d_id = _insert_dataset_entry(
+        datareg,
+        f"DESC/datasets/owner_type_{owner_type}",
+        "0.0.1",
+        owner_type,
+        None,
+        f"This is a {owner_type} dataset",
+    )
+
+    # Query
+    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.Query.find_datasets(
+        ["dataset.owner_type"], [f], return_format="cursorresult"
+    )
+
+    assert results.rowcount == 1
+    for r in results:
+        assert getattr(r, "dataset.owner_type") == owner_type
+
+
+@pytest.mark.parametrize("data_org", ["file", "directory"])
+def test_copy_data(dummy_file, data_org):
+    """Test copying real data into the registry (from an `old_location`)"""
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    # File/directory we are copying in
+    if data_org == "file":
+        data_path = str(tmp_src_dir / "file1.txt")
+    else:
+        data_path = str(tmp_src_dir / "directory1")
+
+    # Add entry
+    d_id = _insert_dataset_entry(
+        datareg,
+        f"DESC/datasets/copy_real_{data_org}",
+        "0.0.1",
+        "user",
+        None,
+        "Test copying a real file",
+        old_location=data_path,
+        is_dummy=False,
+    )
+
+    # Query
+    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.Query.find_datasets(
+        ["dataset.data_org", "dataset.nfiles", "dataset.total_disk_space"],
+        [f],
+        return_format="cursorresult",
+    )
+
+    assert results.rowcount == 1
+    for r in results:
+        assert getattr(r, "dataset.data_org") == data_org
+        assert getattr(r, "dataset.nfiles") == 1
+        assert getattr(r, "dataset.total_disk_space") > 0
+
+
+@pytest.mark.parametrize(
+    "data_org,data_path,v_str,overwritable",
+    [
+        ("file", "file1.txt", "0.0.1", True),
+        ("file", "file1.txt", "0.0.2", False),
+        ("directory", "dummy_dir", "0.0.1", True),
+        ("directory", "dummy_dir", "0.0.2", False),
+    ],
 )
+def test_on_location_data(dummy_file, data_org, data_path, v_str, overwritable):
+    """
+    Test ingesting real data into the registry (already on location). Also
+    tests overwriting datasets.
 
-# Test set 3
-# - Test version bumping
-_insert_dataset_entry(
-    "DESC/datasets/bumped_dataset",
-    "0.0.1",
-    "user",
-    None,
-    "This is my first bumped DESC dataset",
-    name="bumped_dataset",
-)
+    Does twice for each file, the first is a normal entry with
+    `is_overwritable=True`. The second tests overwriting the previous data with
+    a new version.
+    """
 
-_insert_dataset_entry(
-    "DESC/datasets/bumped_dataset_2",
-    "patch",
-    "user",
-    None,
-    "This is my second bumped DESC dataset",
-    name="bumped_dataset",
-)
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
 
-_insert_dataset_entry(
-    "DESC/datasets/bumped_dataset_3",
-    "minor",
-    "user",
-    None,
-    "This is my third bumped DESC dataset",
-    name="bumped_dataset",
-)
+    d_id = _insert_dataset_entry(
+        datareg,
+        data_path,
+        v_str,
+        "user",
+        None,
+        "Test ingesting a real file on location",
+        old_location=None,
+        is_dummy=False,
+        is_overwritable=overwritable,
+    )
 
-_insert_dataset_entry(
-    "DESC/datasets/bumped_dataset_4",
-    "major",
-    "user",
-    None,
-    "This is my fourth bumped DESC dataset",
-    name="bumped_dataset",
-)
+    f = datareg.Query.gen_filter("dataset.relative_path", "==", data_path)
+    results = datareg.Query.find_datasets(
+        [
+            "dataset.data_org",
+            "dataset.nfiles",
+            "dataset.total_disk_space",
+            "dataset.is_overwritable",
+            "dataset.is_overwritten",
+        ],
+        [f],
+        return_format="cursorresult",
+    )
 
-# Test set 4
-# - Test user types
-_insert_dataset_entry(
-    "DESC/datasets/group1_dataset_1",
-    "0.0.1",
-    "group",
-    "group1",
-    "This is group 1's first dataset",
-)
+    assert results.rowcount >= 1 and results.rowcount <= 2
+    for i, r in enumerate(results):
+        assert getattr(r, "dataset.data_org") == data_org
+        assert getattr(r, "dataset.nfiles") == 1
+        assert getattr(r, "dataset.total_disk_space") > 0
+        if i == results.rowcount - 1:
+            assert getattr(r, "dataset.is_overwritable") == overwritable
+        else:
+            if results.rowcount > 1:
+                assert getattr(r, "dataset.is_overwritten") == True
 
-_insert_dataset_entry(
-    "DESC/datasets/production_dataset_1",
-    "0.0.1",
-    "production",
-    None,
-    "This is production's first dataset",
-)
 
-# Test set 5
-# - Create dataset aliases
-dataset_id = _insert_dataset_entry(
-    "DESC/datasets/production_dataset_with_horrible_name",
-    "0.0.1",
-    "production",
-    None,
-    "This is a production dataset",
-)
+def test_dataset_alias(dummy_file):
+    """Register a dataset and make a dataset alias entry for it"""
 
-_insert_alias_entry("nice_dataset_name", dataset_id)
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
 
-# Test set 6
-# - Create a pipeline with multiple input and output datasets.
+    # Add dataset
+    d_id = _insert_dataset_entry(
+        datareg,
+        "alias_test_entry",
+        "0.0.1",
+        "user",
+        None,
+        "Test dataset alias",
+    )
 
-# Stage 1 of my pipe line
-ex_id_1 = _insert_execution_entry("pipeline_stage_1", "The first stage of my pipeline")
-dataset_id_1 = _insert_dataset_entry(
-    "DESC/datasets/my_first_pipeline_stage1",
-    "0.0.1",
-    "user",
-    None,
-    "This is data for stage 1 of my first pipeline",
-    execution_id=ex_id_1,
-)
+    # Add alias
+    _insert_alias_entry(datareg, "nice_dataset_name", d_id)
 
-# Stage 2 of my pipeline
-ex_id_2 = _insert_execution_entry(
-    "pipeline_stage_2",
-    "The second stage of my pipeline",
-    input_datasets=[dataset_id_1],
-)
+    # Query
+    f = datareg.Query.gen_filter("dataset_alias.alias", "==", "nice_dataset_name")
+    results = datareg.Query.find_datasets(
+        [
+            "dataset.dataset_id",
+            "dataset_alias.dataset_id",
+        ],
+        [f],
+        return_format="cursorresult",
+    )
 
-dataset_id_2 = _insert_dataset_entry(
-    "DESC/datasets/my_first_pipeline_stage2a",
-    "0.0.1",
-    "user",
-    None,
-    "This is data for stage 2 of my first pipeline",
-    execution_id=ex_id_2,
-)
+    assert results.rowcount == 1
+    for r in results:
+        assert getattr(r, "dataset.dataset_id") == d_id
+        assert getattr(r, "dataset_alias.dataset_id") == d_id
 
-dataset_id_3 = _insert_dataset_entry(
-    "DESC/datasets/my_first_pipeline_stage2b",
-    "0.0.1",
-    "user",
-    None,
-    "This is data for stage 2 of my first pipeline",
-    execution_id=ex_id_2,
-)
 
-# Stage 3 of my pipeline
-ex_id_3 = _insert_execution_entry(
-    "pipeline_stage_3",
-    "The third stage of my pipeline",
-    input_datasets=[dataset_id_2, dataset_id_3],
-)
+def test_pipeline_entry(dummy_file):
+    """
+    Test making multiple executions and datasets to form a pipeline.
 
-# Test set 7
-# - Version suffixes
-_insert_dataset_entry(
-    "DESC/datasets/my_first_suffix_dataset",
-    "0.0.1",
-    "user",
-    None,
-    "This is my first DESC dataset with a version suffix",
-    name="my_first_suffix_dataset",
-    version_suffix="test-suffix",
-)
+    Also queries to make sure dependencies are made.
+    """
 
-_insert_dataset_entry(
-    "DESC/datasets/my_first_suffix_dataset_bumped",
-    "minor",
-    "user",
-    None,
-    "This is my first DESC dataset with a version suffix (bumped)",
-    name="my_first_suffix_dataset",
-    version_suffix="test-suffix",
-)
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
 
-# Test set 8
-# - Include a configuration file in execution entry
-_insert_execution_entry(
-    "execution_with_configuration",
-    "An execution with an input configuration file",
-    configuration="dummy_configuration_file.yaml",
-)
+    # Add entries
+    ex_id_1 = _insert_execution_entry(
+        datareg, "pipeline_stage_1", "The first stage of my pipeline"
+    )
 
-# Test set 9
-# - Work with a real data
-_insert_dataset_entry(
-    "DESC/datasets/my_first_real_dataset_file",
-    "0.0.1",
-    "user",
-    None,
-    "This is my first DESC dataset with real files",
-    is_dummy=False,
-    old_location="dummy_configuration_file.yaml",
-)
+    d_id_1 = _insert_dataset_entry(
+        datareg,
+        "DESC/datasets/my_first_pipeline_stage1",
+        "0.0.1",
+        "user",
+        None,
+        "This is data for stage 1 of my first pipeline",
+        execution_id=ex_id_1,
+    )
 
-_insert_dataset_entry(
-    "DESC/datasets/my_first_real_dataset_directory",
-    "0.0.1",
-    "user",
-    None,
-    "This is my second DESC dataset with real files",
-    is_dummy=False,
-    old_location="dummy_dir",
-)
+    ex_id_2 = _insert_execution_entry(
+        datareg,
+        "pipeline_stage_2",
+        "The second stage of my pipeline",
+        input_datasets=[d_id_1],
+    )
 
-# Test set 10
-# - Work with a real data already on location (i.e., old_location=None)
-_insert_dataset_entry(
-    "file1.txt",
-    "0.0.1",
-    "user",
-    None,
-    "This is my first DESC dataset with real files already on location",
-    is_dummy=False,
-    old_location=None,
-    is_overwritable=True,
-)
+    d_id_2 = _insert_dataset_entry(
+        datareg,
+        "DESC/datasets/my_first_pipeline_stage2a",
+        "0.0.1",
+        "user",
+        None,
+        "This is data for stage 2 of my first pipeline",
+        execution_id=ex_id_2,
+    )
 
-_insert_dataset_entry(
-    "file1.txt",
-    "0.0.2",
-    "user",
-    None,
-    "This is my first DESC dataset with real files already on location (updated)",
-    is_dummy=False,
-    old_location=None,
-)
+    d_id_3 = _insert_dataset_entry(
+        datareg,
+        "DESC/datasets/my_first_pipeline_stage2b",
+        "0.0.1",
+        "user",
+        None,
+        "This is data for stage 2 of my first pipeline",
+        execution_id=ex_id_2,
+    )
 
-_insert_dataset_entry(
-    "dummy_dir",
-    "0.0.1",
-    "user",
-    None,
-    "This is my second DESC dataset with real files already on location",
-    is_dummy=False,
-    old_location=None,
-    is_overwritable=True,
-)
+    # Stage 3 of my pipeline
+    ex_id_3 = _insert_execution_entry(
+        datareg,
+        "pipeline_stage_3",
+        "The third stage of my pipeline",
+        input_datasets=[d_id_2, d_id_3],
+    )
 
-_insert_dataset_entry(
-    "dummy_dir",
-    "0.0.2",
-    "user",
-    None,
-    "This is my second DESC dataset with real files already on location (updated)",
-    is_dummy=False,
-    old_location=None,
-)
+    # Query on execution
+    f = datareg.Query.gen_filter("dataset.execution_id", "==", ex_id_2)
+    results = datareg.Query.find_datasets(
+        [
+            "dataset.name",
+        ],
+        [f],
+        return_format="cursorresult",
+    )
 
-# Test set 11
-# - Test global owner and owner types in the DataRegistry/Registar class
-datareg2 = DataRegistry(
-    root_dir=_TEST_ROOT_DIR,
-    schema=SCHEMA_VERSION,
-    owner="DESC group",
-    owner_type="group",
-)
+    assert results.rowcount == 2
+    for r in results:
+        assert "my_first_pipeline_stage2" in getattr(r, "dataset.name")
 
-_insert_dataset_entry(
-    "DESC/datasets/global_user_dataset",
-    "0.0.1",
-    None,
-    None,
-    "This should be owned by 'DESC group' and have owner_type='group'",
-    which_datareg=datareg2,
-)
+    # Query on dependency
+    f = datareg.Query.gen_filter("dependency.execution_id", "==", ex_id_2)
+    results = datareg.Query.find_datasets(
+        [
+            "dependency.execution_id",
+            "dataset.dataset_id",
+            "dataset.execution_id",
+            "dataset.name",
+        ],
+        [f],
+        return_format="cursorresult",
+    )
 
-# Test set 12
-# - Testing execution creation directly through dataset registration
-_insert_dataset_entry(
-    "DESC/datasets/execution_test",
-    "0.0.1",
-    None,
-    None,
-    "This should have a more descriptive execution",
-    execution_name="Overwrite execution auto name",
-    execution_description="Overwrite execution auto description",
-    execution_locale="TestMachine",
-    input_datasets=[dataset_id_1],
-)
+    assert results.rowcount == 1
+    for r in results:
+        assert getattr(r, "dataset.dataset_id") == d_id_1
+
+
+def test_global_owner_set(dummy_file):
+    """
+    Test setting the owner and owner_type globally during the database
+    initialization.
+    """
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(
+        root_dir=str(tmp_root_dir),
+        schema=SCHEMA_VERSION,
+        owner="DESC group",
+        owner_type="group",
+    )
+
+    # Add entry
+    d_id = _insert_dataset_entry(
+        datareg,
+        "DESC/datasets/global_user_dataset",
+        "0.0.1",
+        None,
+        None,
+        "Should be allocated user and user_type from global config",
+    )
+
+    # Query
+    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.Query.find_datasets(
+        [
+            "dataset.owner",
+            "dataset.owner_type",
+        ],
+        [f],
+        return_format="cursorresult",
+    )
+
+    assert results.rowcount == 1
+    for r in results:
+        assert getattr(r, "dataset.owner") == "DESC group"
+        assert getattr(r, "dataset.owner_type") == "group"
+
+
+def test_prooduction_schema(dummy_file):
+    """
+    Test making multiple executions and datasets to form a pipeline.
+
+    Also queries to make sure dependencies are made.
+    """
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema="production")
+
+    d_id = _insert_dataset_entry(
+        datareg,
+        "DESC/datasets/production_dataset_1",
+        "0.0.1",
+        "production",
+        None,
+        "This is production's first dataset",
+    )
+
+    # Query
+    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.Query.find_datasets(
+        [
+            "dataset.owner",
+            "dataset.owner_type",
+        ],
+        [f],
+        return_format="cursorresult",
+    )
+
+    assert results.rowcount == 1
+    for r in results:
+        assert getattr(r, "dataset.owner") == "production"
+        assert getattr(r, "dataset.owner_type") == "production"
+
+
+def test_execution_config_file(dummy_file):
+    """Test ingesting a configuration file with an execution entry"""
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    # Add entry
+    ex_id = _insert_execution_entry(
+        datareg,
+        "execution_with_configuration",
+        "An execution with an input configuration file",
+        configuration="dummy_configuration_file.yaml",
+    )
+
+    # Query
+    f = datareg.Query.gen_filter("execution.execution_id", "==", ex_id)
+    results = datareg.Query.find_datasets(
+        [
+            "execution.configuration",
+        ],
+        [f],
+        return_format="cursorresult",
+    )
+
+    assert results.rowcount == 1
+    for r in results:
+        assert getattr(r, "execution.configuration") is not None
+
+
+def test_dataset_with_execution(dummy_file):
+    """
+    Test modifying the datasets default execution directly when registering the
+    dataset
+    """
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    d_id_1 = _insert_dataset_entry(
+        datareg,
+        "DESC/datasets/execution_test_input",
+        "0.0.1",
+        None,
+        None,
+        "This is production's first dataset",
+    )
+
+    d_id_2 = _insert_dataset_entry(
+        datareg,
+        "DESC/datasets/execution_test",
+        "0.0.1",
+        None,
+        None,
+        "This should have a more descriptive execution",
+        execution_name="Overwrite execution auto name",
+        execution_description="Overwrite execution auto description",
+        execution_locale="TestMachine",
+        input_datasets=[d_id_1],
+    )
+
+    # Query on execution
+    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id_2)
+    results = datareg.Query.find_datasets(
+        [
+            "dataset.name",
+            "execution.execution_id",
+            "execution.description",
+            "execution.locale",
+            "execution.name",
+        ],
+        [f],
+        return_format="cursorresult",
+    )
+
+    assert results.rowcount == 1
+    for r in results:
+        assert getattr(r, "execution.name") == "Overwrite execution auto name"
+        assert getattr(r, "execution.description") == "Overwrite execution auto description"
+        assert getattr(r, "execution.locale") == "TestMachine"
+        ex_id_1 = getattr(r, "execution.execution_id")
+
+    # Query on dependency
+    f = datareg.Query.gen_filter("dependency.input_id", "==", d_id_1)
+    results = datareg.Query.find_datasets(
+        [
+            "dataset.dataset_id",
+            "dependency.execution_id",
+            "dependency.input_id",
+        ],
+        [f],
+        return_format="cursorresult",
+    )
+
+    assert results.rowcount == 1
+    for r in results:
+        assert getattr(r, "dependency.execution_id") == ex_id_1
+
+
+    # if datareg.Query._dialect != "sqlite":
+    ## These are example files already in the registry space, just need registered.
+    # for FILE in ["dummy_dir/file1.txt", "dummy_dir/file2.txt", "file1.txt"]:
+    #    with open(
+    #        os.path.join(_TEST_ROOT_DIR, f"user/{os.getenv('USER')}", FILE),
+    #        "w",
+    #    ) as f:
+    #        f.write("test")
+
+    # Establish connection to production database (if not sqllite)
+    # if datareg.db_connection.dialect != "sqllite":
+    #    datareg_prod = DataRegistry(
+    #        root_dir=str(tmp_root_dir), schema="production"
+    #    )
+
