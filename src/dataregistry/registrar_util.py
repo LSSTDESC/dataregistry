@@ -1,6 +1,7 @@
 import hashlib
 import os
 import re
+import warnings
 from sqlalchemy import MetaData, Table, Column, text, select
 from shutil import copyfile, copytree, rmtree
 
@@ -54,14 +55,15 @@ def _parse_version_string(version, with_suffix=False):
     return d
 
 
-def _form_dataset_path(owner_type, owner, relative_path, root_dir=None):
+def _form_dataset_path(owner_type, owner, relative_path, schema=None, root_dir=None):
     """
     Construct full (or relative) path to dataset in the data registry.
 
-    Path will have the format if `root_dir` is None:
+    When schema and root_dir are not None, the full path is returned:
+        <root_dir>/<schema>/<owner_type>/<owner>/<relative_path>
+
+    When schema and root_dir are ommited, the relative path is returned:
         <owner_type>/<owner>/<relative_path>
-    or if `root_dir` is not None:
-        <root_dir>/<owner_type>/<owner>/<relative_path>
 
     Parameters
     ----------
@@ -71,17 +73,24 @@ def _form_dataset_path(owner_type, owner, relative_path, root_dir=None):
         Owner of dataset
     relative_path : str
         Relative path within the data registry
-    root_dir : str
+    schema : str, optional
+        Schema we are connected to
+    root_dir : str, optional
         Root directory of data registry
+    dialect : str, optional
+        SQL dialect, e.g postgres or sqlite
 
     Returns
     -------
     to_return : str
-        Full path of dataset in the data registry
+        Full (or relative) path of dataset in the data registry
     """
+
     if owner_type == "production":
         owner = "production"
     to_return = os.path.join(owner_type, owner, relative_path)
+    if schema:
+        to_return = os.path.join(schema, to_return)
     if root_dir:
         to_return = os.path.join(root_dir, to_return)
     return to_return
@@ -210,6 +219,40 @@ def _name_from_relpath(relative_path):
         name = base
 
     return name
+
+
+def _read_configuration_file(configuration_file, max_config_length):
+    """
+    Read a text, YAML, TOML, etc, configuration file.
+
+    Parameters
+    ----------
+    configuration_file : str
+        Path to configuration file
+    max_config_length : int
+        Maximum number of characters to read from file. Files beyond this limit
+        will be truncated (with a warning message).
+
+    Returns
+    -------
+    contents : str
+    """
+
+    # Make sure file exists
+    if not os.path.isfile(configuration_file):
+        raise FileNotFoundError(f"{configuration_file} not found")
+
+    # Open configuration file and read up to max_config_length characters
+    with open(configuration_file) as f:
+        contents = f.read(max_config_length)
+
+    if len(contents) == max_config_length:
+        warnings.warn(
+            "Configuration file is longer than `max_config_length`, truncated",
+            UserWarning,
+        )
+
+    return contents
 
 
 def _copy_data(dataset_organization, source, dest, do_checksum=True):

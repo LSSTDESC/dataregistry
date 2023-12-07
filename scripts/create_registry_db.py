@@ -2,145 +2,322 @@ import os
 import sys
 import argparse
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Index, Float
-from sqlalchemy import ForeignKey, UniqueConstraint
-from dataregistry.db_basic import DbConnection, TableCreator, SCHEMA_VERSION
-from dataregistry.db_basic import add_table_row, _insert_provenance
+from sqlalchemy import (
+    Column,
+    ColumnDefault,
+    Integer,
+    String,
+    DateTime,
+    Boolean,
+    Index,
+    Float,
+)
+from sqlalchemy import ForeignKey, UniqueConstraint, text
+from sqlalchemy.orm import relationship, DeclarativeBase
+from dataregistry.db_basic import DbConnection, SCHEMA_VERSION
+from dataregistry.db_basic import _insert_provenance
+from dataregistry.schema import load_schema
+
+"""
+A script to create the default dataregistry schema and the production schema.
+
+Both schemas have the same layout, containing six tables:
+    - "dataset"         : Primary table, contains information on the datasets
+    - "dataset_alias"   : Table to associate "alias" names to datasets
+    - "execution"       : Stores the executions, datasets can be linked to these
+    - "execution_alias" : Table to asscociate "alias" names to executions
+    - "dependancy"      : Tracks dependencies between datasets
+    - "provenance"      : Contains information about the database/schema 
+"""
+
+# Conversion from string types in `schema.yaml` to SQLAlchemy
+_TYPE_TRANSLATE = {
+    "String": String,
+    "Integer": Integer,
+    "DateTime": DateTime,
+    "StringShort": String(20),
+    "StringLong": String(250),
+    "Boolean": Boolean,
+    "Float": Float,
+}
+
+# Load the schema from the `schema.yaml` file
+schema_yaml = load_schema()
+
+
+def _get_column_definitions(schema, table):
+    """
+    Build the SQLAlchemy `Column` list for this table from the information in
+    the `schema.yaml` file.
+
+    Parameters
+    ----------
+    schema : str
+    table : str
+
+    Returns
+    -------
+    return_dict : dict
+        SQLAlchemy Column entries for each table
+    """
+
+    return_dict = {}
+    for column in schema_yaml[table].keys():
+        # Special case where column has a foreign key
+        if schema_yaml[table][column]["foreign_key"]:
+            if schema_yaml[table][column]["foreign_key_schema"] == "self":
+                schema_yaml[table][column]["foreign_key_schema"] = schema
+
+            return_dict[column] = Column(
+                column,
+                _TYPE_TRANSLATE[schema_yaml[table][column]["type"]],
+                ForeignKey(
+                    _get_ForeignKey_str(
+                        schema_yaml[table][column]["foreign_key_schema"],
+                        schema_yaml[table][column]["foreign_key_table"],
+                        schema_yaml[table][column]["foreign_key_column"],
+                    )
+                ),
+                primary_key=schema_yaml[table][column]["primary_key"],
+                nullable=schema_yaml[table][column]["nullable"],
+            )
+
+        # Normal case
+        else:
+            return_dict[column] = Column(
+                column,
+                _TYPE_TRANSLATE[schema_yaml[table][column]["type"]],
+                primary_key=schema_yaml[table][column]["primary_key"],
+                nullable=schema_yaml[table][column]["nullable"],
+            )
+
+    return return_dict
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+def _get_ForeignKey_str(schema, table, column):
+    """
+    Get the string reference to the "<shema>.<table>.<column>" a foreign key will
+    point to.
+
+    The schema address will only be included for postgres backends.
+
+    Parameters
+    ---------
+    schema : str
+    table : str
+    column : str
+
+    Returns
+    -------
+    - : str
+    """
+
+    if schema is None:
+        return f"{table}.{column}"
+    else:
+        return f"{schema}.{table}.{column}"
+
+
+def _Provenance(schema):
+    """Keeps track of database/schema versions."""
+
+    class_name = f"{schema}_provenance"
+
+    # Load columns from `schema.yaml` file
+    columns = _get_column_definitions(schema, "provenance")
+
+    # Table metadata
+    meta = {"__tablename__": "provenance", "__table_args__": {"schema": schema}}
+
+    Model = type(class_name, (Base,), {**columns, **meta})
+    return Model
+
+
+def _Execution(schema):
+    """Stores executions, which datasets can be linked to."""
+
+    class_name = f"{schema}_execution"
+
+    # Load columns from `schema.yaml` file
+    columns = _get_column_definitions(schema, "execution")
+
+    # Table metadata
+    meta = {"__tablename__": "execution", "__table_args__": {"schema": schema}}
+
+    Model = type(class_name, (Base,), {**columns, **meta})
+    return Model
+
+
+def _ExecutionAlias(schema):
+    """To asscociate an alias to an execution."""
+
+    class_name = f"{schema}_execution_alias"
+
+    # Load columns from `schema.yaml` file
+    columns = _get_column_definitions(schema, "execution_alias")
+
+    # Table metadata
+    meta = {
+        "__tablename__": "execution_alias",
+        "__table_args__": (
+            UniqueConstraint("alias", "register_date", name="execution_u_register"),
+            {"schema": schema},
+        ),
+    }
+
+    Model = type(class_name, (Base,), {**columns, **meta})
+    return Model
+
+
+def _DatasetAlias(schema):
+    """To asscociate an alias to a dataset."""
+
+    class_name = f"{schema}_dataset_alias"
+
+    # Load columns from `schema.yaml` file
+    columns = _get_column_definitions(schema, "dataset_alias")
+
+    # Table metadata
+    meta = {
+        "__tablename__": "dataset_alias",
+        "__table_args__": (
+            UniqueConstraint("alias", "register_date", name="dataset_u_register"),
+            {"schema": schema},
+        ),
+    }
+
+    Model = type(class_name, (Base,), {**columns, **meta})
+    return Model
+
+
+def _Dataset(schema):
+    """Primary table, stores dataset information."""
+
+    class_name = f"{schema}_dataset"
+
+    # Load columns from `schema.yaml` file
+    columns = _get_column_definitions(schema, "dataset")
+
+    # Table metadata
+    meta = {
+        "__tablename__": "dataset",
+        "__table_args__": (
+            UniqueConstraint(
+                "name", "version_string", "version_suffix", name="dataset_u_version"
+            ),
+            Index("relative_path", "owner", "owner_type"),
+            {"schema": schema},
+        ),
+    }
+
+    Model = type(class_name, (Base,), {**columns, **meta})
+    return Model
+
+
+def _Dependency(schema, has_production):
+    """Links datasets through "dependencies"."""
+
+    class_name = f"{schema}_dependency"
+
+    # Load columns from `schema.yaml` file
+    columns = _get_column_definitions(schema, "dependency")
+
+    # Remove link to production schema.
+    if not has_production:
+        del columns["input_production_id"]
+
+    # Table metadata
+    meta = {"__tablename__": "dependency", "__table_args__": {"schema": schema}}
+
+    Model = type(class_name, (Base,), {**columns, **meta})
+    return Model
+
 
 # The following should be adjusted whenever there is a change to the structure
 # of the database tables.
-_DB_VERSION_MAJOR = 1
-_DB_VERSION_MINOR = 2
+_DB_VERSION_MAJOR = 2
+_DB_VERSION_MINOR = 0
 _DB_VERSION_PATCH = 0
-_DB_VERSION_COMMENT = "Added comment column to Provenance table"
+_DB_VERSION_COMMENT = "Added production dependencies"
 
-parser = argparse.ArgumentParser(description='''
-Creates dataregistry tables in specified schema and connection information (config)''', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--schema', help="name of schema to contain tables. Will be created if it doesn't already exist", default=f"{SCHEMA_VERSION}")
-parser.add_argument('--config', help="Path to the data registry config file")
-
+# Parse command line arguments
+parser = argparse.ArgumentParser(
+    description="""
+Creates dataregistry tables in specified schema and connection information (config)""",
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+)
+parser.add_argument(
+    "--schema",
+    help="name of schema to contain tables. Will be created if it doesn't already exist",
+    default=f"{SCHEMA_VERSION}",
+)
+parser.add_argument("--config", help="Path to the data registry config file")
+parser.add_argument(
+    "--no_production", help="Do not create the production schema", action="store_true"
+)
 args = parser.parse_args()
 
+# Connect to database
 db_connection = DbConnection(args.config, args.schema)
-tab_creator = TableCreator(db_connection)
 
-# Main table, a row per dataset
-cols = []
-cols.append(Column("dataset_id", Integer, primary_key=True))
-cols.append(Column("name", String, nullable=False))
-cols.append(Column("relative_path", String, nullable=False))
-cols.append(Column("version_major", Integer, nullable=False))
-cols.append(Column("version_minor", Integer, nullable=False))
-cols.append(Column("version_patch", Integer, nullable=False))
-cols.append(Column("version_string", String, nullable=False))
-cols.append(Column("version_suffix", String))
-cols.append(Column("dataset_creation_date", DateTime))
-cols.append(Column("is_archived", Boolean, default=False))
-cols.append(Column("is_external_link", Boolean, default=False))
-cols.append(Column("is_overwritable", Boolean, default=False))
-cols.append(Column("is_overwritten", Boolean, default=False))
-cols.append(Column("is_valid", Boolean, default=True)) # False if, e.g., copy failed
+# What schemas are we working with?
+if db_connection.dialect != "sqlite":
+    SCHEMA_LIST = [args.schema, "production"]
+else:
+    SCHEMA_LIST = [None]
+if args.no_production and "production" in SCHEMA_LIST:
+    SCHEMA_LIST.remove("production")
 
-# The following are boilerplate, included in all or most tables
-cols.append(Column("register_date", DateTime, nullable=False))
-cols.append(Column("creator_uid", String(20), nullable=False))
+# Create the schemas
+for SCHEMA in SCHEMA_LIST:
+    if SCHEMA is None:
+        continue
+    with db_connection.engine.connect() as conn:
+        # Create schema
+        stmt = f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}"
+        conn.execute(text(stmt))
+        conn.commit()
 
-# Make access_API a string for now, but it could be an enumeration or
-# a foreign key into another table.   Possible values for the column
-# might include "gcr-catalogs", "skyCatalogs"
-cols.append(Column("access_API", String(20)))
+# Grant reg_reader access
+acct = "reg_reader"
+for SCHEMA in SCHEMA_LIST:
+    if SCHEMA is None:
+        continue
+    try:
+        with db_connection.engine.connect() as conn:
+            # Grant reg_reader access
+            usage_priv = f"GRANT USAGE ON SCHEMA {SCHEMA} to {acct}"
+            select_priv = f"GRANT SELECT ON ALL TABLES IN SCHEMA {SCHEMA} to {acct}"
+            conn.execute(text(usage_priv))
+            conn.execute(text(select_priv))
 
-# A way to associate a dataset with a program execution or "run"
-cols.append(Column("execution_id", Integer, ForeignKey("execution.execution_id")))
-cols.append(Column("description", String))
-cols.append(Column("owner_type", String, nullable=False))
-# If ownership_type is 'production', then owner is always 'production'
-# If ownership_type is 'group', owner will be a group name
-# If ownership_type is 'user', owner will be a user name
-cols.append(Column("owner", String, nullable=False))
+            conn.commit()
+    except:
+        print(f"Could not grant access to {acct} on schema {SCHEMA}")
 
-# To store metadata about the dataset.
-cols.append(Column("data_org", String))
-cols.append(Column("nfiles", Integer))
-cols.append(Column("total_disk_space", Float))
-tab_creator.define_table("dataset", cols,
-                         [Index("relative_path", "owner", "owner_type"),
-                          UniqueConstraint("name", "version_string",
-                                           "version_suffix",
-                                           name="dataset_u_version")])
+# Create the tables
+for SCHEMA in SCHEMA_LIST:
+    _Dataset(SCHEMA)
+    _DatasetAlias(SCHEMA)
+    _Dependency(SCHEMA, "production" in SCHEMA_LIST)
+    _Execution(SCHEMA)
+    _ExecutionAlias(SCHEMA)
+    _Provenance(SCHEMA)
 
-# Dataset alias name table
-cols = []
-cols.append(Column("dataset_alias_id", Integer, primary_key=True))
-cols.append(Column("alias", String, nullable=False))
-cols.append(Column("dataset_id", Integer, ForeignKey("dataset.dataset_id")))
-cols.append(Column("supersede_date", DateTime,  default=None))
-cols.append(Column("register_date", DateTime, nullable=False))
-cols.append(Column("creator_uid", String(20), nullable=False))
-tab_creator.define_table("dataset_alias", cols,
-                         [UniqueConstraint("alias", "register_date",
-                                           name="dataset_u_register")])
+# Generate the database
+Base.metadata.create_all(db_connection.engine)
 
-# Execution table
-cols = []
-cols.append(Column("execution_id", Integer, primary_key=True))
-cols.append(Column("description", String))
-cols.append(Column("register_date", DateTime, nullable=False))
-cols.append(Column("execution_start", DateTime))
-# name is meant to identify the code executed.  E.g., could be pipeline name
-cols.append(Column("name", String))
-# locale is, e.g. site where code was run
-cols.append(Column("locale", String))
-cols.append(Column("configuration", String))
-cols.append(Column("creator_uid", String(20), nullable=False))
-tab_creator.define_table("execution", cols)
-
-# Execution alias name table
-cols = []
-cols.append(Column("execution_alias_id", Integer, primary_key=True))
-cols.append(Column("alias", String, nullable=False))
-cols.append(Column("execution_id", Integer,
-                   ForeignKey("execution.execution_id")))
-cols.append(Column("supersede_date", DateTime,  default=None))
-cols.append(Column("register_date", DateTime, nullable=False))
-cols.append(Column("creator_uid", String(20), nullable=False))
-tab_creator.define_table("execution_alias", cols,
-                         [UniqueConstraint("alias", "register_date",
-                                           name="execution_u_register")])
-
-# Internal dependencies - which datasets are inputs to creation of others
-# This table associates an execution with its inputs
-cols = []
-cols.append(Column("dependency_id", Integer, primary_key=True))
-cols.append(Column("register_date", DateTime, nullable=False))
-cols.append(Column("input_id", Integer, ForeignKey("dataset.dataset_id")))
-cols.append(Column("execution_id", Integer, ForeignKey("execution.execution_id")))
-tab_creator.define_table("dependency", cols)
-
-# Keep track of code version creating the db
-# Create this table separately so that we have handle needed to
-# make an entry
-cols = []
-cols.append(Column("provenance_id", Integer, primary_key=True))
-cols.append(Column("code_version_major", Integer, nullable=False))
-cols.append(Column("code_version_minor", Integer, nullable=False))
-cols.append(Column("code_version_patch", Integer, nullable=False))
-cols.append(Column("code_version_suffix", String))
-cols.append(Column("db_version_major", Integer, nullable=False))
-cols.append(Column("db_version_minor", Integer, nullable=False))
-cols.append(Column("db_version_patch", Integer, nullable=False))
-cols.append(Column("git_hash", String, nullable=True))
-cols.append(Column("repo_is_clean", Boolean, nullable=True))
-# update method is always "CREATE" for this script.
-# Alternative could be "MODIFY" or "MIGRATE"
-cols.append(Column("update_method", String(10), nullable=False))
-cols.append(Column("schema_enabled_date", DateTime, nullable=False))
-cols.append(Column("creator_uid", String(20), nullable=False))
-cols.append(Column("comment", String(250)))
-tab_creator.define_table("provenance", cols)
-
-tab_creator.create_all()
-
-prov_id = _insert_provenance(db_connection, _DB_VERSION_MAJOR,
-                             _DB_VERSION_MINOR, _DB_VERSION_PATCH,
-                             "CREATE", comment=_DB_VERSION_COMMENT)
+for SCHEMA in SCHEMA_LIST:
+    # Add initial procenance information
+    prov_id = _insert_provenance(
+        DbConnection(args.config, SCHEMA),
+        _DB_VERSION_MAJOR,
+        _DB_VERSION_MINOR,
+        _DB_VERSION_PATCH,
+        "CREATE",
+        comment=_DB_VERSION_COMMENT,
+    )

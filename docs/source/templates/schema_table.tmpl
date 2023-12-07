@@ -1,0 +1,22 @@
+.. -*- mode: rst -*-
+
+{% for table in ['execution','provenance','execution_alias','dataset','dependency','dataset_alias'] %}
+
+The {{table}} table
+----------------------------------------
+
+.. list-table::
+   :header-rows: 1
+   :class: tight-table 
+
+   * - row
+     - description
+     - type
+
+{% for item in data[table] %}
+   * - {{item}}
+{% for item2 in ['description', 'type'] %}
+     - {{data[table][item][item2]}}
+{% endfor %}
+{% endfor %}
+{% endfor %}
