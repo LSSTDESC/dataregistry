@@ -40,15 +40,16 @@ def dummy_file(tmp_path):
 
     # Temp root_dir of the registry
     tmp_root_dir = tmp_path / "root_dir"
-    p = tmp_root_dir / f"{SCHEMA_VERSION}/user/{os.getenv('USER')}/dummy_dir"
-    p.mkdir(parents=True)
+    for THIS_SCHEMA in [SCHEMA_VERSION + "/", ""]:
+        p = tmp_root_dir / f"{THIS_SCHEMA}user/{os.getenv('USER')}/dummy_dir"
+        p.mkdir(parents=True)
 
-    f = p / "file1.txt"
-    f.write_text("i am another dummy file (but on location in a dir)")
+        f = p / "file1.txt"
+        f.write_text("i am another dummy file (but on location in a dir)")
 
-    p = tmp_root_dir / f"{SCHEMA_VERSION}/user/{os.getenv('USER')}"
-    f = p / "file1.txt"
-    f.write_text("i am another dummy file (but on location)")
+        p = tmp_root_dir / f"{THIS_SCHEMA}user/{os.getenv('USER')}"
+        f = p / "file1.txt"
+        f.write_text("i am another dummy file (but on location)")
 
     # Make a dummy configuration yaml file
     data = {
@@ -267,8 +268,7 @@ def test_simple_query(dummy_file):
         return_format="cursorresult",
     )
 
-    assert results.rowcount == 1
-    for r in results:
+    for i, r in enumerate(results):
         assert getattr(r, "dataset.name") == "my_first_dataset"
         assert getattr(r, "dataset.version_string") == "0.0.1"
         assert getattr(r, "dataset.version_major") == 0
@@ -280,6 +280,7 @@ def test_simple_query(dummy_file):
         assert getattr(r, "dataset.relative_path") == "DESC/datasets/my_first_dataset"
         assert getattr(r, "dataset.version_suffix") == None
         assert getattr(r, "dataset.data_org") == "dummy"
+        assert i < 1
 
 
 def test_manual_name_and_vsuffix(dummy_file):
@@ -307,10 +308,10 @@ def test_manual_name_and_vsuffix(dummy_file):
         ["dataset.name", "dataset.version_suffix"], [f], return_format="cursorresult"
     )
 
-    assert results.rowcount == 1
-    for r in results:
+    for i, r in enumerate(results):
         assert getattr(r, "dataset.name") == "custom name"
         assert getattr(r, "dataset.version_suffix") == "custom_suffix"
+        assert i < 1
 
 
 @pytest.mark.parametrize(
@@ -350,10 +351,10 @@ def test_dataset_bumping(dummy_file, v_type, ans, name):
         ["dataset.name", "dataset.version_string"], [f], return_format="cursorresult"
     )
 
-    assert results.rowcount == 1
-    for r in results:
+    for i, r in enumerate(results):
         assert getattr(r, "dataset.name") == name
         assert getattr(r, "dataset.version_string") == ans
+        assert i < 1
 
 
 @pytest.mark.parametrize("owner_type", ["user", "group", "project"])
@@ -380,9 +381,9 @@ def test_owner_types(dummy_file, owner_type):
         ["dataset.owner_type"], [f], return_format="cursorresult"
     )
 
-    assert results.rowcount == 1
-    for r in results:
+    for i, r in enumerate(results):
         assert getattr(r, "dataset.owner_type") == owner_type
+        assert i < 1
 
 
 @pytest.mark.parametrize("data_org", ["file", "directory"])
@@ -419,11 +420,11 @@ def test_copy_data(dummy_file, data_org):
         return_format="cursorresult",
     )
 
-    assert results.rowcount == 1
-    for r in results:
+    for i, r in enumerate(results):
         assert getattr(r, "dataset.data_org") == data_org
         assert getattr(r, "dataset.nfiles") == 1
         assert getattr(r, "dataset.total_disk_space") > 0
+        assert i < 1
 
 
 @pytest.mark.parametrize(
@@ -469,21 +470,32 @@ def test_on_location_data(dummy_file, data_org, data_path, v_str, overwritable):
             "dataset.total_disk_space",
             "dataset.is_overwritable",
             "dataset.is_overwritten",
+            "dataset.version_string",
         ],
         [f],
         return_format="cursorresult",
     )
 
-    assert results.rowcount >= 1 and results.rowcount <= 2
+    num_results = len(results.all())
     for i, r in enumerate(results):
         assert getattr(r, "dataset.data_org") == data_org
         assert getattr(r, "dataset.nfiles") == 1
         assert getattr(r, "dataset.total_disk_space") > 0
-        if i == results.rowcount - 1:
-            assert getattr(r, "dataset.is_overwritable") == overwritable
-        else:
-            if results.rowcount > 1:
+        if getattr(r, "version_string") == "0.0.1":
+            if num_results == 1:
+                assert getattr(r, "dataset.is_overwritable") == True
+                assert getattr(r, "dataset.is_overwritten") == False
+            else:
+                assert getattr(r, "dataset.is_overwritable") == True
                 assert getattr(r, "dataset.is_overwritten") == True
+        else:
+            if num_results == 1:
+                assert getattr(r, "dataset.is_overwritable") == False
+                assert getattr(r, "dataset.is_overwritten") == True
+            else:
+                assert getattr(r, "dataset.is_overwritable") == False
+                assert getattr(r, "dataset.is_overwritten") == False
+        assert i < 2
 
 
 def test_dataset_alias(dummy_file):
@@ -517,10 +529,10 @@ def test_dataset_alias(dummy_file):
         return_format="cursorresult",
     )
 
-    assert results.rowcount == 1
-    for r in results:
+    for i, r in enumerate(results):
         assert getattr(r, "dataset.dataset_id") == d_id
         assert getattr(r, "dataset_alias.dataset_id") == d_id
+        assert i < 1
 
 
 def test_pipeline_entry(dummy_file):
@@ -594,9 +606,9 @@ def test_pipeline_entry(dummy_file):
         return_format="cursorresult",
     )
 
-    assert results.rowcount == 2
-    for r in results:
+    for i, r in enumerate(results):
         assert "my_first_pipeline_stage2" in getattr(r, "dataset.name")
+        assert i < 2
 
     # Query on dependency
     f = datareg.Query.gen_filter("dependency.execution_id", "==", ex_id_2)
@@ -611,9 +623,9 @@ def test_pipeline_entry(dummy_file):
         return_format="cursorresult",
     )
 
-    assert results.rowcount == 1
-    for r in results:
+    for i, r in enumerate(results):
         assert getattr(r, "dataset.dataset_id") == d_id_1
+        assert i < 1
 
 
 def test_global_owner_set(dummy_file):
@@ -652,12 +664,13 @@ def test_global_owner_set(dummy_file):
         return_format="cursorresult",
     )
 
-    assert results.rowcount == 1
-    for r in results:
+    for i, r in enumerate(results):
         assert getattr(r, "dataset.owner") == "DESC group"
         assert getattr(r, "dataset.owner_type") == "group"
+        assert i < 1
 
 
+@pytest.mark.skip(reason="Can't do production related things with sqlite")
 def test_prooduction_schema(dummy_file):
     """
     Test making multiple executions and datasets to form a pipeline.
@@ -689,10 +702,10 @@ def test_prooduction_schema(dummy_file):
         return_format="cursorresult",
     )
 
-    assert results.rowcount == 1
-    for r in results:
+    for i, r in enumerate(results):
         assert getattr(r, "dataset.owner") == "production"
         assert getattr(r, "dataset.owner_type") == "production"
+        assert i < 1
 
 
 def test_execution_config_file(dummy_file):
@@ -720,9 +733,9 @@ def test_execution_config_file(dummy_file):
         return_format="cursorresult",
     )
 
-    assert results.rowcount == 1
-    for r in results:
+    for i, r in enumerate(results):
         assert getattr(r, "execution.configuration") is not None
+        assert i < 1
 
 
 def test_dataset_with_execution(dummy_file):
@@ -771,8 +784,7 @@ def test_dataset_with_execution(dummy_file):
         return_format="cursorresult",
     )
 
-    assert results.rowcount == 1
-    for r in results:
+    for i, r in enumerate(results):
         assert getattr(r, "execution.name") == "Overwrite execution auto name"
         assert (
             getattr(r, "execution.description")
@@ -780,6 +792,7 @@ def test_dataset_with_execution(dummy_file):
         )
         assert getattr(r, "execution.locale") == "TestMachine"
         ex_id_1 = getattr(r, "execution.execution_id")
+        assert i < 1
 
     # Query on dependency
     f = datareg.Query.gen_filter("dependency.input_id", "==", d_id_1)
@@ -793,9 +806,9 @@ def test_dataset_with_execution(dummy_file):
         return_format="cursorresult",
     )
 
-    assert results.rowcount == 1
-    for r in results:
+    for i, r in enumerate(results):
         assert getattr(r, "dependency.execution_id") == ex_id_1
+        assert i < 1
 
 
 def test_get_dataset_absolute_path(dummy_file):

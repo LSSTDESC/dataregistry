@@ -6,7 +6,7 @@ from dataregistry import DataRegistry
 from dataregistry.db_basic import SCHEMA_VERSION
 
 # Establish connection to database (default schema)
-datareg = DataRegistry()
+datareg = DataRegistry(root_dir="temp")
 
 
 def test_query_return_format():

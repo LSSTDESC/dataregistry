@@ -197,4 +197,4 @@ jobs:
           bash create_test_entries_cli.sh
 
           # Run some test queries
-          pytest -v test_*.py
+          pytest -v -m "not skip" test_*.py

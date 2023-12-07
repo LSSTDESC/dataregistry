@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 from dataregistry import DataRegistry
 
@@ -22,6 +23,10 @@ def register_dataset(args):
     Information about the arguments that go into `register_dataset` can be
     found in `src/cli/cli.py` or by running `dregs --help`.
     """
+
+    # Convert to a datetime object (needed for SQLite)
+    if args.creation_date is not None:
+        args.creation_date = datetime.strptime(args.creation_date, "%Y-%m-%d")
 
     # Connect to database.
     datareg = DataRegistry(

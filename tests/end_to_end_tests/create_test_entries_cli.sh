@@ -2,10 +2,13 @@
 
 # A basic entry
 dregs register dataset my_cli_dataset "0.0.1" \
-    --is_dummy
+    --is_dummy \
+    --root_dir temp_root_dir
+
 dregs register dataset my_cli_dataset2 "patch" \
     --is_dummy \
-    --name my_cli_dataset
+    --name my_cli_dataset \
+    --root_dir temp_root_dir
 
 # A basic entry with more options
 dregs register dataset my_cli_dataset3 "1.2.3" --is_dummy \
@@ -17,12 +20,14 @@ dregs register dataset my_cli_dataset3 "1.2.3" --is_dummy \
     --creation_date "2020-01-01" \
     --input_datasets 1 2 \
     --execution_name "I have given the execution a name" \
-    --is_overwritable
+    --is_overwritable \
+    --root_dir temp_root_dir
 
 # A production dataset
 if [ "$DATAREG_BACKEND" = "postgres" ]; then
   dregs register dataset my_production_cli_dataset "0.1.2" \
       --owner_type "production" \
       --is_dummy \
-      --schema "production"
+      --schema "production" \
+      --root_dir temp_root_dir
 fi
