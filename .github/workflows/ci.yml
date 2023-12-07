@@ -74,6 +74,7 @@ jobs:
 
     env:
       DATAREG_CONFIG: "${{ github.workspace }}/config.txt"
+      DATAREG_BACKEND: "postgres"
 
     # Service containers to run with `runner-job`
     services:
@@ -130,7 +131,6 @@ jobs:
       - name: Create data registry default and production schema
         run: |
           python scripts/create_registry_db.py --config $DATAREG_CONFIG
-          python scripts/create_registry_db.py --config $DATAREG_CONFIG --schema production
 
       # Run CI tests
       - name: Run CI tests
@@ -151,6 +151,7 @@ jobs:
 
     env:
       DATAREG_CONFIG: "${{ github.workspace }}/config.txt"
+      DATAREG_BACKEND: "sqlite"
 
     # Our strategy lists the OS and Python versions we want to test on.
     strategy:

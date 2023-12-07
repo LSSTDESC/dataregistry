@@ -4,6 +4,7 @@ import argparse
 from dataregistry.db_basic import SCHEMA_VERSION
 from .register import register_dataset
 from .query import dregs_ls
+from dataregistry.schema import load_schema
 
 # ---------------------
 # The data registry CLI
@@ -45,6 +46,20 @@ arg_ls.add_argument(
 # Register a dataset
 # ------------------
 
+# Load the schema information
+schema_data = load_schema()
+
+# Conversion from string types in `schema.yaml` to SQLAlchemy
+_TYPE_TRANSLATE = {
+    "String": str,
+    "Integer": int,
+    "DateTime": str,
+    "StringShort": str,
+    "StringLong": str,
+    "Boolean": bool,
+    "Float": float,
+}
+
 # Register a new database entry.
 arg_register = subparsers.add_parser(
     "register", help="Register a new entry to the database"
@@ -57,6 +72,36 @@ arg_register_sub = arg_register.add_subparsers(
 # Register a new dataset.
 arg_register_dataset = arg_register_sub.add_parser("dataset", help="Register a dataset")
 
+# Get some information from the `schema.yaml` file
+for column in schema_data["dataset"]:
+    extra_args = {}
+
+    # Any default?
+    if schema_data["dataset"][column]["cli_default"] is not None:
+        extra_args["default"] = schema_data["dataset"][column]["cli_default"]
+        default_str = f" (default={extra_args['default']})"
+    else:
+        default_str = ""
+
+    # Restricted to choices?
+    if schema_data["dataset"][column]["choices"] is not None:
+        extra_args["choices"] = schema_data["dataset"][column]["choices"]
+
+    # Is this a boolean flag?
+    if schema_data["dataset"][column]["type"] == "Boolean":
+        extra_args["action"] = "store_true"
+    else:
+        extra_args["type"] = _TYPE_TRANSLATE[schema_data["dataset"][column]["type"]]
+
+    # Add flag
+    if schema_data["dataset"][column]["cli_optional"]:
+        arg_register_dataset.add_argument(
+            "--" + column,
+            help=schema_data["dataset"][column]["description"] + default_str,
+            **extra_args,
+        )
+
+# Entries unique to registering the dataset using the CLI
 arg_register_dataset.add_argument(
     "relative_path",
     help=(
@@ -74,45 +119,6 @@ arg_register_dataset.add_argument(
         "details)."
     ),
     type=str,
-)
-arg_register_dataset.add_argument(
-    "--version_suffix",
-    help=(
-        "Optional suffix string to place at the end of the version string."
-        "Cannot be used for production datasets."
-    ),
-    type=str,
-)
-arg_register_dataset.add_argument(
-    "--name",
-    help=(
-        "Any convenient, evocative name for the human. Note the combination of"
-        "name, version and version_suffix must be unique. If None name is generated"
-        "from the relative path."
-    ),
-    type=str,
-)
-arg_register_dataset.add_argument(
-    "--creation_date", help="Manually set creation date of dataset"
-)
-arg_register_dataset.add_argument(
-    "--description", help="Human-readable description of dataset", type=str
-)
-arg_register_dataset.add_argument(
-    "--execution_id",
-    help="Used to associate dataset with a particular execution",
-    type=int,
-)
-arg_register_dataset.add_argument(
-    "--access_API", help="Hint as to how to read the data", type=str
-)
-arg_register_dataset.add_argument(
-    "--is_overwritable",
-    help=(
-        "True if dataset may be overwritten (defaults to False). Production"
-        "datasets cannot be overwritten."
-    ),
-    action="store_true",
 )
 arg_register_dataset.add_argument(
     "--old_location",
@@ -136,18 +142,6 @@ arg_register_dataset.add_argument(
     "--schema",
     default=f"{SCHEMA_VERSION}",
     help="Which schema to connect to",
-)
-arg_register_dataset.add_argument(
-    "--locale",
-    help="Location where dataset was produced",
-    type=str,
-    default="NERSC",
-)
-arg_register_dataset.add_argument(
-    "--owner", help="Owner of dataset. Defaults to $USER."
-)
-arg_register_dataset.add_argument(
-    "--owner-type", choices=["production", "group", "user"], default="user"
 )
 arg_register_dataset.add_argument(
     "--config_file", help="Location of data registry config file", type=str

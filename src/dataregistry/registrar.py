@@ -9,7 +9,11 @@ from sqlalchemy import update, select
 from dataregistry.db_basic import add_table_row
 from dataregistry.registrar_util import _form_dataset_path, get_directory_info
 from dataregistry.registrar_util import _parse_version_string, _bump_version
-from dataregistry.registrar_util import _name_from_relpath, _copy_data
+from dataregistry.registrar_util import (
+    _name_from_relpath,
+    _read_configuration_file,
+    _copy_data,
+)
 from dataregistry.db_basic import TableMetadata
 
 # from dataregistry.exceptions import *
@@ -225,25 +229,25 @@ class Registrar:
         locale=None,
         configuration=None,
         input_datasets=[],
+        input_production_datasets=[],
         max_config_length=_DEFAULT_MAX_CONFIG,
     ):
         """
         Register a new execution in the DESC data registry.
 
+        Any args marked with '**' share their name with the associated column
+        in the registry schema. Descriptions of what these columns are can be
+        found in `schema.yaml` or the documentation.
+
         Parameters
         ----------
-        name : str
-            Typically pipeline name or program name
-        description : str, optional
-            Human readible description of execution
-        execution_start : datetime, optional
-            Date the execution started
-        locale : str, optional
-            Where was the execution performed?
-        configuration : str, optional
-            Path to text file used to configure the execution
-        input_datasets : list, optional
-            List of dataset ids that were the input to this execution
+        name** : str
+        description** : str, optional
+        execution_start** : datetime, optional
+        locale** : str, optional
+        configuration** : str, optional
+        input_datasets** : list, optional
+        input_production_datasets** : list, optional
         max_config_length : int, optional
             Maxiumum number of lines to read from a configuration file
 
@@ -269,12 +273,9 @@ class Registrar:
 
         # Read configuration file. Enter contents as a raw string.
         if configuration:
-            # Maybe first check that file size isn't outrageous?
-            with open(configuration) as f:
-                contents = f.read(max_config_length)
-                # if len(contents) == _MAX_CONFIG:
-                #    issue truncation warning?
-            values["configuration"] = contents
+            values["configuration"] = _read_configuration_file(
+                configuration, max_config_length
+            )
 
         # Enter row into data registry database
         with self._engine.connect() as conn:
@@ -286,6 +287,14 @@ class Registrar:
                 values["input_id"] = d
                 values["execution_id"] = my_id
                 add_table_row(conn, dependency_table, values, commit=False)
+
+            # handle production dependencies
+            for d in input_production_datasets:
+                values["register_date"] = datetime.now()
+                values["input_production_id"] = d
+                values["execution_id"] = my_id
+                add_table_row(conn, dependency_table, values, commit=False)
+
             conn.commit()
         return my_id
 
@@ -299,6 +308,7 @@ class Registrar:
         description=None,
         execution_id=None,
         access_API=None,
+        access_API_configuration=None,
         is_overwritable=False,
         old_location=None,
         copy=True,
@@ -312,45 +322,31 @@ class Registrar:
         execution_locale=None,
         execution_configuration=None,
         input_datasets=[],
+        input_production_datasets=[],
+        max_config_length=_DEFAULT_MAX_CONFIG,
     ):
         """
         Register a new dataset in the DESC data registry.
 
+        Any args marked with '**' share their name with the associated column
+        in the registry schema. Descriptions of what these columns are can be
+        found in `schema.yaml` or the documentation.
+
         First, the dataset entry is created in the database. If success, the
         data is then copied (if `old_location` was provided). Only if both
-        steps are successful will there be a permanent entry in the registry.
+        steps are successful will there be `is_valid=True` entry in the registry.
 
         Parameters
         ----------
-        relative_path : str
-            Destination for the dataset within the data registry. Path is
-            relative to ``<registry root>/<owner_type>/<owner>``.
-        version : str
-            Semantic version string of the format MAJOR.MINOR.PATCH *or*
-            a special flag: "patch", "minor" or "major".
-
-            When a special flag is used it automatically bumps the relative
-            version for you (see examples for more details).
-        version_suffix : str, optional
-            Suffix string to place at the end of the version string. Cannot be
-            used for production datasets.
-        name : str, optional
-            Any convenient, evocative name for the human.
-
-            Note the combination of name, version and version_suffix must be
-            unique.
-        creation_date : datetime, optional
-            Manually set creation date of dataset
-        description : str, optional
-            Human-readable description of dataset
-        execution_id : int, optional
-            Used to associate dataset with a particular execution
-        access_API : str, optional
-            Hint as to how to read the data
-        is_overwritable : bool, optional
-            True if dataset may be overwritten (defaults to False).
-
-            Note production datasets cannot be overwritten.
+        relative_path** : str
+        version** : str
+        version_suffix** : str, optional
+        name** : str, optional
+        creation_date** : datetime, optional
+        description** : str, optional
+        execution_id** : int, optional
+        access_API** : str, optional
+        is_overwritable** : bool, optional
         old_location : str, optional
             Absolute location of dataset to copy into the data registry.
 
@@ -365,25 +361,19 @@ class Registrar:
             only)
         verbose : bool, optional
             Provide some additional output information
-        owner : str, optional
-            Owner of the dataset. If None, defaults to what was set in
-            Registrar __init__, if that is also None, defaults to $USER.
-        owner_type : str, optional
-            Owner type: "user", "group", or "production". If None, defaults to
-            what was set in Registrar __init__, if that is also None, defaults
-            to "user".
-        execution_name : str, optional
-            Typically pipeline name or program name
-        execution_description : str, optional
-            Human readable description of execution
-        execution_start : datetime, optional
-            Date the execution started
-        execution_locale : str, optional
-            Where was the execution performed?
-        execution_configuration : str, optional
-            Path to text file used to configure the execution
+        owner** : str, optional
+        owner_type** : str, optional
+        execution_name** : str, optional
+        execution_description** : str, optional
+        execution_start** : datetime, optional
+        execution_locale** : str, optional
+        execution_configuration** : str, optional
         input_datasets : list, optional
             List of dataset ids that were the input to this execution
+        input_production_datasets : list, optional
+            List of production dataset ids that were the input to this execution
+        max_config_length : int, optional
+            Maxiumum number of lines to read from a configuration file
 
         Returns
         -------
@@ -468,6 +458,7 @@ class Registrar:
                 locale=execution_locale,
                 configuration=execution_configuration,
                 input_datasets=input_datasets,
+                input_production_datasets=input_production_datasets,
             )
 
         # Pull the dataset properties together
@@ -478,20 +469,26 @@ class Registrar:
         values["version_string"] = version_string
         if version_suffix:
             values["version_suffix"] = version_suffix
-        if creation_date:
-            values["dataset_creation_date"] = creation_date
         if description:
             values["description"] = description
         if execution_id:
             values["execution_id"] = execution_id
         if access_API:
             values["access_API"] = access_API
+        if access_API_configuration:
+            values["access_API_configuration"] = _read_configuration_file(
+                access_API_configuration, max_config_length
+            )
         values["is_overwritable"] = is_overwritable
         values["is_overwritten"] = False
+        values["is_external_link"] = False
+        values["is_archived"] = False
+        values["is_valid"] = True
         values["register_date"] = datetime.now()
         values["owner_type"] = owner_type
         values["owner"] = owner
         values["creator_uid"] = self._uid
+        values["register_root_dir"] = self._root_dir
 
         # We tentatively start with an "invalid" dataset in the database. This
         # will be upgraded to True if the data copying (if any) was successful.
@@ -527,6 +524,10 @@ class Registrar:
             total_size = 0
             ds_creation_date = None
 
+        # Case where use is overwriting the dateset `creation_date`
+        if creation_date:
+            ds_creation_date = creation_date
+
         # Copy was successful, update the entry with dataset metadata
         with self._engine.connect() as conn:
             update_stmt = (
@@ -536,7 +537,7 @@ class Registrar:
                     data_org=dataset_organization,
                     nfiles=num_files,
                     total_disk_space=total_size / 1024 / 1024,
-                    dataset_creation_date=ds_creation_date,
+                    creation_date=ds_creation_date,
                     is_valid=True,
                 )
             )
@@ -549,12 +550,14 @@ class Registrar:
         """
         Register a new dataset alias in the DESC data registry.
 
+        Any args marked with '**' share their name with the associated column
+        in the registry schema. Descriptions of what these columns are can be
+        found in `schema.yaml` or the documentation.
+
         Parameters
         ----------
-        aliasname : str
-            Human readible alias for the dataset
-        dataset_id : int
-            Existing dataset ID to attach dataset alias to
+        aliasname** : str
+        dataset_id** : int
 
         Returns
         -------

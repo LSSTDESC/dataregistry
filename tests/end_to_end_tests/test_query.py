@@ -12,9 +12,7 @@ _TEST_ROOT_DIR_PRODUCTION = "DataRegistry_data_production"
 datareg = DataRegistry(root_dir=_TEST_ROOT_DIR)
 
 # Establish connection to database (production schema)
-datareg_prod = DataRegistry(
-    root_dir=_TEST_ROOT_DIR_PRODUCTION, schema="production"
-)
+datareg_prod = DataRegistry(root_dir=_TEST_ROOT_DIR_PRODUCTION, schema="production")
 
 
 def test_query_return_format():
@@ -60,6 +58,21 @@ def test_query_all():
 #        ["dataset.name", "dataset.version_string", "dataset.relative_path"], [f]
 #    )
 #    assert len(results["dataset.name"]) == 2, "Bad result from query dcli1"
+
+    # Query 2: Find production dependencies of an execution
+    if datareg.Query._dialect != "sqlite":
+        f = datareg.Query.gen_filter("execution.name", "==", "production_id_test")
+        results = datareg.Query.find_datasets(["execution.execution_id"], [f])
+        assert len(results["execution.execution_id"]) == 1, "Bad result from query ex1"
+
+        # Find dependencies for this execution
+        f = datareg.Query.gen_filter(
+            "dependency.execution_id", "==", results["execution.execution_id"][0]
+        )
+        results = datareg.Query.find_datasets(["dependency.input_production_id"], [f])
+        assert (
+            len(results["dependency.input_production_id"]) == 1
+        ), "Bad result from query dep2"
 
 
 def test_db_version():

@@ -20,7 +20,6 @@ SCHEMA_VERSION = "registry_beta"
 __all__ = [
     "DbConnection",
     "add_table_row",
-    "TableCreator",
     "TableMetadata",
     "SCHEMA_VERSION",
 ]
@@ -152,130 +151,6 @@ class DbConnection:
     @property
     def schema(self):
         return self._schema
-
-
-class TableCreator:
-    def __init__(self, db_connection):
-        """
-        Make it easy to create one or more tables
-
-        Parameters
-        ----------
-        dbConnection : a DbConnection object
-        """
-        self._engine = db_connection.engine
-        self._schema = db_connection.schema
-        self._dialect = db_connection.dialect
-        self._metadata = MetaData(schema=db_connection.schema)
-
-    def define_table(self, name, columns, constraints=[]):
-        """
-        Usual case: caller wants to create a collection of tables all at once
-        so just stash definition in MetaData object.
-
-        Parameters
-        ----------
-        name : str
-            The table name
-        columns : list
-            List of sqlalchemy.Column objects
-        constraints : list, optional
-            List of sqlalchemy.Constraint objects
-
-        Returns
-        -------
-        tbl : sqlalchemy.Table object
-            User may instantiate immediately with sqlalchemy.Table.create
-            method
-        """
-
-        tbl = Table(name, self._metadata, *columns)
-        for c in constraints:
-            tbl.append_constraint(c)
-
-        return tbl
-
-    def create_table(self, name, columns, constraints=None):
-        """
-        Define and instantiate a single table.
-
-        Parameters
-        ----------
-        name : str
-            The table name
-        columns : list
-            List of sqlalchemy.Column objects
-        constraints : list, optional
-            List of sqlalchemy.Constraint objects
-        """
-
-        tbl = define_table(self, name, columns, constraints)
-        tbl.create(self._engine)
-
-    def create_all(self):
-        """
-        Instantiate all tables defined so far which don't already exist
-        """
-        self.create_schema()
-        self._metadata.create_all(self._engine)
-        try:
-            self.grant_reader_access("reg_reader")
-        except:
-            print("Could not grant access to reg_reader")
-
-    def get_table_metadata(self, table_name):
-        """
-        Return metadata for a particular table in the database.
-
-        Parameters
-        ----------
-        table_name : str
-
-        Returns
-        -------
-        - : Table object
-        """
-
-        if not "." in table_name:
-            table_name = ".".join([self._schema, table_name])
-        return self._metadata.tables[table_name]
-
-    def create_schema(self):
-        """
-        Create a new schema in the database (if it doesn't already exist).
-
-        Schema name is taken from `self._schema`.
-        """
-
-        if self._dialect == "sqlite":
-            return
-        stmt = f"CREATE SCHEMA IF NOT EXISTS {self._schema}"
-        with self._engine.connect() as conn:
-            conn.execute(text(stmt))
-            conn.commit()
-
-    def grant_reader_access(self, acct):
-        """
-        Grant USAGE on schema, SELECT on tables to specified account.
-
-        Parameters
-        ----------
-        acct : str
-            Name of account we are granting read access to.
-        """
-        if self._dialect == "sqlite":
-            return
-        # Cannot figure out how to pass value of acct using parameters,
-        # so for safety do minimal checking ourselves: check that value of
-        # acct has no spaces
-        if len(acct.split()) != 1:
-            raise ValueException(f"grant_reader_access: {acct} is not a valid account")
-        usage_priv = f"GRANT USAGE ON SCHEMA {self._schema} to {acct}"
-        select_priv = f"GRANT SELECT ON ALL TABLES IN SCHEMA {self._schema} to {acct}"
-        with self._engine.connect() as conn:
-            conn.execute(text(usage_priv))
-            conn.execute(text(select_priv))
-            conn.commit()
 
 
 class TableMetadata:
