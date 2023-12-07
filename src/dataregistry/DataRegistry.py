@@ -113,7 +113,7 @@ class DataRegistry:
                             "`root_dir` must not equal a pre-defined site with Sqlite"
                         )
             return root_dir
-            
+
         # Non Sqlite case
         else:
             if root_dir is None:

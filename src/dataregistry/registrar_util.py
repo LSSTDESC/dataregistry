@@ -1,7 +1,9 @@
+import hashlib
 import os
 import re
 import warnings
 from sqlalchemy import MetaData, Table, Column, text, select
+from shutil import copyfile, copytree, rmtree
 
 __all__ = [
     "_parse_version_string",
@@ -9,6 +11,7 @@ __all__ = [
     "_form_dataset_path",
     "get_directory_info",
     "_name_from_relpath",
+    "_copy_data",
 ]
 VERSION_SEPARATOR = "."
 _nonneg_int_re = "0|[1-9][0-9]*"
@@ -242,3 +245,85 @@ def _read_configuration_file(configuration_file, max_config_length):
         )
 
     return contents
+
+
+def _copy_data(dataset_organization, source, dest, do_checksum=True):
+    """
+    Copy data from one location to another (for ingesting directories and files
+    into the `root_dir` shared space.
+
+    Note prior to this, in `_handle_data`, it has already been check that
+    `source` exists, so we do not have to check again.
+
+    To ensure robustness, if overwriting data, the original file/folder is
+    moved to a temporary location, then deleted if the copy was successful. If
+    the copy was not successful the backup is renamed back.
+
+    For individual files a checksum validation can be performed if
+    `do_checksum=True`, there is no such check for directories.
+
+    Parameters
+    ----------
+    dataset_organization : str
+        The dataset organization, either "file" or "directory"
+    source : str
+        Path of source file or directory
+    dest : str
+        Destination we are copying to
+    do_checksum : bool
+        When overwriting files, do a checksum with the old and new file
+    """
+
+    def _compute_checksum(file_path):
+        hasher = hashlib.sha256()
+        with open(file_path, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hasher.update(chunk)
+        return hasher.hexdigest()
+
+    temp_dest = dest + "_DATAREG_backup"
+
+    try:
+        # Backup original before copy
+        if os.path.exists(dest):
+            os.rename(dest, temp_dest)
+
+        # Create any intervening directories
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+
+        # Copy a single file
+        if dataset_organization == "file":
+            copyfile(source, dest)
+
+            # Checksums on the files
+            if do_checksum and os.path.exists(temp_dest):
+                cs_dest = _compute_checksum(dest)
+                cs_dest_backup = _compute_checksum(temp_dest)
+
+                if cs_dest != cs_dest_backup:
+                    raise Exception("Checksum with backup failed")
+
+        # Copy a single directory (and subdirectories)
+        elif dataset_organization == "directory":
+            copytree(source, dest, copy_function=copyfile)
+
+        # If successful, delete the backup
+        if os.path.exists(temp_dest):
+            if dataset_organization == "file":
+                os.remove(temp_dest)
+            else:
+                rmtree(temp_dest)
+
+    except Exception as e:
+        if os.path.exists(temp_dest):
+            if os.path.exists(dest):
+                rmtree(dest)
+            os.rename(temp_dest, dest)
+
+        print(
+            f"Something went wrong during data copying, aborting."
+            "Note an entry in the registry database will still have"
+            "been created"
+        )
+
+        raise Exception(e)
