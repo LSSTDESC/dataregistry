@@ -533,7 +533,7 @@ class Registrar:
                     data_org=dataset_organization,
                     nfiles=num_files,
                     total_disk_space=total_size / 1024 / 1024,
-                    dataset_creation_date=ds_creation_date,
+                    creation_date=ds_creation_date,
                     is_valid=True,
                 )
             )

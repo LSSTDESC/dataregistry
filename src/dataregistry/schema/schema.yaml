@@ -234,15 +234,12 @@ dataset:
   data_org:
     type: "String"
     description: "Dataset organisation ('file' or 'directory')"
-    nullable: False
   nfiles:
     type: "Integer"
     description: "How many files are in the dataset"
-    nullable: False
   total_disk_space:
     type: "Float"
     description: "Total disk spaced used by the dataset"
-    nullable: False
   register_root_dir:
     type: "String"
     description: "The `root_dir` the dataset was originally ingested into"
