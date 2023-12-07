@@ -37,7 +37,8 @@ def test_query_return_format():
 
 
 def test_query_all():
-    """Test a query where no properties are chosen, i.e., 'return *"""
+    """Test a query where no properties are chosen, i.e., 'return *'"""
+
     results = datareg.Query.find_datasets()
 
     assert results is not None
@@ -50,6 +51,6 @@ def test_db_version():
     versions to be used when new db is created
     """
     actual_major, actual_minor, actual_patch = datareg.Query.get_db_versioning()
-    assert actual_major == 1, "db major version doesn't match expected"
-    assert actual_minor == 2, "db minor version doesn't match expected"
+    assert actual_major == 2, "db major version doesn't match expected"
+    assert actual_minor == 0, "db minor version doesn't match expected"
     assert actual_patch == 0, "db patch version doesn't match expected"
