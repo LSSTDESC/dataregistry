@@ -60,7 +60,7 @@ class RegistrarDataset:
         max_config_length=_DEFAULT_MAX_CONFIG,
     ):
         """
-        Register a new dataset in the DESC data registry.
+        Create a new dataset entry in the DESC data registry.
 
         Any args marked with '**' share their name with the associated column
         in the registry schema. Descriptions of what these columns are can be
@@ -151,7 +151,7 @@ class RegistrarDataset:
                     "Only the production schema can handle owner_type='production'"
                 )
 
-        # If name not passed, automatically generate a name from the relative path
+        # If `name` not passed, automatically generate a name from the relative path
         if name is None:
             name = _name_from_relpath(relative_path)
 
@@ -410,3 +410,19 @@ class RegistrarDataset:
                 previous.append(r.dataset_id)
 
         return previous
+
+    def delete(self):
+        """
+        Delete a dataset entry from the DESC data registry.
+
+        """
+
+        raise NotImplementedError
+
+    def modify(self):
+        """
+        Modify a dataset entry in the DESC data registry.
+
+        """
+
+        raise NotImplementedError

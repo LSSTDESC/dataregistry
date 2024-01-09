@@ -33,7 +33,7 @@ class RegistrarExecution:
         max_config_length=_DEFAULT_MAX_CONFIG,
     ):
         """
-        Register a new execution in the DESC data registry.
+        Create a new execution entry in the DESC data registry.
 
         Any args marked with '**' share their name with the associated column
         in the registry schema. Descriptions of what these columns are can be
@@ -97,3 +97,19 @@ class RegistrarExecution:
 
             conn.commit()
         return my_id
+
+    def delete(self):
+        """
+        Delete an execution entry from the DESC data registry.
+
+        """
+
+        raise NotImplementedError
+
+    def modify(self):
+        """
+        Modify an execution entry in the DESC data registry.
+
+        """
+
+        raise NotImplementedError
