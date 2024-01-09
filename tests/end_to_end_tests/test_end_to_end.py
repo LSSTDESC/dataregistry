@@ -82,7 +82,7 @@ def _insert_alias_entry(datareg, name, dataset_id):
         The alias ID for this new entry
     """
 
-    new_id = datareg.Registrar.register_dataset_alias(name, dataset_id)
+    new_id = datareg.Registrar.dataset_alias.create(name, dataset_id)
 
     assert new_id is not None, "Trying to create a dataset alias that already exists"
     print(f"Created dataset alias entry with id {new_id}")
@@ -113,7 +113,7 @@ def _insert_execution_entry(
         The execution ID for this new entry
     """
 
-    new_id = datareg.Registrar.register_execution(
+    new_id = datareg.Registrar.execution.create(
         name,
         description=description,
         input_datasets=input_datasets,
@@ -201,7 +201,7 @@ def _insert_dataset_entry(
     make_sym_link = False
 
     # Add new entry.
-    dataset_id, execution_id = datareg.Registrar.register_dataset(
+    dataset_id, execution_id = datareg.Registrar.dataset.create(
         relpath,
         version,
         version_suffix=version_suffix,

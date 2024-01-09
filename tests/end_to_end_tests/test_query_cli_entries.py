@@ -6,7 +6,7 @@ from dataregistry import DataRegistry
 from dataregistry.db_basic import SCHEMA_VERSION
 
 # Establish connection to database (default schema)
-datareg = DataRegistry(root_dir="temp")
+datareg = DataRegistry(root_dir="temp_root_dir")
 
 
 def test_cli_basic_dataset():
@@ -44,7 +44,7 @@ def test_cli_production_entry():
 
     if datareg.Query._dialect != "sqlite":
         # Establish connection to database (production schema)
-        datareg_prod = DataRegistry(schema="production")
+        datareg_prod = DataRegistry(schema="production", root_dir="temp_root_dir")
 
         f = datareg_prod.Query.gen_filter(
             "dataset.name", "==", "my_production_cli_dataset"
