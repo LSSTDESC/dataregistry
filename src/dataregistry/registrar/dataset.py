@@ -68,7 +68,7 @@ class RegistrarDataset:
 
         First, the dataset entry is created in the database. If success, the
         data is then copied (if `old_location` was provided). Only if both
-        steps are successful will there be `is_valid=True` entry in the registry.
+        steps are successful will there be `status=1` entry in the registry.
 
         Parameters
         ----------
@@ -217,7 +217,6 @@ class RegistrarDataset:
         values["is_overwritten"] = False
         values["is_external_link"] = False
         values["is_archived"] = False
-        values["is_valid"] = True
         values["register_date"] = datetime.now()
         values["owner_type"] = owner_type
         values["owner"] = owner
@@ -225,8 +224,8 @@ class RegistrarDataset:
         values["register_root_dir"] = self.parent._root_dir
 
         # We tentatively start with an "invalid" dataset in the database. This
-        # will be upgraded to True if the data copying (if any) was successful.
-        values["is_valid"] = False
+        # will be upgraded to valid if the data copying (if any) was successful.
+        values["status"] = -1
 
         # Create a new row in the data registry database.
         with self.parent._engine.connect() as conn:
@@ -272,7 +271,7 @@ class RegistrarDataset:
                     nfiles=num_files,
                     total_disk_space=total_size / 1024 / 1024,
                     creation_date=ds_creation_date,
-                    is_valid=True,
+                    status=1,
                 )
             )
             conn.execute(update_stmt)

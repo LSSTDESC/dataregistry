@@ -248,10 +248,6 @@ dataset:
     type: "String"
     description: "User provided human-readable description of the dataset"
     cli_optional: True
-  is_valid:
-    type: "Boolean"
-    nullable: False
-    description: "False if, e.g., copy failed"
   execution_id:
     type: "Integer"
     foreign_key: True
@@ -273,7 +269,22 @@ dataset:
     type: "Boolean"
     nullable: False
     description: "True if an external link"
-  is_archived:
-    type: "Boolean"
+  status:
+    type: "Integer"
     nullable: False
-    description: "True if dataset is archived"
+    description: "What is the status of the dataset? -1: Invalid (e.g., copy data failed during creation), 1: Valid, 2: Archived, 3: deleted"
+  archive_date:
+    type: "DateTime"
+    description: "Dataset archive date"
+  archive_path:
+    type: "String"
+    description: "Path the dataset was archived to"
+  delete_date:
+    type: "DateTime"
+    description: "Date the dataset was deleted"
+  delete_uid:
+    type: "String"
+    description: "User ID of person who deleted the dataset"
+  move_date:
+    type: "DateTime"
+    description: "Date the dataset was last moved"
