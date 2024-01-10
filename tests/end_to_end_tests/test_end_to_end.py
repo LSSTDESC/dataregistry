@@ -7,6 +7,8 @@ from dataregistry.db_basic import SCHEMA_VERSION
 from dataregistry.registrar import _OWNER_TYPES
 import pytest
 
+from dataregistry.registrar.registrar_util import _form_dataset_path
+
 
 @pytest.fixture
 def dummy_file(tmp_path):
@@ -30,8 +32,9 @@ def dummy_file(tmp_path):
     tmp_src_dir = tmp_path / "source"
     tmp_src_dir.mkdir()
 
-    f = tmp_src_dir / "file1.txt"
-    f.write_text("i am a dummy file")
+    for i in range(2):
+        f = tmp_src_dir / f"file{i+1}.txt"
+        f.write_text("i am a dummy file")
 
     p = tmp_src_dir / "directory1"
     p.mkdir()
@@ -845,3 +848,104 @@ def test_get_dataset_absolute_path(dummy_file):
         assert v == os.path.join(
             str(tmp_root_dir), SCHEMA_VERSION, dset_ownertype, dset_owner, dset_relpath
         )
+
+
+def test_delete_entry_dummy(dummy_file):
+    """Make a simple (dummy) entry, then delete it, then check it was deleted"""
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    # Make sure we raise an exception trying to delete a dataset that doesn't exist
+    with pytest.raises(ValueError, match="does not exist"):
+        datareg.Registrar.dataset.delete(10000)
+
+    # Add entry
+    d_id = _insert_dataset_entry(
+        datareg,
+        "DESC/datasets/dummy_dataset_to_delete",
+        "0.0.1",
+        "user",
+        None,
+        "A dataset to delete",
+    )
+
+    # Now delete that entry
+    datareg.Registrar.dataset.delete(d_id)
+
+    # Check the entry was deleted
+    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.Query.find_datasets(
+        [
+            "dataset.status",
+            "dataset.delete_date",
+            "dataset.delete_uid",
+        ],
+        [f],
+        return_format="cursorresult",
+    )
+
+    for r in results:
+        assert getattr(r, "dataset.status") == 3
+        assert getattr(r, "dataset.delete_date") is not None
+        assert getattr(r, "dataset.delete_uid") is not None
+
+
+def test_delete_entry_real(dummy_file):
+    """Make a simple (real data) entry, then delete it, then check it was deleted"""
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    # Make sure we raise an exception trying to delete a dataset that doesn't exist
+    with pytest.raises(ValueError, match="does not exist"):
+        datareg.Registrar.dataset.delete(10000)
+
+    # Add entry
+    data_path = str(tmp_src_dir / "file2.txt")
+    assert os.path.isfile(data_path)
+    d_id = _insert_dataset_entry(
+        datareg,
+        "DESC/datasets/real_dataset_to_delete",
+        "0.0.1",
+        "user",
+        None,
+        "A dataset to delete",
+        old_location=data_path,
+        is_dummy=False,
+    )
+
+    # Now delete that entry
+    datareg.Registrar.dataset.delete(d_id)
+
+    # Check the entry was set to deleted in the registry
+    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.Query.find_datasets(
+        [
+            "dataset.status",
+            "dataset.delete_date",
+            "dataset.delete_uid",
+            "dataset.owner",
+            "dataset.owner_type",
+            "dataset.relative_path",
+        ],
+        [f],
+        return_format="cursorresult",
+    )
+
+    for r in results:
+        assert getattr(r, "dataset.status") == 3
+        assert getattr(r, "dataset.delete_date") is not None
+        assert getattr(r, "dataset.delete_uid") is not None
+
+    # Make sure the file in the root_dir has gone
+    data_path = _form_dataset_path(
+        getattr(r, "dataset.owner_type"),
+        getattr(r, "dataset.owner"),
+        getattr(r, "dataset.relative_path"),
+        schema=SCHEMA_VERSION,
+        root_dir=str(tmp_root_dir),
+    )
+    assert not os.path.isfile(data_path)

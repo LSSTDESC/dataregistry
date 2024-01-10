@@ -157,11 +157,17 @@ class RegistrarDataset:
 
         # Look for previous entries. Fail if not overwritable
         dataset_table = self.parent._get_table_metadata("dataset")
-        previous = self._find_previous(relative_path, dataset_table, owner, owner_type)
+        previous_dataset = self._find_previous(
+            dataset_table,
+            relative_path=relative_path,
+            owner=owner,
+            owner_type=owner_type,
+        )
 
-        if previous is None:
-            print(f"Dataset {relative_path} exists, and is not overwritable")
-            return None
+        if previous_dataset is not None:
+            if not previous_dataset.is_overwritable:
+                print(f"Dataset {relative_path} exists, and is not overwritable")
+                return None
 
         # Deal with version string (non-special case)
         if version not in ["major", "minor", "patch"]:
@@ -231,11 +237,11 @@ class RegistrarDataset:
         with self.parent._engine.connect() as conn:
             prim_key = add_table_row(conn, dataset_table, values, commit=False)
 
-            if len(previous) > 0:
+            if previous_dataset is not None:
                 # Update previous rows, setting is_overwritten to True
                 update_stmt = (
                     update(dataset_table)
-                    .where(dataset_table.c.dataset_id.in_(previous))
+                    .where(dataset_table.c.dataset_id == previous_dataset.dataset_id)
                     .values(is_overwritten=True)
                 )
                 conn.execute(update_stmt)
@@ -251,11 +257,13 @@ class RegistrarDataset:
             ) = self._handle_data(
                 relative_path, old_location, owner, owner_type, verbose
             )
+            valid_status = 1
         else:
             dataset_organization = "dummy"
             num_files = 0
             total_size = 0
             ds_creation_date = None
+            valid_status = 0
 
         # Case where use is overwriting the dateset `creation_date`
         if creation_date:
@@ -271,7 +279,7 @@ class RegistrarDataset:
                     nfiles=num_files,
                     total_disk_space=total_size / 1024 / 1024,
                     creation_date=ds_creation_date,
-                    status=1,
+                    status=valid_status,
                 )
             )
             conn.execute(update_stmt)
@@ -364,59 +372,140 @@ class RegistrarDataset:
 
         return dataset_organization, num_files, total_size, ds_creation_date
 
-    def _find_previous(self, relative_path, dataset_table, owner, owner_type):
+    def _find_previous(
+        self,
+        dataset_table,
+        relative_path=None,
+        owner=None,
+        owner_type=None,
+        dataset_id=None,
+    ):
         """
         Check to see if a dataset exists already in the registry, and if we are
         allowed to overwrite it.
 
+        Can search either by `dataset_id`, or a combination of `relative_path`,
+        `owner` and `owner_type`.
+
+        Only one dataset should ever be found.
+
         Parameters
         ----------
-        relative_path : str
-            Relative path to dataset
         dataset_table : SQLAlchemy Table object
             Link to the dataset table
-        owner : str
+        relative_path : str, optional
+            Relative path to dataset
+        owner : str, optional
             Owner of the dataset
-        owner_type : str
+        owner_type : str, optional
+        dataset_id : int, optional
 
         Returns
         -------
-        previous : list
-            List of dataset IDs that are overwritable
+        r : CursorResult object
+            Searched dataset
         """
 
+        # Make sure we have all the relavant information
+        if dataset_id is None:
+            if (relative_path is None) or (owner is None) or (owner_type is None):
+                raise ValueError(
+                    "Must pass relative_path, owner and owner_type to _find_previous"
+                )
+
         # Search for dataset in the registry.
-        stmt = (
-            select(dataset_table.c.dataset_id, dataset_table.c.is_overwritable)
-            .where(
-                dataset_table.c.relative_path == relative_path,
-                dataset_table.c.owner == owner,
-                dataset_table.c.owner_type == owner_type,
+        if dataset_id is None:
+            stmt = (
+                select(
+                    dataset_table.c.dataset_id,
+                    dataset_table.c.is_overwritable,
+                    dataset_table.c.status,
+                    dataset_table.c.owner,
+                    dataset_table.c.owner_type,
+                    dataset_table.c.relative_path,
+                )
+                .where(
+                    dataset_table.c.relative_path == relative_path,
+                    dataset_table.c.owner == owner,
+                    dataset_table.c.owner_type == owner_type,
+                )
+                .order_by(dataset_table.c.dataset_id.desc())
             )
-            .order_by(dataset_table.c.dataset_id.desc())
-        )
+        else:
+            stmt = (
+                select(
+                    dataset_table.c.dataset_id,
+                    dataset_table.c.is_overwritable,
+                    dataset_table.c.status,
+                    dataset_table.c.owner,
+                    dataset_table.c.owner_type,
+                    dataset_table.c.relative_path,
+                )
+                .where(
+                    dataset_table.c.dataset_id == dataset_id,
+                )
+                .order_by(dataset_table.c.dataset_id.desc())
+            )
 
         with self.parent._engine.connect() as conn:
             result = conn.execute(stmt)
             conn.commit()
 
         # If the datasets are overwritable, log their ID, else return None
-        previous = []
         for r in result:
-            if not r.is_overwritable:
-                return None
-            else:
-                previous.append(r.dataset_id)
+            return r
 
-        return previous
+        return None
 
-    def delete(self):
+    def delete(self, dataset_id):
         """
         Delete a dataset entry from the DESC data registry.
 
+        This will remove the raw data from the root dir, but the dataset entry
+        remains in the registry (now with `status=3`).
+
+        Parameters
+        ----------
+        dataset_id : int
+            Dataset we want to delete from the registry
         """
 
-        raise NotImplementedError
+        # First make sure the given dataset id is in the registry
+        dataset_table = self.parent._get_table_metadata("dataset")
+        previous_dataset = self._find_previous(dataset_table, dataset_id=dataset_id)
+
+        if previous_dataset is None:
+            raise ValueError(f"Dataset ID {dataset_id} does not exist")
+        if previous_dataset.status not in [0, 1]:
+            raise ValueError(f"Dataset ID {dataset_id} does not have a valid status")
+
+        # Update the status of the dataset to deleted
+        with self.parent._engine.connect() as conn:
+            update_stmt = (
+                update(dataset_table)
+                .where(dataset_table.c.dataset_id == dataset_id)
+                .values(
+                    status=3,
+                    delete_date=datetime.now(),
+                    delete_uid=self.parent._uid,
+                )
+            )
+            conn.execute(update_stmt)
+            conn.commit()
+
+        # Delete the physical data in the root_dir
+        if previous_dataset.status == 1:
+            data_path = _form_dataset_path(
+                previous_dataset.owner_type,
+                previous_dataset.owner,
+                previous_dataset.relative_path,
+                schema=self.parent._schema,
+                root_dir=self.parent._root_dir,
+            )
+            print(f"Deleting data {data_path}")
+            os.remove(data_path)
+
+        print(f"Deleted {dataset_id} from data registry")
 
     def modify(self):
         """

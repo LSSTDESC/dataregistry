@@ -272,7 +272,7 @@ dataset:
   status:
     type: "Integer"
     nullable: False
-    description: "What is the status of the dataset? -1: Invalid (e.g., copy data failed during creation), 1: Valid, 2: Archived, 3: deleted"
+    description: "What is the status of the dataset? -1: Invalid (e.g., copy data failed during creation), 0: Valid dummy dataset 1: Valid dataset, 2: Archived, 3: deleted"
   archive_date:
     type: "DateTime"
     description: "Dataset archive date"
