@@ -14,6 +14,7 @@ from .registrar_util import (
     _read_configuration_file,
     get_directory_info,
 )
+from .dataset_util import set_dataset_status, get_dataset_status
 
 # Default maximum allowed length of configuration file allowed to be ingested
 _DEFAULT_MAX_CONFIG = 10000
@@ -68,7 +69,8 @@ class RegistrarDataset:
 
         First, the dataset entry is created in the database. If success, the
         data is then copied (if `old_location` was provided). Only if both
-        steps are successful will there be `status=1` entry in the registry.
+        steps are successful will there be "valid" status entry in the
+        registry.
 
         Parameters
         ----------
@@ -225,7 +227,7 @@ class RegistrarDataset:
 
         # We tentatively start with an "invalid" dataset in the database. This
         # will be upgraded to valid if the data copying (if any) was successful.
-        values["status"] = -1
+        values["status"] = 0
 
         # Create a new row in the data registry database.
         with self.parent._engine.connect() as conn:
@@ -271,7 +273,7 @@ class RegistrarDataset:
                     nfiles=num_files,
                     total_disk_space=total_size / 1024 / 1024,
                     creation_date=ds_creation_date,
-                    status=1,
+                    status=set_dataset_status(values["status"], valid=True),
                 )
             )
             conn.execute(update_stmt)
