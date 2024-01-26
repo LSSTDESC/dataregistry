@@ -59,18 +59,18 @@ class DataRegistry:
         self.db_connection = DbConnection(config_file, schema=schema, verbose=verbose)
 
         # Work out the location of the root directory
-        root_dir = self._get_root_dir(root_dir, site)
+        self.root_dir = self._get_root_dir(root_dir, site)
 
         # Create registrar object
         self.Registrar = Registrar(
             self.db_connection,
-            root_dir,
+            self.root_dir,
             owner=owner,
             owner_type=owner_type,
         )
 
         # Create query object
-        self.Query = Query(self.db_connection, root_dir)
+        self.Query = Query(self.db_connection, self.root_dir)
 
     def _get_root_dir(self, root_dir, site):
         """
