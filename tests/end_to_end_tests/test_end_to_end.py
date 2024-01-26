@@ -4,7 +4,7 @@ import yaml
 
 from dataregistry import DataRegistry
 from dataregistry.db_basic import SCHEMA_VERSION
-from dataregistry.registrar import _OWNER_TYPES
+#from dataregistry.registrar import get_owner_types
 import pytest
 
 

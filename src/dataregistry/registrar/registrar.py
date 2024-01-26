@@ -1,15 +1,9 @@
-import os
-
-from dataregistry.db_basic import TableMetadata
-
-from .dataset import RegistrarDataset
-from .dataset_alias import RegistrarDatasetAlias
-from .execution import RegistrarExecution
+from .base_table_class import _OWNER_TYPES
+from .dataset import DatasetTable
+from .dataset_alias import DatasetAliasTable
+from .execution import ExecutionTable
 
 __all__ = ["Registrar"]
-
-# Allowed owner types
-_OWNER_TYPES = {"user", "project", "group", "production"}
 
 
 class Registrar:
@@ -21,7 +15,11 @@ class Registrar:
         owner_type=None,
     ):
         """
-        Class to register new datasets, executions and alias names.
+        Wrapper registrar class.
+
+        This holds callable subclasses for each table (dataset, execution and
+        dataset_alias) which are used to register/modify/delete entries in
+        those tables.
 
         Parameters
         ----------
@@ -38,27 +36,14 @@ class Registrar:
             instance.
         """
 
-        # Root directory on disk for data registry files
-        self._root_dir = root_dir
-
-        # Database engine and dialect.
-        self._engine = db_connection.engine
-        self._schema = db_connection.schema
-
-        # Link to Table Metadata.
-        self._metadata_getter = TableMetadata(db_connection)
-
-        # Store user id
-        self._uid = os.getenv("USER")
-
-        # Default owner and owner_type's
-        self._owner = owner
-        self._owner_type = owner_type
-
         # Class wrappers which are used to create/modify/delete entries
-        self.dataset = RegistrarDataset(self)
-        self.execution = RegistrarExecution(self)
-        self.dataset_alias = RegistrarDatasetAlias(self)
+        self.execution = ExecutionTable(db_connection, root_dir, owner, owner_type)
+        self.dataset_alias = DatasetAliasTable(
+            db_connection, root_dir, owner, owner_type
+        )
+        self.dataset = DatasetTable(
+            db_connection, root_dir, owner, owner_type, self.execution
+        )
 
     def get_owner_types(self):
         """
@@ -72,6 +57,3 @@ class Registrar:
         """
 
         return _OWNER_TYPES
-
-    def _get_table_metadata(self, tbl):
-        return self._metadata_getter.get(tbl)

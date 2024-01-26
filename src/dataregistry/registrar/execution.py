@@ -2,24 +2,15 @@ from datetime import datetime
 
 from dataregistry.db_basic import add_table_row
 
+from .base_table_class import BaseTable
 from .registrar_util import _read_configuration_file
 
-# Default maximum allowed length of configuration file allowed to be ingested
-_DEFAULT_MAX_CONFIG = 10000
 
+class ExecutionTable(BaseTable):
+    def __init__(self, db_connection, root_dir, owner, owner_type):
+        super().__init__(db_connection, root_dir, owner, owner_type)
 
-class RegistrarExecution:
-    def __init__(self, parent):
-        """
-        Wrapper class to register/modify/delete execution entries.
-
-        Parameters
-        ----------
-        parent : Registrar class
-            Contains db_connection, engine, etc
-        """
-
-        self.parent = parent
+        self.which_table = "execution"
 
     def create(
         self,
@@ -30,7 +21,7 @@ class RegistrarExecution:
         configuration=None,
         input_datasets=[],
         input_production_datasets=[],
-        max_config_length=_DEFAULT_MAX_CONFIG,
+        max_config_length=None,
     ):
         """
         Create a new execution entry in the DESC data registry.
@@ -57,6 +48,10 @@ class RegistrarExecution:
             The execution ID of the new row relating to this entry
         """
 
+        # Set max configuration file length
+        if max_config_length is None:
+            max_config_length = self._DEFAULT_MAX_CONFIG
+
         # Put the execution information together
         values = {"name": name}
         if locale:
@@ -66,10 +61,10 @@ class RegistrarExecution:
         if description:
             values["description"] = description
         values["register_date"] = datetime.now()
-        values["creator_uid"] = self.parent._uid
+        values["creator_uid"] = self._uid
 
-        exec_table = self.parent._get_table_metadata("execution")
-        dependency_table = self.parent._get_table_metadata("dependency")
+        exec_table = self._get_table_metadata("execution")
+        dependency_table = self._get_table_metadata("dependency")
 
         # Read configuration file. Enter contents as a raw string.
         if configuration:
@@ -78,7 +73,7 @@ class RegistrarExecution:
             )
 
         # Enter row into data registry database
-        with self.parent._engine.connect() as conn:
+        with self._engine.connect() as conn:
             my_id = add_table_row(conn, exec_table, values, commit=False)
 
             # handle dependencies
@@ -97,19 +92,3 @@ class RegistrarExecution:
 
             conn.commit()
         return my_id
-
-    def delete(self):
-        """
-        Delete an execution entry from the DESC data registry.
-
-        """
-
-        raise NotImplementedError
-
-    def modify(self):
-        """
-        Modify an execution entry in the DESC data registry.
-
-        """
-
-        raise NotImplementedError
