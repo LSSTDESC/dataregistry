@@ -24,7 +24,7 @@ class DatasetTable(BaseTable):
         self.execution_table = execution_table
         self.which_table = "dataset"
 
-    def create(
+    def register(
         self,
         relative_path,
         version,
@@ -181,7 +181,7 @@ class DatasetTable(BaseTable):
                     execution_name = f"{execution_name}-{version_suffix}"
             if execution_description is None:
                 execution_description = "Fabricated execution for dataset"
-            execution_id = self.execution_table.create(
+            execution_id = self.execution_table.register(
                 execution_name,
                 description=execution_description,
                 execution_start=execution_start,

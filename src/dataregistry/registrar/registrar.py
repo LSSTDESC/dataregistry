@@ -36,7 +36,8 @@ class Registrar:
             instance.
         """
 
-        # Class wrappers which are used to create/modify/delete entries
+        # Class wrappers which are used to register/modify/delete entries in
+        # the database
         self.execution = ExecutionTable(db_connection, root_dir, owner, owner_type)
         self.dataset_alias = DatasetAliasTable(
             db_connection, root_dir, owner, owner_type

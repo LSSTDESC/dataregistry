@@ -12,7 +12,7 @@ class ExecutionTable(BaseTable):
 
         self.which_table = "execution"
 
-    def create(
+    def register(
         self,
         name,
         description=None,

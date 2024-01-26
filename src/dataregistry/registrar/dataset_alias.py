@@ -12,7 +12,7 @@ class DatasetAliasTable(BaseTable):
 
         self.which_table = "dataset_alias"
 
-    def create(self, aliasname, dataset_id):
+    def register(self, aliasname, dataset_id):
         """
         Create a new dataset alias entry in the DESC data registry.
 
