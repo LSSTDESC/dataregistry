@@ -61,18 +61,29 @@ class BaseTable:
     def _get_table_metadata(self, tbl):
         return self._metadata_getter.get(tbl)
 
-    def delete(self):
+    def delete(self, entry_id):
         """
-        Delete entry from the DESC data registry.
+        Delete an entry from the DESC data registry.
 
+        Parameters
+        ----------
+        entry_id : int
+            The dataset/execution/etc ID we wish to delete from the database
         """
 
         raise NotImplementedError
 
-    def modify(self):
+    def modify(self, entry_id, modify_fields):
         """
-        Modify a entry in the DESC data registry.
+        Modify an entry in the DESC data registry.
 
+        Parameters
+        ----------
+        entry_id : int
+            The dataset/execution/etc ID we wish to delete from the database
+        modify_fields : dict
+            Dict where key is the column to modify (must be allowed to modify)
+            and value is the desired new value for the entry
         """
 
         raise NotImplementedError
