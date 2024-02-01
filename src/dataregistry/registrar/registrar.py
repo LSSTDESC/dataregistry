@@ -7,19 +7,11 @@ __all__ = ["Registrar"]
 
 
 class Registrar:
-    def __init__(
-        self,
-        db_connection,
-        root_dir,
-        owner=None,
-        owner_type=None,
-    ):
+    def __init__(self, db_connection, root_dir, owner, owner_type):
         """
-        Wrapper registrar class.
-
-        This holds callable subclasses for each table (dataset, execution and
-        dataset_alias) which are used to register/modify/delete entries in
-        those tables.
+        The registrar class is a wrapper for each table subclass (dataset,
+        execution and dataset_alias). Each table subclass can
+        register/modify/delete entries in those tables.
 
         Parameters
         ----------
@@ -37,7 +29,7 @@ class Registrar:
         """
 
         # Class wrappers which are used to register/modify/delete entries in
-        # the database
+        # their respective tables in the database
         self.execution = ExecutionTable(db_connection, root_dir, owner, owner_type)
         self.dataset_alias = DatasetAliasTable(
             db_connection, root_dir, owner, owner_type
@@ -48,7 +40,7 @@ class Registrar:
 
     def get_owner_types(self):
         """
-        Returns a list of allowed owner_types that can be registered within the
+        Returns a list of allowed `owner_types` that can be registered within the
         data registry.
 
         Returns

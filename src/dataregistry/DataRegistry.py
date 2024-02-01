@@ -22,16 +22,17 @@ class DataRegistry:
         """
         Primary data registry wrapper class.
 
-        Class links to both the Registrar class, to registry new dataset, and
-        the Query class, to query existing datasets.
+        The DataRegistry class links to both the Registrar class, to
+        register/modify/delete datasets, and the Query class, to query existing
+        datasets.
 
         Links to the database is done automatically using the:
             - the users config file (if None defaults are used)
-            - the passed schema (if None default is used)
+            - the passed schema (if None the default schema is used)
 
         The `root_dir` is the location the data is copied to. This can be
         manually passed, or alternately a predefined `site` can be chosen. If
-        nether are chosen, the NERSC site will be selected.
+        nether are chosen, the NERSC site will be selected as the default.
 
         Parameters
         ----------
@@ -62,12 +63,7 @@ class DataRegistry:
         self.root_dir = self._get_root_dir(root_dir, site)
 
         # Create registrar object
-        self.Registrar = Registrar(
-            self.db_connection,
-            self.root_dir,
-            owner=owner,
-            owner_type=owner_type,
-        )
+        self.Registrar = Registrar(self.db_connection, self.root_dir, owner, owner_type)
 
         # Create query object
         self.Query = Query(self.db_connection, self.root_dir)

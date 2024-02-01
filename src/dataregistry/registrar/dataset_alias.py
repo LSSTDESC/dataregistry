@@ -14,7 +14,7 @@ class DatasetAliasTable(BaseTable):
 
     def register(self, aliasname, dataset_id):
         """
-        Create a new dataset alias entry in the DESC data registry.
+        Create a new `dataset_alias` entry in the DESC data registry.
 
         Any args marked with '**' share their name with the associated column
         in the registry schema. Descriptions of what these columns are can be
@@ -53,19 +53,3 @@ class DatasetAliasTable(BaseTable):
             conn.execute(stmt)
             conn.commit()
         return prim_key
-
-    def delete(self):
-        """
-        Delete a dataset alias entry from the DESC data registry.
-
-        """
-
-        raise NotImplementedError
-
-    def modify(self):
-        """
-        Modify a dataset alias entry in the DESC data registry.
-
-        """
-
-        raise NotImplementedError

@@ -17,8 +17,8 @@ class BaseTable:
         Each table subclass (e.g., DatasetTable) will inherit this class.
         
         Functions universal to all tables, such as delete and modify are
-        written here, the register function and other unique functions for the
-        tables are in their own subclasses.
+        written here, the register function, and other unique functions for the
+        tables, are in their respective subclasses.
 
         Parameters
         ----------
