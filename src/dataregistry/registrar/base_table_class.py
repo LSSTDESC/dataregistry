@@ -1,6 +1,19 @@
 import os
 
 from dataregistry.db_basic import TableMetadata
+from sqlalchemy import select, update
+from datetime import datetime
+
+from .registrar_util import (
+    _bump_version,
+    _copy_data,
+    _form_dataset_path,
+    _name_from_relpath,
+    _parse_version_string,
+    _read_configuration_file,
+    get_directory_info,
+)
+from .dataset_util import set_dataset_status, get_dataset_status
 
 # Allowed owner types
 _OWNER_TYPES = {"user", "project", "group", "production"}
@@ -68,59 +81,10 @@ class BaseTable:
         Parameters
         ----------
         entry_id : int
-            The dataset/execution/etc ID we wish to delete from the database
+            Entry we want to delete from the registry
         """
 
         raise NotImplementedError
-
-        """
-        Delete a dataset entry from the DESC data registry.
-
-        This will remove the raw data from the root dir, but the dataset entry
-        remains in the registry (now with `status=3`).
-
-        Parameters
-        ----------
-        dataset_id : int
-            Dataset we want to delete from the registry
-        """
-
-#        # First make sure the given dataset id is in the registry
-#        dataset_table = self.parent._get_table_metadata("dataset")
-#        previous_dataset = self._find_previous(dataset_table, dataset_id=dataset_id)
-#
-#        if previous_dataset is None:
-#            raise ValueError(f"Dataset ID {dataset_id} does not exist")
-#        if previous_dataset.status not in [0, 1]:
-#            raise ValueError(f"Dataset ID {dataset_id} does not have a valid status")
-#
-#        # Update the status of the dataset to deleted
-#        with self.parent._engine.connect() as conn:
-#            update_stmt = (
-#                update(dataset_table)
-#                .where(dataset_table.c.dataset_id == dataset_id)
-#                .values(
-#                    status=3,
-#                    delete_date=datetime.now(),
-#                    delete_uid=self.parent._uid,
-#                )
-#            )
-#            conn.execute(update_stmt)
-#            conn.commit()
-#
-#        # Delete the physical data in the root_dir
-#        if previous_dataset.status == 1:
-#            data_path = _form_dataset_path(
-#                previous_dataset.owner_type,
-#                previous_dataset.owner,
-#                previous_dataset.relative_path,
-#                schema=self.parent._schema,
-#                root_dir=self.parent._root_dir,
-#            )
-#            print(f"Deleting data {data_path}")
-#            os.remove(data_path)
-#
-#        print(f"Deleted {dataset_id} from data registry")
 
     def modify(self, entry_id, modify_fields):
         """
