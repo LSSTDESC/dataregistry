@@ -4,7 +4,6 @@ import yaml
 
 from dataregistry import DataRegistry
 from dataregistry.db_basic import SCHEMA_VERSION
-from dataregistry.registrar import _OWNER_TYPES
 import pytest
 
 from dataregistry.registrar.registrar_util import _form_dataset_path
@@ -85,7 +84,7 @@ def _insert_alias_entry(datareg, name, dataset_id):
 		The alias ID for this new entry
 	"""
 
-	new_id = datareg.Registrar.dataset_alias.create(name, dataset_id)
+    new_id = datareg.Registrar.dataset_alias.register(name, dataset_id)
 
 	assert new_id is not None, "Trying to create a dataset alias that already exists"
 	print(f"Created dataset alias entry with id {new_id}")
@@ -116,12 +115,13 @@ def _insert_execution_entry(
 		The execution ID for this new entry
 	"""
 
-	new_id = datareg.Registrar.execution.create(
-		name,
-		description=description,
-		input_datasets=input_datasets,
-		configuration=configuration,
-	)
+
+    new_id = datareg.Registrar.execution.register(
+        name,
+        description=description,
+        input_datasets=input_datasets,
+        configuration=configuration,
+    )
 
 	assert new_id is not None, "Trying to create a execution that already exists"
 	print(f"Created execution entry with id {new_id}")
@@ -203,29 +203,29 @@ def _insert_dataset_entry(
 	creation_data = None
 	make_sym_link = False
 
-	# Add new entry.
-	dataset_id, execution_id = datareg.Registrar.dataset.create(
-		relpath,
-		version,
-		version_suffix=version_suffix,
-		name=name,
-		creation_date=creation_data,
-		description=description,
-		old_location=old_location,
-		copy=(not make_sym_link),
-		is_dummy=is_dummy,
-		execution_id=execution_id,
-		verbose=True,
-		owner=owner,
-		owner_type=owner_type,
-		is_overwritable=is_overwritable,
-		execution_name=execution_name,
-		execution_description=execution_description,
-		execution_start=execution_start,
-		execution_locale=execution_locale,
-		execution_configuration=execution_configuration,
-		input_datasets=input_datasets,
-	)
+    # Add new entry.
+    dataset_id, execution_id = datareg.Registrar.dataset.register(
+        relpath,
+        version,
+        version_suffix=version_suffix,
+        name=name,
+        creation_date=creation_data,
+        description=description,
+        old_location=old_location,
+        copy=(not make_sym_link),
+        is_dummy=is_dummy,
+        execution_id=execution_id,
+        verbose=True,
+        owner=owner,
+        owner_type=owner_type,
+        is_overwritable=is_overwritable,
+        execution_name=execution_name,
+        execution_description=execution_description,
+        execution_start=execution_start,
+        execution_locale=execution_locale,
+        execution_configuration=execution_configuration,
+        input_datasets=input_datasets,
+    )
 
 	assert dataset_id is not None, "Trying to create a dataset that already exists"
 	assert execution_id is not None, "Trying to create a execution that already exists"

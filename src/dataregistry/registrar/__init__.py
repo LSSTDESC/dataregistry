@@ -1,1 +1,1 @@
-from .registrar import _OWNER_TYPES, Registrar
+from .registrar import Registrar

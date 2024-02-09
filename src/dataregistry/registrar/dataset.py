@@ -5,6 +5,7 @@ from datetime import datetime
 from dataregistry.db_basic import add_table_row
 from sqlalchemy import select, update
 
+from .base_table_class import BaseTable
 from .registrar_util import (
     _bump_version,
     _copy_data,
@@ -14,25 +15,17 @@ from .registrar_util import (
     _read_configuration_file,
     get_directory_info,
 )
-
-# Default maximum allowed length of configuration file allowed to be ingested
-_DEFAULT_MAX_CONFIG = 10000
+from .dataset_util import set_dataset_status, get_dataset_status
 
 
-class RegistrarDataset:
-    def __init__(self, parent):
-        """
-        Wrapper class to register/modify/delete dataset entries.
+class DatasetTable(BaseTable):
+    def __init__(self, db_connection, root_dir, owner, owner_type, execution_table):
+        super().__init__(db_connection, root_dir, owner, owner_type)
 
-        Parameters
-        ----------
-        parent : Registrar class
-            Contains db_connection, engine, etc
-        """
+        self.execution_table = execution_table
+        self.which_table = "dataset"
 
-        self.parent = parent
-
-    def create(
+    def register(
         self,
         relative_path,
         version,
@@ -57,7 +50,7 @@ class RegistrarDataset:
         execution_configuration=None,
         input_datasets=[],
         input_production_datasets=[],
-        max_config_length=_DEFAULT_MAX_CONFIG,
+        max_config_length=None,
     ):
         """
         Create a new dataset entry in the DESC data registry.
@@ -68,7 +61,8 @@ class RegistrarDataset:
 
         First, the dataset entry is created in the database. If success, the
         data is then copied (if `old_location` was provided). Only if both
-        steps are successful will there be `status=1` entry in the registry.
+        steps are successful will there be "valid" status entry in the
+        registry.
 
         Parameters
         ----------
@@ -117,21 +111,25 @@ class RegistrarDataset:
             The execution ID associated with the dataset
         """
 
+        # Set max configuration file length
+        if max_config_length is None:
+            max_config_length = self._DEFAULT_MAX_CONFIG
+
         # Make sure the owner_type is legal
         if owner_type is None:
-            if self.parent._owner_type is not None:
-                owner_type = self.parent._owner_type
+            if self._owner_type is not None:
+                owner_type = self._owner_type
             else:
                 owner_type = "user"
-        if owner_type not in self.parent.get_owner_types():
+        if owner_type not in self._OWNER_TYPES:
             raise ValueError(f"{owner_type} is not a valid owner_type")
 
         # Establish the dataset owner
         if owner is None:
-            if self.parent._owner is not None:
-                owner = self.parent._owner
+            if self._owner is not None:
+                owner = self._owner
             else:
-                owner = self.parent._uid
+                owner = self._uid
         if owner_type == "production":
             owner = "production"
 
@@ -141,12 +139,12 @@ class RegistrarDataset:
                 raise ValueError("Cannot overwrite production entries")
             if version_suffix is not None:
                 raise ValueError("Production entries can't have version suffix")
-            if self.parent._schema != "production":
+            if self._schema != "production":
                 raise ValueError(
                     "Only the production schema can handle owner_type='production'"
                 )
         else:
-            if self.parent._schema == "production":
+            if self._schema == "production":
                 raise ValueError(
                     "Only the production schema can handle owner_type='production'"
                 )
@@ -156,7 +154,7 @@ class RegistrarDataset:
             name = _name_from_relpath(relative_path)
 
         # Look for previous entries. Fail if not overwritable
-        dataset_table = self.parent._get_table_metadata("dataset")
+        dataset_table = self._get_table_metadata("dataset")
         previous_dataset = self._find_previous(
             dataset_table,
             relative_path=relative_path,
@@ -177,7 +175,7 @@ class RegistrarDataset:
             # Generate new version fields based on previous entries
             # with the same name field and same suffix (i.e., bump)
             v_fields = _bump_version(
-                name, version, version_suffix, dataset_table, self.parent._engine
+                name, version, version_suffix, dataset_table, self._engine
             )
             version_string = (
                 f"{v_fields['major']}.{v_fields['minor']}.{v_fields['patch']}"
@@ -191,7 +189,7 @@ class RegistrarDataset:
                     execution_name = f"{execution_name}-{version_suffix}"
             if execution_description is None:
                 execution_description = "Fabricated execution for dataset"
-            execution_id = self.parent.execution.create(
+            execution_id = self.execution_table.register(
                 execution_name,
                 description=execution_description,
                 execution_start=execution_start,
@@ -226,15 +224,15 @@ class RegistrarDataset:
         values["register_date"] = datetime.now()
         values["owner_type"] = owner_type
         values["owner"] = owner
-        values["creator_uid"] = self.parent._uid
-        values["register_root_dir"] = self.parent._root_dir
+        values["creator_uid"] = self._uid
+        values["register_root_dir"] = self._root_dir
 
         # We tentatively start with an "invalid" dataset in the database. This
         # will be upgraded to valid if the data copying (if any) was successful.
-        values["status"] = -1
+        values["status"] = 0
 
         # Create a new row in the data registry database.
-        with self.parent._engine.connect() as conn:
+        with self._engine.connect() as conn:
             prim_key = add_table_row(conn, dataset_table, values, commit=False)
 
             if previous_dataset is not None:
@@ -270,7 +268,7 @@ class RegistrarDataset:
             ds_creation_date = creation_date
 
         # Copy was successful, update the entry with dataset metadata
-        with self.parent._engine.connect() as conn:
+        with self._engine.connect() as conn:
             update_stmt = (
                 update(dataset_table)
                 .where(dataset_table.c.dataset_id == prim_key)
@@ -279,7 +277,7 @@ class RegistrarDataset:
                     nfiles=num_files,
                     total_disk_space=total_size / 1024 / 1024,
                     creation_date=ds_creation_date,
-                    status=valid_status,
+                    status=set_dataset_status(values["status"], valid=True),
                 )
             )
             conn.execute(update_stmt)
@@ -326,8 +324,8 @@ class RegistrarDataset:
             owner_type,
             owner,
             relative_path,
-            schema=self.parent._schema,
-            root_dir=self.parent._root_dir,
+            schema=self._schema,
+            root_dir=self._root_dir,
         )
 
         # Is the data already on location, or coming from somewhere new?
@@ -447,7 +445,7 @@ class RegistrarDataset:
                 .order_by(dataset_table.c.dataset_id.desc())
             )
 
-        with self.parent._engine.connect() as conn:
+        with self._engine.connect() as conn:
             result = conn.execute(stmt)
             conn.commit()
 
@@ -456,61 +454,3 @@ class RegistrarDataset:
             return r
 
         return None
-
-    def delete(self, dataset_id):
-        """
-        Delete a dataset entry from the DESC data registry.
-
-        This will remove the raw data from the root dir, but the dataset entry
-        remains in the registry (now with `status=3`).
-
-        Parameters
-        ----------
-        dataset_id : int
-            Dataset we want to delete from the registry
-        """
-
-        # First make sure the given dataset id is in the registry
-        dataset_table = self.parent._get_table_metadata("dataset")
-        previous_dataset = self._find_previous(dataset_table, dataset_id=dataset_id)
-
-        if previous_dataset is None:
-            raise ValueError(f"Dataset ID {dataset_id} does not exist")
-        if previous_dataset.status not in [0, 1]:
-            raise ValueError(f"Dataset ID {dataset_id} does not have a valid status")
-
-        # Update the status of the dataset to deleted
-        with self.parent._engine.connect() as conn:
-            update_stmt = (
-                update(dataset_table)
-                .where(dataset_table.c.dataset_id == dataset_id)
-                .values(
-                    status=3,
-                    delete_date=datetime.now(),
-                    delete_uid=self.parent._uid,
-                )
-            )
-            conn.execute(update_stmt)
-            conn.commit()
-
-        # Delete the physical data in the root_dir
-        if previous_dataset.status == 1:
-            data_path = _form_dataset_path(
-                previous_dataset.owner_type,
-                previous_dataset.owner,
-                previous_dataset.relative_path,
-                schema=self.parent._schema,
-                root_dir=self.parent._root_dir,
-            )
-            print(f"Deleting data {data_path}")
-            os.remove(data_path)
-
-        print(f"Deleted {dataset_id} from data registry")
-
-    def modify(self):
-        """
-        Modify a dataset entry in the DESC data registry.
-
-        """
-
-        raise NotImplementedError

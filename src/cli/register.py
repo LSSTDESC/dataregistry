@@ -37,7 +37,7 @@ def register_dataset(args):
     )
 
     # Register new dataset.
-    new_id = datareg.Registrar.dataset.create(
+    new_id = datareg.Registrar.dataset.register(
         args.relative_path,
         args.version,
         name=args.name,

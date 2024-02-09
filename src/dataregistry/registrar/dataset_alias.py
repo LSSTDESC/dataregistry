@@ -3,26 +3,18 @@ from datetime import datetime
 from dataregistry.db_basic import add_table_row
 from sqlalchemy import update
 
-# Default maximum allowed length of configuration file allowed to be ingested
-_DEFAULT_MAX_CONFIG = 10000
+from .base_table_class import BaseTable
 
 
-class RegistrarDatasetAlias:
-    def __init__(self, parent):
+class DatasetAliasTable(BaseTable):
+    def __init__(self, db_connection, root_dir, owner, owner_type):
+        super().__init__(db_connection, root_dir, owner, owner_type)
+
+        self.which_table = "dataset_alias"
+
+    def register(self, aliasname, dataset_id):
         """
-        Wrapper class to register/modify/delete execution entries.
-
-        Parameters
-        ----------
-        parent : Registrar class
-            Contains db_connection, engine, etc
-        """
-
-        self.parent = parent
-
-    def create(self, aliasname, dataset_id):
-        """
-        Create a new dataset alias entry in the DESC data registry.
+        Create a new `dataset_alias` entry in the DESC data registry.
 
         Any args marked with '**' share their name with the associated column
         in the registry schema. Descriptions of what these columns are can be
@@ -43,10 +35,10 @@ class RegistrarDatasetAlias:
         values = {"alias": aliasname}
         values["dataset_id"] = dataset_id
         values["register_date"] = now
-        values["creator_uid"] = self.parent._uid
+        values["creator_uid"] = self._uid
 
-        alias_table = self.parent._get_table_metadata("dataset_alias")
-        with self.parent._engine.connect() as conn:
+        alias_table = self._get_table_metadata("dataset_alias")
+        with self._engine.connect() as conn:
             prim_key = add_table_row(conn, alias_table, values)
 
             # Update any other alias rows which have been superseded
@@ -61,19 +53,3 @@ class RegistrarDatasetAlias:
             conn.execute(stmt)
             conn.commit()
         return prim_key
-
-    def delete(self):
-        """
-        Delete a dataset alias entry from the DESC data registry.
-
-        """
-
-        raise NotImplementedError
-
-    def modify(self):
-        """
-        Modify a dataset alias entry in the DESC data registry.
-
-        """
-
-        raise NotImplementedError
