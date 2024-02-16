@@ -116,7 +116,6 @@ def _insert_execution_entry(
         The execution ID for this new entry
     """
 
-
     new_id = datareg.Registrar.execution.register(
         name,
         description=description,
@@ -435,9 +434,11 @@ def test_copy_data(dummy_file, data_org):
     "data_org,data_path,v_str,overwritable",
     [
         ("file", "file1.txt", "0.0.1", True),
-        ("file", "file1.txt", "0.0.2", False),
+        ("file", "file1.txt", "0.0.2", True),
+        ("file", "file1.txt", "0.0.3", False),
         ("directory", "dummy_dir", "0.0.1", True),
-        ("directory", "dummy_dir", "0.0.2", False),
+        ("directory", "dummy_dir", "0.0.2", True),
+        ("directory", "dummy_dir", "0.0.3", False),
     ],
 )
 def test_on_location_data(dummy_file, data_org, data_path, v_str, overwritable):
@@ -445,9 +446,9 @@ def test_on_location_data(dummy_file, data_org, data_path, v_str, overwritable):
     Test ingesting real data into the registry (already on location). Also
     tests overwriting datasets.
 
-    Does twice for each file, the first is a normal entry with
-    `is_overwritable=True`. The second tests overwriting the previous data with
-    a new version.
+    Does three times for each file, the first is a normal entry with
+    `is_overwritable=True`. The second and third tests overwriting the previous
+    data with a new version.
     """
 
     # Establish connection to database
@@ -492,14 +493,22 @@ def test_on_location_data(dummy_file, data_org, data_path, v_str, overwritable):
             else:
                 assert getattr(r, "dataset.is_overwritable") == True
                 assert getattr(r, "dataset.is_overwritten") == True
-        else:
-            if num_results == 1:
-                assert getattr(r, "dataset.is_overwritable") == False
+        elif getattr(r, "version_string") == "0.0.2":
+            assert num_results >= 2
+            if num_results == 2:
+                assert getattr(r, "dataset.is_overwritable") == True
+                assert getattr(r, "dataset.is_overwritten") == False
+            elif num_results == 3:
+                assert getattr(r, "dataset.is_overwritable") == True
                 assert getattr(r, "dataset.is_overwritten") == True
-            else:
+        elif getattr(r, "version_string") == "0.0.3":
+            assert num_results >= 3
+            if num_results == 3:
                 assert getattr(r, "dataset.is_overwritable") == False
                 assert getattr(r, "dataset.is_overwritten") == False
-        assert i < 2
+            else:
+                assert getattr(r, "dataset.is_overwritable") == True
+                assert getattr(r, "dataset.is_overwritten") == True
 
 
 def test_dataset_alias(dummy_file):
@@ -849,6 +858,7 @@ def test_get_dataset_absolute_path(dummy_file):
         assert v == os.path.join(
             str(tmp_root_dir), SCHEMA_VERSION, dset_ownertype, dset_owner, dset_relpath
         )
+
 
 @pytest.mark.parametrize(
     "is_dummy,dataset_name",

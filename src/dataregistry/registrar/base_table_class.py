@@ -28,7 +28,7 @@ class BaseTable:
         Base class to register/modify/delete entries in the database tables.
 
         Each table subclass (e.g., DatasetTable) will inherit this class.
-        
+
         Functions universal to all tables, such as delete and modify are
         written here, the register function, and other unique functions for the
         tables, are in their respective subclasses.
@@ -100,3 +100,38 @@ class BaseTable:
         """
 
         raise NotImplementedError
+
+    def find_entry(self, entry_id):
+        """
+        Find an entry in the database.
+
+        Parameters
+        ----------
+        entry_id : int
+            Unique identifier for table entry
+            e.g., dataset_id for the dataset table
+
+        Returns
+        -------
+        r : CursorResult object
+            Found entry (None if no entry found)
+        """
+
+        # Search for dataset in the registry.
+        my_table = self._get_table_metadata(self.which_table)
+
+        if self.which_table == "dataset":
+            stmt = select(my_table).where(my_table.c.dataset_id == entry_id)
+        else:
+            raise ValueError("Can only perform `find_entry` on dataset table for now")
+
+        with self._engine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        # Pull out the single result
+        for r in result:
+            return r
+
+        # No results found
+        return None
