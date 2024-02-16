@@ -1,6 +1,7 @@
 import os
 import time
 from datetime import datetime
+import shutil
 
 from dataregistry.db_basic import add_table_row
 from sqlalchemy import select, update
@@ -471,6 +472,9 @@ class DatasetTable(BaseTable):
                 root_dir=self._root_dir,
             )
             print(f"Deleting data {data_path}")
-            os.remove(data_path)
+            if os.path.isfile(data_path):
+                os.remove(data_path)
+            else:
+                shutil.rmtree(data_path)
 
         print(f"Deleted {dataset_id} from data registry")

@@ -13,7 +13,16 @@ from dataregistry.registrar.dataset_util import set_dataset_status, get_dataset_
 @pytest.fixture
 def dummy_file(tmp_path):
     """
-    Create some dummy (temporary) files and directories
+    Create some dummy (temporary) files and directories:
+
+    | - <tmp_src_dir>
+    |     - <source>
+    |         - file1.txt
+    |         - file2.txt
+    |         - <directory1>
+    |             - file2.txt
+    |
+    | - <tmp_root_dir>
 
     Parameters
     ----------
@@ -865,6 +874,7 @@ def test_get_dataset_absolute_path(dummy_file):
     [
         (True, "dummy_dataset_to_delete"),
         (False, "real_dataset_to_delete"),
+        (False, "real_directory_to_delete"),
     ],
 )
 def test_delete_entry(dummy_file, is_dummy, dataset_name):
@@ -886,8 +896,12 @@ def test_delete_entry(dummy_file, is_dummy, dataset_name):
     if is_dummy:
         data_path = None
     else:
-        data_path = str(tmp_src_dir / "file2.txt")
-        assert os.path.isfile(data_path)
+        if dataset_name == "real_dataset_to_delete":
+            data_path = str(tmp_src_dir / "file2.txt")
+            assert os.path.isfile(data_path)
+        else:
+            data_path = str(tmp_src_dir / "directory1")
+            assert os.path.isdir(data_path)
 
     # Add entry
     d_id = _insert_dataset_entry(
@@ -933,7 +947,10 @@ def test_delete_entry(dummy_file, is_dummy, dataset_name):
             schema=SCHEMA_VERSION,
             root_dir=str(tmp_root_dir),
         )
-        assert not os.path.isfile(data_path)
+        if dataset_name == "real_dataset_to_delete":
+            assert not os.path.isfile(data_path)
+        else:
+            assert not os.path.isdir(data_path)
 
     # Make sure we can not delete an already deleted entry.
     with pytest.raises(ValueError, match="not have a valid status"):
