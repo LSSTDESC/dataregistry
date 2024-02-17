@@ -156,16 +156,11 @@ class DatasetTable(BaseTable):
 
         # Look for previous entries. Fail if not overwritable
         dataset_table = self._get_table_metadata("dataset")
-        previous_dataset_id, previous_dataset_overwritable = self._find_previous(
-            relative_path,
-            owner,
-            owner_type,
-        )
+        previous = self._find_previous(relative_path, owner, owner_type)
 
-        if previous_dataset_id is not None:
-            if not previous_dataset_overwritable:
-                print(f"Dataset {relative_path} exists, and is not overwritable")
-                return None
+        if previous is None:
+            print(f"Dataset {relative_path} exists, and is not overwritable")
+            return None, None
 
         # Deal with version string (non-special case)
         if version not in ["major", "minor", "patch"]:
@@ -235,11 +230,11 @@ class DatasetTable(BaseTable):
         with self._engine.connect() as conn:
             prim_key = add_table_row(conn, dataset_table, values, commit=False)
 
-            if previous_dataset_id is not None:
+            if len(previous) > 0:
                 # Update previous rows, setting is_overwritten to True
                 update_stmt = (
                     update(dataset_table)
-                    .where(dataset_table.c.dataset_id == previous_dataset_id)
+                    .where(dataset_table.c.dataset_id.in_(previous))
                     .values(is_overwritten=True)
                 )
                 conn.execute(update_stmt)
@@ -372,12 +367,15 @@ class DatasetTable(BaseTable):
 
     def _find_previous(self, relative_path, owner, owner_type):
         """
-        Find a dataset(s) based on their combination of `relative_path`,
-        `owner`, `owner_type`.
+        Find each dataset with combination of `relative_path`, `owner`,
+        `owner_type`.
 
-        Looking to see if an entry exists, so we can check if it is
-        overwritable. If multiple datasets are found, only the latest (i.e.,
-        that with `is_overwritten=False`) is of interest.
+        We want to know, of those datasets, which are overwritable but have not
+        yet been marked as overwritten.
+
+        If any dataset with the same path has `is_overwritable=False`, the
+        routine returns None, indicating the dataset is not allowed to be
+        overwritten.
 
         Parameters
         ----------
@@ -390,10 +388,9 @@ class DatasetTable(BaseTable):
 
         Returns
         -------
-        dataset_id : bool
-            Dataset ID of dataset with the path combination
-        dataset_is_overwritable : bool
-            True if found dataset can be overwritten
+        dataset_id_list : list
+            List of dataset IDs that have the desired path combination that are
+            overwritable, but have not already previously been overwritten.
         """
 
         # Search for dataset in the registry.
@@ -411,15 +408,15 @@ class DatasetTable(BaseTable):
             conn.commit()
 
         # Pull out the single result
-        dataset_id = None
-        dataset_is_overwritable = None
+        dataset_id_list = []
         for r in result:
-            if not r.is_overwritten:
-                dataset_is_overwritable = r.is_overwritable
-                dataset_id = r.dataset_id
-                break
+            if not r.is_overwritable:
+                return None
 
-        return dataset_id, dataset_is_overwritable
+            if not r.is_overwritten:
+                dataset_id_list.append(r.dataset_id)
+
+        return dataset_id_list
 
     def delete(self, dataset_id):
         """
