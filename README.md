@@ -8,7 +8,7 @@
 
 The data registry is a facility to store and share datasets from DESC related projects and pipelines.
 
-The data, once registered, are transferred and stored at a central location at NERSC, which can then be later accessed and queried using the ``dataregistry`` Python package, or the CLI. 
+The data, once registered, are transferred and stored at a central location at NERSC, which can then be later accessed and queried using the ``dataregistry`` Python package, or the CLI.
 
 ### Documentation
 
@@ -16,7 +16,7 @@ The full documentation for the data registry can be found [here](http://lsstdesc
 
 ### Contact
 
-For any further information, please get in touch!
+For any further information, please get in touch:
 
 - Admin: Joanne Bogart ([@JoanneBogart](https://www.github.com/JoanneBogart))
 - Admin: Stuart McAlpine ([@stuartmcalpine](https://www.github.com/stuartmcalpine))
