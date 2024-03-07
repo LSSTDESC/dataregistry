@@ -395,7 +395,11 @@ class DatasetTable(BaseTable):
 
         # Search for dataset in the registry.
         dataset_table = self._get_table_metadata("dataset")
-        stmt = select(dataset_table)
+        stmt = select(
+            dataset_table.c.dataset_id,
+            dataset_table.c.is_overwritable,
+            dataset_table.c.is_overwritten,
+        )
 
         stmt = stmt.where(
             dataset_table.c.relative_path == relative_path,
