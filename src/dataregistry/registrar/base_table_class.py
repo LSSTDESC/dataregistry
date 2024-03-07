@@ -1,6 +1,19 @@
 import os
 
 from dataregistry.db_basic import TableMetadata
+from sqlalchemy import select, update
+from datetime import datetime
+
+from .registrar_util import (
+    _bump_version,
+    _copy_data,
+    _form_dataset_path,
+    _name_from_relpath,
+    _parse_version_string,
+    _read_configuration_file,
+    get_directory_info,
+)
+from .dataset_util import set_dataset_status, get_dataset_status
 
 # Allowed owner types
 _OWNER_TYPES = {"user", "project", "group", "production"}
@@ -15,7 +28,7 @@ class BaseTable:
         Base class to register/modify/delete entries in the database tables.
 
         Each table subclass (e.g., DatasetTable) will inherit this class.
-        
+
         Functions universal to all tables, such as delete and modify are
         written here, the register function, and other unique functions for the
         tables, are in their respective subclasses.
@@ -68,7 +81,7 @@ class BaseTable:
         Parameters
         ----------
         entry_id : int
-            The dataset/execution/etc ID we wish to delete from the database
+            Entry we want to delete from the registry
         """
 
         raise NotImplementedError
@@ -87,3 +100,38 @@ class BaseTable:
         """
 
         raise NotImplementedError
+
+    def find_entry(self, entry_id):
+        """
+        Find an entry in the database.
+
+        Parameters
+        ----------
+        entry_id : int
+            Unique identifier for table entry
+            e.g., dataset_id for the dataset table
+
+        Returns
+        -------
+        r : CursorResult object
+            Found entry (None if no entry found)
+        """
+
+        # Search for dataset in the registry.
+        my_table = self._get_table_metadata(self.which_table)
+
+        if self.which_table == "dataset":
+            stmt = select(my_table).where(my_table.c.dataset_id == entry_id)
+        else:
+            raise ValueError("Can only perform `find_entry` on dataset table for now")
+
+        with self._engine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        # Pull out the single result
+        for r in result:
+            return r
+
+        # No results found
+        return None

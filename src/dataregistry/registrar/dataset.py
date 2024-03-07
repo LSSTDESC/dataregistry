@@ -1,6 +1,7 @@
 import os
 import time
 from datetime import datetime
+import shutil
 
 from dataregistry.db_basic import add_table_row
 from sqlalchemy import select, update
@@ -155,11 +156,11 @@ class DatasetTable(BaseTable):
 
         # Look for previous entries. Fail if not overwritable
         dataset_table = self._get_table_metadata("dataset")
-        previous = self._find_previous(relative_path, dataset_table, owner, owner_type)
+        previous = self._find_previous(relative_path, owner, owner_type)
 
         if previous is None:
             print(f"Dataset {relative_path} exists, and is not overwritable")
-            return None
+            return None, None
 
         # Deal with version string (non-special case)
         if version not in ["major", "minor", "patch"]:
@@ -249,11 +250,13 @@ class DatasetTable(BaseTable):
             ) = self._handle_data(
                 relative_path, old_location, owner, owner_type, verbose
             )
+            valid_status = 1
         else:
             dataset_organization = "dummy"
             num_files = 0
             total_size = 0
             ds_creation_date = None
+            valid_status = 0
 
         # Case where use is overwriting the dateset `creation_date`
         if creation_date:
@@ -362,48 +365,117 @@ class DatasetTable(BaseTable):
 
         return dataset_organization, num_files, total_size, ds_creation_date
 
-    def _find_previous(self, relative_path, dataset_table, owner, owner_type):
+    def _find_previous(self, relative_path, owner, owner_type):
         """
-        Check to see if a dataset exists already in the registry, and if we are
-        allowed to overwrite it.
+        Find each dataset with combination of `relative_path`, `owner`,
+        `owner_type`.
+
+        We want to know, of those datasets, which are overwritable but have not
+        yet been marked as overwritten.
+
+        If any dataset with the same path has `is_overwritable=False`, the
+        routine returns None, indicating the dataset is not allowed to be
+        overwritten.
 
         Parameters
         ----------
         relative_path : str
             Relative path to dataset
-        dataset_table : SQLAlchemy Table object
-            Link to the dataset table
         owner : str
             Owner of the dataset
         owner_type : str
+            Owner type of the dataset
 
         Returns
         -------
-        previous : list
-            List of dataset IDs that are overwritable
+        dataset_id_list : list
+            List of dataset IDs that have the desired path combination that are
+            overwritable, but have not already previously been overwritten.
         """
 
         # Search for dataset in the registry.
-        stmt = (
-            select(dataset_table.c.dataset_id, dataset_table.c.is_overwritable)
-            .where(
-                dataset_table.c.relative_path == relative_path,
-                dataset_table.c.owner == owner,
-                dataset_table.c.owner_type == owner_type,
-            )
-            .order_by(dataset_table.c.dataset_id.desc())
+        dataset_table = self._get_table_metadata("dataset")
+        stmt = select(
+            dataset_table.c.dataset_id,
+            dataset_table.c.is_overwritable,
+            dataset_table.c.is_overwritten,
+        )
+
+        stmt = stmt.where(
+            dataset_table.c.relative_path == relative_path,
+            dataset_table.c.owner == owner,
+            dataset_table.c.owner_type == owner_type,
         )
 
         with self._engine.connect() as conn:
             result = conn.execute(stmt)
             conn.commit()
 
-        # If the datasets are overwritable, log their ID, else return None
-        previous = []
+        # Pull out the single result
+        dataset_id_list = []
         for r in result:
             if not r.is_overwritable:
                 return None
-            else:
-                previous.append(r.dataset_id)
 
-        return previous
+            if not r.is_overwritten:
+                dataset_id_list.append(r.dataset_id)
+
+        return dataset_id_list
+
+    def delete(self, dataset_id):
+        """
+        Delete an dataset entry from the DESC data registry.
+
+        This will also remove the raw data from the root dir, but the dataset
+        entry remains in the registry (now with an updated `status` field).
+
+        Parameters
+        ----------
+        dataset_id : int
+            Dataset we want to delete from the registry
+        """
+
+        # First make sure the given dataset id is in the registry
+        dataset_table = self._get_table_metadata(self.which_table)
+        previous_dataset = self.find_entry(dataset_id)
+
+        # Check dataset exists
+        if previous_dataset is None:
+            raise ValueError(f"Dataset ID {dataset_id} does not exist")
+        # Check dataset is valid
+        if not get_dataset_status(previous_dataset.status, "valid"):
+            raise ValueError(f"Dataset ID {dataset_id} does not have a valid status")
+        # Check dataset has not already been deleted
+        if get_dataset_status(previous_dataset.status, "deleted"):
+            raise ValueError(f"Dataset ID {dataset_id} does not have a valid status")
+
+        # Update the status of the dataset to deleted
+        with self._engine.connect() as conn:
+            update_stmt = (
+                update(dataset_table)
+                .where(dataset_table.c.dataset_id == dataset_id)
+                .values(
+                    status=set_dataset_status(previous_dataset.status, deleted=True),
+                    delete_date=datetime.now(),
+                    delete_uid=self._uid,
+                )
+            )
+            conn.execute(update_stmt)
+            conn.commit()
+
+        # Delete the physical data in the root_dir
+        if previous_dataset.data_org != "dummy":
+            data_path = _form_dataset_path(
+                previous_dataset.owner_type,
+                previous_dataset.owner,
+                previous_dataset.relative_path,
+                schema=self._schema,
+                root_dir=self._root_dir,
+            )
+            print(f"Deleting data {data_path}")
+            if os.path.isfile(data_path):
+                os.remove(data_path)
+            else:
+                shutil.rmtree(data_path)
+
+        print(f"Deleted {dataset_id} from data registry")
