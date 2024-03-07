@@ -1,6 +1,6 @@
 import pytest
 import os
-from dataregistry.registrar_util import _copy_data
+from dataregistry.registrar.registrar_util import _copy_data
 
 
 @pytest.fixture

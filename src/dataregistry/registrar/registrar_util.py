@@ -2,8 +2,9 @@ import hashlib
 import os
 import re
 import warnings
-from sqlalchemy import MetaData, Table, Column, text, select
 from shutil import copyfile, copytree, rmtree
+
+from sqlalchemy import select
 
 __all__ = [
     "_parse_version_string",
@@ -329,7 +330,7 @@ def _copy_data(dataset_organization, source, dest, do_checksum=True):
             os.rename(temp_dest, dest)
 
         print(
-            f"Something went wrong during data copying, aborting."
+            "Something went wrong during data copying, aborting."
             "Note an entry in the registry database will still have"
             "been created"
         )
