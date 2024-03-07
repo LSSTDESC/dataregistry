@@ -4,14 +4,25 @@ import yaml
 
 from dataregistry import DataRegistry
 from dataregistry.db_basic import SCHEMA_VERSION
-from dataregistry.registrar import _OWNER_TYPES
 import pytest
+
+from dataregistry.registrar.registrar_util import _form_dataset_path
+from dataregistry.registrar.dataset_util import set_dataset_status, get_dataset_status
 
 
 @pytest.fixture
 def dummy_file(tmp_path):
     """
-    Create some dummy (temporary) files and directories
+    Create some dummy (temporary) files and directories:
+
+    | - <tmp_src_dir>
+    |     - <source>
+    |         - file1.txt
+    |         - file2.txt
+    |         - <directory1>
+    |             - file2.txt
+    |
+    | - <tmp_root_dir>
 
     Parameters
     ----------
@@ -30,8 +41,9 @@ def dummy_file(tmp_path):
     tmp_src_dir = tmp_path / "source"
     tmp_src_dir.mkdir()
 
-    f = tmp_src_dir / "file1.txt"
-    f.write_text("i am a dummy file")
+    for i in range(2):
+        f = tmp_src_dir / f"file{i+1}.txt"
+        f.write_text("i am a dummy file")
 
     p = tmp_src_dir / "directory1"
     p.mkdir()
@@ -82,7 +94,7 @@ def _insert_alias_entry(datareg, name, dataset_id):
         The alias ID for this new entry
     """
 
-    new_id = datareg.Registrar.register_dataset_alias(name, dataset_id)
+    new_id = datareg.Registrar.dataset_alias.register(name, dataset_id)
 
     assert new_id is not None, "Trying to create a dataset alias that already exists"
     print(f"Created dataset alias entry with id {new_id}")
@@ -113,7 +125,7 @@ def _insert_execution_entry(
         The execution ID for this new entry
     """
 
-    new_id = datareg.Registrar.register_execution(
+    new_id = datareg.Registrar.execution.register(
         name,
         description=description,
         input_datasets=input_datasets,
@@ -201,7 +213,7 @@ def _insert_dataset_entry(
     make_sym_link = False
 
     # Add new entry.
-    dataset_id, execution_id = datareg.Registrar.register_dataset(
+    dataset_id, execution_id = datareg.Registrar.dataset.register(
         relpath,
         version,
         version_suffix=version_suffix,
@@ -431,9 +443,11 @@ def test_copy_data(dummy_file, data_org):
     "data_org,data_path,v_str,overwritable",
     [
         ("file", "file1.txt", "0.0.1", True),
-        ("file", "file1.txt", "0.0.2", False),
+        ("file", "file1.txt", "0.0.2", True),
+        ("file", "file1.txt", "0.0.3", False),
         ("directory", "dummy_dir", "0.0.1", True),
-        ("directory", "dummy_dir", "0.0.2", False),
+        ("directory", "dummy_dir", "0.0.2", True),
+        ("directory", "dummy_dir", "0.0.3", False),
     ],
 )
 def test_on_location_data(dummy_file, data_org, data_path, v_str, overwritable):
@@ -441,9 +455,9 @@ def test_on_location_data(dummy_file, data_org, data_path, v_str, overwritable):
     Test ingesting real data into the registry (already on location). Also
     tests overwriting datasets.
 
-    Does twice for each file, the first is a normal entry with
-    `is_overwritable=True`. The second tests overwriting the previous data with
-    a new version.
+    Does three times for each file, the first is a normal entry with
+    `is_overwritable=True`. The second and third tests overwriting the previous
+    data with a new version.
     """
 
     # Establish connection to database
@@ -488,14 +502,22 @@ def test_on_location_data(dummy_file, data_org, data_path, v_str, overwritable):
             else:
                 assert getattr(r, "dataset.is_overwritable") == True
                 assert getattr(r, "dataset.is_overwritten") == True
-        else:
-            if num_results == 1:
-                assert getattr(r, "dataset.is_overwritable") == False
+        elif getattr(r, "version_string") == "0.0.2":
+            assert num_results >= 2
+            if num_results == 2:
+                assert getattr(r, "dataset.is_overwritable") == True
+                assert getattr(r, "dataset.is_overwritten") == False
+            elif num_results == 3:
+                assert getattr(r, "dataset.is_overwritable") == True
                 assert getattr(r, "dataset.is_overwritten") == True
-            else:
+        elif getattr(r, "version_string") == "0.0.3":
+            assert num_results >= 3
+            if num_results == 3:
                 assert getattr(r, "dataset.is_overwritable") == False
                 assert getattr(r, "dataset.is_overwritten") == False
-        assert i < 2
+            else:
+                assert getattr(r, "dataset.is_overwritable") == True
+                assert getattr(r, "dataset.is_overwritten") == True
 
 
 def test_dataset_alias(dummy_file):
@@ -845,3 +867,91 @@ def test_get_dataset_absolute_path(dummy_file):
         assert v == os.path.join(
             str(tmp_root_dir), SCHEMA_VERSION, dset_ownertype, dset_owner, dset_relpath
         )
+
+
+@pytest.mark.parametrize(
+    "is_dummy,dataset_name",
+    [
+        (True, "dummy_dataset_to_delete"),
+        (False, "real_dataset_to_delete"),
+        (False, "real_directory_to_delete"),
+    ],
+)
+def test_delete_entry(dummy_file, is_dummy, dataset_name):
+    """
+    Make a simple entry, then delete it, then check it was deleted.
+
+    Does this for a dummy dataset and a real one.
+    """
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    # Make sure we raise an exception trying to delete a dataset that doesn't exist
+    with pytest.raises(ValueError, match="does not exist"):
+        datareg.Registrar.dataset.delete(10000)
+
+    # Where is the real data?
+    if is_dummy:
+        data_path = None
+    else:
+        if dataset_name == "real_dataset_to_delete":
+            data_path = str(tmp_src_dir / "file2.txt")
+            assert os.path.isfile(data_path)
+        else:
+            data_path = str(tmp_src_dir / "directory1")
+            assert os.path.isdir(data_path)
+
+    # Add entry
+    d_id = _insert_dataset_entry(
+        datareg,
+        f"DESC/datasets/{dataset_name}",
+        "0.0.1",
+        "user",
+        None,
+        "A dataset to delete",
+        is_dummy=is_dummy,
+        old_location=data_path,
+    )
+
+    # Now delete that entry
+    datareg.Registrar.dataset.delete(d_id)
+
+    # Check the entry was deleted
+    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.Query.find_datasets(
+        [
+            "dataset.status",
+            "dataset.delete_date",
+            "dataset.delete_uid",
+            "dataset.owner_type",
+            "dataset.owner",
+            "dataset.relative_path",
+        ],
+        [f],
+        return_format="cursorresult",
+    )
+
+    for r in results:
+        assert get_dataset_status(getattr(r, "dataset.status"), "deleted")
+        assert getattr(r, "dataset.delete_date") is not None
+        assert getattr(r, "dataset.delete_uid") is not None
+
+    if not is_dummy:
+        # Make sure the file in the root_dir has gone
+        data_path = _form_dataset_path(
+            getattr(r, "dataset.owner_type"),
+            getattr(r, "dataset.owner"),
+            getattr(r, "dataset.relative_path"),
+            schema=SCHEMA_VERSION,
+            root_dir=str(tmp_root_dir),
+        )
+        if dataset_name == "real_dataset_to_delete":
+            assert not os.path.isfile(data_path)
+        else:
+            assert not os.path.isdir(data_path)
+
+    # Make sure we can not delete an already deleted entry.
+    with pytest.raises(ValueError, match="not have a valid status"):
+        datareg.Registrar.dataset.delete(d_id)
