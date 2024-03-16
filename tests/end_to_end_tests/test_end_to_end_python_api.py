@@ -264,7 +264,7 @@ def test_simple_query(dummy_file):
         datareg,
         "DESC/datasets/my_first_dataset",
         "0.0.1",
-        "This is my first DESC dataset",
+        description="This is my first DESC dataset",
     )
 
     # Query
@@ -329,6 +329,15 @@ def test_manual_name_and_vsuffix(dummy_file):
         assert getattr(r, "dataset.version_suffix") == "custom_suffix"
         assert i < 1
 
+    # Try to bump dataset with version suffix (should fail)
+    with pytest.raises(ValueError, match="Cannot bump"):
+        d_id = _insert_dataset_entry(
+            datareg,
+            "DESC/datasets/my_second_dataset_bumped",
+            "major",
+            name="custom name",
+        )
+
 
 @pytest.mark.parametrize(
     "v_type,ans,name",
@@ -336,6 +345,9 @@ def test_manual_name_and_vsuffix(dummy_file):
         ("major", "1.0.0", "my_first_dataset"),
         ("minor", "1.1.0", "my_first_dataset"),
         ("patch", "1.1.1", "my_first_dataset"),
+        ("patch", "1.1.2", "my_first_dataset"),
+        ("minor", "1.2.0", "my_first_dataset"),
+        ("major", "2.0.0", "my_first_dataset"),
     ],
 )
 def test_dataset_bumping(dummy_file, v_type, ans, name):
@@ -352,7 +364,7 @@ def test_dataset_bumping(dummy_file, v_type, ans, name):
     # Add entry
     d_id = _insert_dataset_entry(
         datareg,
-        f"DESC/datasets/bumped_dataset_{v_type}_{name}",
+        f"DESC/datasets/bumped_dataset_{v_type}_{name}_{ans.replace('.','_')}",
         v_type,
         name=name,
     )
