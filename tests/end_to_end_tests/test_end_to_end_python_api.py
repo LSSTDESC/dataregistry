@@ -13,16 +13,23 @@ from dataregistry.registrar.dataset_util import set_dataset_status, get_dataset_
 @pytest.fixture
 def dummy_file(tmp_path):
     """
-    Create some dummy (temporary) files and directories:
+    Create some dummy (temporary) files and directories to work with during
+    testing.
 
-    | - <tmp_src_dir>
-    |     - <source>
-    |         - file1.txt
-    |         - file2.txt
-    |         - <directory1>
-    |             - file2.txt
-    |
-    | - <tmp_root_dir>
+    Structure is as follows:
+
+    | - <tmp_path>
+    |   - <source>
+    |     - dummy_configuration_file.yaml
+    |     - file1.txt
+    |     - file2.txt
+    |     - <directory1>
+    |       - file2.txt
+    |   - <root_dir>
+    |     - <schema/user/uid>
+    |       - <dummy_dir>
+    |         - file1.txt 
+    |       - file1.txt
 
     Parameters
     ----------
@@ -52,6 +59,8 @@ def dummy_file(tmp_path):
 
     # Temp root_dir of the registry
     tmp_root_dir = tmp_path / "root_dir"
+
+    # Make some dummy data already on location
     for THIS_SCHEMA in [SCHEMA_VERSION + "/", ""]:
         p = tmp_root_dir / f"{THIS_SCHEMA}user/{os.getenv('USER')}/dummy_dir"
         p.mkdir(parents=True)
@@ -142,9 +151,9 @@ def _insert_dataset_entry(
     datareg,
     relpath,
     version,
-    owner_type,
-    owner,
-    description,
+    owner_type=None,
+    owner=None,
+    description=None,
     name=None,
     execution_id=None,
     version_suffix=None,
@@ -255,8 +264,6 @@ def test_simple_query(dummy_file):
         datareg,
         "DESC/datasets/my_first_dataset",
         "0.0.1",
-        "user",
-        None,
         "This is my first DESC dataset",
     )
 
@@ -307,9 +314,6 @@ def test_manual_name_and_vsuffix(dummy_file):
         datareg,
         "DESC/datasets/my_second_dataset",
         "0.0.1",
-        "user",
-        None,
-        "This is my first DESC dataset",
         name="custom name",
         version_suffix="custom_suffix",
     )
@@ -330,9 +334,8 @@ def test_manual_name_and_vsuffix(dummy_file):
     "v_type,ans,name",
     [
         ("major", "1.0.0", "my_first_dataset"),
-        ("minor", "0.1.0", "my_first_dataset"),
-        ("patch", "0.0.2", "my_first_dataset"),
-        ("patch", "0.0.1", "my_second_dataset"),
+        ("minor", "1.1.0", "my_first_dataset"),
+        ("patch", "1.1.1", "my_first_dataset"),
     ],
 )
 def test_dataset_bumping(dummy_file, v_type, ans, name):
@@ -351,9 +354,6 @@ def test_dataset_bumping(dummy_file, v_type, ans, name):
         datareg,
         f"DESC/datasets/bumped_dataset_{v_type}_{name}",
         v_type,
-        "user",
-        None,
-        "This is my first bumped DESC dataset",
         name=name,
     )
 
@@ -382,9 +382,7 @@ def test_owner_types(dummy_file, owner_type):
         datareg,
         f"DESC/datasets/owner_type_{owner_type}",
         "0.0.1",
-        owner_type,
-        None,
-        f"This is a {owner_type} dataset",
+        owner_type=owner_type,
     )
 
     # Query
@@ -417,9 +415,6 @@ def test_copy_data(dummy_file, data_org):
         datareg,
         f"DESC/datasets/copy_real_{data_org}",
         "0.0.1",
-        "user",
-        None,
-        "Test copying a real file",
         old_location=data_path,
         is_dummy=False,
     )
@@ -468,9 +463,6 @@ def test_on_location_data(dummy_file, data_org, data_path, v_str, overwritable):
         datareg,
         data_path,
         v_str,
-        "user",
-        None,
-        "Test ingesting a real file on location",
         old_location=None,
         is_dummy=False,
         is_overwritable=overwritable,
@@ -532,9 +524,6 @@ def test_dataset_alias(dummy_file):
         datareg,
         "alias_test_entry",
         "0.0.1",
-        "user",
-        None,
-        "Test dataset alias",
     )
 
     # Add alias
@@ -577,9 +566,6 @@ def test_pipeline_entry(dummy_file):
         datareg,
         "DESC/datasets/my_first_pipeline_stage1",
         "0.0.1",
-        "user",
-        None,
-        "This is data for stage 1 of my first pipeline",
         execution_id=ex_id_1,
     )
 
@@ -594,9 +580,6 @@ def test_pipeline_entry(dummy_file):
         datareg,
         "DESC/datasets/my_first_pipeline_stage2a",
         "0.0.1",
-        "user",
-        None,
-        "This is data for stage 2 of my first pipeline",
         execution_id=ex_id_2,
     )
 
@@ -604,9 +587,6 @@ def test_pipeline_entry(dummy_file):
         datareg,
         "DESC/datasets/my_first_pipeline_stage2b",
         "0.0.1",
-        "user",
-        None,
-        "This is data for stage 2 of my first pipeline",
         execution_id=ex_id_2,
     )
 
@@ -670,9 +650,8 @@ def test_global_owner_set(dummy_file):
         datareg,
         "DESC/datasets/global_user_dataset",
         "0.0.1",
-        None,
-        None,
-        "Should be allocated user and user_type from global config",
+        owner=None,
+        owner_type=None,
     )
 
     # Query
@@ -708,9 +687,7 @@ def test_prooduction_schema(dummy_file):
         datareg,
         "DESC/datasets/production_dataset_1",
         "0.0.1",
-        "production",
-        None,
-        "This is production's first dataset",
+        owner_type="production",
     )
 
     # Query
@@ -774,18 +751,12 @@ def test_dataset_with_execution(dummy_file):
         datareg,
         "DESC/datasets/execution_test_input",
         "0.0.1",
-        None,
-        None,
-        "This is production's first dataset",
     )
 
     d_id_2 = _insert_dataset_entry(
         datareg,
         "DESC/datasets/execution_test",
         "0.0.1",
-        None,
-        None,
-        "This should have a more descriptive execution",
         execution_name="Overwrite execution auto name",
         execution_description="Overwrite execution auto description",
         execution_locale="TestMachine",
@@ -852,9 +823,8 @@ def test_get_dataset_absolute_path(dummy_file):
         datareg,
         dset_relpath,
         "0.0.1",
-        dset_ownertype,
-        dset_owner,
-        "Test the Query.get_dataset_absolute_path function",
+        owner_type=dset_ownertype,
+        owner=dset_owner,
     )
 
     v = datareg.Query.get_dataset_absolute_path(d_id_1)
@@ -908,9 +878,6 @@ def test_delete_entry(dummy_file, is_dummy, dataset_name):
         datareg,
         f"DESC/datasets/{dataset_name}",
         "0.0.1",
-        "user",
-        None,
-        "A dataset to delete",
         is_dummy=is_dummy,
         old_location=data_path,
     )
