@@ -168,10 +168,8 @@ class DatasetTable(BaseTable):
             version_string = version
         else:
             # Generate new version fields based on previous entries
-            # with the same name field and same suffix (i.e., bump)
-            v_fields = _bump_version(
-                name, version, version_suffix, dataset_table, self._engine
-            )
+            # with the same name field (i.e., bump)
+            v_fields = _bump_version(name, version, dataset_table, self._engine)
             version_string = (
                 f"{v_fields['major']}.{v_fields['minor']}.{v_fields['patch']}"
             )
