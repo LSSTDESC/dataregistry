@@ -6,15 +6,7 @@ from .register import register_dataset
 from .query import dregs_ls
 from dataregistry.schema import load_schema
 
-def parse_args(args):
-    """
-    Parse a list of arguments.
-
-    Parameters
-    ----------
-    args : list
-        Argument list, when None sys.argv is used
-    """
+def get_parser():
 
     # ---------------------
     # The data registry CLI
@@ -186,6 +178,20 @@ def parse_args(args):
     arg_register_dataset.add_argument(
         "--site", help="Get the root_dir through a pre-defined 'site'", type=str
     )
+
+    return parser
+
+def parse_args(args):
+    """
+    Parse a list of arguments.
+
+    Parameters
+    ----------
+    args : list
+        Argument list, when None sys.argv is used
+    """
+
+    parser = get_parser()
 
     return parser.parse_args(args)
 
