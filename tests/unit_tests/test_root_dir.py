@@ -39,5 +39,4 @@ def test_root_dir_manual(root_dir, site, set_env_var, ans):
     if reg.db_connection.dialect != "sqlite":
         assert reg.db_connection.schema is not None
 
-    assert reg.Registrar._root_dir == ans
-    assert reg.Query._root_dir == ans
+    assert reg.root_dir == ans

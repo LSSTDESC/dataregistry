@@ -1,4 +1,4 @@
-from dataregistry.registrar_util import (
+from dataregistry.registrar.registrar_util import (
     _parse_version_string,
     _name_from_relpath,
     _form_dataset_path,

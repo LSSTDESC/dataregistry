@@ -2,7 +2,7 @@ from collections import namedtuple
 from sqlalchemy import text, select
 import sqlalchemy.sql.sqltypes as sqltypes
 import pandas as pd
-from dataregistry.registrar_util import _form_dataset_path
+from dataregistry.registrar.registrar_util import _form_dataset_path
 from dataregistry.exceptions import DataRegistryNYI, DataRegistryException
 import os
 

@@ -35,7 +35,7 @@ docs = ["sphinx_rtd_theme"]
 where = ["src"]
 
 [project.scripts]
-dregs = "cli.cli:main"
+dregs = "dataregistry_cli.cli:main"
 
 [tool.setuptools.package-data]
 "dataregistry" = ["site_config/site_rootdir.yaml", "schema/schema.yaml"]

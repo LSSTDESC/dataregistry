@@ -13,9 +13,11 @@ material by viewing the notebooks on GitHub.
 1) Getting started with the data registry
 -----------------------------------------
 
-**Getting started with the DESC data registry (part 1)**: `Link to notebook <https://github.com/LSSTDESC/dataregistry/blob/main/docs/source/tutorial_notebooks/getting_started.ipynb>`__
+**Getting started: Part 1 - Registering datasets**: `Link to notebook <https://github.com/LSSTDESC/dataregistry/blob/main/docs/source/tutorial_notebooks/getting_started_1_register_datasets.ipynb>`__
 
-**Getting started with the DESC data registry (part 2)**: `Link to notebook <https://github.com/LSSTDESC/dataregistry/blob/main/docs/source/tutorial_notebooks/getting_started_2.ipynb>`__
+**Getting started: Part 2 - Simple queries**: `Link to notebook <https://github.com/LSSTDESC/dataregistry/blob/main/docs/source/tutorial_notebooks/getting_started_2_query_datasets.ipynb>`__
+
+**Getting started: Part 3 - Pipeline datasets**: `Link to notebook <https://github.com/LSSTDESC/dataregistry/blob/main/docs/source/tutorial_notebooks/getting_started_3_pipelines.ipynb>`__
 
 2) The production schema
 ------------------------
