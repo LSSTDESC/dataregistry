@@ -248,6 +248,7 @@ dataset:
     type: "String"
     description: "User provided human-readable description of the dataset"
     cli_optional: True
+    modifiable: True
   execution_id:
     type: "Integer"
     foreign_key: True
