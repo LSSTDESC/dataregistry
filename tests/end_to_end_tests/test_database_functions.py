@@ -43,3 +43,16 @@ def test_find_entry(dummy_file):
     assert r is not None
     assert r.alias == "test_find_entry_alias"
     assert r.dataset_id == d_id
+
+def test_get_modifiable_columns(dummy_file):
+    """Test the `get_modifiable_columns` function"""
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    mod_list = datareg.Registrar.dataset.get_modifiable_columns()
+    assert "description" in mod_list
+
+    mod_list = datareg.Registrar.execution.get_modifiable_columns()
+    assert "description" in mod_list

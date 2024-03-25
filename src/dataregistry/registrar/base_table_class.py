@@ -177,3 +177,21 @@ class BaseTable:
 
         # No results found
         return None
+
+    def get_modifiable_columns(self):
+        """
+        Return a list of all columns in this table that are "modifiable".
+
+        As defined in the schema yaml file.
+
+        Returns
+        -------
+        mod_list : list[str]
+        """
+
+        mod_list = []
+        for att in self.schema_yaml[self.which_table]:
+            if self.schema_yaml[self.which_table][att]["modifiable"]:
+                mod_list.append(att)
+
+        return mod_list
