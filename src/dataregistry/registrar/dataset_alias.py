@@ -11,6 +11,7 @@ class DatasetAliasTable(BaseTable):
         super().__init__(db_connection, root_dir, owner, owner_type)
 
         self.which_table = "dataset_alias"
+        self.entry_id = "dataset_alias_id"
 
     def register(self, aliasname, dataset_id):
         """

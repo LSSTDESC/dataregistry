@@ -7,6 +7,7 @@ execution:
   description:
     type: "String"
     description: "Short description of execution"
+    modifiable: True
   register_date:
     type: "DateTime"
     description: "When was the execution registered in the database"

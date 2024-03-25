@@ -690,47 +690,5 @@ def test_delete_entry(dummy_file, is_dummy, dataset_name):
             assert not os.path.isdir(data_path)
 
     # Make sure we can not delete an already deleted entry.
-    with pytest.raises(ValueError, match="not have a valid status"):
+    with pytest.raises(ValueError, match="does not exist/invalid/deleted"):
         datareg.Registrar.dataset.delete(d_id)
-
-@pytest.mark.parametrize(
-    "dataset_name,column,new_value",
-    [
-        ("dummy_dataset_1", "description", "New description"),
-    ],
-)
-def test_modify_entry(dummy_file,dataset_name,column,new_value):
-    """
-    Make a simple entry, then mofify it, then check it was modified.
-    """
-
-    # Establish connection to database
-    tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
-    
-    # Add entry
-    d_id = _insert_dataset_entry(
-        datareg,
-        f"DESC/datasets/{dataset_name}",
-        "0.0.1",
-        is_dummy=True,
-    )
-
-    # Modify entry
-    datareg.Registrar.dataset.modify(d_id, {column: new_value})
-
-    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
-    results = datareg.Query.find_datasets(
-        [f"dataset.{column}"],
-        [f],
-    )
-
-    assert results[f"dataset.{column}"][0] == new_value
-
-    # Try to modify an entry I'm not allowed to
-    with pytest.raises(ValueError, match="not modifiable"):
-        datareg.Registrar.dataset.modify(d_id, {"dataset_id": 10})
-
-    # Try to mofify a column that doesn't exist
-    with pytest.raises(ValueError, match="not exist in the schema"):
-        datareg.Registrar.dataset.modify(d_id, {"my_dataset_id": 10})

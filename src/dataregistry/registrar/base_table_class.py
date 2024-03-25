@@ -94,6 +94,9 @@ class BaseTable:
         """
         Modify an entry in the DESC data registry.
 
+        Only certain columns are allowed to be modified after registration,
+        this is defined in the schema yaml file.
+
         Parameters
         ----------
         entry_id : int
@@ -107,10 +110,6 @@ class BaseTable:
             type(modify_fields) == dict
         ), f"modify_fields is expected as a dict, {'column': new_values}"
 
-        # Placeholder for now
-        if self.which_table != "dataset":
-            raise ValueError("Can only perform updates on dataset table for now")
-
         # First make sure the given entry is in the registry
         my_table = self._get_table_metadata(self.which_table)
         previous_entry = self.find_entry(entry_id)
@@ -121,10 +120,11 @@ class BaseTable:
 
         # Loop over each column to be modified
         for key, v in modify_fields.items():
-            # Make sure the fields are allowed to be modified
+            # Make sure the column is in the schema
             if key not in self.schema_yaml[self.which_table].keys():
                 raise ValueError(f"The column {key} doesnt not exist in the schema")
 
+            # Make sure the column is modifiable
             if not self.schema_yaml[self.which_table][key]["modifiable"]:
                 raise ValueError(f"The column {key} is not modifiable")
 
@@ -132,7 +132,7 @@ class BaseTable:
         with self._engine.connect() as conn:
             update_stmt = (
                 update(my_table)
-                .where(my_table.c.dataset_id == entry_id) # Modify for others
+                .where(getattr(my_table.c, self.entry_id) == entry_id)
                 .values(modify_fields)
             )
             conn.execute(update_stmt)
@@ -160,11 +160,7 @@ class BaseTable:
 
         # Search for entry in the registry.
         my_table = self._get_table_metadata(self.which_table)
-
-        if self.which_table == "dataset":
-            stmt = select(my_table).where(my_table.c.dataset_id == entry_id)
-        else:
-            raise ValueError("Can only perform `find_entry` on dataset table for now")
+        stmt = select(my_table).where(getattr(my_table.c, self.entry_id) == entry_id)
 
         with self._engine.connect() as conn:
             result = conn.execute(stmt)

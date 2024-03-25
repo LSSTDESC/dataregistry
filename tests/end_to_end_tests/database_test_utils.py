@@ -211,7 +211,7 @@ def _insert_dataset_entry(
 
     # Some defaults over all test datasets
     locale = "NERSC"
-    creation_data = None
+    creation_date = None
     make_sym_link = False
 
     # Add new entry.
@@ -220,7 +220,7 @@ def _insert_dataset_entry(
         version,
         version_suffix=version_suffix,
         name=name,
-        creation_date=creation_data,
+        creation_date=creation_date,
         description=description,
         old_location=old_location,
         copy=(not make_sym_link),

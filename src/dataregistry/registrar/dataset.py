@@ -25,6 +25,7 @@ class DatasetTable(BaseTable):
 
         self.execution_table = execution_table
         self.which_table = "dataset"
+        self.entry_id = "dataset_id"
 
     def register(
         self,
