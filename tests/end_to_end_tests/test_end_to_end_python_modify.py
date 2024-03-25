@@ -13,7 +13,7 @@ from database_test_utils import *
 @pytest.mark.parametrize(
     "dataset_name,column,new_value",
     [
-        ("dummy_dataset_1", "description", "New description"),
+        ("modify_dummy_dataset_1", "description", "New description"),
     ],
 )
 def test_modify_dataset(dummy_file,dataset_name,column,new_value):
@@ -47,7 +47,7 @@ def test_modify_dataset(dummy_file,dataset_name,column,new_value):
 @pytest.mark.parametrize(
     "execution_name,column,new_value",
     [
-        ("dummy_execution_1", "description", "New description"),
+        ("modify_dummy_execution_1", "description", "New description"),
     ],
 )
 def test_modify_execution(dummy_file,execution_name,column,new_value):
@@ -71,11 +71,11 @@ def test_modify_execution(dummy_file,execution_name,column,new_value):
 
     f = datareg.Query.gen_filter("execution.execution_id", "==", e_id)
     results = datareg.Query.find_datasets(
-        [f"dataset.{column}"],
+        [f"execution.{column}"],
         [f],
     )
 
-    assert results[f"dataset.{column}"][0] == new_value
+    assert results[f"execution.{column}"][0] == new_value
 
 def test_modify_not_allowed(dummy_file):
     """Make a modify attempt that is not allowed"""
