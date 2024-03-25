@@ -11,6 +11,7 @@ class ExecutionTable(BaseTable):
         super().__init__(db_connection, root_dir, owner, owner_type)
 
         self.which_table = "execution"
+        self.entry_id = "execution_id"
 
     def register(
         self,

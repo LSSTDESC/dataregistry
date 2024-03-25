@@ -1,6 +1,7 @@
 import os
 
 from dataregistry.db_basic import TableMetadata
+from dataregistry.schema import load_schema
 from sqlalchemy import select, update
 from datetime import datetime
 
@@ -71,6 +72,9 @@ class BaseTable:
         # Max configuration file length allowed
         self._DEFAULT_MAX_CONFIG = _DEFAULT_MAX_CONFIG
 
+        # Load and store the schema yaml file
+        self.schema_yaml = load_schema()
+
     def _get_table_metadata(self, tbl):
         return self._metadata_getter.get(tbl)
 
@@ -90,6 +94,9 @@ class BaseTable:
         """
         Modify an entry in the DESC data registry.
 
+        Only certain columns are allowed to be modified after registration,
+        this is defined in the schema yaml file.
+
         Parameters
         ----------
         entry_id : int
@@ -99,9 +106,39 @@ class BaseTable:
             and value is the desired new value for the entry
         """
 
-        raise NotImplementedError
+        assert (
+            type(modify_fields) == dict
+        ), f"modify_fields is expected as a dict, {'column': new_values}"
 
-    def find_entry(self, entry_id):
+        # First make sure the given entry is in the registry
+        my_table = self._get_table_metadata(self.which_table)
+        previous_entry = self.find_entry(entry_id)
+
+        # Check entry exists
+        if previous_entry is None:
+            raise ValueError(f"{self.which_table} {entry_id} does not exist")
+
+        # Loop over each column to be modified
+        for key, v in modify_fields.items():
+            # Make sure the column is in the schema
+            if key not in self.schema_yaml[self.which_table].keys():
+                raise ValueError(f"The column {key} doesnt not exist in the schema")
+
+            # Make sure the column is modifiable
+            if not self.schema_yaml[self.which_table][key]["modifiable"]:
+                raise ValueError(f"The column {key} is not modifiable")
+
+        # Update the entries
+        with self._engine.connect() as conn:
+            update_stmt = (
+                update(my_table)
+                .where(getattr(my_table.c, self.entry_id) == entry_id)
+                .values(modify_fields)
+            )
+            conn.execute(update_stmt)
+            conn.commit()
+
+    def find_entry(self, entry_id, only_valid=False, only_on_disk=False):
         """
         Find an entry in the database.
 
@@ -110,6 +147,10 @@ class BaseTable:
         entry_id : int
             Unique identifier for table entry
             e.g., dataset_id for the dataset table
+        only_valid : bool, optional
+            True to only return the dataset if it is "valid" (dataset only)
+        only_on_disk : bool, optional
+            True to only return the dataset if it is on disk (dataset only)
 
         Returns
         -------
@@ -117,13 +158,9 @@ class BaseTable:
             Found entry (None if no entry found)
         """
 
-        # Search for dataset in the registry.
+        # Search for entry in the registry.
         my_table = self._get_table_metadata(self.which_table)
-
-        if self.which_table == "dataset":
-            stmt = select(my_table).where(my_table.c.dataset_id == entry_id)
-        else:
-            raise ValueError("Can only perform `find_entry` on dataset table for now")
+        stmt = select(my_table).where(getattr(my_table.c, self.entry_id) == entry_id)
 
         with self._engine.connect() as conn:
             result = conn.execute(stmt)
@@ -131,7 +168,30 @@ class BaseTable:
 
         # Pull out the single result
         for r in result:
+            if self.which_table == "dataset":
+                if not get_dataset_status(r.status, "valid") and only_valid:
+                    return None
+                if get_dataset_status(r.status, "deleted") and only_on_disk:
+                    return None
             return r
 
         # No results found
         return None
+
+    def get_modifiable_columns(self):
+        """
+        Return a list of all columns in this table that are "modifiable".
+
+        As defined in the schema yaml file.
+
+        Returns
+        -------
+        mod_list : list[str]
+        """
+
+        mod_list = []
+        for att in self.schema_yaml[self.which_table]:
+            if self.schema_yaml[self.which_table][att]["modifiable"]:
+                mod_list.append(att)
+
+        return mod_list
