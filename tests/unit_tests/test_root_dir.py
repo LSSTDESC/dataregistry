@@ -21,7 +21,14 @@ _ENV_SITE = "nersc"
     ],
 )
 def test_root_dir_manual(root_dir, site, set_env_var, ans):
-    """Test various ways of passing the root_dir"""
+    """
+    Test various ways of passing the root_dir
+
+    - Manually by passing `root_dir` to `DataRegistry`
+    - Through a "site" reference string
+    - Through setting the $DATAREG_SITE environment variable
+    - The default (passing None), which should give the NERSC site
+    """
 
     # Case where we are using the DATAREG_SITE env variable
     if set_env_var:
