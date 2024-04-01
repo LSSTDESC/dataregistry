@@ -148,7 +148,7 @@ class DatasetTable(BaseTable):
         else:
             if self._schema == "production":
                 raise ValueError(
-                    "Only the production schema can handle owner_type='production'"
+                    "Only owner_type='production' can go in the production schema"
                 )
 
         # If `name` not passed, automatically generate a name from the relative path

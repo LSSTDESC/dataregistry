@@ -1,14 +1,9 @@
-import os
-import sys
-import yaml
-
+import pytest
 from dataregistry import DataRegistry
 from dataregistry.db_basic import SCHEMA_VERSION
-import pytest
 
-from dataregistry.registrar.registrar_util import _form_dataset_path
-from dataregistry.registrar.dataset_util import set_dataset_status, get_dataset_status
 from database_test_utils import *
+
 
 @pytest.mark.parametrize(
     "dataset_name,column,new_value",
@@ -16,7 +11,7 @@ from database_test_utils import *
         ("modify_dummy_dataset_1", "description", "New description"),
     ],
 )
-def test_modify_dataset(dummy_file,dataset_name,column,new_value):
+def test_modify_dataset(dummy_file, dataset_name, column, new_value):
     """
     Make a dataset entry, then mofify it, then check it was modified.
     """
@@ -24,7 +19,7 @@ def test_modify_dataset(dummy_file,dataset_name,column,new_value):
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
     datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
-    
+
     # Add entry
     d_id = _insert_dataset_entry(
         datareg,
@@ -44,13 +39,14 @@ def test_modify_dataset(dummy_file,dataset_name,column,new_value):
 
     assert results[f"dataset.{column}"][0] == new_value
 
+
 @pytest.mark.parametrize(
     "execution_name,column,new_value",
     [
         ("modify_dummy_execution_1", "description", "New description"),
     ],
 )
-def test_modify_execution(dummy_file,execution_name,column,new_value):
+def test_modify_execution(dummy_file, execution_name, column, new_value):
     """
     Make a dataset entry, then mofify it, then check it was modified.
     """
@@ -58,7 +54,7 @@ def test_modify_execution(dummy_file,execution_name,column,new_value):
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
     datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
-    
+
     # Add entry
     e_id = _insert_execution_entry(
         datareg,
@@ -77,13 +73,14 @@ def test_modify_execution(dummy_file,execution_name,column,new_value):
 
     assert results[f"execution.{column}"][0] == new_value
 
+
 def test_modify_not_allowed(dummy_file):
     """Make a modify attempt that is not allowed"""
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
     datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
-    
+
     # Add entry
     d_id = _insert_dataset_entry(
         datareg,

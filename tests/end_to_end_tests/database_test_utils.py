@@ -1,10 +1,15 @@
-import pytest
 import os
-import yaml
 
+import pytest
 from dataregistry.db_basic import SCHEMA_VERSION
 
-__all__ = ["dummy_file", "_insert_alias_entry", "_insert_execution_entry", "_insert_dataset_entry"]
+__all__ = [
+    "dummy_file",
+    "_insert_alias_entry",
+    "_insert_execution_entry",
+    "_insert_dataset_entry",
+]
+
 
 @pytest.fixture
 def dummy_file(tmp_path):
@@ -16,7 +21,6 @@ def dummy_file(tmp_path):
 
     | - <tmp_path>
     |   - <source>
-    |     - dummy_configuration_file.yaml
     |     - file1.txt
     |     - file2.txt
     |     - <directory1>
@@ -24,7 +28,7 @@ def dummy_file(tmp_path):
     |   - <root_dir>
     |     - <schema/user/uid>
     |       - <dummy_dir>
-    |         - file1.txt 
+    |         - file1.txt
     |       - file1.txt
 
     Parameters
@@ -68,18 +72,8 @@ def dummy_file(tmp_path):
         f = p / "file1.txt"
         f.write_text("i am another dummy file (but on location)")
 
-    # Make a dummy configuration yaml file
-    data = {
-        "run_by": "somebody",
-        "software_version": {"major": 1, "minor": 1, "patch": 0},
-        "an_important_list": [1, 2, 3],
-    }
-
-    # Write the data to the YAML file
-    with open(tmp_src_dir / "dummy_configuration_file.yaml", "w") as file:
-        yaml.dump(data, file, default_flow_style=False)
-
     return tmp_src_dir, tmp_root_dir
+
 
 def _insert_alias_entry(datareg, name, dataset_id):
     """
@@ -107,7 +101,12 @@ def _insert_alias_entry(datareg, name, dataset_id):
 
 
 def _insert_execution_entry(
-    datareg, name, description, input_datasets=[], configuration=None
+    datareg,
+    name,
+    description,
+    input_datasets=[],
+    input_production_datasets=[],
+    configuration=None,
 ):
     """
     Wrapper to create execution entry
@@ -133,6 +132,7 @@ def _insert_execution_entry(
         name,
         description=description,
         input_datasets=input_datasets,
+        input_production_datasets=input_production_datasets,
         configuration=configuration,
     )
 
@@ -140,6 +140,7 @@ def _insert_execution_entry(
     print(f"Created execution entry with id {new_id}")
 
     return new_id
+
 
 def _insert_dataset_entry(
     datareg,
@@ -210,8 +211,6 @@ def _insert_dataset_entry(
     """
 
     # Some defaults over all test datasets
-    locale = "NERSC"
-    creation_date = None
     make_sym_link = False
 
     # Add new entry.
@@ -220,7 +219,7 @@ def _insert_dataset_entry(
         version,
         version_suffix=version_suffix,
         name=name,
-        creation_date=creation_date,
+        creation_date=None,
         description=description,
         old_location=old_location,
         copy=(not make_sym_link),
@@ -243,4 +242,3 @@ def _insert_dataset_entry(
     print(f"Created dataset entry with id {dataset_id}")
 
     return dataset_id
-
