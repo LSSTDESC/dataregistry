@@ -1,12 +1,13 @@
-from dataregistry.registrar.registrar_util import (
-    _parse_version_string,
-    _name_from_relpath,
-    _form_dataset_path,
-    get_directory_info,
-    _read_configuration_file,
-)
 import os
+
 import pytest
+from dataregistry.registrar.registrar_util import (
+    _form_dataset_path,
+    _name_from_relpath,
+    _parse_version_string,
+    _read_configuration_file,
+    get_directory_info,
+)
 
 
 @pytest.mark.parametrize(
@@ -41,6 +42,7 @@ def test_parse_version_string(
         if v_len == 4:
             assert tmp["suffix"] == ans_suf
 
+
 @pytest.mark.parametrize(
     "owner_type,owner,rel_path,root_dir,ans",
     [
@@ -66,6 +68,7 @@ def test_form_dataset_path(owner_type, owner, rel_path, root_dir, ans):
 
     tmp = _form_dataset_path(owner_type, owner, rel_path, root_dir=root_dir)
     assert tmp == ans
+
 
 def test_directory_info():
     """
@@ -104,6 +107,7 @@ def test_form_dataset_path(owner_type, owner, rel_path, root_dir, ans):
 
     tmp = _form_dataset_path(owner_type, owner, rel_path, root_dir=root_dir)
     assert tmp == ans
+
 
 def _make_dummy_config(tmpdir, nchars):
     """

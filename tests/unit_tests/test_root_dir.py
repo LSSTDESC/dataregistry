@@ -1,7 +1,8 @@
-from dataregistry import DataRegistry
 import os
+
 import pytest
 import yaml
+from dataregistry import DataRegistry
 
 _TEST_ROOT_DIR = "DataRegistry_data"
 _NERSC_SITE = "/global/cfs/cdirs/desc-co/registry-beta"

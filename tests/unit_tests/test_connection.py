@@ -1,6 +1,7 @@
-from dataregistry.db_basic import DbConnection
 import os
+
 import pytest
+from dataregistry.db_basic import DbConnection
 
 # This is always assumed to exist from the one-time-setup for the dataregistry
 _DEFAULT_LOCATION = os.path.join(os.getenv("HOME"), ".config_reg_access")
