@@ -157,7 +157,6 @@ def _insert_dataset_entry(
     name=None,
     execution_id=None,
     version_suffix=None,
-    is_dummy=True,
     old_location=None,
     is_overwritable=False,
     which_datareg=None,
@@ -167,6 +166,7 @@ def _insert_dataset_entry(
     execution_locale=None,
     execution_configuration=None,
     input_datasets=[],
+    locale="dummy",
 ):
     """
     Wrapper to create dataset entry
@@ -191,8 +191,6 @@ def _insert_dataset_entry(
         Execution entry related to this dataset
     version_suffix : str
         Append a suffix to the version string
-    is_dummy : bool
-        True for dummy dataset (copies no data)
     old_location : str
         Path to data to be copied to data registry
     which_datareg : DataRegistry object
@@ -209,6 +207,8 @@ def _insert_dataset_entry(
         Path to text file used to configure the execution
     input_datasets : list, optional
         List of dataset ids that were the input to this execution
+    locale : str, optional
+        Location of data, "onsite", "external" or "dummy"
 
     Returns
     -------
@@ -217,7 +217,6 @@ def _insert_dataset_entry(
     """
 
     # Some defaults over all test datasets
-    locale = "NERSC"
     creation_data = None
     make_sym_link = False
 
@@ -231,7 +230,6 @@ def _insert_dataset_entry(
         description=description,
         old_location=old_location,
         copy=(not make_sym_link),
-        is_dummy=is_dummy,
         execution_id=execution_id,
         verbose=True,
         owner=owner,
@@ -243,6 +241,7 @@ def _insert_dataset_entry(
         execution_locale=execution_locale,
         execution_configuration=execution_configuration,
         input_datasets=input_datasets,
+        locale=locale
     )
 
     assert dataset_id is not None, "Trying to create a dataset that already exists"
@@ -428,7 +427,7 @@ def test_copy_data(dummy_file, data_org):
         f"DESC/datasets/copy_real_{data_org}",
         "0.0.1",
         old_location=data_path,
-        is_dummy=False,
+        locale="onsite",
     )
 
     # Query
@@ -476,7 +475,7 @@ def test_on_location_data(dummy_file, data_org, data_path, v_str, overwritable):
         data_path,
         v_str,
         old_location=None,
-        is_dummy=False,
+        locale="onsite",
         is_overwritable=overwritable,
     )
 
@@ -877,6 +876,7 @@ def test_delete_entry(dummy_file, is_dummy, dataset_name):
     # Where is the real data?
     if is_dummy:
         data_path = None
+        locale = "dummy"
     else:
         if dataset_name == "real_dataset_to_delete":
             data_path = str(tmp_src_dir / "file2.txt")
@@ -884,13 +884,14 @@ def test_delete_entry(dummy_file, is_dummy, dataset_name):
         else:
             data_path = str(tmp_src_dir / "directory1")
             assert os.path.isdir(data_path)
+        locale = "onsite"
 
     # Add entry
     d_id = _insert_dataset_entry(
         datareg,
         f"DESC/datasets/{dataset_name}",
         "0.0.1",
-        is_dummy=is_dummy,
+        locale=locale,
         old_location=data_path,
     )
 
@@ -917,7 +918,7 @@ def test_delete_entry(dummy_file, is_dummy, dataset_name):
         assert getattr(r, "dataset.delete_date") is not None
         assert getattr(r, "dataset.delete_uid") is not None
 
-    if not is_dummy:
+    if locale == "onsite":
         # Make sure the file in the root_dir has gone
         data_path = _form_dataset_path(
             getattr(r, "dataset.owner_type"),

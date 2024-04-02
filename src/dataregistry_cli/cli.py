@@ -136,11 +136,6 @@ def get_parser():
         action="store_true",
     )
     arg_register_dataset.add_argument(
-        "--is_dummy",
-        help="True for “dummy” datasets (no data is copied, for testing purposes only)",
-        action="store_true",
-    )
-    arg_register_dataset.add_argument(
         "--schema",
         default=f"{SCHEMA_VERSION}",
         help="Which schema to connect to",

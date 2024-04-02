@@ -40,7 +40,6 @@ class DatasetTable(BaseTable):
         is_overwritable=False,
         old_location=None,
         copy=True,
-        is_dummy=False,
         verbose=False,
         owner=None,
         owner_type=None,
@@ -52,6 +51,9 @@ class DatasetTable(BaseTable):
         input_datasets=[],
         input_production_datasets=[],
         max_config_length=None,
+        locale="onsite",
+        url=None,
+        contact_email=None,
     ):
         """
         Create a new dataset entry in the DESC data registry.
@@ -85,9 +87,6 @@ class DatasetTable(BaseTable):
             True to copy data from ``old_location`` into the data registry
             (default behaviour).
             False to create a symlink.
-        is_dummy : bool, optional
-            True for "dummy" datasets (no data is copied, for testing purposes
-            only)
         verbose : bool, optional
             Provide some additional output information
         owner** : str, optional
@@ -103,6 +102,9 @@ class DatasetTable(BaseTable):
             List of production dataset ids that were the input to this execution
         max_config_length : int, optional
             Maxiumum number of lines to read from a configuration file
+        locale**: str, optional
+        url**: str, optional
+        contact_email**: str, optional
 
         Returns
         -------
@@ -111,6 +113,11 @@ class DatasetTable(BaseTable):
         execution_id : int
             The execution ID associated with the dataset
         """
+
+        # If external dataset, check for either a `url` or `contact_email`
+        if locale == "external":
+            if url is None and contact_email is None:
+                raise ValueError("External datasets require either a url or contact_email")
 
         # Set max configuration file length
         if max_config_length is None:
@@ -219,6 +226,11 @@ class DatasetTable(BaseTable):
         values["owner"] = owner
         values["creator_uid"] = self._uid
         values["register_root_dir"] = self._root_dir
+        values["locale"] = locale
+        if url:
+            values["url"] = url
+        if contact_email:
+            values["external_email"] = contact_email
 
         # We tentatively start with an "invalid" dataset in the database. This
         # will be upgraded to valid if the data copying (if any) was successful.
@@ -239,7 +251,7 @@ class DatasetTable(BaseTable):
             conn.commit()
 
         # Get dataset characteristics; copy to `root_dir` if requested
-        if not is_dummy:
+        if locale == "onsite":
             (
                 dataset_organization,
                 num_files,
@@ -250,7 +262,7 @@ class DatasetTable(BaseTable):
             )
             valid_status = 1
         else:
-            dataset_organization = "dummy"
+            dataset_organization = locale
             num_files = 0
             total_size = 0
             ds_creation_date = None
@@ -303,7 +315,7 @@ class DatasetTable(BaseTable):
         Returns
         -------
         dataset_organization : str
-            "file", "directory", or "dummy"
+            "file" or "directory"
         num_files : int
             Total number of files making up dataset
         total_size : float
@@ -462,7 +474,7 @@ class DatasetTable(BaseTable):
             conn.commit()
 
         # Delete the physical data in the root_dir
-        if previous_dataset.data_org != "dummy":
+        if previous_dataset.locale == "onsite":
             data_path = _form_dataset_path(
                 previous_dataset.owner_type,
                 previous_dataset.owner,

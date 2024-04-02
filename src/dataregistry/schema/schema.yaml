@@ -288,3 +288,18 @@ dataset:
   move_date:
     type: "DateTime"
     description: "Date the dataset was last moved"
+  locale:
+    type: "String"
+    choices: ["onsite", "external", "dummy"]
+    cli_default: "onsite"
+    cli_optional: True
+    nullable: False
+    description: "What is the location of the data? 'onsite' means the data is located within the `<root_dir>`, 'external' means the data is off-site and not managed by the registry, therefore there is only a database entry (in this case a `url` or `contact_email` must be provided during registration) and 'dummy' is a dataset for testing purposes only."
+  url:
+    type: "String"
+    description: "URL that points to the data (used in the case of external datasets, i.e., `locale='external'`)."
+    cli_optional: True
+  contact_email:
+    type: "String"
+    description: "Contact information for someone regarding the dataset."
+    cli_optional: True
