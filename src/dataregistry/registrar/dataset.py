@@ -436,13 +436,15 @@ class DatasetTable(BaseTable):
 
         # First make sure the given dataset id is in the registry
         dataset_table = self._get_table_metadata(self.which_table)
-        previous_dataset = self.find_entry(
-            dataset_id, only_valid=True, only_on_disk=True
-        )
+        previous_dataset = self.find_entry(dataset_id, raise_if_not_found=True)
 
-        # Check dataset exists
-        if previous_dataset is None:
-            raise ValueError(f"Dataset ID {dataset_id} does not exist/invalid/deleted")
+        # Check dataset has not already been deleted
+        if get_dataset_status(r.status, "deleted"):
+            raise ValueError(f"Dataset {dataset_id} has already been deleted") 
+
+        # Check dataset is valid
+        if not get_dataset_status(r.status, "valid"):
+            raise ValueError(f"Dataset {dataset_id} is not a valid entry")
 
         # Update the status of the dataset to deleted
         with self._engine.connect() as conn:
