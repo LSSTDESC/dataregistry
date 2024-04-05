@@ -9,7 +9,7 @@ from dataregistry.schema import load_schema
 
 def _add_generic_arguments(parser_obj):
     """
-    Most commands have the schema/root_dir/etc as options, have a function that
+    Most commands have the schema, root_dir, etc. as options. This function
     does that for us.
 
     Parameters
