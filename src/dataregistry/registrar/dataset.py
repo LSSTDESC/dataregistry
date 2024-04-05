@@ -439,11 +439,11 @@ class DatasetTable(BaseTable):
         previous_dataset = self.find_entry(dataset_id, raise_if_not_found=True)
 
         # Check dataset has not already been deleted
-        if get_dataset_status(r.status, "deleted"):
+        if get_dataset_status(previous_dataset.status, "deleted"):
             raise ValueError(f"Dataset {dataset_id} has already been deleted") 
 
         # Check dataset is valid
-        if not get_dataset_status(r.status, "valid"):
+        if not get_dataset_status(previous_dataset.status, "valid"):
             raise ValueError(f"Dataset {dataset_id} is not a valid entry")
 
         # Update the status of the dataset to deleted

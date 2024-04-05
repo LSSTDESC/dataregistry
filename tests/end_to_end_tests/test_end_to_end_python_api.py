@@ -629,7 +629,7 @@ def test_delete_entry(dummy_file, is_dummy, dataset_name):
     datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
 
     # Make sure we raise an exception trying to delete a dataset that doesn't exist
-    with pytest.raises(ValueError, match="does not exist"):
+    with pytest.raises(ValueError, match="not found in"):
         datareg.Registrar.dataset.delete(10000)
 
     # Where is the real data?
@@ -690,5 +690,5 @@ def test_delete_entry(dummy_file, is_dummy, dataset_name):
             assert not os.path.isdir(data_path)
 
     # Make sure we can not delete an already deleted entry.
-    with pytest.raises(ValueError, match="does not exist/invalid/deleted"):
+    with pytest.raises(ValueError, match="has already been deleted"):
         datareg.Registrar.dataset.delete(d_id)
