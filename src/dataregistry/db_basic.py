@@ -287,3 +287,35 @@ def _insert_provenance(
         id = add_table_row(conn, prov_table, values)
 
         return id
+
+def _insert_keyword(
+    db_connection,
+    table,
+    keyword,
+):
+    """
+    Write a row to a keyword table.
+
+    Parameters
+    ----------
+    db_connection : DbConnection class
+        Conenction to the database
+    table : str
+        Keyword table we are appending (e.g., "keyword_preset")
+    keyword : str
+        Keyword to add
+
+    Returns
+    -------
+    id : int
+        Id of new row in keyword table
+    """
+
+    values = dict()
+    values["keyword"] = keyword
+
+    keyword_table = TableMetadata(db_connection, get_db_version=False).get(table)
+    with db_connection.engine.connect() as conn:
+        id = add_table_row(conn, keyword_table, values)
+
+        return id

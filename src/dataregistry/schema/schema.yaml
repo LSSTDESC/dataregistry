@@ -169,6 +169,32 @@ dependency:
     foreign_key_column: "execution_id"
     description: "Execution this dependency is linked to"
 
+keyword_preset:
+  keyword_id:
+    description: "Unique identifier for preset keyword"
+    type: "Integer"
+    primary_key: True
+  keyword:
+    type: "StringLong"
+    description: "The keyword (max 250 characters)"
+
+dataset_keyword_preset:
+  dataset_keyword_preset_id:
+    type: "Integer"
+    primary_key: True
+  dataset_id:
+    type: "Integer"
+    foreign_key: True
+    foreign_key_schema: "self"
+    foreign_key_table: "dataset"
+    foreign_key_column: "dataset_id"
+  keyword_id:
+    type: "Integer"
+    foreign_key: True
+    foreign_key_schema: "self"
+    foreign_key_table: "keyword_preset"
+    foreign_key_column: "keyword_id"
+
 dataset:
   dataset_id:
     type: "Integer"

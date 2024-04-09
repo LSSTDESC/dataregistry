@@ -15,19 +15,21 @@ from sqlalchemy import (
 from sqlalchemy import ForeignKey, UniqueConstraint, text
 from sqlalchemy.orm import relationship, DeclarativeBase
 from dataregistry.db_basic import DbConnection, SCHEMA_VERSION
-from dataregistry.db_basic import _insert_provenance
-from dataregistry.schema import load_schema
+from dataregistry.db_basic import _insert_provenance, _insert_keyword
+from dataregistry.schema import load_schema, load_preset_keywords
 
 """
 A script to create the default dataregistry schema and the production schema.
 
-Both schemas have the same layout, containing six tables:
+Both schemas have the same layout, containing these tables:
     - "dataset"         : Primary table, contains information on the datasets
     - "dataset_alias"   : Table to associate "alias" names to datasets
     - "execution"       : Stores the executions, datasets can be linked to these
     - "execution_alias" : Table to asscociate "alias" names to executions
     - "dependancy"      : Tracks dependencies between datasets
-    - "provenance"      : Contains information about the database/schema 
+    - "provenance"      : Contains information about the database/schema
+    - "keyword_preset"  : A list of preset keyswords that can be tagged to datasets
+    - "dataset_keyword_preset"  : Many-many link between keywords and datasets
 """
 
 # Conversion from string types in `schema.yaml` to SQLAlchemy
@@ -237,6 +239,36 @@ def _Dependency(schema, has_production):
     return Model
 
 
+def _KeywordPreset(schema):
+    """Stores the list of preset keywords."""
+
+    class_name = f"{schema}_keyword_preset"
+
+    # Load columns from `schema.yaml` file
+    columns = _get_column_definitions(schema, "keyword_preset")
+
+    # Table metadata
+    meta = {"__tablename__": "keyword_preset", "__table_args__": (UniqueConstraint(
+                "keyword", name="keyword_preset_u_keyword"
+            ), {"schema": schema},)}
+
+    Model = type(class_name, (Base,), {**columns, **meta})
+    return Model
+
+def _DatasetKeywordPreset(schema):
+    """Many-Many link between datasets and keywords."""
+
+    class_name = f"{schema}_dataset_keyword_preset"
+
+    # Load columns from `schema.yaml` file
+    columns = _get_column_definitions(schema, "dataset_keyword_preset")
+
+    # Table metadata
+    meta = {"__tablename__": "dataset_keyword_preset", "__table_args__": {"schema": schema}}
+
+    Model = type(class_name, (Base,), {**columns, **meta})
+    return Model
+
 # The following should be adjusted whenever there is a change to the structure
 # of the database tables.
 _DB_VERSION_MAJOR = 2
@@ -307,17 +339,27 @@ for SCHEMA in SCHEMA_LIST:
     _Execution(SCHEMA)
     _ExecutionAlias(SCHEMA)
     _Provenance(SCHEMA)
+    _KeywordPreset(SCHEMA)
+    _DatasetKeywordPreset(SCHEMA)
 
 # Generate the database
 Base.metadata.create_all(db_connection.engine)
 
 for SCHEMA in SCHEMA_LIST:
+
+    db = DbConnection(args.config, SCHEMA)
+
     # Add initial procenance information
     prov_id = _insert_provenance(
-        DbConnection(args.config, SCHEMA),
+        db,
         _DB_VERSION_MAJOR,
         _DB_VERSION_MINOR,
         _DB_VERSION_PATCH,
         "CREATE",
         comment=_DB_VERSION_COMMENT,
     )
+
+    # Populate the preset keywords for datasets
+    keywords = load_preset_keywords()
+    for att in keywords["dataset"]:
+        _insert_keyword(db, "keyword_preset", att)
