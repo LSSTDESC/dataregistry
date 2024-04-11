@@ -265,10 +265,6 @@ dataset:
     nullable: False
     description: "True means this dataset can be overwritten in the future"
     cli_optional: True
-  is_external_link:
-    type: "Boolean"
-    nullable: False
-    description: "True if an external link"
   status:
     type: "Integer"
     nullable: False

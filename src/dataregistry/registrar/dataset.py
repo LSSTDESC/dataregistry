@@ -219,7 +219,6 @@ class DatasetTable(BaseTable):
             )
         values["is_overwritable"] = is_overwritable
         values["is_overwritten"] = False
-        values["is_external_link"] = False
         values["is_archived"] = False
         values["register_date"] = datetime.now()
         values["owner_type"] = owner_type
