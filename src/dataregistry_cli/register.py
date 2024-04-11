@@ -54,10 +54,10 @@ def register_dataset(args):
         execution_name=args.execution_name,
         execution_description=args.execution_description,
         execution_start=args.execution_start,
-        execution_locale=args.execution_locale,
+        execution_site=args.execution_site,
         execution_configuration=args.execution_configuration,
         input_datasets=args.input_datasets,
-        locale=args.locale,
+        location_type=args.location_type,
         url=args.url,
         contact_email=args.contact_email,
     )

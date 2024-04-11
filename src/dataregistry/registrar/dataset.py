@@ -46,12 +46,12 @@ class DatasetTable(BaseTable):
         execution_name=None,
         execution_description=None,
         execution_start=None,
-        execution_locale=None,
+        execution_site=None,
         execution_configuration=None,
         input_datasets=[],
         input_production_datasets=[],
         max_config_length=None,
-        locale="onsite",
+        location_type="dataregistry",
         url=None,
         contact_email=None,
     ):
@@ -94,7 +94,7 @@ class DatasetTable(BaseTable):
         execution_name** : str, optional
         execution_description** : str, optional
         execution_start** : datetime, optional
-        execution_locale** : str, optional
+        execution_site** : str, optional
         execution_configuration** : str, optional
         input_datasets : list, optional
             List of dataset ids that were the input to this execution
@@ -102,7 +102,7 @@ class DatasetTable(BaseTable):
             List of production dataset ids that were the input to this execution
         max_config_length : int, optional
             Maxiumum number of lines to read from a configuration file
-        locale**: str, optional
+        location_type**: str, optional
         url**: str, optional
         contact_email**: str, optional
 
@@ -115,7 +115,7 @@ class DatasetTable(BaseTable):
         """
 
         # If external dataset, check for either a `url` or `contact_email`
-        if locale == "external":
+        if location_type == "external":
             if url is None and contact_email is None:
                 raise ValueError("External datasets require either a url or contact_email")
 
@@ -193,7 +193,7 @@ class DatasetTable(BaseTable):
                 execution_name,
                 description=execution_description,
                 execution_start=execution_start,
-                locale=execution_locale,
+                site=execution_site,
                 configuration=execution_configuration,
                 input_datasets=input_datasets,
                 input_production_datasets=input_production_datasets,
@@ -225,7 +225,7 @@ class DatasetTable(BaseTable):
         values["owner"] = owner
         values["creator_uid"] = self._uid
         values["register_root_dir"] = self._root_dir
-        values["locale"] = locale
+        values["location_type"] = location_type
         if url:
             values["url"] = url
         if contact_email:
@@ -250,7 +250,7 @@ class DatasetTable(BaseTable):
             conn.commit()
 
         # Get dataset characteristics; copy to `root_dir` if requested
-        if locale == "onsite":
+        if location_type == "dataregistry":
             (
                 dataset_organization,
                 num_files,
@@ -261,7 +261,7 @@ class DatasetTable(BaseTable):
             )
             valid_status = 1
         else:
-            dataset_organization = locale
+            dataset_organization = location_type
             num_files = 0
             total_size = 0
             ds_creation_date = None
@@ -473,7 +473,7 @@ class DatasetTable(BaseTable):
             conn.commit()
 
         # Delete the physical data in the root_dir
-        if previous_dataset.locale == "onsite":
+        if previous_dataset.location_type == "dataregistry":
             data_path = _form_dataset_path(
                 previous_dataset.owner_type,
                 previous_dataset.owner,

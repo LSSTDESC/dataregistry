@@ -153,7 +153,7 @@ def get_parser():
         "--execution_start", help="Date the execution started"
     )
     arg_register_dataset.add_argument(
-        "--execution_locale", help="Where was the execution performed?", type=str
+        "--execution_site", help="Where was the execution performed?", type=str
     )
     arg_register_dataset.add_argument(
         "--execution_configuration",
