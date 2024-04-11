@@ -40,7 +40,7 @@ def load_schema():
     return yaml_data
 
 def load_preset_keywords():
-    """Load the preset keywords from the yaml file"""
+    """Load the system preset keywords from the yaml file"""
 
     # Load
     yaml_file_path = os.path.join(

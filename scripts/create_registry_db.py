@@ -28,8 +28,8 @@ Both schemas have the same layout, containing these tables:
     - "execution_alias" : Table to asscociate "alias" names to executions
     - "dependancy"      : Tracks dependencies between datasets
     - "provenance"      : Contains information about the database/schema
-    - "keyword_preset"  : A list of preset keyswords that can be tagged to datasets
-    - "dataset_keyword_preset"  : Many-many link between keywords and datasets
+    - "keyword"         : A list of keywords that can be tagged to datasets
+    - "dataset_keyword" : Many-many link between keywords and datasets
 """
 
 # Conversion from string types in `schema.yaml` to SQLAlchemy
@@ -239,32 +239,32 @@ def _Dependency(schema, has_production):
     return Model
 
 
-def _KeywordPreset(schema):
-    """Stores the list of preset keywords."""
+def _Keyword(schema):
+    """Stores the list of keywords."""
 
-    class_name = f"{schema}_keyword_preset"
+    class_name = f"{schema}_keyword"
 
     # Load columns from `schema.yaml` file
-    columns = _get_column_definitions(schema, "keyword_preset")
+    columns = _get_column_definitions(schema, "keyword")
 
     # Table metadata
-    meta = {"__tablename__": "keyword_preset", "__table_args__": (UniqueConstraint(
-                "keyword", name="keyword_preset_u_keyword"
+    meta = {"__tablename__": "keyword", "__table_args__": (UniqueConstraint(
+                "keyword", name="keyword_u_keyword"
             ), {"schema": schema},)}
 
     Model = type(class_name, (Base,), {**columns, **meta})
     return Model
 
-def _DatasetKeywordPreset(schema):
+def _DatasetKeyword(schema):
     """Many-Many link between datasets and keywords."""
 
-    class_name = f"{schema}_dataset_keyword_preset"
+    class_name = f"{schema}_dataset_keyword"
 
     # Load columns from `schema.yaml` file
-    columns = _get_column_definitions(schema, "dataset_keyword_preset")
+    columns = _get_column_definitions(schema, "dataset_keyword")
 
     # Table metadata
-    meta = {"__tablename__": "dataset_keyword_preset", "__table_args__": {"schema": schema}}
+    meta = {"__tablename__": "dataset_keyword", "__table_args__": {"schema": schema}}
 
     Model = type(class_name, (Base,), {**columns, **meta})
     return Model
@@ -339,8 +339,8 @@ for SCHEMA in SCHEMA_LIST:
     _Execution(SCHEMA)
     _ExecutionAlias(SCHEMA)
     _Provenance(SCHEMA)
-    _KeywordPreset(SCHEMA)
-    _DatasetKeywordPreset(SCHEMA)
+    _Keyword(SCHEMA)
+    _DatasetKeyword(SCHEMA)
 
 # Generate the database
 Base.metadata.create_all(db_connection.engine)
@@ -359,7 +359,7 @@ for SCHEMA in SCHEMA_LIST:
         comment=_DB_VERSION_COMMENT,
     )
 
-    # Populate the preset keywords for datasets
+    # Populate the preset system keywords for datasets
     keywords = load_preset_keywords()
     for att in keywords["dataset"]:
-        _insert_keyword(db, "keyword_preset", att)
+        _insert_keyword(db, att, True)
