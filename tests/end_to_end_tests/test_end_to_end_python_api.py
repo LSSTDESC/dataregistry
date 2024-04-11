@@ -163,10 +163,10 @@ def _insert_dataset_entry(
     execution_name=None,
     execution_description=None,
     execution_start=None,
-    execution_locale=None,
+    execution_site=None,
     execution_configuration=None,
     input_datasets=[],
-    locale="dummy",
+    location_type="dummy",
 ):
     """
     Wrapper to create dataset entry
@@ -201,14 +201,14 @@ def _insert_dataset_entry(
         Human readible description of execution
     execution_start : datetime, optional
         Date the execution started
-    execution_locale : str, optional
+    execution_site : str, optional
         Where was the execution performed?
     execution_configuration : str, optional
         Path to text file used to configure the execution
     input_datasets : list, optional
         List of dataset ids that were the input to this execution
-    locale : str, optional
-        Location of data, "onsite", "external" or "dummy"
+    location_type : str, optional
+        Physical location of data, "dataregistry", "external" or "dummy"
 
     Returns
     -------
@@ -238,10 +238,10 @@ def _insert_dataset_entry(
         execution_name=execution_name,
         execution_description=execution_description,
         execution_start=execution_start,
-        execution_locale=execution_locale,
+        execution_site=execution_site,
         execution_configuration=execution_configuration,
         input_datasets=input_datasets,
-        locale=locale
+        location_type=location_type
     )
 
     assert dataset_id is not None, "Trying to create a dataset that already exists"
@@ -427,7 +427,7 @@ def test_copy_data(dummy_file, data_org):
         f"DESC/datasets/copy_real_{data_org}",
         "0.0.1",
         old_location=data_path,
-        locale="onsite",
+        location_type="dataregistry",
     )
 
     # Query
@@ -475,7 +475,7 @@ def test_on_location_data(dummy_file, data_org, data_path, v_str, overwritable):
         data_path,
         v_str,
         old_location=None,
-        locale="onsite",
+        location_type="dataregistry",
         is_overwritable=overwritable,
     )
 
@@ -770,7 +770,7 @@ def test_dataset_with_execution(dummy_file):
         "0.0.1",
         execution_name="Overwrite execution auto name",
         execution_description="Overwrite execution auto description",
-        execution_locale="TestMachine",
+        execution_site="TestMachine",
         input_datasets=[d_id_1],
     )
 
@@ -781,7 +781,7 @@ def test_dataset_with_execution(dummy_file):
             "dataset.name",
             "execution.execution_id",
             "execution.description",
-            "execution.locale",
+            "execution.site",
             "execution.name",
         ],
         [f],
@@ -794,7 +794,7 @@ def test_dataset_with_execution(dummy_file):
             getattr(r, "execution.description")
             == "Overwrite execution auto description"
         )
-        assert getattr(r, "execution.locale") == "TestMachine"
+        assert getattr(r, "execution.site") == "TestMachine"
         ex_id_1 = getattr(r, "execution.execution_id")
         assert i < 1
 
@@ -876,7 +876,7 @@ def test_delete_entry(dummy_file, is_dummy, dataset_name):
     # Where is the real data?
     if is_dummy:
         data_path = None
-        locale = "dummy"
+        location_type = "dummy"
     else:
         if dataset_name == "real_dataset_to_delete":
             data_path = str(tmp_src_dir / "file2.txt")
@@ -884,14 +884,14 @@ def test_delete_entry(dummy_file, is_dummy, dataset_name):
         else:
             data_path = str(tmp_src_dir / "directory1")
             assert os.path.isdir(data_path)
-        locale = "onsite"
+        location_type = "dataregistry"
 
     # Add entry
     d_id = _insert_dataset_entry(
         datareg,
         f"DESC/datasets/{dataset_name}",
         "0.0.1",
-        locale=locale,
+        location_type=location_type,
         old_location=data_path,
     )
 
@@ -918,7 +918,7 @@ def test_delete_entry(dummy_file, is_dummy, dataset_name):
         assert getattr(r, "dataset.delete_date") is not None
         assert getattr(r, "dataset.delete_uid") is not None
 
-    if locale == "onsite":
+    if location_type == "dataregistry":
         # Make sure the file in the root_dir has gone
         data_path = _form_dataset_path(
             getattr(r, "dataset.owner_type"),
