@@ -65,16 +65,15 @@ def _get_column_definitions(schema, table):
     for column in schema_yaml[table].keys():
         # Special case where column has a foreign key
         if schema_yaml[table][column]["foreign_key"]:
-            fk_schema = schema
-            if schema_yaml[table][column]["foreign_key_schema"] != "self":
-                fk_schema = schema_yaml[table][column]["foreign_key_schema"]
+            if schema_yaml[table][column]["foreign_key_schema"] == "self":
+                schema_yaml[table][column]["foreign_key_schema"] = schema
 
             return_dict[column] = Column(
                 column,
                 _TYPE_TRANSLATE[schema_yaml[table][column]["type"]],
                 ForeignKey(
                     _get_ForeignKey_str(
-                        fk_schema,
+                        schema_yaml[table][column]["foreign_key_schema"],
                         schema_yaml[table][column]["foreign_key_table"],
                         schema_yaml[table][column]["foreign_key_column"],
                     )

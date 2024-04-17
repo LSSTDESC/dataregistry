@@ -81,14 +81,12 @@ class ExecutionTable(BaseTable):
             for d in input_datasets:
                 values["register_date"] = datetime.now()
                 values["input_id"] = d
-                values["input_production_id"] = None
                 values["execution_id"] = my_id
                 add_table_row(conn, dependency_table, values, commit=False)
 
             # handle production dependencies
             for d in input_production_datasets:
                 values["register_date"] = datetime.now()
-                values["input_id"] = None
                 values["input_production_id"] = d
                 values["execution_id"] = my_id
                 add_table_row(conn, dependency_table, values, commit=False)
