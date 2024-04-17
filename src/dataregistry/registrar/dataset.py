@@ -103,7 +103,10 @@ class DatasetTable(BaseTable):
         max_config_length : int, optional
             Maxiumum number of lines to read from a configuration file
         location_type**: str, optional
+            If `location_type="external"`, either `url` or `contact_email` must
+            be supplied
         url**: str, optional
+            For `location_type="external"` only
         contact_email**: str, optional
 
         Returns
@@ -226,7 +229,7 @@ class DatasetTable(BaseTable):
         values["creator_uid"] = self._uid
         values["register_root_dir"] = self._root_dir
         values["location_type"] = location_type
-        if url:
+        if url and location_type == "external":
             values["url"] = url
         if contact_email:
             values["external_email"] = contact_email

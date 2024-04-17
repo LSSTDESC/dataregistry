@@ -208,7 +208,7 @@ def _insert_dataset_entry(
     input_datasets : list, optional
         List of dataset ids that were the input to this execution
     location_type : str, optional
-        Physical location of data, "dataregistry", "external" or "dummy"
+        Physical location of data: "dataregistry", "external" or "dummy"
 
     Returns
     -------

@@ -290,7 +290,7 @@ dataset:
     cli_default: "dataregistry"
     cli_optional: True
     nullable: False
-    description: "What is the physical location of the data? 'dataregistry' means the data is located within the `<root_dir>` and managed by the `dataregistry`, 'external' means the data is off-site and not managed by the `dataregistry`, therefore there is only a database entry (in this case a `url` or `contact_email` must be provided during registration) and 'dummy' is a dataset for testing purposes only (only a database entry is created in this case)."
+    description: "What is the physical location of the data? 'dataregistry' means the data is located within the `<root_dir>` and managed by the `dataregistry`, external means the data is not managed by the dataregistry, either because it is off-site or because it is stored outside <root_dir> therefore there is only a database entry (in this case a `url` or `contact_email` must be provided during registration) and 'dummy' is a dataset for testing purposes only (only a database entry is created in this case)."
   url:
     type: "String"
     description: "URL that points to the data (used in the case of external datasets, i.e., `location_type='external'`)."

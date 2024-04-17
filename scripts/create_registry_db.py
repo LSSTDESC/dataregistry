@@ -242,7 +242,7 @@ def _Dependency(schema, has_production):
 _DB_VERSION_MAJOR = 2
 _DB_VERSION_MINOR = 2
 _DB_VERSION_PATCH = 0
-_DB_VERSION_COMMENT = "Add locale for dataset table"
+_DB_VERSION_COMMENT = "Add `location_type` for dataset table"
 
 # Parse command line arguments
 parser = argparse.ArgumentParser(
