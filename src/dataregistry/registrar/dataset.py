@@ -52,6 +52,7 @@ class DatasetTable(BaseTable):
         input_datasets=[],
         input_production_datasets=[],
         max_config_length=None,
+        keywords=[],
     ):
         """
         Create a new dataset entry in the DESC data registry.
@@ -103,6 +104,9 @@ class DatasetTable(BaseTable):
             List of production dataset ids that were the input to this execution
         max_config_length : int, optional
             Maxiumum number of lines to read from a configuration file
+        keywords : list[str], optional
+            List of keywords to tag dataset with.
+            Each keyword must be registered already in the keywords table.
 
         Returns
         -------
@@ -111,6 +115,10 @@ class DatasetTable(BaseTable):
         execution_id : int
             The execution ID associated with the dataset
         """
+
+        # Validate the keywords (make sure they are registered)
+        if len(keywords) > 0:
+            self._validate_keywords(keywords)
 
         # Set max configuration file length
         if max_config_length is None:
@@ -477,3 +485,35 @@ class DatasetTable(BaseTable):
                 shutil.rmtree(data_path)
 
         print(f"Deleted {dataset_id} from data registry")
+
+    def _validate_keywords(self, keywords):
+        """
+        Validate a list of keywords.
+
+            - Ensure they are strings
+            - Ensure the chosen keywords are registered in the keywords table
+
+        If any keyword is invalid an excetion is raised.
+
+        Parameters
+        ----------
+        keywords : list[str]
+        """
+
+        for k in keywords:
+            # Make sure keyword is a string
+            if type(k) != str:
+                raise ValueError(f"{k} is not a valid keyword string")
+        
+            # Make sure keyword is in the keywords table
+            keyword_table = self._get_table_metadata("keyword")
+
+            stmt = select(keyword_table.c.keyword).where(keyword_table.c.keyword == k)
+
+            with self._engine.connect() as conn:
+                result = conn.execute(stmt)
+                conn.commit()
+
+            # Pull out the single result
+            for r in result:
+                print(r.keyword)
