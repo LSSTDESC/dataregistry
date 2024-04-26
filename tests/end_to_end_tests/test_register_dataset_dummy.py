@@ -169,7 +169,7 @@ def test_dataset_owner_types(dummy_file, owner_type):
         assert i < 1
 
 
-def test_regsiter_dataset_with_global_owner_set(dummy_file):
+def test_register_dataset_with_global_owner_set(dummy_file):
     """
     Test setting the owner and owner_type globally during the database
     initialization.
