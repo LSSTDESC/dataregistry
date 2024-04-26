@@ -118,7 +118,7 @@ class BaseTable:
         for key, v in modify_fields.items():
             # Make sure the column is in the schema
             if key not in self.schema_yaml[self.which_table].keys():
-                raise ValueError(f"The column {key} doesnt not exist in the schema")
+                raise ValueError(f"The column {key} does not exist in the schema")
 
             # Make sure the column is modifiable
             if not self.schema_yaml[self.which_table][key]["modifiable"]:
