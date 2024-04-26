@@ -8,7 +8,8 @@ from database_test_utils import *
 @pytest.mark.parametrize(
     "dataset_name,column,new_value",
     [
-        ("modify_dummy_dataset_1", "description", "New description"),
+        ("modify_dummy_dataset_1_str", "description", "new description"),
+        ("modify_dummy_dataset_1_int", "description", 10293912),
     ],
 )
 def test_modify_dataset(dummy_file, dataset_name, column, new_value):
@@ -37,7 +38,7 @@ def test_modify_dataset(dummy_file, dataset_name, column, new_value):
         [f],
     )
 
-    assert results[f"dataset.{column}"][0] == new_value
+    assert results[f"dataset.{column}"][0] == str(new_value)
 
 
 @pytest.mark.parametrize(

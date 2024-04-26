@@ -112,11 +112,7 @@ class BaseTable:
 
         # First make sure the given entry is in the registry
         my_table = self._get_table_metadata(self.which_table)
-        previous_entry = self.find_entry(entry_id)
-
-        # Check entry exists
-        if previous_entry is None:
-            raise ValueError(f"{self.which_table} {entry_id} does not exist")
+        previous_entry = self.find_entry(entry_id, raise_if_not_found=True)
 
         # Loop over each column to be modified
         for key, v in modify_fields.items():
@@ -138,7 +134,7 @@ class BaseTable:
             conn.execute(update_stmt)
             conn.commit()
 
-    def find_entry(self, entry_id, only_valid=False, only_on_disk=False):
+    def find_entry(self, entry_id, raise_if_not_found=False):
         """
         Find an entry in the database.
 
@@ -147,10 +143,8 @@ class BaseTable:
         entry_id : int
             Unique identifier for table entry
             e.g., dataset_id for the dataset table
-        only_valid : bool, optional
-            True to only return the dataset if it is "valid" (dataset only)
-        only_on_disk : bool, optional
-            True to only return the dataset if it is on disk (dataset only)
+        raise_if_not_found : bool, optional
+            Raise an exception if the entry is not found
 
         Returns
         -------
@@ -168,12 +162,11 @@ class BaseTable:
 
         # Pull out the single result
         for r in result:
-            if self.which_table == "dataset":
-                if not get_dataset_status(r.status, "valid") and only_valid:
-                    return None
-                if get_dataset_status(r.status, "deleted") and only_on_disk:
-                    return None
             return r
+
+        # Raise an exception if we did not find the entry
+        if raise_if_not_found:
+            raise ValueError(f"Entry {entry_id} not found in {self.which_table}")
 
         # No results found
         return None
