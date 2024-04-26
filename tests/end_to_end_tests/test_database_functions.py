@@ -1,12 +1,67 @@
+import os
+
+import pytest
 from dataregistry import DataRegistry
 from dataregistry.db_basic import SCHEMA_VERSION
-import pytest
 
 from database_test_utils import *
 
+
+def test_db_version(dummy_file):
+    """
+    Test the `Query.get_db_versioning()` function.
+    CI makes a fresh database, hence actual db versions should match
+    versions to be used when new db is created
+    """
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    actual_major, actual_minor, actual_patch = datareg.Query.get_db_versioning()
+    assert actual_major == 2, "db major version doesn't match expected"
+    assert actual_minor == 1, "db minor version doesn't match expected"
+    assert actual_patch == 0, "db patch version doesn't match expected"
+
+
+def test_get_dataset_absolute_path(dummy_file):
+    """
+    Test the generation of the full absolute path of a dataset using the
+    `Query.get_dataset_absolute_path()` function
+    """
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    dset_relpath = "DESC/datasets/get_dataset_absolute_path_test"
+    dset_ownertype = "group"
+    dset_owner = "group1"
+
+    # Make a basic entry
+    d_id_1 = _insert_dataset_entry(
+        datareg,
+        dset_relpath,
+        "0.0.1",
+        owner_type=dset_ownertype,
+        owner=dset_owner,
+    )
+
+    v = datareg.Query.get_dataset_absolute_path(d_id_1)
+
+    if datareg.Query._dialect == "sqlite":
+        assert v == os.path.join(
+            str(tmp_root_dir), dset_ownertype, dset_owner, dset_relpath
+        )
+    else:
+        assert v == os.path.join(
+            str(tmp_root_dir), SCHEMA_VERSION, dset_ownertype, dset_owner, dset_relpath
+        )
+
+
 def test_find_entry(dummy_file):
     """
-    Test the `find_entry` function.
+    Test the `find_entry()` function.
 
     First create a dataset/execution/alias entry, then make sure we can find it
     using the generic `find_entry` function in the `BaseTable` class.
@@ -44,8 +99,9 @@ def test_find_entry(dummy_file):
     assert r.alias == "test_find_entry_alias"
     assert r.dataset_id == d_id
 
+
 def test_get_modifiable_columns(dummy_file):
-    """Test the `get_modifiable_columns` function"""
+    """Test the `get_modifiable_columns()` function"""
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
