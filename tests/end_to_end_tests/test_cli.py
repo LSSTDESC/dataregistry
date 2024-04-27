@@ -4,10 +4,9 @@ import dataregistry_cli.cli as cli
 import pytest
 from dataregistry import DataRegistry
 from dataregistry.db_basic import SCHEMA_VERSION
+
+from database_test_utils import dummy_file
 from dataregistry.registrar.dataset_util import get_dataset_status, set_dataset_status
-
-from test_end_to_end_python_api import dummy_file
-
 
 def test_simple_query(dummy_file):
     """Make a simple entry, and make sure the query returns the correct result"""
