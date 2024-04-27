@@ -1,7 +1,8 @@
-from dataregistry import DataRegistry
 import os
+
 import pytest
 import yaml
+from dataregistry import DataRegistry
 
 _TEST_ROOT_DIR = "DataRegistry_data"
 _NERSC_SITE = "/global/cfs/cdirs/desc-co/registry-beta"
@@ -21,7 +22,14 @@ _ENV_SITE = "nersc"
     ],
 )
 def test_root_dir_manual(root_dir, site, set_env_var, ans):
-    """Test various ways of passing the root_dir"""
+    """
+    Test various ways of passing the root_dir
+
+    - Manually by passing `root_dir` to `DataRegistry`
+    - Through a "site" reference string
+    - Through setting the $DATAREG_SITE environment variable
+    - The default (passing None), which should give the NERSC site
+    """
 
     # Case where we are using the DATAREG_SITE env variable
     if set_env_var:
@@ -39,5 +47,4 @@ def test_root_dir_manual(root_dir, site, set_env_var, ans):
     if reg.db_connection.dialect != "sqlite":
         assert reg.db_connection.schema is not None
 
-    assert reg.Registrar._root_dir == ans
-    assert reg.Query._root_dir == ans
+    assert reg.root_dir == ans

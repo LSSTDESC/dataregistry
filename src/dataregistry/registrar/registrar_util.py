@@ -2,8 +2,9 @@ import hashlib
 import os
 import re
 import warnings
-from sqlalchemy import MetaData, Table, Column, text, select
 from shutil import copyfile, copytree, rmtree
+
+from sqlalchemy import select
 
 __all__ = [
     "_parse_version_string",
@@ -128,7 +129,7 @@ def get_directory_info(path):
     return num_files, total_size
 
 
-def _bump_version(name, v_string, v_suffix, dataset_table, engine):
+def _bump_version(name, v_string, dataset_table, engine):
     """
     Bump version of dataset automatically if user has supplied a special
     version string during register.
@@ -139,8 +140,6 @@ def _bump_version(name, v_string, v_suffix, dataset_table, engine):
         Name of the dataset
     v_string : str
         Special version string "major", "minor", "patch"
-    version_suffix : str
-        Dataset version suffix
     dataset_table : SQLAlchemy Table object
     engine : SQLAlchemy Engine object
 
@@ -150,17 +149,15 @@ def _bump_version(name, v_string, v_suffix, dataset_table, engine):
         Updated version dict with keys "major", "minor", "patch"
     """
 
-    # Find the previous dataset based on the name and version suffix
+    # Find the previous dataset based on the name and version
     stmt = select(
-        dataset_table.c["version_major", "version_minor", "version_patch"]
+        dataset_table.c["version_major", "version_minor", "version_patch", "version_suffix"]
     ).where(dataset_table.c.name == name)
-    if v_suffix:
-        stmt = stmt.where(dataset_table.c.version_suffix == v_suffix)
-        stmt = (
-            stmt.order_by(dataset_table.c.version_major.desc())
-            .order_by(dataset_table.c.version_minor.desc())
-            .order_by(dataset_table.c.version_patch.desc())
-        )
+    stmt = (
+        stmt.order_by(dataset_table.c.version_major.desc())
+        .order_by(dataset_table.c.version_minor.desc())
+        .order_by(dataset_table.c.version_patch.desc())
+    )
     with engine.connect() as conn:
         result = conn.execute(stmt)
         conn.commit()
@@ -170,9 +167,17 @@ def _bump_version(name, v_string, v_suffix, dataset_table, engine):
             old_minor = 0
             old_patch = 0
         else:
-            old_major = int(r[0])
-            old_minor = int(r[1])
-            old_patch = int(r[2])
+            # We don't bump datasets with a version suffix
+            if r.version_suffix is not None:
+                raise ValueError(
+                    "Cannot bump dataset automatically as it "
+                    f"has a version suffix ({r.version_suffix}). "
+                    "Select the version/suffix manually instead."
+                )
+
+            old_major = int(r.version_major)
+            old_minor = int(r.version_minor)
+            old_patch = int(r.version_patch)
 
     # Add 1 to the relative version part.
     v_fields = {"major": old_major, "minor": old_minor, "patch": old_patch}
@@ -329,7 +334,7 @@ def _copy_data(dataset_organization, source, dest, do_checksum=True):
             os.rename(temp_dest, dest)
 
         print(
-            f"Something went wrong during data copying, aborting."
+            "Something went wrong during data copying, aborting."
             "Note an entry in the registry database will still have"
             "been created"
         )

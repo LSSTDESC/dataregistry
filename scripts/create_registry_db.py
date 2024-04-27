@@ -65,15 +65,16 @@ def _get_column_definitions(schema, table):
     for column in schema_yaml[table].keys():
         # Special case where column has a foreign key
         if schema_yaml[table][column]["foreign_key"]:
-            if schema_yaml[table][column]["foreign_key_schema"] == "self":
-                schema_yaml[table][column]["foreign_key_schema"] = schema
+            fk_schema = schema
+            if schema_yaml[table][column]["foreign_key_schema"] != "self":
+                fk_schema = schema_yaml[table][column]["foreign_key_schema"]
 
             return_dict[column] = Column(
                 column,
                 _TYPE_TRANSLATE[schema_yaml[table][column]["type"]],
                 ForeignKey(
                     _get_ForeignKey_str(
-                        schema_yaml[table][column]["foreign_key_schema"],
+                        fk_schema,
                         schema_yaml[table][column]["foreign_key_table"],
                         schema_yaml[table][column]["foreign_key_column"],
                     )
@@ -240,9 +241,9 @@ def _Dependency(schema, has_production):
 # The following should be adjusted whenever there is a change to the structure
 # of the database tables.
 _DB_VERSION_MAJOR = 2
-_DB_VERSION_MINOR = 0
+_DB_VERSION_MINOR = 1
 _DB_VERSION_PATCH = 0
-_DB_VERSION_COMMENT = "Added production dependencies"
+_DB_VERSION_COMMENT = "Add dataset status"
 
 # Parse command line arguments
 parser = argparse.ArgumentParser(

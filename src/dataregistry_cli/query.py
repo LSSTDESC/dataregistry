@@ -71,15 +71,14 @@ def dregs_ls(args):
     else:
         print("all datasets", end=" ")
 
-    # Show the format out the output.
-    mystr = "Format : '[owner_type:owner] name : version_string -> relative_path'"
-    print(f"\n{mystr}")
-    print("-" * len(mystr))
-
     # Loop over this schema and the production schema and print the results
     for this_datareg in [datareg, datareg_prod]:
         if this_datareg is None:
             continue
+    
+        mystr = f"Schema = {this_datareg.db_connection.schema}"
+        print(f"\n{mystr}")
+        print("-" * len(mystr))
 
         # Query
         results = this_datareg.Query.find_datasets(
@@ -89,21 +88,10 @@ def dregs_ls(args):
                 "dataset.relative_path",
                 "dataset.owner",
                 "dataset.owner_type",
+                "dataset.status",
             ],
             filters,
-            return_format="CursorResult",
+            return_format="dataframe",
         )
 
-        # Loop over each result and print.
-        if results.rowcount > 0:
-            for r in results:
-                tmp_name = getattr(r, "dataset.name")
-                tmp_vs = getattr(r, "dataset.version_string")
-                tmp_path = getattr(r, "dataset.relative_path")
-                tmp_owner = getattr(r, "dataset.owner")
-                tmp_owner_type = getattr(r, "dataset.owner_type")
-
-                print(
-                    f" - [{tmp_owner_type}:{tmp_owner}] {tmp_name} :",
-                    f"v{tmp_vs} -> {tmp_path}",
-                )
+        print(results.to_string(index=False))
