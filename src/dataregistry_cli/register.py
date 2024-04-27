@@ -49,15 +49,17 @@ def register_dataset(args):
         description=args.description,
         old_location=args.old_location,
         copy=(not args.make_symlink),
-        is_dummy=args.is_dummy,
         owner=args.owner,
         owner_type=args.owner_type,
         execution_name=args.execution_name,
         execution_description=args.execution_description,
         execution_start=args.execution_start,
-        execution_locale=args.execution_locale,
+        execution_site=args.execution_site,
         execution_configuration=args.execution_configuration,
         input_datasets=args.input_datasets,
+        location_type=args.location_type,
+        url=args.url,
+        contact_email=args.contact_email,
     )
 
     print(f"Created dataset entry with id {new_id}")

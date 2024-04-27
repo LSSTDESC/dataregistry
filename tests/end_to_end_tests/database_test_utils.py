@@ -152,16 +152,18 @@ def _insert_dataset_entry(
     name=None,
     execution_id=None,
     version_suffix=None,
-    is_dummy=True,
     old_location=None,
     is_overwritable=False,
     which_datareg=None,
     execution_name=None,
     execution_description=None,
     execution_start=None,
-    execution_locale=None,
+    execution_site=None,
     execution_configuration=None,
     input_datasets=[],
+    location_type="dummy",
+    contact_email=None,
+    url=None,
 ):
     """
     Wrapper to create dataset entry
@@ -186,8 +188,6 @@ def _insert_dataset_entry(
         Execution entry related to this dataset
     version_suffix : str
         Append a suffix to the version string
-    is_dummy : bool
-        True for dummy dataset (copies no data)
     old_location : str
         Path to data to be copied to data registry
     which_datareg : DataRegistry object
@@ -197,12 +197,18 @@ def _insert_dataset_entry(
     execution_description : str, optional
         Human readible description of execution
     execution_start : datetime, optional
-    execution_locale : str, optional
+    execution_site : str, optional
         Where was the execution performed?
     execution_configuration : str, optional
         Path to text file used to configure the execution
     input_datasets : list, optional
         List of dataset ids that were the input to this execution
+    location_type : str, optional
+        "dataregistry", "external" or "dummy"
+    contact_email : str
+        Contact email for external datasets
+    url : str
+        Url for external datasets
 
     Returns
     -------
@@ -223,7 +229,6 @@ def _insert_dataset_entry(
         description=description,
         old_location=old_location,
         copy=(not make_sym_link),
-        is_dummy=is_dummy,
         execution_id=execution_id,
         verbose=True,
         owner=owner,
@@ -232,9 +237,12 @@ def _insert_dataset_entry(
         execution_name=execution_name,
         execution_description=execution_description,
         execution_start=execution_start,
-        execution_locale=execution_locale,
+        execution_site=execution_site,
         execution_configuration=execution_configuration,
         input_datasets=input_datasets,
+        location_type=location_type,
+        contact_email=contact_email,
+        url=url,
     )
 
     assert dataset_id is not None, "Trying to create a dataset that already exists"

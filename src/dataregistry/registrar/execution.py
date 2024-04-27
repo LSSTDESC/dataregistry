@@ -18,7 +18,7 @@ class ExecutionTable(BaseTable):
         name,
         description=None,
         execution_start=None,
-        locale=None,
+        site=None,
         configuration=None,
         input_datasets=[],
         input_production_datasets=[],
@@ -36,7 +36,7 @@ class ExecutionTable(BaseTable):
         name** : str
         description** : str, optional
         execution_start** : datetime, optional
-        locale** : str, optional
+        site** : str, optional
         configuration** : str, optional
         input_datasets** : list, optional
         input_production_datasets** : list, optional
@@ -55,8 +55,8 @@ class ExecutionTable(BaseTable):
 
         # Put the execution information together
         values = {"name": name}
-        if locale:
-            values["locale"] = locale
+        if site:
+            values["site"] = site
         if execution_start:
             values["execution_start"] = execution_start
         if description:

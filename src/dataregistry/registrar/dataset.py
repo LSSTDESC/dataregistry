@@ -41,18 +41,20 @@ class DatasetTable(BaseTable):
         is_overwritable=False,
         old_location=None,
         copy=True,
-        is_dummy=False,
         verbose=False,
         owner=None,
         owner_type=None,
         execution_name=None,
         execution_description=None,
         execution_start=None,
-        execution_locale=None,
+        execution_site=None,
         execution_configuration=None,
         input_datasets=[],
         input_production_datasets=[],
         max_config_length=None,
+        location_type="dataregistry",
+        url=None,
+        contact_email=None,
     ):
         """
         Create a new dataset entry in the DESC data registry.
@@ -86,9 +88,6 @@ class DatasetTable(BaseTable):
             True to copy data from ``old_location`` into the data registry
             (default behaviour).
             False to create a symlink.
-        is_dummy : bool, optional
-            True for "dummy" datasets (no data is copied, for testing purposes
-            only)
         verbose : bool, optional
             Provide some additional output information
         owner** : str, optional
@@ -96,7 +95,7 @@ class DatasetTable(BaseTable):
         execution_name** : str, optional
         execution_description** : str, optional
         execution_start** : datetime, optional
-        execution_locale** : str, optional
+        execution_site** : str, optional
         execution_configuration** : str, optional
         input_datasets : list, optional
             List of dataset ids that were the input to this execution
@@ -104,6 +103,12 @@ class DatasetTable(BaseTable):
             List of production dataset ids that were the input to this execution
         max_config_length : int, optional
             Maxiumum number of lines to read from a configuration file
+        location_type**: str, optional
+            If `location_type="external"`, either `url` or `contact_email` must
+            be supplied
+        url**: str, optional
+            For `location_type="external"` only
+        contact_email**: str, optional
 
         Returns
         -------
@@ -112,6 +117,11 @@ class DatasetTable(BaseTable):
         execution_id : int
             The execution ID associated with the dataset
         """
+
+        # If external dataset, check for either a `url` or `contact_email`
+        if location_type == "external":
+            if url is None and contact_email is None:
+                raise ValueError("External datasets require either a url or contact_email")
 
         # Set max configuration file length
         if max_config_length is None:
@@ -187,7 +197,7 @@ class DatasetTable(BaseTable):
                 execution_name,
                 description=execution_description,
                 execution_start=execution_start,
-                locale=execution_locale,
+                site=execution_site,
                 configuration=execution_configuration,
                 input_datasets=input_datasets,
                 input_production_datasets=input_production_datasets,
@@ -213,13 +223,17 @@ class DatasetTable(BaseTable):
             )
         values["is_overwritable"] = is_overwritable
         values["is_overwritten"] = False
-        values["is_external_link"] = False
         values["is_archived"] = False
         values["register_date"] = datetime.now()
         values["owner_type"] = owner_type
         values["owner"] = owner
         values["creator_uid"] = self._uid
         values["register_root_dir"] = self._root_dir
+        values["location_type"] = location_type
+        if url and location_type == "external":
+            values["url"] = url
+        if contact_email:
+            values["contact_email"] = contact_email
 
         # We tentatively start with an "invalid" dataset in the database. This
         # will be upgraded to valid if the data copying (if any) was successful.
@@ -240,7 +254,7 @@ class DatasetTable(BaseTable):
             conn.commit()
 
         # Get dataset characteristics; copy to `root_dir` if requested
-        if not is_dummy:
+        if location_type == "dataregistry":
             (
                 dataset_organization,
                 num_files,
@@ -251,7 +265,7 @@ class DatasetTable(BaseTable):
             )
             valid_status = 1
         else:
-            dataset_organization = "dummy"
+            dataset_organization = location_type
             num_files = 0
             total_size = 0
             ds_creation_date = None
@@ -304,7 +318,7 @@ class DatasetTable(BaseTable):
         Returns
         -------
         dataset_organization : str
-            "file", "directory", or "dummy"
+            "file" or "directory"
         num_files : int
             Total number of files making up dataset
         total_size : float
@@ -461,7 +475,7 @@ class DatasetTable(BaseTable):
             conn.commit()
 
         # Delete the physical data in the root_dir
-        if previous_dataset.data_org != "dummy":
+        if previous_dataset.location_type == "dataregistry":
             data_path = _form_dataset_path(
                 previous_dataset.owner_type,
                 previous_dataset.owner,

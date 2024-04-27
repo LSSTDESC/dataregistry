@@ -154,11 +154,6 @@ def get_parser():
         action="store_true",
     )
     arg_register_dataset.add_argument(
-        "--is_dummy",
-        help="True for “dummy” datasets (no data is copied, for testing purposes only)",
-        action="store_true",
-    )
-    arg_register_dataset.add_argument(
         "--execution_name", help="Typically pipeline name or program name", type=str
     )
     arg_register_dataset.add_argument(
@@ -168,7 +163,7 @@ def get_parser():
         "--execution_start", help="Date the execution started"
     )
     arg_register_dataset.add_argument(
-        "--execution_locale", help="Where was the execution performed?", type=str
+        "--execution_site", help="Where was the execution performed?", type=str
     )
     arg_register_dataset.add_argument(
         "--execution_configuration",

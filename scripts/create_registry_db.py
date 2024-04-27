@@ -241,9 +241,9 @@ def _Dependency(schema, has_production):
 # The following should be adjusted whenever there is a change to the structure
 # of the database tables.
 _DB_VERSION_MAJOR = 2
-_DB_VERSION_MINOR = 1
+_DB_VERSION_MINOR = 2
 _DB_VERSION_PATCH = 0
-_DB_VERSION_COMMENT = "Add dataset status"
+_DB_VERSION_COMMENT = "Add `location_type` for dataset table"
 
 # Parse command line arguments
 parser = argparse.ArgumentParser(

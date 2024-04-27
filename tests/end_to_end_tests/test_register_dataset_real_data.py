@@ -31,7 +31,7 @@ def test_copy_data(dummy_file, data_org):
         f"DESC/datasets/copy_real_{data_org}",
         "0.0.1",
         old_location=data_path,
-        is_dummy=False,
+        location_type="dataregistry",
     )
 
     # Query
@@ -79,7 +79,7 @@ def test_on_location_data(dummy_file, data_org, data_path, v_str, overwritable):
         data_path,
         v_str,
         old_location=None,
-        is_dummy=False,
+        location_type="dataregistry",
         is_overwritable=overwritable,
     )
 

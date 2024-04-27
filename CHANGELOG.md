@@ -1,3 +1,17 @@
+## Version 0.4.1
+
+Add ability to register "external" datasets. For example datasets that are not
+physically managed by the registry, or are offsite, therefore only a database
+entry is created.
+
+- Database version bumped to 2.2.0
+- Added `location_type` column to `dataset` table (can be either "onsite",
+  "external" or "dummy").
+- Added `contact_email` and `url` column to `dataset` table. One of these is
+  required when registering a `location_type="external"` dataset.
+- Removed `is_external_link` column from `dataset` table as it is redundant.
+- Renamed `execution.locale` to `execution.site` in the `execution` table.
+
 ## Version 0.4.0
 
 Version 0.4.0 focuses around being able to manipulate data already within the

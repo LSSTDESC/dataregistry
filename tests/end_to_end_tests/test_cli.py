@@ -15,12 +15,12 @@ def test_simple_query(dummy_file):
     tmp_src_dir, tmp_root_dir = dummy_file
 
     # Register a dataset
-    cmd = "register dataset my_cli_dataset 0.0.1 --is_dummy"
+    cmd = "register dataset my_cli_dataset 0.0.1 --location_type dummy"
     cmd += f" --schema {SCHEMA_VERSION} --root_dir {str(tmp_root_dir)}"
     cli.main(shlex.split(cmd))
 
     # Update the registered dataset
-    cmd = "register dataset my_cli_dataset2 patch --is_dummy --name my_cli_dataset"
+    cmd = "register dataset my_cli_dataset2 patch --location_type dummy --name my_cli_dataset"
     cmd += f" --schema {SCHEMA_VERSION} --root_dir {str(tmp_root_dir)}"
     cli.main(shlex.split(cmd))
 
@@ -40,7 +40,7 @@ def test_dataset_entry_with_execution(dummy_file):
     tmp_src_dir, tmp_root_dir = dummy_file
 
     # Register a dataset with many options
-    cmd = "register dataset my_cli_dataset3 1.2.3 --is_dummy"
+    cmd = "register dataset my_cli_dataset3 1.2.3 --location_type dummy"
     cmd += " --description 'This is my dataset description'"
     cmd += " --access_API 'Awesome API' --owner DESC --owner_type group"
     cmd += " --version_suffix test --creation_date '2020-01-01'"
@@ -78,7 +78,7 @@ def test_production_entry(dummy_file):
 
     if datareg.Query._dialect != "sqlite":
         # Register a dataset
-        cmd = "register dataset my_production_cli_dataset 0.1.2 --is_dummy"
+        cmd = "register dataset my_production_cli_dataset 0.1.2 --location_type dummy"
         cmd += " --owner_type production"
         cmd += f" --schema production --root_dir {str(tmp_root_dir)}"
         cli.main(shlex.split(cmd))
@@ -99,7 +99,7 @@ def test_delete_dataset(dummy_file):
     tmp_src_dir, tmp_root_dir = dummy_file
 
     # Register a dataset
-    cmd = "register dataset my_cli_dataset_to_delete 0.0.1 --is_dummy"
+    cmd = "register dataset my_cli_dataset_to_delete 0.0.1 --location_type dummy"
     cmd += f" --schema {SCHEMA_VERSION} --root_dir {str(tmp_root_dir)}"
     cli.main(shlex.split(cmd))
 
