@@ -1,5 +1,5 @@
-from dataregistry.registrar.dataset_util import set_dataset_status, get_dataset_status
 import pytest
+from dataregistry.registrar.dataset_util import get_dataset_status, set_dataset_status
 
 
 @pytest.mark.parametrize(

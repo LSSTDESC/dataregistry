@@ -3,8 +3,33 @@ import sys
 import argparse
 from dataregistry.db_basic import SCHEMA_VERSION
 from .register import register_dataset
+from .delete import delete_dataset
 from .query import dregs_ls
 from dataregistry.schema import load_schema
+
+def _add_generic_arguments(parser_obj):
+    """
+    Most commands have the schema, root_dir, etc. as options. This function
+    does that for us.
+
+    Parameters
+    ----------
+    parser_obj : argparse.ArgumentParser
+        Argument parser we are adding the options to
+    """
+
+    parser_obj.add_argument(
+        "--config_file", help="Location of data registry config file", type=str
+    )
+    parser_obj.add_argument("--root_dir", help="Location of the root_dir", type=str)
+    parser_obj.add_argument(
+        "--site", help="Get the root_dir through a pre-defined 'site'", type=str
+    )
+    parser_obj.add_argument(
+        "--schema",
+        default=f"{SCHEMA_VERSION}",
+        help="Which schema to connect to",
+    )
 
 def get_parser():
 
@@ -30,23 +55,12 @@ def get_parser():
         help="List datasets for a given owner type",
         choices=["user", "group", "production"],
     )
-    arg_ls.add_argument(
-        "--config_file", help="Location of data registry config file", type=str
-    )
     arg_ls.add_argument("--all", help="List all datasets", action="store_true")
-    arg_ls.add_argument(
-        "--schema",
-        default=f"{SCHEMA_VERSION}",
-        help="Which schema to connect to",
-    )
-    arg_ls.add_argument("--root_dir", help="Location of the root_dir", type=str)
-    arg_ls.add_argument(
-        "--site", help="Get the root_dir through a pre-defined 'site'", type=str
-    )
-    
-    # ------------------
-    # Register a dataset
-    # ------------------
+    _add_generic_arguments(arg_ls)
+
+    # --------
+    # Register
+    # --------
     
     # Load the schema information (help strings are loaded from here)
     schema_data = load_schema()
@@ -70,7 +84,11 @@ def get_parser():
     arg_register_sub = arg_register.add_subparsers(
         title="register what?", dest="register_type"
     )
-    
+   
+    # ------------------
+    # Register a dataset
+    # ------------------
+
     # Register a new dataset.
     arg_register_dataset = arg_register_sub.add_parser("dataset", help="Register a dataset")
     
@@ -144,6 +162,9 @@ def get_parser():
         "--config_file", help="Location of data registry config file", type=str
     )
     arg_register_dataset.add_argument(
+        "--location_type", type=str, default="onsite"
+    )
+    arg_register_dataset.add_argument(
         "--execution_name", help="Typically pipeline name or program name", type=str
     )
     arg_register_dataset.add_argument(
@@ -167,12 +188,30 @@ def get_parser():
         default=[],
         nargs="+",
     )
-    arg_register_dataset.add_argument(
-        "--root_dir", help="Location of the root_dir", type=str
+    _add_generic_arguments(arg_register_dataset)
+
+    # ------
+    # Delete
+    # ------
+    
+    # Register a new database entry.
+    arg_delete = subparsers.add_parser(
+        "delete", help="Delete an entry in the database"
     )
-    arg_register_dataset.add_argument(
-        "--site", help="Get the root_dir through a pre-defined 'site'", type=str
+    
+    arg_delete_sub = arg_delete.add_subparsers(
+        title="delete what?", dest="delete_type"
     )
+
+    # ----------------
+    # Delete a dataset
+    # ----------------
+
+    # Delete a dataset.
+    arg_delete_dataset = arg_delete_sub.add_parser("dataset", help="Delete a dataset")
+    arg_delete_dataset.add_argument("dataset_id", help="The dataset_id you wish to delete",
+            type=int)
+    _add_generic_arguments(arg_delete_dataset)
 
     return parser
 
@@ -198,6 +237,11 @@ def main(cmd=None):
     if args.subcommand == "register":
         if args.register_type == "dataset":
             register_dataset(args)
+
+    # Delete an entry
+    elif args.subcommand == "delete":
+        if args.delete_type == "dataset":
+            delete_dataset(args)
 
     # Query database entries
     elif args.subcommand == "ls":

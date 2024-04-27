@@ -25,6 +25,7 @@ class DatasetTable(BaseTable):
 
         self.execution_table = execution_table
         self.which_table = "dataset"
+        self.entry_id = "dataset_id"
 
     def register(
         self,
@@ -157,7 +158,7 @@ class DatasetTable(BaseTable):
         else:
             if self._schema == "production":
                 raise ValueError(
-                    "Only the production schema can handle owner_type='production'"
+                    "Only owner_type='production' can go in the production schema"
                 )
 
         # If `name` not passed, automatically generate a name from the relative path
@@ -449,17 +450,15 @@ class DatasetTable(BaseTable):
 
         # First make sure the given dataset id is in the registry
         dataset_table = self._get_table_metadata(self.which_table)
-        previous_dataset = self.find_entry(dataset_id)
+        previous_dataset = self.find_entry(dataset_id, raise_if_not_found=True)
 
-        # Check dataset exists
-        if previous_dataset is None:
-            raise ValueError(f"Dataset ID {dataset_id} does not exist")
-        # Check dataset is valid
-        if not get_dataset_status(previous_dataset.status, "valid"):
-            raise ValueError(f"Dataset ID {dataset_id} does not have a valid status")
         # Check dataset has not already been deleted
         if get_dataset_status(previous_dataset.status, "deleted"):
-            raise ValueError(f"Dataset ID {dataset_id} does not have a valid status")
+            raise ValueError(f"Dataset {dataset_id} has already been deleted") 
+
+        # Check dataset is valid
+        if not get_dataset_status(previous_dataset.status, "valid"):
+            raise ValueError(f"Dataset {dataset_id} is not a valid entry")
 
         # Update the status of the dataset to deleted
         with self._engine.connect() as conn:
