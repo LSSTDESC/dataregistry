@@ -233,7 +233,7 @@ class DatasetTable(BaseTable):
         if url and location_type == "external":
             values["url"] = url
         if contact_email:
-            values["external_email"] = contact_email
+            values["contact_email"] = contact_email
 
         # We tentatively start with an "invalid" dataset in the database. This
         # will be upgraded to valid if the data copying (if any) was successful.

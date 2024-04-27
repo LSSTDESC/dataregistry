@@ -162,6 +162,8 @@ def _insert_dataset_entry(
     execution_configuration=None,
     input_datasets=[],
     location_type="dummy",
+    contact_email=None,
+    url=None,
 ):
     """
     Wrapper to create dataset entry
@@ -203,6 +205,10 @@ def _insert_dataset_entry(
         List of dataset ids that were the input to this execution
     location_type : str, optional
         "dataregistry", "external" or "dummy"
+    contact_email : str
+        Contact email for external datasets
+    url : str
+        Url for external datasets
 
     Returns
     -------
@@ -235,6 +241,8 @@ def _insert_dataset_entry(
         execution_configuration=execution_configuration,
         input_datasets=input_datasets,
         location_type=location_type,
+        contact_email=contact_email,
+        url=url,
     )
 
     assert dataset_id is not None, "Trying to create a dataset that already exists"
