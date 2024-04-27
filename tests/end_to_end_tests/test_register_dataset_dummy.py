@@ -232,7 +232,7 @@ def test_register_dataset_with_modified_default_execution(dummy_file):
         "0.0.1",
         execution_name="Overwrite execution auto name",
         execution_description="Overwrite execution auto description",
-        execution_locale="TestMachine",
+        execution_site="TestMachine",
         input_datasets=[d_id_1],
     )
 
@@ -243,7 +243,7 @@ def test_register_dataset_with_modified_default_execution(dummy_file):
             "dataset.name",
             "execution.execution_id",
             "execution.description",
-            "execution.locale",
+            "execution.site",
             "execution.name",
         ],
         [f],
@@ -256,7 +256,7 @@ def test_register_dataset_with_modified_default_execution(dummy_file):
             getattr(r, "execution.description")
             == "Overwrite execution auto description"
         )
-        assert getattr(r, "execution.locale") == "TestMachine"
+        assert getattr(r, "execution.site") == "TestMachine"
         ex_id_1 = getattr(r, "execution.execution_id")
         assert i < 1
 

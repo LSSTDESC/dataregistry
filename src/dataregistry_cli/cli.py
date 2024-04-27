@@ -154,17 +154,6 @@ def get_parser():
         action="store_true",
     )
     arg_register_dataset.add_argument(
-        "--schema",
-        default=f"{SCHEMA_VERSION}",
-        help="Which schema to connect to",
-    )
-    arg_register_dataset.add_argument(
-        "--config_file", help="Location of data registry config file", type=str
-    )
-    arg_register_dataset.add_argument(
-        "--location_type", type=str, default="onsite"
-    )
-    arg_register_dataset.add_argument(
         "--execution_name", help="Typically pipeline name or program name", type=str
     )
     arg_register_dataset.add_argument(

@@ -99,7 +99,7 @@ def test_delete_dataset(dummy_file):
     tmp_src_dir, tmp_root_dir = dummy_file
 
     # Register a dataset
-    cmd = "register dataset my_cli_dataset_to_delete 0.0.1 --is_dummy"
+    cmd = "register dataset my_cli_dataset_to_delete 0.0.1 --location_type dummy"
     cmd += f" --schema {SCHEMA_VERSION} --root_dir {str(tmp_root_dir)}"
     cli.main(shlex.split(cmd))
 

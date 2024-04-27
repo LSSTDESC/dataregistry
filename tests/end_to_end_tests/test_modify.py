@@ -26,7 +26,7 @@ def test_modify_dataset(dummy_file, dataset_name, column, new_value):
         datareg,
         f"DESC/datasets/{dataset_name}",
         "0.0.1",
-        is_dummy=True,
+        location_type="dummy",
     )
 
     # Modify entry
@@ -87,7 +87,7 @@ def test_modify_not_allowed(dummy_file):
         datareg,
         f"DESC/datasets/bad_modify",
         "0.0.1",
-        is_dummy=True,
+        location_type="dummy",
     )
 
     # Try to modify an column I'm not allowed to

@@ -43,6 +43,7 @@ def test_delete_dataset_entry(dummy_file, is_dummy, dataset_name):
     # Where is the real data?
     if is_dummy:
         data_path = None
+        location_type = "dummy"
     else:
         if dataset_name == "real_dataset_to_delete":
             data_path = str(tmp_src_dir / "file2.txt")
@@ -50,13 +51,14 @@ def test_delete_dataset_entry(dummy_file, is_dummy, dataset_name):
         else:
             data_path = str(tmp_src_dir / "directory1")
             assert os.path.isdir(data_path)
+        location_type = "dataregistry"
 
     # Add entry
     d_id = _insert_dataset_entry(
         datareg,
         f"DESC/datasets/{dataset_name}",
         "0.0.1",
-        is_dummy=is_dummy,
+        location_type=location_type,
         old_location=data_path,
     )
 
