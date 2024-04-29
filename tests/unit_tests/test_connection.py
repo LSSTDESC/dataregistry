@@ -1,31 +1,37 @@
-from dataregistry.db_basic import DbConnection
 import os
 
+import pytest
+from dataregistry.db_basic import DbConnection
 
-def test_connect_manual():
-    """Test connection to database with manually passed config location"""
-    conn = DbConnection(
-        config_file=os.path.join(os.getenv("HOME"), ".config_reg_access"), verbose=True
-    )
-    assert conn.engine is not None
-    assert conn.dialect is not None
-    if conn.dialect != "sqlite":
-        assert conn.schema is not None
+# This is always assumed to exist from the one-time-setup for the dataregistry
+_DEFAULT_LOCATION = os.path.join(os.getenv("HOME"), ".config_reg_access")
 
 
-def test_connect_env():
-    """Test connection to database with DATAREG_CONFIG env set"""
-    os.environ["DATAREG_CONFIG"] = os.path.join(os.getenv("HOME"), ".config_reg_access")
-    conn = DbConnection(verbose=True)
-    assert conn.engine is not None
-    assert conn.dialect is not None
-    if conn.dialect != "sqlite":
-        assert conn.schema is not None
+@pytest.mark.parametrize(
+    "config_file,set_env_var",
+    [
+        (_DEFAULT_LOCATION, False),
+        (None, False),
+        (None, True),
+    ],
+)
+def test_connection(config_file, set_env_var):
+    """
+    Test various ways of passing the connection config file
 
+    - Manually by passing `config_file` to `DataRegistry`
+    - Through setting the $DATAREG_CONFIG environment variable
+    - The default (passing None), which should look for $HOME/.config_reg_access
+    """
 
-def test_connect_default():
-    """Test connection to database with default config location"""
-    conn = DbConnection(verbose=True)
+    # Case where we are using the DATAREG_SITE env variable
+    if set_env_var:
+        os.environ["DATAREG_CONFIG"] = _DEFAULT_LOCATION
+    else:
+        if os.environ.get("DATAREG_CONFIG"):
+            os.environ.pop("DATAREG_CONFIG")
+
+    conn = DbConnection(config_file=config_file, verbose=True)
     assert conn.engine is not None
     assert conn.dialect is not None
     if conn.dialect != "sqlite":

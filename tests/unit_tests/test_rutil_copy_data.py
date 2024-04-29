@@ -1,5 +1,6 @@
-import pytest
 import os
+
+import pytest
 from dataregistry.registrar.registrar_util import _copy_data
 
 

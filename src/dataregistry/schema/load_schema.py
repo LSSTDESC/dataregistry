@@ -14,7 +14,7 @@ def _populate_defaults(mydict):
 
     # Attributes we check for and populate with these default value if missing
     atts = {"nullable": True, "primary_key": False, "foreign_key": False, "cli_optional": False,
-            "cli_default": None, "choices": None}
+            "cli_default": None, "choices": None, "modifiable": False}
 
     # Loop over eah row and ingest
     for table in mydict.keys():
