@@ -59,10 +59,14 @@ jobs:
         run: |
           echo "sqlalchemy.url : postgresql://postgres:postgres@localhost:5432/desc_data_registry" > $HOME/.config_reg_access
 
-      # Create schema
+      # Create schemas
+      - name: Create data registry production schema
+        run: |
+          python scripts/create_registry_schema.py --config $HOME/.config_reg_access --schema production
+
       - name: Create data registry default schema
         run: |
-          python scripts/create_registry_db.py --config $HOME/.config_reg_access
+          python scripts/create_registry_schema.py --config $HOME/.config_reg_access
 
       # Run CI tests
       - name: Run CI tests
@@ -127,10 +131,14 @@ jobs:
         run: |
           echo "sqlalchemy.url : postgresql://postgres:postgres@localhost:5432/desc_data_registry" > $DATAREG_CONFIG
 
-      # Create schema
-      - name: Create data registry default and production schema
+      # Create schemas
+      - name: Create data registry production schema
         run: |
-          python scripts/create_registry_db.py --config $DATAREG_CONFIG
+          python scripts/create_registry_schema.py --config $HOME/.config_reg_access --schema production
+
+      - name: Create data registry default schema
+        run: |
+          python scripts/create_registry_schema.py --config $HOME/.config_reg_access
 
       # Run CI tests
       - name: Run CI tests
@@ -183,7 +191,7 @@ jobs:
       # Create schema
       - name: Create data registry default schema
         run: |
-          python scripts/create_registry_db.py --config $DATAREG_CONFIG
+          python scripts/create_registry_schema.py --config $DATAREG_CONFIG
 
       # Run CI tests
       - name: Run CI tests
