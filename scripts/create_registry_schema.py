@@ -288,6 +288,7 @@ parser.add_argument("--config", help="Path to the data registry config file")
 
 args = parser.parse_args()
 schema = args.schema
+prod_schema = args.production_schema
 
 # Connect to database to find out what the backend is
 db_connection = DbConnection(args.config, schema)
@@ -295,16 +296,16 @@ if db_connection.dialect == "sqlite":
     if schema == "production":
         raise ValueError("Production not available for sqlite databases")
 else:
-    if schema != args.production_schema:
+    if schema != prod_schema:
         # production schema, tables must already exists and schema
         # major and minor versions must match
-        stmt = f"select db_version_major, db_version_minor from {args.production_schema}.provenance order by provenance_id desc limit 1"
+        stmt = f"select db_version_major, db_version_minor from {prod_schema}.provenance order by provenance_id desc limit 1"
         try:
             with db_connection.engine.connect() as conn:
                 result = conn.execute(text(stmt))
                 result = pd.DataFrame(result)
                 conn.commit()
-        except Exception as e:
+        except Exception:
             raise RuntimeError("production schema does not exist or is ill-formed")
         if result["db_version_major"][0] != _DB_VERSION_MAJOR | int(result["db_version_minor"][0]) > _DB_VERSION_MINOR:
             raise RuntimeError("production schema version incompatible")
@@ -323,8 +324,8 @@ try:
         select_prv = f"GRANT SELECT ON ALL TABLES IN SCHEMA {schema} to {acct}"
         conn.execute(text(usage_prv))
         conn.execute(text(select_prv))
-        #if schema == "production":       # also grant privileges to reg_writer
-        if schema == args.production_schema:
+
+        if schema == prod_schema:      # also grant privileges to reg_writer
             acct = "reg_writer"
             usage_priv = f"GRANT USAGE ON SCHEMA {schema} to {acct}"
             select_priv = f"GRANT SELECT ON ALL TABLES IN SCHEMA {schema} to {acct}"
@@ -339,12 +340,14 @@ except Exception as e:
 _Dataset(schema)
 _DatasetAlias(schema)
 _Dependency(schema, db_connection.dialect != "sqlite",
-            production=args.production_schema)
+            production=prod_schema)
 _Execution(schema)
 _ExecutionAlias(schema)
 _Provenance(schema)
 
 # Generate the database
+if schema != prod_schema:
+    Base.metadata.reflect(db_connection.engine, prod_schema)
 Base.metadata.create_all(db_connection.engine)
 
 # Add initial provenance information
