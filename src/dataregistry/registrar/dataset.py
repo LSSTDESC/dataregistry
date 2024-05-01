@@ -124,12 +124,14 @@ class DatasetTable(BaseTable):
 
         # Validate the keywords (make sure they are registered)
         if len(keywords) > 0:
-            self._validate_keywords(keywords)
-        
+            keyword_ids = self._validate_keywords(keywords)
+
         # If external dataset, check for either a `url` or `contact_email`
         if location_type == "external":
             if url is None and contact_email is None:
-                raise ValueError("External datasets require either a url or contact_email")
+                raise ValueError(
+                    "External datasets require either a url or contact_email"
+                )
 
         # Set max configuration file length
         if max_config_length is None:
@@ -251,14 +253,15 @@ class DatasetTable(BaseTable):
         with self._engine.connect() as conn:
             prim_key = add_table_row(conn, dataset_table, values, commit=False)
 
+            # Update the rows of the overwritten dataset
             if len(previous) > 0:
-                # Update previous rows, setting is_overwritten to True
                 update_stmt = (
                     update(dataset_table)
                     .where(dataset_table.c.dataset_id.in_(previous))
                     .values(is_overwritten=True)
                 )
                 conn.execute(update_stmt)
+
             conn.commit()
 
         # Get dataset characteristics; copy to `root_dir` if requested
@@ -279,7 +282,7 @@ class DatasetTable(BaseTable):
             ds_creation_date = None
             valid_status = 0
 
-        # Case where use is overwriting the dateset `creation_date`
+        # Case where user is overwriting the dataset `creation_date`
         if creation_date:
             ds_creation_date = creation_date
 
@@ -297,6 +300,18 @@ class DatasetTable(BaseTable):
                 )
             )
             conn.execute(update_stmt)
+
+            # Add any keyword tags
+            if len(keywords) > 0:
+                keyword_table = self._get_table_metadata("dataset_keyword")
+                for k_id in keyword_ids:
+                    add_table_row(
+                        conn,
+                        keyword_table,
+                        {"dataset_id": prim_key, "keyword_id": k_id},
+                        commit=False,
+                    )
+
             conn.commit()
 
         return prim_key, execution_id
@@ -462,7 +477,7 @@ class DatasetTable(BaseTable):
 
         # Check dataset has not already been deleted
         if get_dataset_status(previous_dataset.status, "deleted"):
-            raise ValueError(f"Dataset {dataset_id} has already been deleted") 
+            raise ValueError(f"Dataset {dataset_id} has already been deleted")
 
         # Check dataset is valid
         if not get_dataset_status(previous_dataset.status, "valid"):
@@ -511,22 +526,36 @@ class DatasetTable(BaseTable):
         Parameters
         ----------
         keywords : list[str]
+
+        Returns
+        -------
+        keyword_ids : list[int]
         """
+
+        keyword_ids = []
 
         for k in keywords:
             # Make sure keyword is a string
             if type(k) != str:
                 raise ValueError(f"{k} is not a valid keyword string")
-        
-            # Make sure keyword is in the keywords table
-            keyword_table = self._get_table_metadata("keyword")
 
-            stmt = select(keyword_table.c.keyword).where(keyword_table.c.keyword == k)
+        # Make sure keywords are all in the keywords table
+        keyword_table = self._get_table_metadata("keyword")
 
-            with self._engine.connect() as conn:
-                result = conn.execute(stmt)
-                conn.commit()
+        stmt = select(keyword_table.c.keyword_id).where(
+            keyword_table.c.keyword.in_(keywords)
+        )
 
-            # Pull out the single result
-            for r in result:
-                print(r.keyword)
+        with self._engine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        # Keyword found
+        for r in result:
+            keyword_ids.append(r.keyword_id)
+
+        # Keyword not found
+        if len(keyword_ids) != len(keywords):
+            raise ValueError(f"Did not find all keywords")
+
+        return keyword_ids

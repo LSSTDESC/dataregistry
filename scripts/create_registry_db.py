@@ -13,7 +13,7 @@ from sqlalchemy import (
     Float,
 )
 from sqlalchemy import ForeignKey, UniqueConstraint, text
-from sqlalchemy.orm import relationship, DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase
 from dataregistry.db_basic import DbConnection, SCHEMA_VERSION
 from dataregistry.db_basic import _insert_provenance, _insert_keyword
 from dataregistry.schema import load_schema, load_preset_keywords
@@ -263,7 +263,7 @@ def _DatasetKeyword(schema):
 
     # Load columns from `schema.yaml` file
     columns = _get_column_definitions(schema, "dataset_keyword")
-
+    
     # Table metadata
     meta = {"__tablename__": "dataset_keyword", "__table_args__": {"schema": schema}}
 
@@ -272,10 +272,10 @@ def _DatasetKeyword(schema):
 
 # The following should be adjusted whenever there is a change to the structure
 # of the database tables.
-_DB_VERSION_MAJOR = 2
-_DB_VERSION_MINOR = 2
+_DB_VERSION_MAJOR = 3
+_DB_VERSION_MINOR = 0
 _DB_VERSION_PATCH = 0
-_DB_VERSION_COMMENT = "Add `location_type` for dataset table"
+_DB_VERSION_COMMENT = "Added keywords table"
 
 # Parse command line arguments
 parser = argparse.ArgumentParser(
@@ -334,14 +334,14 @@ for SCHEMA in SCHEMA_LIST:
 
 # Create the tables
 for SCHEMA in SCHEMA_LIST:
+    _DatasetKeyword(SCHEMA)
+    _Keyword(SCHEMA)
     _Dataset(SCHEMA)
     _DatasetAlias(SCHEMA)
     _Dependency(SCHEMA, "production" in SCHEMA_LIST)
     _Execution(SCHEMA)
     _ExecutionAlias(SCHEMA)
     _Provenance(SCHEMA)
-    _Keyword(SCHEMA)
-    _DatasetKeyword(SCHEMA)
 
 # Generate the database
 Base.metadata.create_all(db_connection.engine)
@@ -364,3 +364,5 @@ for SCHEMA in SCHEMA_LIST:
     keywords = load_preset_keywords()
     for att in keywords["dataset"]:
         _insert_keyword(db, att, True)
+
+#x = dset(relative_path="test/test", version_string="1.0.0")

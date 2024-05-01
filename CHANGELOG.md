@@ -1,3 +1,14 @@
+## Version 0.4.2
+
+Add ability to tag datasets with keywords/labels to make them easier to catagorize.
+
+- New table `keyword` that stores both the system and user keywords.
+- New table `dataset_keyword` that links keywords to datasets.
+- System keywords are stored in `src/dataregistry/schema/keywords.yaml`, which
+  is used to populate the `keywords` table during database creation.
+- Added `datareg.Registrar.dataset.get_keywords()` function to return the list
+  of currently registered keywords.
+
 ## Version 0.4.1
 
 Add ability to register "external" datasets. For example datasets that are not

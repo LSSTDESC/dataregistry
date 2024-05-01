@@ -1,9 +1,10 @@
 import os
 import pandas as pd
 import sqlalchemy
+from sqlalchemy import inspect
 
 from dataregistry import DataRegistry
-from dataregistry.db_basic import SCHEMA_VERSION
+from dataregistry.db_basic import SCHEMA_VERSION, TableMetadata
 
 # Establish connection to database (default schema)
 datareg = DataRegistry(root_dir="temp")
