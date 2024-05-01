@@ -333,7 +333,8 @@ try:
             conn.execute(text(select_priv))
             conn.commit()
 except Exception as e:
-    raise e(f"Could not grant access to {acct} on schema {schema}")
+    print(f"Could not grant access to {acct} on schema {schema}")
+    raise e
 
 # Create the tables
 # for SCHEMA in SCHEMA_LIST:
