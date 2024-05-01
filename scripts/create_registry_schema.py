@@ -334,7 +334,6 @@ try:
             conn.commit()
 except Exception as e:
     print(f"Could not grant access to {acct} on schema {schema}")
-    raise e
 
 # Create the tables
 # for SCHEMA in SCHEMA_LIST:
