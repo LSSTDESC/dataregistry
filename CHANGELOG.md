@@ -2,6 +2,7 @@
 
 Add ability to tag datasets with keywords/labels to make them easier to catagorize.
 
+- Database version bumped to 3.0.0
 - New table `keyword` that stores both the system and user keywords.
 - New table `dataset_keyword` that links keywords to datasets.
 - System keywords are stored in `src/dataregistry/schema/keywords.yaml`, which

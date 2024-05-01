@@ -364,5 +364,3 @@ for SCHEMA in SCHEMA_LIST:
     keywords = load_preset_keywords()
     for att in keywords["dataset"]:
         _insert_keyword(db, att, True)
-
-#x = dset(relative_path="test/test", version_string="1.0.0")

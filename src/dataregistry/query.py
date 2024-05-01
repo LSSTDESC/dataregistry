@@ -324,9 +324,7 @@ class Query:
 
         # No properties requested, return all from dataset table (only)
         if property_names is None:
-            #stmt = select("*").select_from(self._tables["dataset"])
-            #stmt = select("*").select_from(self._tables["keyword"])
-            stmt = select(self._tables["dataset"]).join(self._tables["dataset_keyword"])
+            stmt = select("*").select_from(self._tables["dataset"])
 
         # Return the selected properties.
         else:
