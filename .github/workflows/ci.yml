@@ -134,11 +134,11 @@ jobs:
       # Create schemas
       - name: Create data registry production schema
         run: |
-          python scripts/create_registry_schema.py --config $HOME/.config_reg_access --schema production
+          python scripts/create_registry_schema.py --config $DATAREG_CONFIG --schema production
 
       - name: Create data registry default schema
         run: |
-          python scripts/create_registry_schema.py --config $HOME/.config_reg_access
+          python scripts/create_registry_schema.py --config $DATAREG_CONFIG
 
       # Run CI tests
       - name: Run CI tests
