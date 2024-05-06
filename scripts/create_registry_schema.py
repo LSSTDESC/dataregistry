@@ -18,7 +18,7 @@ from dataregistry.schema import load_schema
 """
 A script to create a schema.
 
-Both schemas have the same layout, containing six tables:
+The schema contains the following six tables:
     - "dataset"         : Primary table, contains information on the datasets
     - "dataset_alias"   : Table to associate "alias" names to datasets
     - "execution"       : Stores executions, datasets can be linked to these
@@ -293,14 +293,16 @@ prod_schema = args.production_schema
 # Connect to database to find out what the backend is
 db_connection = DbConnection(args.config, schema)
 if db_connection.dialect == "sqlite":
-    if schema == "production":
+    if schema == prod_schema:
         raise ValueError("Production not available for sqlite databases")
     # In fact we don't use schemas at all for sqlite
     schema = None
 else:
     if schema != prod_schema:
         # production schema, tables must already exists and schema
-        # major and minor versions must match
+        # must be backwards-compatible with prod_schem.  That is, major
+        # versions must match and minor version of prod_schema cannot
+        # be greater than minor version of schema
         stmt = f"select db_version_major, db_version_minor from {prod_schema}.provenance order by provenance_id desc limit 1"
         try:
             with db_connection.engine.connect() as conn:
