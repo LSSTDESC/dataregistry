@@ -20,7 +20,7 @@ def test_register_dataset_with_bad_keywords(dummy_file):
     tmp_src_dir, tmp_root_dir = dummy_file
     datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
 
-    # Keywords are not strings
+    # Test case where keywords are not strings
     with pytest.raises(ValueError, match="not a valid keyword string"):
         _ = _insert_dataset_entry(
             datareg,
@@ -29,8 +29,8 @@ def test_register_dataset_with_bad_keywords(dummy_file):
             keywords=[10,20]
         )
 
-    # Keywords are not registered
-    with pytest.raises(ValueError, match="Did not find all keywords"):
+    # Test case where keywords are not previously registered in keyword table
+    with pytest.raises(ValueError, match="Not all keywords"):
         _ = _insert_dataset_entry(
             datareg,
             "DESC/datasets/my_second_dataset_with_bad_keywords",
@@ -39,7 +39,7 @@ def test_register_dataset_with_bad_keywords(dummy_file):
         )
 
 def test_register_dataset_with_keywords(dummy_file):
-    """Register a dataset with keywords"""
+    """Register a dataset with keywords, then query using keywords"""
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
@@ -53,31 +53,21 @@ def test_register_dataset_with_keywords(dummy_file):
         keywords=["simulation", "observation"]
     )
 
-    # Query for keywords
-    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
+    d_id2 = _insert_dataset_entry(
+        datareg,
+        "DESC/datasets/my_second_dataset_with_keywords",
+        "0.0.1",
+        keywords=["simulation"]
+    )
+
+    # Query using keywords
+    f = datareg.Query.gen_filter("keyword.keyword", "==", "simulation")
     results = datareg.Query.find_datasets(
-        None,
+        ["dataset.dataset_id", "keyword.keyword"],
         [f],
         return_format="cursorresult",
     )
 
     for i, r in enumerate(results):
-        print(r)
-
-    ## Query for keywords
-    #f = datareg.Query.gen_filter("keyword.keyword", "==", "simulation")
-    #results = datareg.Query.find_datasets(
-    #    None,
-    #    [f],
-    #    return_format="cursorresult",
-    #)
-
-    #for i, r in enumerate(results):
-    #    print(r)
-    #    assert getattr(r, "dataset.name") == "my_first_dataset_with_keywords"
-    #    assert getattr(r, "dataset.version_string") == "0.0.1"
-    #    assert getattr(r, "keyword.keyword") == "simulation"
-    #    assert getattr(r, "dataset.dataset_id") == d_id
-    #    assert i < 1
-
-
+        assert getattr(r, "dataset.dataset_id") in [d_id, d_id2]
+        assert getattr(r, "keyword.keyword") == "simulation"

@@ -530,6 +530,7 @@ class DatasetTable(BaseTable):
         Returns
         -------
         keyword_ids : list[int]
+            The asscociated `keyword_id`s from the `keyword` table
         """
 
         keyword_ids = []
@@ -556,6 +557,6 @@ class DatasetTable(BaseTable):
 
         # Keyword not found
         if len(keyword_ids) != len(keywords):
-            raise ValueError(f"Did not find all keywords")
+            raise ValueError(f"Not all keywords selected are registered")
 
         return keyword_ids

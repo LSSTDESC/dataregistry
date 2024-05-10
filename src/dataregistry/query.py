@@ -334,10 +334,16 @@ class Query:
             if len(tables_required) > 1:
                 j = self._tables["dataset"]
                 for i in range(len(tables_required)):
-                    if tables_required[i] == "dataset":
+                    if tables_required[i] in ["dataset", "keyword"]:
                         continue
 
                     j = j.join(self._tables[tables_required[i]])
+
+                # Special case for many-to-many keyword join
+                if "keyword" in tables_required:
+                    j = j.join(self._tables["dataset_keyword"]).join(
+                        self._tables["keyword"]
+                    )
 
                 stmt = stmt.select_from(j)
             else:
