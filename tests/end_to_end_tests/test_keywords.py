@@ -14,7 +14,12 @@ from database_test_utils import *
 
 
 def test_register_dataset_with_bad_keywords(dummy_file):
-    """Register a dataset with bad keywords"""
+    """
+    Make sure we throw exceptions when registering bad keywords
+
+    Case 1) When the keywords aren't strings
+    Case 2) When the chosen keyword doesn't exist in the keyword table
+    """
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
@@ -39,13 +44,17 @@ def test_register_dataset_with_bad_keywords(dummy_file):
         )
 
 def test_register_dataset_with_keywords(dummy_file):
-    """Register a dataset with keywords, then query using keywords"""
+    """
+    Register some basic datasets with keywords.
+
+    Then query the registry on a keyword and make sure we get our datasets back.
+    """
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
     datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
 
-    # Register a dataset with keywords
+    # Register two datasets with keywords
     d_id = _insert_dataset_entry(
         datareg,
         "DESC/datasets/my_first_dataset_with_keywords",
@@ -60,8 +69,45 @@ def test_register_dataset_with_keywords(dummy_file):
         keywords=["simulation"]
     )
 
-    # Query using keywords
+    # Query on the "simulation" keyword
     f = datareg.Query.gen_filter("keyword.keyword", "==", "simulation")
+    results = datareg.Query.find_datasets(
+        ["dataset.dataset_id", "keyword.keyword"],
+        [f],
+        return_format="property_dict",
+    )
+
+    # Make sure we get our datasets back
+    for tmp_id in [d_id, d_id2]:
+        assert tmp_id in results["dataset.dataset_id"]
+    for tmp_k in results["keyword.keyword"]:
+        assert tmp_k == "simulation"
+
+def test_modify_dataset_with_keywords(dummy_file):
+    """
+    Register a basic dataset without any keywords.
+
+    Then add keywords with `modify()`.
+
+    Then query to make sure the keyword was tagged.
+    """
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    # Register a dataset with keywords
+    d_id = _insert_dataset_entry(
+        datareg,
+        "DESC/datasets/my_first_modify_dataset_with_keywords",
+        "0.0.1",
+    )
+
+    # Add keyword to already registered dataset
+    datareg.Registrar.dataset.modify(d_id, {"keywords": ["simulation", "observation"]})
+    
+    # Query for the dataset
+    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
     results = datareg.Query.find_datasets(
         ["dataset.dataset_id", "keyword.keyword"],
         [f],
@@ -69,5 +115,5 @@ def test_register_dataset_with_keywords(dummy_file):
     )
 
     for i, r in enumerate(results):
-        assert getattr(r, "dataset.dataset_id") in [d_id, d_id2]
-        assert getattr(r, "keyword.keyword") == "simulation"
+        assert getattr(r, "dataset.dataset_id") == d_id
+        assert getattr(r, "keyword.keyword") in ["simulation", "observation"]

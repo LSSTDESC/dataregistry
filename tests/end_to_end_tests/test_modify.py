@@ -97,32 +97,3 @@ def test_modify_not_allowed(dummy_file):
     # Try to mofify a column that doesn't exist
     with pytest.raises(ValueError, match="not exist in the schema"):
         datareg.Registrar.dataset.modify(d_id, {"my_dataset_id": 10})
-
-def test_modify_dataset_with_keywords(dummy_file):
-    """Register a dataset without keywords, then add keywords"""
-
-    # Establish connection to database
-    tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
-
-    # Register a dataset with keywords
-    d_id = _insert_dataset_entry(
-        datareg,
-        "DESC/datasets/my_first_modify_dataset_with_keywords",
-        "0.0.1",
-    )
-
-    # Add keyword to already registered dataset
-    datareg.Registrar.dataset.modify(d_id, {"keywords": ["simulation"]})
-    
-    # Query using keywords
-    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
-    results = datareg.Query.find_datasets(
-        ["dataset.dataset_id", "keyword.keyword"],
-        [f],
-        return_format="cursorresult",
-    )
-
-    for i, r in enumerate(results):
-        assert getattr(r, "dataset.dataset_id") == d_id
-        assert getattr(r, "keyword.keyword") == "simulation"
