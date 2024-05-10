@@ -15,6 +15,7 @@ from .registrar_util import (
     get_directory_info,
 )
 from .dataset_util import set_dataset_status, get_dataset_status
+from dataregistry.db_basic import add_table_row
 
 # Allowed owner types
 _OWNER_TYPES = {"user", "project", "group", "production"}
@@ -116,6 +117,12 @@ class BaseTable:
 
         # Loop over each column to be modified
         for key, v in modify_fields.items():
+            # Keywords are a special many-to-many case
+            if key == "keywords":
+                if self.which_table != "dataset":
+                    raise ValueError("Only the dataset table has keywords")
+                continue
+
             # Make sure the column is in the schema
             if key not in self.schema_yaml[self.which_table].keys():
                 raise ValueError(f"The column {key} does not exist in the schema")
@@ -124,15 +131,36 @@ class BaseTable:
             if not self.schema_yaml[self.which_table][key]["modifiable"]:
                 raise ValueError(f"The column {key} is not modifiable")
 
-        # Update the entries
+        # Validate keywords
+        keyword_ids = None
+        if "keywords" in modify_fields.keys():
+            if len(modify_fields["keywords"]) > 0:
+                keyword_ids = self._validate_keywords(modify_fields["keywords"])
+                del modify_fields["keywords"]
+
         with self._engine.connect() as conn:
-            update_stmt = (
-                update(my_table)
-                .where(getattr(my_table.c, self.entry_id) == entry_id)
-                .values(modify_fields)
-            )
-            conn.execute(update_stmt)
+            # Update the metadata
+            if len(modify_fields.keys()) > 0:
+                update_stmt = (
+                    update(my_table)
+                    .where(getattr(my_table.c, self.entry_id) == entry_id)
+                    .values(modify_fields)
+                )
+                conn.execute(update_stmt)
+
+            # Update the keywords
+            if keyword_ids is not None:
+                keyword_table = self._get_table_metadata("dataset_keyword")
+                for k_id in keyword_ids:
+                    add_table_row(
+                        conn,
+                        keyword_table,
+                        {"dataset_id": entry_id, "keyword_id": k_id},
+                        commit=False,
+                    )
+
             conn.commit()
+
 
     def find_entry(self, entry_id, raise_if_not_found=False):
         """
