@@ -13,7 +13,7 @@ from sqlalchemy import ForeignKey, UniqueConstraint, text
 from sqlalchemy.orm import DeclarativeBase
 from dataregistry.db_basic import DbConnection, SCHEMA_VERSION
 from dataregistry.db_basic import _insert_provenance
-from dataregistry.schema import load_schema
+from dataregistry.schema import load_schema, load_preset_keywords
 
 """
 A script to create a schema.
