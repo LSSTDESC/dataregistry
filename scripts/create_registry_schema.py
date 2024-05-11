@@ -253,6 +253,35 @@ def _Dependency(schema, has_production, production="production"):
     Model = type(class_name, (Base,), {**columns, **meta})
     return Model
 
+def _Keyword(schema):
+    """Stores the list of keywords."""
+
+    class_name = f"{schema}_keyword"
+
+    # Load columns from `schema.yaml` file
+    columns = _get_column_definitions(schema, "keyword")
+
+    # Table metadata
+    meta = {"__tablename__": "keyword", "__table_args__": (UniqueConstraint(
+                "keyword", name="keyword_u_keyword"
+            ), {"schema": schema},)}
+
+    Model = type(class_name, (Base,), {**columns, **meta})
+    return Model
+
+def _DatasetKeyword(schema):
+    """Many-Many link between datasets and keywords."""
+
+    class_name = f"{schema}_dataset_keyword"
+
+    # Load columns from `schema.yaml` file
+    columns = _get_column_definitions(schema, "dataset_keyword")
+
+    # Table metadata
+    meta = {"__tablename__": "dataset_keyword", "__table_args__": {"schema": schema}}
+
+    Model = type(class_name, (Base,), {**columns, **meta})
+    return Model
 
 # The following should be adjusted whenever there is a change to the structure
 # of the database tables.
