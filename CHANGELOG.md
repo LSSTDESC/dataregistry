@@ -9,6 +9,10 @@ Add ability to tag datasets with keywords/labels to make them easier to catagori
   is used to populate the `keywords` table during database creation.
 - Added `datareg.Registrar.dataset.get_keywords()` function to return the list
   of currently registered keywords.
+- When the keyword table is queried, an automatic join is made with the
+  dataset-keyword association table. So the user can query for all datasets
+  with a given keyword, for example.
+- Added keywords information to the documentation
 
 ## Version 0.4.1
 
