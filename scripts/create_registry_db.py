@@ -339,8 +339,8 @@ for SCHEMA in SCHEMA_LIST:
     _Dataset(SCHEMA)
     _DatasetAlias(SCHEMA)
     _Dependency(SCHEMA, "production" in SCHEMA_LIST)
-    _Execution(SCHEMA)
-    _ExecutionAlias(SCHEMA)
+    #_Execution(SCHEMA)
+    #_ExecutionAlias(SCHEMA)
     _Provenance(SCHEMA)
 
 # Generate the database
