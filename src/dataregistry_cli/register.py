@@ -60,6 +60,7 @@ def register_dataset(args):
         location_type=args.location_type,
         url=args.url,
         contact_email=args.contact_email,
+        keywords=args.keywords,
     )
 
     print(f"Created dataset entry with id {new_id}")

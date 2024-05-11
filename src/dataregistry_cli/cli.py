@@ -177,6 +177,13 @@ def get_parser():
         default=[],
         nargs="+",
     )
+    arg_register_dataset.add_argument(
+        "--keywords",
+        help="List of (predefined) keywords to tag dataset with",
+        type=str,
+        default=[],
+        nargs="+",
+    )
     _add_generic_arguments(arg_register_dataset)
 
     # ------

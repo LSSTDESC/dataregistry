@@ -12,7 +12,7 @@ from sqlalchemy import (
 from sqlalchemy import ForeignKey, UniqueConstraint, text
 from sqlalchemy.orm import DeclarativeBase
 from dataregistry.db_basic import DbConnection, SCHEMA_VERSION
-from dataregistry.db_basic import _insert_provenance
+from dataregistry.db_basic import _insert_provenance, _insert_keyword
 from dataregistry.schema import load_schema, load_preset_keywords
 
 """
