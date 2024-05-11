@@ -13,6 +13,8 @@ Add ability to tag datasets with keywords/labels to make them easier to catagori
   dataset-keyword association table. So the user can query for all datasets
   with a given keyword, for example.
 - Added keywords information to the documentation
+- Can tag keywords when registering datasets through the CLI
+- Can run `dregs show keywords` from CLI to display all pre-registered keywords
 
 ## Version 0.4.1
 

@@ -132,3 +132,31 @@ def test_delete_dataset(dummy_file):
         assert get_dataset_status(getattr(r, "dataset.status"), "deleted")
         assert getattr(r, "dataset.delete_date") is not None
         assert getattr(r, "dataset.delete_uid") is not None
+
+def test_dataset_entry_with_keywords(dummy_file):
+    """Make a dataset with some keywords tagged"""
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+
+    # Register a dataset with many options
+    cmd = "register dataset my_cli_dataset_keywords 1.0.0 --location_type dummy"
+    cmd += " --is_overwritable --keywords simulation observation"
+    cmd += f" --schema {SCHEMA_VERSION} --root_dir {str(tmp_root_dir)}"
+    cli.main(shlex.split(cmd))
+
+    # Check
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    f = datareg.Query.gen_filter("dataset.name", "==", "my_cli_dataset_keywords")
+    results = datareg.Query.find_datasets(
+        [
+            "dataset.name",
+            "dataset.version_string",
+            "keyword.keyword",
+        ],
+        [f],
+        return_format="cursorresult",
+    )
+    for r in results:
+        assert getattr(r, "dataset.name") == "my_cli_dataset_keywords"
+        assert getattr(r, "keyword.keyword") in ["observation", "simulation"]

@@ -5,7 +5,9 @@ from dataregistry.db_basic import SCHEMA_VERSION
 from .register import register_dataset
 from .delete import delete_dataset
 from .query import dregs_ls
+from .show import dregs_show
 from dataregistry.schema import load_schema
+
 
 def _add_generic_arguments(parser_obj):
     """
@@ -31,8 +33,8 @@ def _add_generic_arguments(parser_obj):
         help="Which schema to connect to",
     )
 
-def get_parser():
 
+def get_parser():
     # ---------------------
     # The data registry CLI
     # ---------------------
@@ -41,14 +43,28 @@ def get_parser():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     subparsers = parser.add_subparsers(title="subcommand", dest="subcommand")
-    
+
+    # ---------------------
+    # Show (show some info)
+    # ---------------------
+
+    # List information
+    arg_show = subparsers.add_parser("show", help="Show some properties")
+    arg_show_sub = arg_show.add_subparsers(title="show what?", dest="show_type")
+
+    # Show list of pre-registered keywords
+    arg_show_keywords = arg_show_sub.add_parser(
+        "keywords", help="Show list of pre-defined keywords"
+    )
+    _add_generic_arguments(arg_show_keywords)
+
     # ----------
     # Query (ls)
     # ----------
-    
+
     # List your entries in the database
     arg_ls = subparsers.add_parser("ls", help="List your entries in the data registry")
-    
+
     arg_ls.add_argument("--owner", help="List datasets for a given owner")
     arg_ls.add_argument(
         "--owner_type",
@@ -61,10 +77,10 @@ def get_parser():
     # --------
     # Register
     # --------
-    
+
     # Load the schema information (help strings are loaded from here)
     schema_data = load_schema()
-    
+
     # Conversion from string types in `schema.yaml` to SQLAlchemy
     _TYPE_TRANSLATE = {
         "String": str,
@@ -75,44 +91,46 @@ def get_parser():
         "Boolean": bool,
         "Float": float,
     }
-    
+
     # Register a new database entry.
     arg_register = subparsers.add_parser(
         "register", help="Register a new entry to the database"
     )
-    
+
     arg_register_sub = arg_register.add_subparsers(
         title="register what?", dest="register_type"
     )
-   
+
     # ------------------
     # Register a dataset
     # ------------------
 
     # Register a new dataset.
-    arg_register_dataset = arg_register_sub.add_parser("dataset", help="Register a dataset")
-    
+    arg_register_dataset = arg_register_sub.add_parser(
+        "dataset", help="Register a dataset"
+    )
+
     # Get some information from the `schema.yaml` file
     for column in schema_data["dataset"]:
         extra_args = {}
-    
+
         # Any default?
         if schema_data["dataset"][column]["cli_default"] is not None:
             extra_args["default"] = schema_data["dataset"][column]["cli_default"]
             default_str = f" (default={extra_args['default']})"
         else:
             default_str = ""
-    
+
         # Restricted to choices?
         if schema_data["dataset"][column]["choices"] is not None:
             extra_args["choices"] = schema_data["dataset"][column]["choices"]
-    
+
         # Is this a boolean flag?
         if schema_data["dataset"][column]["type"] == "Boolean":
             extra_args["action"] = "store_true"
         else:
             extra_args["type"] = _TYPE_TRANSLATE[schema_data["dataset"][column]["type"]]
-    
+
         # Add flag
         if schema_data["dataset"][column]["cli_optional"]:
             arg_register_dataset.add_argument(
@@ -120,7 +138,7 @@ def get_parser():
                 help=schema_data["dataset"][column]["description"] + default_str,
                 **extra_args,
             )
-    
+
     # Entries unique to registering the dataset when using the CLI
     arg_register_dataset.add_argument(
         "relative_path",
@@ -157,7 +175,9 @@ def get_parser():
         "--execution_name", help="Typically pipeline name or program name", type=str
     )
     arg_register_dataset.add_argument(
-        "--execution_description", help="Human readible description of execution", type=str
+        "--execution_description",
+        help="Human readible description of execution",
+        type=str,
     )
     arg_register_dataset.add_argument(
         "--execution_start", help="Date the execution started"
@@ -189,15 +209,11 @@ def get_parser():
     # ------
     # Delete
     # ------
-    
+
     # Register a new database entry.
-    arg_delete = subparsers.add_parser(
-        "delete", help="Delete an entry in the database"
-    )
-    
-    arg_delete_sub = arg_delete.add_subparsers(
-        title="delete what?", dest="delete_type"
-    )
+    arg_delete = subparsers.add_parser("delete", help="Delete an entry in the database")
+
+    arg_delete_sub = arg_delete.add_subparsers(title="delete what?", dest="delete_type")
 
     # ----------------
     # Delete a dataset
@@ -205,11 +221,13 @@ def get_parser():
 
     # Delete a dataset.
     arg_delete_dataset = arg_delete_sub.add_parser("dataset", help="Delete a dataset")
-    arg_delete_dataset.add_argument("dataset_id", help="The dataset_id you wish to delete",
-            type=int)
+    arg_delete_dataset.add_argument(
+        "dataset_id", help="The dataset_id you wish to delete", type=int
+    )
     _add_generic_arguments(arg_delete_dataset)
 
     return parser
+
 
 def parse_args(args):
     """
@@ -225,8 +243,8 @@ def parse_args(args):
 
     return parser.parse_args(args)
 
-def main(cmd=None):
 
+def main(cmd=None):
     args = parse_args(cmd)
 
     # Register a new entry
@@ -242,3 +260,8 @@ def main(cmd=None):
     # Query database entries
     elif args.subcommand == "ls":
         dregs_ls(args)
+
+    # Show database info
+    elif args.subcommand == "show":
+        if args.show_type == "keywords":
+            dregs_show("keywords", args)
