@@ -351,3 +351,39 @@ def test_query_all(dummy_file):
     results = datareg.Query.find_datasets()
 
     assert results is not None
+
+def test_manual_relative_path_and_auto_name(dummy_file):
+    """
+    Test setting the relative path manually when registering a dataset.
+
+    In this case generate the dataset name from the relative path.
+    """
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    # Add entry
+    my_rel_path = "ci_tests/dummy_dataset/auto_name_dataset"
+    d_id = _insert_dataset_entry(
+        datareg,
+        None,
+        "0.0.1",
+        relative_path=my_rel_path,
+    )
+
+    # Query
+    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.Query.find_datasets(
+        [
+            "dataset.name",
+            "dataset.relative_path",
+        ],
+        [f],
+        return_format="cursorresult",
+    )
+
+    for i, r in enumerate(results):
+        assert getattr(r, "dataset.name") == "auto_name_dataset"
+        assert getattr(r, "dataset.relative_path") == my_rel_path
+        assert i < 1

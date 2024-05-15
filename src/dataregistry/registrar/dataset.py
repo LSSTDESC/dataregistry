@@ -15,6 +15,7 @@ from .registrar_util import (
     _parse_version_string,
     _read_configuration_file,
     get_directory_info,
+    _name_from_relpath
 )
 from .dataset_util import set_dataset_status, get_dataset_status
 
@@ -118,6 +119,11 @@ class DatasetTable(BaseTable):
             The execution ID associated with the dataset
         """
 
+        # If no name, we need a `relative_path`
+        if name is None:
+            if relative_path is None:
+                raise ValueError("`relative_path` is required when `name` is None")
+
         # If external dataset, check for either a `url` or `contact_email`
         if location_type == "external":
             if url is None and contact_email is None:
@@ -179,21 +185,9 @@ class DatasetTable(BaseTable):
         if relative_path is None:
             relative_path = _relpath_from_name(name, version_string, version_suffix)
 
-            # When generated automatically, the relative path should not yet
-            # exist
-            dest_check = _form_dataset_path(
-                owner_type,
-                owner,
-                relative_path,
-                schema=self._schema,
-                root_dir=self._root_dir,
-            )
-
-            if os.path.isdir(dest_check):
-                raise ValueError(
-                    f"Cannot work with autogen relative path ({dest_check}),"
-                    f"already exists, enter relative_path manually."
-                )
+        # If `name` is None, generate it from the `relative_path`
+        if name is None:
+            name = _name_from_relpath(relative_path)
 
         # Look for previous entries. Fail if not overwritable
         previous = self._find_previous(relative_path, owner, owner_type)

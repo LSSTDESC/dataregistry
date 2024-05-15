@@ -4,6 +4,7 @@ import pytest
 from dataregistry.registrar.registrar_util import (
     _form_dataset_path,
     _relpath_from_name,
+    _name_from_relpath,
     _parse_version_string,
     _read_configuration_file,
     get_directory_info,
@@ -149,3 +150,17 @@ def test_relpath_from_name(name, version_string, version_suffix, ans):
 
     tmp = _relpath_from_name(name, version_string, version_suffix)
     assert tmp == ans
+
+@pytest.mark.parametrize(
+    "rel_path,ans",
+    [
+        ("/testing/test", "test"),
+        ("./testing/test", "test"),
+        ("/testing/test/", "test"),
+        ("test", "test"),
+    ],
+)
+def test_name_from_relpath(rel_path,ans):
+    """Make sure names are extracted from paths correctly"""
+
+    assert _name_from_relpath(rel_path) == ans

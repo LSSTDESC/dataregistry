@@ -12,6 +12,7 @@ __all__ = [
     "_form_dataset_path",
     "get_directory_info",
     "_name_from_relpath",
+    "_relpath_from_name",
     "_copy_data",
 ]
 VERSION_SEPARATOR = "."
