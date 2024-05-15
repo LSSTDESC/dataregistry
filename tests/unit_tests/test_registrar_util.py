@@ -3,7 +3,7 @@ import os
 import pytest
 from dataregistry.registrar.registrar_util import (
     _form_dataset_path,
-    _name_from_relpath,
+    _relpath_from_name,
     _parse_version_string,
     _read_configuration_file,
     get_directory_info,
@@ -82,33 +82,6 @@ def test_directory_info():
     assert total_size > 0
 
 
-@pytest.mark.parametrize(
-    "owner_type,owner,rel_path,root_dir,ans",
-    [
-        ("production", "desc", "my/path", None, "production/production/my/path"),
-        (
-            "production",
-            "desc",
-            "my/path",
-            "my/root",
-            "my/root/production/production/my/path",
-        ),
-        ("group", "desc", "my/path", None, "group/desc/my/path"),
-        ("user", "desc", "my/path", "/root/", "/root/user/desc/my/path"),
-    ],
-)
-def test_form_dataset_path(owner_type, owner, rel_path, root_dir, ans):
-    """
-    Test dataset path construction
-
-    Datasets should come back with the format:
-        <root_dir>/<owner_type>/<owner>/<relative_path>
-    """
-
-    tmp = _form_dataset_path(owner_type, owner, rel_path, root_dir=root_dir)
-    assert tmp == ans
-
-
 def _make_dummy_config(tmpdir, nchars):
     """
     Create a dummy config file in temp directory
@@ -158,3 +131,21 @@ def test_read_file(tmpdir, nchars, max_config_length, ans):
     # Make sure we raise an exception when the file doesn't exist
     with pytest.raises(FileNotFoundError, match="not found"):
         _read_configuration_file("i_dont_exist.txt", 10)
+
+@pytest.mark.parametrize(
+    "name,version_string,version_suffix,ans",
+    [
+        ("mydataset", "1.1.1", None, "mydataset_1.1.1"),
+        ("mydataset", "1.1.1", "v1", "mydataset_1.1.1_v1"),
+    ],
+)
+def test_relpath_from_name(name, version_string, version_suffix, ans):
+    """
+    Test dataset path construction
+
+    Datasets should come back with the format:
+        <root_dir>/<owner_type>/<owner>/<relative_path>
+    """
+
+    tmp = _relpath_from_name(name, version_string, version_suffix)
+    assert tmp == ans

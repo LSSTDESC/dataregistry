@@ -177,12 +177,12 @@ dataset:
     description: "Unique identifier for this dataset"
   name:
     type: "String"
-    description: "Any convenient, evocative name for the human. Note the combination of name, version and version_suffix must be unique. If None name is generated from the relative path."
+    description: "Any convenient, evocative name for the human. Note the combination of name, version and version_suffix must be unique."
     nullable: False
     cli_optional: True
   relative_path:
     type: "String"
-    description: "Relative path storing the data, relative to `<root_dir>`"
+    description: "Relative path storing the data, relative to `<root_dir>`.  If None name is generated automatically from the provided name and version."
     nullable: False
   version_major:
     type: "Integer"
