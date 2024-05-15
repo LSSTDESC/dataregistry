@@ -41,10 +41,11 @@ def test_get_dataset_absolute_path(dummy_file):
     # Make a basic entry
     d_id_1 = _insert_dataset_entry(
         datareg,
-        dset_relpath,
+        "dataset_test_get_dataset_absolute_path",
         "0.0.1",
         owner_type=dset_ownertype,
         owner=dset_owner,
+        relative_path=dset_relpath,
     )
 
     v = datareg.Query.get_dataset_absolute_path(d_id_1)
@@ -72,7 +73,12 @@ def test_find_entry(dummy_file):
     datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
 
     # Make a dataset
-    d_id = _insert_dataset_entry(datareg, "test_find_entry/dataset", "0.0.1")
+    d_id = _insert_dataset_entry(
+        datareg,
+        "dataset_test_find_entry",
+        "0.0.1",
+        relative_path="test_find_entry/dataset",
+    )
 
     # Find it
     r = datareg.Registrar.dataset.find_entry(d_id)
