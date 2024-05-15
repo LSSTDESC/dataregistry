@@ -123,10 +123,10 @@ def get_parser():
     
     # Entries unique to registering the dataset when using the CLI
     arg_register_dataset.add_argument(
-        "relative_path",
+        "name",
         help=(
-            "Destination for the dataset within the data registry. Path is"
-            "relative to <registry root>/<owner_type>/<owner>."
+            "Any convenient, evocative name for the human."
+            "Note the combination of name, version and version_suffix must be unique."
         ),
         type=str,
     )

@@ -20,7 +20,7 @@ def test_simple_query(dummy_file):
     cli.main(shlex.split(cmd))
 
     # Update the registered dataset
-    cmd = "register dataset my_cli_dataset2 patch --location_type dummy --name my_cli_dataset"
+    cmd = "register dataset my_cli_dataset patch --location_type dummy"
     cmd += f" --schema {SCHEMA_VERSION} --root_dir {str(tmp_root_dir)}"
     cli.main(shlex.split(cmd))
 
@@ -40,7 +40,7 @@ def test_dataset_entry_with_execution(dummy_file):
     tmp_src_dir, tmp_root_dir = dummy_file
 
     # Register a dataset with many options
-    cmd = "register dataset my_cli_dataset3 1.2.3 --location_type dummy"
+    cmd = "register dataset my_cli_dataset_with_ex 1.2.3 --location_type dummy"
     cmd += " --description 'This is my dataset description'"
     cmd += " --access_API 'Awesome API' --owner DESC --owner_type group"
     cmd += " --version_suffix test --creation_date '2020-01-01'"
@@ -51,14 +51,11 @@ def test_dataset_entry_with_execution(dummy_file):
 
     # Check
     datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
-    f = datareg.Query.gen_filter("dataset.name", "==", "my_cli_dataset3")
+    f = datareg.Query.gen_filter("dataset.name", "==", "my_cli_dataset_with_ex")
     results = datareg.Query.find_datasets(
         [
             "dataset.name",
-            "dataset.version_string",
-            "dataset.relative_path",
             "execution.name",
-            "execution.execution_id",
             "dataset.is_overwritable",
         ],
         [f],
@@ -86,7 +83,7 @@ def test_production_entry(dummy_file):
         # Check
         f = datareg.Query.gen_filter("dataset.name", "==", "my_production_cli_dataset")
         results = datareg.Query.find_datasets(
-            ["dataset.name", "dataset.version_string", "dataset.relative_path"], [f]
+            ["dataset.name", "dataset.version_string"], [f]
         )
         assert len(results["dataset.name"]) == 1, "Bad result from query dcli3"
         assert results["dataset.version_string"][0] == "0.1.2"

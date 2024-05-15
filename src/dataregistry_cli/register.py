@@ -38,9 +38,8 @@ def register_dataset(args):
 
     # Register new dataset.
     new_id = datareg.Registrar.dataset.register(
-        args.relative_path,
+        args.name,
         args.version,
-        name=args.name,
         version_suffix=args.version_suffix,
         creation_date=args.creation_date,
         access_API=args.access_API,
@@ -60,6 +59,7 @@ def register_dataset(args):
         location_type=args.location_type,
         url=args.url,
         contact_email=args.contact_email,
+        relative_path=args.relative_path,
     )
 
     print(f"Created dataset entry with id {new_id}")

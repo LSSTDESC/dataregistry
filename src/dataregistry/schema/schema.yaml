@@ -179,11 +179,11 @@ dataset:
     type: "String"
     description: "Any convenient, evocative name for the human. Note the combination of name, version and version_suffix must be unique."
     nullable: False
-    cli_optional: True
   relative_path:
     type: "String"
     description: "Relative path storing the data, relative to `<root_dir>`.  If None name is generated automatically from the provided name and version."
     nullable: False
+    cli_optional: True
   version_major:
     type: "Integer"
     description: "Major version in semantic string (i.e., X.x.x)"
