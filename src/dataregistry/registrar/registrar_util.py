@@ -346,8 +346,7 @@ def _relpath_from_name(name, version, version_suffix):
     """
     Construct a relative path from the name and version of a dataset.
 
-    We use this when the `relative_path` is not explicitly defined. To be safe
-    from conflicts we also append the current timestamp to the relative_path.
+    We use this when the `relative_path` is not explicitly defined.
 
     Parameters
     ----------
