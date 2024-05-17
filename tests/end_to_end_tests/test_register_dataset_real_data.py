@@ -10,6 +10,7 @@ from dataregistry.registrar.registrar_util import _form_dataset_path
 
 from database_test_utils import *
 
+
 @pytest.mark.parametrize("data_org", ["file", "directory"])
 def test_copy_data(dummy_file, data_org):
     """Test copying real data into the registry (from an `old_location`)"""
@@ -18,7 +19,7 @@ def test_copy_data(dummy_file, data_org):
     tmp_src_dir, tmp_root_dir = dummy_file
     datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
 
-    # File/directory we are copying in
+    # File/directory we are ingesting
     if data_org == "file":
         data_path = str(tmp_src_dir / "file1.txt")
     else:
@@ -27,7 +28,7 @@ def test_copy_data(dummy_file, data_org):
     # Add entry
     d_id = _insert_dataset_entry(
         datareg,
-        f"dataset_copy_real_{data_org}",
+        f"test_copy_data::dataset_{data_org}",
         "0.0.1",
         old_location=data_path,
         location_type="dataregistry",
@@ -36,7 +37,12 @@ def test_copy_data(dummy_file, data_org):
     # Query
     f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
     results = datareg.Query.find_datasets(
-        ["dataset.data_org", "dataset.nfiles", "dataset.total_disk_space"],
+        [
+            "dataset.data_org",
+            "dataset.nfiles",
+            "dataset.total_disk_space",
+            "dataset.relative_path",
+        ],
         [f],
         return_format="cursorresult",
     )
@@ -45,6 +51,66 @@ def test_copy_data(dummy_file, data_org):
         assert getattr(r, "dataset.data_org") == data_org
         assert getattr(r, "dataset.nfiles") == 1
         assert getattr(r, "dataset.total_disk_space") > 0
+        assert (
+            getattr(r, "dataset.relative_path")
+            == f"test_copy_data::dataset_{data_org}_0.0.1"
+        )
+        assert i < 1
+
+
+@pytest.mark.parametrize(
+    "relative_path,data_org,name",
+    [
+        ["test/path", "file", "dataset1"],
+        ["test2/path", "directory", "dataset2"],
+        ["test/test::path", "file", "dataset3"],
+    ],
+)
+def test_copy_data_with_relative_path(dummy_file, relative_path, data_org, name):
+    """
+    Test copying real data into the registry (from an `old_location`).
+
+    The relative path in these tests are manually specified.
+    """
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    # File/directory we are ingesting
+    if data_org == "file":
+        data_path = str(tmp_src_dir / "file1.txt")
+    else:
+        data_path = str(tmp_src_dir / "directory1")
+
+    # Add entry
+    d_id = _insert_dataset_entry(
+        datareg,
+        f"test_copy_data_with_relative_path::{name}",
+        "0.0.1",
+        old_location=data_path,
+        location_type="dataregistry",
+        relative_path=relative_path,
+    )
+
+    # Query
+    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.Query.find_datasets(
+        [
+            "dataset.data_org",
+            "dataset.nfiles",
+            "dataset.total_disk_space",
+            "dataset.relative_path",
+        ],
+        [f],
+        return_format="cursorresult",
+    )
+
+    for i, r in enumerate(results):
+        assert getattr(r, "dataset.data_org") == data_org
+        assert getattr(r, "dataset.nfiles") == 1
+        assert getattr(r, "dataset.total_disk_space") > 0
+        assert getattr(r, "dataset.relative_path") == relative_path
         assert i < 1
 
 
@@ -75,7 +141,7 @@ def test_on_location_data(dummy_file, data_org, data_path, v_str, overwritable):
 
     d_id = _insert_dataset_entry(
         datareg,
-        data_path,
+        f"test_on_location_data::{data_org}",
         v_str,
         old_location=None,
         location_type="dataregistry",

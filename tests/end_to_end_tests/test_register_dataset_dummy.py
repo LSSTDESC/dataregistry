@@ -23,10 +23,9 @@ def test_register_dataset(dummy_file):
     # Add entry
     d_id = _insert_dataset_entry(
         datareg,
-        "my_first_dummy_dataset",
+        "test_register_dataset::dummy_dataset",
         "0.0.1",
         description="This is my first DESC dataset",
-        version_suffix="v1",
     )
 
     # Query
@@ -35,7 +34,6 @@ def test_register_dataset(dummy_file):
         [
             "dataset.name",
             "dataset.version_string",
-            "dataset.version_suffix",
             "dataset.owner",
             "dataset.owner_type",
             "dataset.description",
@@ -49,23 +47,31 @@ def test_register_dataset(dummy_file):
         return_format="cursorresult",
     )
 
+    # Check
     for i, r in enumerate(results):
-        assert getattr(r, "dataset.name") == "my_first_dummy_dataset"
+        assert getattr(r, "dataset.name") == "test_register_dataset::dummy_dataset"
         assert getattr(r, "dataset.version_string") == "0.0.1"
-        assert getattr(r, "dataset.version_suffix") == "v1"
         assert getattr(r, "dataset.version_major") == 0
         assert getattr(r, "dataset.version_minor") == 0
         assert getattr(r, "dataset.version_patch") == 1
         assert getattr(r, "dataset.owner") == os.getenv("USER")
         assert getattr(r, "dataset.owner_type") == "user"
         assert getattr(r, "dataset.description") == "This is my first DESC dataset"
-        assert getattr(r, "dataset.relative_path") == "my_first_dummy_dataset_0.0.1_v1"
-        assert getattr(r, "dataset.version_suffix") == "v1"
+        assert (
+            getattr(r, "dataset.relative_path")
+            == "test_register_dataset::dummy_dataset_0.0.1"
+        )
         assert getattr(r, "dataset.data_org") == "dummy"
         assert i < 1
 
 
-def test_manual_relative_path(dummy_file):
+@pytest.mark.parametrize(
+    "owner,owner_type,relative_path",
+    [
+        ("DESC", "group", "ci_tests/dummy_dataset/my_second_dummy_dataset"),
+    ],
+)
+def test_manual_relative_path(dummy_file, owner, owner_type, relative_path):
     """Test setting the relative path manually when registering a dataset"""
 
     # Establish connection to database
@@ -73,16 +79,13 @@ def test_manual_relative_path(dummy_file):
     datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
 
     # Add entry
-    my_rel_path = "ci_tests/dummy_dataset/my_second_dummy_dataset"
-    my_owner = "DESC"
-    my_owner_type = "group"
     d_id = _insert_dataset_entry(
         datareg,
-        "my_second_dummy_dataset",
+        "test_manual_relative_path::dataset",
         "0.0.1",
-        relative_path=my_rel_path,
-        owner=my_owner,
-        owner_type=my_owner_type,
+        relative_path=relative_path,
+        owner=owner,
+        owner_type=owner_type,
     )
 
     # Query
@@ -98,27 +101,31 @@ def test_manual_relative_path(dummy_file):
         return_format="cursorresult",
     )
 
+    # Check
     for i, r in enumerate(results):
-        assert getattr(r, "dataset.name") == "my_second_dummy_dataset"
-        assert getattr(r, "dataset.relative_path") == my_rel_path
-        assert getattr(r, "dataset.owner") == my_owner
-        assert getattr(r, "dataset.owner_type") == my_owner_type
+        assert getattr(r, "dataset.name") == "test_manual_relative_path::dataset"
+        assert getattr(r, "dataset.relative_path") == relative_path
+        assert getattr(r, "dataset.owner") == owner
+        assert getattr(r, "dataset.owner_type") == owner_type
         assert i < 1
 
 
 @pytest.mark.parametrize(
-    "v_type,ans,name",
+    "v_type,ans",
     [
-        ("major", "1.0.0", "my_first_dataset"),
-        ("minor", "1.1.0", "my_first_dataset"),
-        ("patch", "1.1.1", "my_first_dataset"),
-        ("patch", "1.1.2", "my_first_dataset"),
-        ("minor", "1.2.0", "my_first_dataset"),
-        ("major", "2.0.0", "my_first_dataset"),
+        ("major", "1.0.0"),
+        ("minor", "1.1.0"),
+        ("patch", "1.1.1"),
+        ("patch", "1.1.2"),
+        ("minor", "1.2.0"),
+        ("major", "2.0.0"),
     ],
 )
-def test_dataset_bumping(dummy_file, v_type, ans, name):
+def test_dataset_bumping(dummy_file, v_type, ans):
     """Test bumping a dataset and make sure the new version is correct"""
+
+    # Dataset that was created in `test_register_dataset()`
+    name = "test_register_dataset::dummy_dataset"
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
@@ -139,6 +146,7 @@ def test_dataset_bumping(dummy_file, v_type, ans, name):
         return_format="cursorresult",
     )
 
+    # Check
     for i, r in enumerate(results):
         assert getattr(r, "dataset.name") == name
         assert getattr(r, "dataset.version_string") == ans
@@ -155,14 +163,32 @@ def test_dataset_bumping_with_suffix(dummy_file):
 
     # Add entry
     d_id = _insert_dataset_entry(
-        datareg, "bump_dummy_with_suffix", "1.0.0", version_suffix="v1"
+        datareg,
+        "test_dataset_bumping_with_suffix::dataset",
+        "1.0.0",
+        version_suffix="v1",
     )
+
+    # Query
+    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.Query.find_datasets(
+        [
+            "dataset.version_suffix",
+        ],
+        [f],
+        return_format="cursorresult",
+    )
+
+    # Check
+    for i, r in enumerate(results):
+        assert getattr(r, "dataset.version_suffix") == "v1"
+        assert i < 1
 
     # Try to bump it
     with pytest.raises(ValueError, match="Cannot bump"):
         _ = _insert_dataset_entry(
             datareg,
-            "bump_dummy_with_suffix",
+            "test_dataset_bumping_with_suffix::dataset",
             "major",
         )
 
@@ -178,7 +204,7 @@ def test_dataset_owner_types(dummy_file, owner_type):
     # Add entry
     d_id = _insert_dataset_entry(
         datareg,
-        f"dataset_owner_type_{owner_type}",
+        f"test_dataset_owner_types::dataset_{owner_type}",
         "0.0.1",
         owner_type=owner_type,
     )
@@ -189,33 +215,46 @@ def test_dataset_owner_types(dummy_file, owner_type):
         ["dataset.owner_type"], [f], return_format="cursorresult"
     )
 
+    # Check
     for i, r in enumerate(results):
         assert getattr(r, "dataset.owner_type") == owner_type
         assert i < 1
 
 
-def test_register_dataset_with_global_owner_set(dummy_file):
+@pytest.mark.parametrize(
+    "owner_local,owner_type_local,owner_global,owner_type_global",
+    [
+        (None, None, "DESC group", "group"),
+        (None, None, "DESC project", "project"),
+        ("DESC local user", "user", "DESC project", "project"),
+    ],
+)
+def test_register_dataset_with_global_owner_set(
+    dummy_file, owner_local, owner_type_local, owner_global, owner_type_global
+):
     """
     Test setting the owner and owner_type globally during the database
     initialization.
+
+    If the local owner/owner_type is set, it should take priority
     """
 
-    # Establish connection to database
+    # Establish connection to database with preset owner/owner_type
     tmp_src_dir, tmp_root_dir = dummy_file
     datareg = DataRegistry(
         root_dir=str(tmp_root_dir),
         schema=SCHEMA_VERSION,
-        owner="DESC group",
-        owner_type="group",
+        owner=owner_global,
+        owner_type=owner_type_global,
     )
 
     # Add entry
     d_id = _insert_dataset_entry(
         datareg,
-        "global_owner_and_owner_type_dataset",
+        f"test_register_dataset_with_global_owner_set::{owner_local}_{owner_type_local}",
         "0.0.1",
-        owner=None,
-        owner_type=None,
+        owner=owner_local,
+        owner_type=owner_type_local,
     )
 
     # Query
@@ -230,8 +269,12 @@ def test_register_dataset_with_global_owner_set(dummy_file):
     )
 
     for i, r in enumerate(results):
-        assert getattr(r, "dataset.owner") == "DESC group"
-        assert getattr(r, "dataset.owner_type") == "group"
+        if owner_local is not None:
+            assert getattr(r, "dataset.owner") == owner_local
+            assert getattr(r, "dataset.owner_type") == owner_type_local
+        else:
+            assert getattr(r, "dataset.owner") == owner_global
+            assert getattr(r, "dataset.owner_type") == owner_type_global
         assert i < 1
 
 
@@ -245,15 +288,16 @@ def test_register_dataset_with_modified_default_execution(dummy_file):
     tmp_src_dir, tmp_root_dir = dummy_file
     datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
 
+    # Create two datasets, the first feeds into the second execution
     d_id_1 = _insert_dataset_entry(
         datareg,
-        "dataset_with_default_execution",
+        "test_default_execution::input_dataset",
         "0.0.1",
     )
 
     d_id_2 = _insert_dataset_entry(
         datareg,
-        "dataset_with_manual_execution",
+        "test_default_execution::execution_dataset",
         "0.0.1",
         execution_name="Overwrite execution auto name",
         execution_description="Overwrite execution auto description",
@@ -320,7 +364,7 @@ def test_dataset_query_return_format(dummy_file, return_format_str, expected_typ
     # Register a dataset
     d_id_1 = _insert_dataset_entry(
         datareg,
-        f"dataset_query_return_test_{return_format_str}",
+        f"test_dataset_query_return_format::{return_format_str}",
         "3.2.1",
     )
 
@@ -344,7 +388,7 @@ def test_query_all(dummy_file):
     # Register a dataset
     d_id_1 = _insert_dataset_entry(
         datareg,
-        "test_return_all_dataset",
+        "test_query_all::dataset",
         "3.2.1",
     )
 
@@ -352,7 +396,9 @@ def test_query_all(dummy_file):
 
     assert results is not None
 
-def test_manual_relative_path_and_auto_name(dummy_file):
+
+@pytest.mark.parametrize("relative_path", ["dummy_dataset/auto_name_dataset"])
+def test_manual_relative_path_and_auto_name(dummy_file, relative_path):
     """
     Test setting the relative path manually when registering a dataset.
 
@@ -364,12 +410,11 @@ def test_manual_relative_path_and_auto_name(dummy_file):
     datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
 
     # Add entry
-    my_rel_path = "ci_tests/dummy_dataset/auto_name_dataset"
     d_id = _insert_dataset_entry(
         datareg,
         None,
         "0.0.1",
-        relative_path=my_rel_path,
+        relative_path=relative_path,
     )
 
     # Query
@@ -385,5 +430,5 @@ def test_manual_relative_path_and_auto_name(dummy_file):
 
     for i, r in enumerate(results):
         assert getattr(r, "dataset.name") == "auto_name_dataset"
-        assert getattr(r, "dataset.relative_path") == my_rel_path
+        assert getattr(r, "dataset.relative_path") == relative_path
         assert i < 1
