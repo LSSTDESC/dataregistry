@@ -82,6 +82,10 @@ provenance:
   comment:
     type: "StringLong"
     description: "Comment relating to new provenance entry"
+  associated_production:
+    type: "String"
+    description: "Name of production schema associated with this schema"
+    
 
 execution_alias:
   execution_alias_id:
