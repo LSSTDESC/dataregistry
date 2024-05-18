@@ -179,7 +179,7 @@ class TableMetadata:
         else:
             prov_name = ".".join([self._schema, "provenance"])
             prov_table = self._metadata.tables[prov_name]
-            stmt = select(column("production_schema")).select_from(prov_table)
+            stmt = select(column("associated_production")).select_from(prov_table)
             stmt = stmt.order_by(prov_table.c.provenance_id.desc())
             with self._engine.connect() as conn:
                 results = conn.execute(stmt)
