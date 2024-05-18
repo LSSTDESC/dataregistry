@@ -161,7 +161,7 @@ class TableMetadata:
         db_connection : DbConnection object
             Stores information about the DB connection
         get_db_version : bool, optional
-            True to extract the DB version from the provinance table
+            True to extract the DB version from the provenance table
         """
 
         self._metadata = MetaData(schema=db_connection.schema)
@@ -171,23 +171,25 @@ class TableMetadata:
         # Load all existing tables
         self._metadata.reflect(self._engine, db_connection.schema)
 
-        # Fetch and save db versioning if present and requested
+        # Fetch and save db versioning, assoc. production schema
+        # if present and requested
+        self._prod_schema = None
         if db_connection.dialect == "sqlite":
             prov_name = "provenance"
-            prov_table = self._metadata.tables[prov_name]
-            self._prod_schema = None
         else:
             prov_name = ".".join([self._schema, "provenance"])
+
+            # prov_table = self._metadata.tables[prov_name]
+        if prov_name in self._metadata.tables and get_db_version:
             prov_table = self._metadata.tables[prov_name]
             stmt = select(column("associated_production")).select_from(prov_table)
             stmt = stmt.order_by(prov_table.c.provenance_id.desc())
             with self._engine.connect() as conn:
                 results = conn.execute(stmt)
                 conn.commit()
-            r = results.fetchone()
+                r = results.fetchone()
             self._prod_schema = r[0]
 
-        if prov_name in self._metadata.tables and get_db_version:
             cols = ["db_version_major", "db_version_minor", "db_version_patch"]
             stmt = select(*[column(c) for c in cols])
             stmt = stmt.select_from(prov_table)
@@ -223,7 +225,7 @@ class TableMetadata:
         if tbl not in self._metadata.tables.keys():
             try:
                 self._metadata.reflect(self._engine, only=[tbl])
-            except:
+            except Exception:
                 raise ValueError(f"No such table {tbl}")
         return self._metadata.tables[tbl]
 
