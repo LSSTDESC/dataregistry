@@ -6,8 +6,6 @@ import yaml
 import os
 from datetime import datetime
 from dataregistry import __version__
-from dataregistry.git_util import get_git_info
-from git import InvalidGitRepositoryError
 
 """
 Low-level utility routines and classes for accessing the registry
@@ -260,6 +258,9 @@ def _insert_provenance(
     id : int
         Id of new row in provenance table
     """
+    from dataregistry.git_util import get_git_info
+    from git import InvalidGitRepositoryError
+
     version_fields = __version__.split(".")
     patch = version_fields[2]
     suffix = None

@@ -36,8 +36,8 @@ class DatasetTable(BaseTable):
         creation_date=None,
         description=None,
         execution_id=None,
-        access_API=None,
-        access_API_configuration=None,
+        access_api=None,
+        access_api_configuration=None,
         is_overwritable=False,
         old_location=None,
         copy=True,
@@ -55,6 +55,7 @@ class DatasetTable(BaseTable):
         location_type="dataregistry",
         url=None,
         contact_email=None,
+        test_production=False,
     ):
         """
         Create a new dataset entry in the DESC data registry.
@@ -77,7 +78,7 @@ class DatasetTable(BaseTable):
         creation_date** : datetime, optional
         description** : str, optional
         execution_id** : int, optional
-        access_API** : str, optional
+        access_api** : str, optional
         is_overwritable** : bool, optional
         old_location : str, optional
             Absolute location of dataset to copy into the data registry.
@@ -109,6 +110,8 @@ class DatasetTable(BaseTable):
         url**: str, optional
             For `location_type="external"` only
         contact_email**: str, optional
+        test_production: boolean, default False.  Set to True for testing
+                         code for production owner_type
 
         Returns
         -------
@@ -151,12 +154,12 @@ class DatasetTable(BaseTable):
                 raise ValueError("Cannot overwrite production entries")
             if version_suffix is not None:
                 raise ValueError("Production entries can't have version suffix")
-            if self._schema != "production":
+            if self._schema != "production" and not test_production:
                 raise ValueError(
                     "Only the production schema can handle owner_type='production'"
                 )
         else:
-            if self._schema == "production":
+            if self._schema == "production" or test_production:
                 raise ValueError(
                     "Only owner_type='production' can go in the production schema"
                 )
@@ -215,11 +218,11 @@ class DatasetTable(BaseTable):
             values["description"] = description
         if execution_id:
             values["execution_id"] = execution_id
-        if access_API:
-            values["access_API"] = access_API
-        if access_API_configuration:
-            values["access_API_configuration"] = _read_configuration_file(
-                access_API_configuration, max_config_length
+        if access_api:
+            values["access_api"] = access_api
+        if access_api_configuration:
+            values["access_api_configuration"] = _read_configuration_file(
+                access_api_configuration, max_config_length
             )
         values["is_overwritable"] = is_overwritable
         values["is_overwritten"] = False
@@ -454,7 +457,7 @@ class DatasetTable(BaseTable):
 
         # Check dataset has not already been deleted
         if get_dataset_status(previous_dataset.status, "deleted"):
-            raise ValueError(f"Dataset {dataset_id} has already been deleted") 
+            raise ValueError(f"Dataset {dataset_id} has already been deleted")
 
         # Check dataset is valid
         if not get_dataset_status(previous_dataset.status, "valid"):
