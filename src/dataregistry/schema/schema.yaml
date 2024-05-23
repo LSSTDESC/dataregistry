@@ -7,17 +7,18 @@ execution:
   description:
     type: "String"
     description: "Short description of execution"
+    modifiable: True
   register_date:
     type: "DateTime"
     description: "When was the execution registered in the database"
     nullable: False
   execution_start:
     type: "DateTime"
-    description: "When was the execution performed at `locale`"
+    description: "When was the execution performed at `site`"
   name:
     type: "String"
     description: "Identifies the code executed (e.g., could be pipeline name)"
-  locale:
+  site:
     type: "String"
     description: "Site where the code was run (e.g., NERSC)"
   configuration:
@@ -248,6 +249,7 @@ dataset:
     type: "String"
     description: "User provided human-readable description of the dataset"
     cli_optional: True
+    modifiable: True
   execution_id:
     type: "Integer"
     foreign_key: True
@@ -265,10 +267,6 @@ dataset:
     nullable: False
     description: "True means this dataset can be overwritten in the future"
     cli_optional: True
-  is_external_link:
-    type: "Boolean"
-    nullable: False
-    description: "True if an external link"
   status:
     type: "Integer"
     nullable: False
@@ -288,3 +286,18 @@ dataset:
   move_date:
     type: "DateTime"
     description: "Date the dataset was last moved"
+  location_type:
+    type: "String"
+    choices: ["dataregistry", "external", "dummy"]
+    cli_default: "dataregistry"
+    cli_optional: True
+    nullable: False
+    description: "What is the physical location of the data? 'dataregistry' means the data is located within the `<root_dir>` and managed by the `dataregistry`, external means the data is not managed by the dataregistry, either because it is off-site or because it is stored outside <root_dir> therefore there is only a database entry (in this case a `url` or `contact_email` must be provided during registration) and 'dummy' is a dataset for testing purposes only (only a database entry is created in this case)."
+  url:
+    type: "String"
+    description: "URL that points to the data (used in the case of external datasets, i.e., `location_type='external'`)."
+    cli_optional: True
+  contact_email:
+    type: "String"
+    description: "Contact information for someone regarding the dataset."
+    cli_optional: True

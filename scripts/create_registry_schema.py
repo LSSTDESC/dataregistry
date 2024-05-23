@@ -1,10 +1,7 @@
-import os
-import sys
 import argparse
-from datetime import datetime
+import pandas as pd
 from sqlalchemy import (
     Column,
-    ColumnDefault,
     Integer,
     String,
     DateTime,
@@ -13,21 +10,21 @@ from sqlalchemy import (
     Float,
 )
 from sqlalchemy import ForeignKey, UniqueConstraint, text
-from sqlalchemy.orm import relationship, DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase
 from dataregistry.db_basic import DbConnection, SCHEMA_VERSION
 from dataregistry.db_basic import _insert_provenance
 from dataregistry.schema import load_schema
 
 """
-A script to create the default dataregistry schema and the production schema.
+A script to create a schema.
 
-Both schemas have the same layout, containing six tables:
+The schema contains the following six tables:
     - "dataset"         : Primary table, contains information on the datasets
     - "dataset_alias"   : Table to associate "alias" names to datasets
-    - "execution"       : Stores the executions, datasets can be linked to these
+    - "execution"       : Stores executions, datasets can be linked to these
     - "execution_alias" : Table to asscociate "alias" names to executions
     - "dependancy"      : Tracks dependencies between datasets
-    - "provenance"      : Contains information about the database/schema 
+    - "provenance"      : Contains information about the database/schema
 """
 
 # Conversion from string types in `schema.yaml` to SQLAlchemy
@@ -101,8 +98,8 @@ class Base(DeclarativeBase):
 
 def _get_ForeignKey_str(schema, table, column):
     """
-    Get the string reference to the "<shema>.<table>.<column>" a foreign key will
-    point to.
+    Get the string reference to the "<shema>.<table>.<column>" a foreign key
+    will point to.
 
     The schema address will only be included for postgres backends.
 
@@ -165,7 +162,9 @@ def _ExecutionAlias(schema):
     meta = {
         "__tablename__": "execution_alias",
         "__table_args__": (
-            UniqueConstraint("alias", "register_date", name="execution_u_register"),
+            UniqueConstraint("alias",
+                             "register_date",
+                             name="execution_u_register"),
             {"schema": schema},
         ),
     }
@@ -186,7 +185,9 @@ def _DatasetAlias(schema):
     meta = {
         "__tablename__": "dataset_alias",
         "__table_args__": (
-            UniqueConstraint("alias", "register_date", name="dataset_u_register"),
+            UniqueConstraint("alias",
+                             "register_date",
+                             name="dataset_u_register"),
             {"schema": schema},
         ),
     }
@@ -208,7 +209,10 @@ def _Dataset(schema):
         "__tablename__": "dataset",
         "__table_args__": (
             UniqueConstraint(
-                "name", "version_string", "version_suffix", name="dataset_u_version"
+                "name",
+                "version_string",
+                "version_suffix",
+                name="dataset_u_version"
             ),
             Index("relative_path", "owner", "owner_type"),
             {"schema": schema},
@@ -219,20 +223,40 @@ def _Dataset(schema):
     return Model
 
 
-def _Dependency(schema, has_production):
-    """Links datasets through "dependencies"."""
+def _Dependency(schema, has_production, production="production"):
+    """
+    Links datasets through "dependencies".
+
+    Parameters
+    ----------
+    schema          str      Name of schema we're writing to
+    has_production  boolean  True if this schema refers to production schema
+    production      string   Name of production schema
+    """
 
     class_name = f"{schema}_dependency"
 
     # Load columns from `schema.yaml` file
     columns = _get_column_definitions(schema, "dependency")
 
-    # Remove link to production schema.
+    # Remove link to production schema if unneeded.
     if not has_production:
         del columns["input_production_id"]
 
+    # Update production schema name
+    else:
+        if production != "production":
+            old_col = columns["input_production_id"]
+            fkey = ForeignKey(f"{production}.dataset.dataset_id")
+            new_input_production_id = Column(old_col.name,
+                                             old_col.type,
+                                             fkey)
+            del columns["input_production_id"]
+            columns["input_production_id"] = new_input_production_id
+
     # Table metadata
-    meta = {"__tablename__": "dependency", "__table_args__": {"schema": schema}}
+    meta = {"__tablename__": "dependency",
+            "__table_args__": {"schema": schema}}
 
     Model = type(class_name, (Base,), {**columns, **meta})
     return Model
@@ -248,7 +272,7 @@ _DB_VERSION_COMMENT = "Add `location_type` for dataset table"
 # Parse command line arguments
 parser = argparse.ArgumentParser(
     description="""
-Creates dataregistry tables in specified schema and connection information (config)""",
+Creates dataregistry tables for specified schema and connection information (config)""",
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
 )
 parser.add_argument(
@@ -256,69 +280,88 @@ parser.add_argument(
     help="name of schema to contain tables. Will be created if it doesn't already exist",
     default=f"{SCHEMA_VERSION}",
 )
-parser.add_argument("--config", help="Path to the data registry config file")
 parser.add_argument(
-    "--no_production", help="Do not create the production schema", action="store_true"
+    "--production-schema", default="production",
+    help="name of schema containing production tables.",
 )
+parser.add_argument("--config", help="Path to the data registry config file")
+
 args = parser.parse_args()
+schema = args.schema
+prod_schema = args.production_schema
 
-# Connect to database
-db_connection = DbConnection(args.config, args.schema)
-
-# What schemas are we working with?
-if db_connection.dialect != "sqlite":
-    SCHEMA_LIST = [args.schema, "production"]
+# Connect to database to find out what the backend is
+db_connection = DbConnection(args.config, schema)
+if db_connection.dialect == "sqlite":
+    if schema == prod_schema:
+        raise ValueError("Production not available for sqlite databases")
+    # In fact we don't use schemas at all for sqlite
+    schema = None
 else:
-    SCHEMA_LIST = [None]
-if args.no_production and "production" in SCHEMA_LIST:
-    SCHEMA_LIST.remove("production")
+    if schema != prod_schema:
+        # production schema, tables must already exists and schema
+        # must be backwards-compatible with prod_schem.  That is, major
+        # versions must match and minor version of prod_schema cannot
+        # be greater than minor version of schema
+        stmt = f"select db_version_major, db_version_minor from {prod_schema}.provenance order by provenance_id desc limit 1"
+        try:
+            with db_connection.engine.connect() as conn:
+                result = conn.execute(text(stmt))
+                result = pd.DataFrame(result)
+                conn.commit()
+        except Exception:
+            raise RuntimeError("production schema does not exist or is ill-formed")
+        if result["db_version_major"][0] != _DB_VERSION_MAJOR | int(result["db_version_minor"][0]) > _DB_VERSION_MINOR:
+            raise RuntimeError("production schema version incompatible")
 
-# Create the schemas
-for SCHEMA in SCHEMA_LIST:
-    if SCHEMA is None:
-        continue
+if schema:
+    stmt = f"CREATE SCHEMA IF NOT EXISTS {schema}"
     with db_connection.engine.connect() as conn:
-        # Create schema
-        stmt = f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}"
         conn.execute(text(stmt))
         conn.commit()
 
-# Grant reg_reader access
-acct = "reg_reader"
-for SCHEMA in SCHEMA_LIST:
-    if SCHEMA is None:
-        continue
+    # Grant reg_reader access
     try:
         with db_connection.engine.connect() as conn:
-            # Grant reg_reader access
-            usage_priv = f"GRANT USAGE ON SCHEMA {SCHEMA} to {acct}"
-            select_priv = f"GRANT SELECT ON ALL TABLES IN SCHEMA {SCHEMA} to {acct}"
-            conn.execute(text(usage_priv))
-            conn.execute(text(select_priv))
+            # Grant reg_reader access.
+            acct = "reg_reader"
+            usage_prv = f"GRANT USAGE ON SCHEMA {schema} to {acct}"
+            select_prv = f"GRANT SELECT ON ALL TABLES IN SCHEMA {schema} to {acct}"
+            conn.execute(text(usage_prv))
+            conn.execute(text(select_prv))
 
-            conn.commit()
-    except:
-        print(f"Could not grant access to {acct} on schema {SCHEMA}")
+            if schema == prod_schema:      # also grant privileges to reg_writer
+                acct = "reg_writer"
+                usage_priv = f"GRANT USAGE ON SCHEMA {schema} to {acct}"
+                select_priv = f"GRANT SELECT ON ALL TABLES IN SCHEMA {schema} to {acct}"
+                conn.execute(text(usage_priv))
+                conn.execute(text(select_priv))
+                conn.commit()
+    except Exception as e:
+        print(f"Could not grant access to {acct} on schema {schema}")
 
 # Create the tables
-for SCHEMA in SCHEMA_LIST:
-    _Dataset(SCHEMA)
-    _DatasetAlias(SCHEMA)
-    _Dependency(SCHEMA, "production" in SCHEMA_LIST)
-    _Execution(SCHEMA)
-    _ExecutionAlias(SCHEMA)
-    _Provenance(SCHEMA)
+# for SCHEMA in SCHEMA_LIST:
+_Dataset(schema)
+_DatasetAlias(schema)
+_Dependency(schema, db_connection.dialect != "sqlite",
+            production=prod_schema)
+_Execution(schema)
+_ExecutionAlias(schema)
+_Provenance(schema)
 
 # Generate the database
+if schema:
+    if schema != prod_schema:
+        Base.metadata.reflect(db_connection.engine, prod_schema)
 Base.metadata.create_all(db_connection.engine)
 
-for SCHEMA in SCHEMA_LIST:
-    # Add initial procenance information
-    prov_id = _insert_provenance(
-        DbConnection(args.config, SCHEMA),
-        _DB_VERSION_MAJOR,
-        _DB_VERSION_MINOR,
-        _DB_VERSION_PATCH,
-        "CREATE",
-        comment=_DB_VERSION_COMMENT,
-    )
+# Add initial provenance information
+prov_id = _insert_provenance(
+    DbConnection(args.config, schema),
+    _DB_VERSION_MAJOR,
+    _DB_VERSION_MINOR,
+    _DB_VERSION_PATCH,
+    "CREATE",
+    comment=_DB_VERSION_COMMENT,
+)
