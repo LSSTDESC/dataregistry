@@ -1,3 +1,10 @@
+## Version 0.4.2
+
+- Add check during dataset registration to raise an exception if the `root_dir`
+  does not exist
+- Add check before copying any data (i.e., `old_location != None`) that the
+  user has write permission to the `root_dir` folder.
+
 ## Version 0.4.1
 
 Add ability to register "external" datasets. For example datasets that are not

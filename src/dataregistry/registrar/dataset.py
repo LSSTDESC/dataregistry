@@ -27,6 +27,12 @@ class DatasetTable(BaseTable):
         self.which_table = "dataset"
         self.entry_id = "dataset_id"
 
+        # Does the root_dir exist?
+        self.root_dir_exists = os.path.isdir(root_dir)
+
+        # Does the user have write permission to the root_dir?
+        self.root_dir_write_access = os.access(root_dir, os.W_OK)
+
     def register(
         self,
         relative_path,
@@ -117,6 +123,10 @@ class DatasetTable(BaseTable):
         execution_id : int
             The execution ID associated with the dataset
         """
+
+        # If the root_dir does not exist, stop
+        if not self.root_dir_exists:
+            raise FileNotFoundError(f"root_dir {self._root_dir} does not exist")
 
         # If external dataset, check for either a `url` or `contact_email`
         if location_type == "external":
@@ -366,6 +376,11 @@ class DatasetTable(BaseTable):
 
         # Copy data into data registry
         if old_location:
+
+            # Stop if we don't have write permission to the root_dir
+            if not self.root_dir_write_access:
+                raise Exception(f"Cannot copy data, no write access to {self._root_dir}")
+
             if verbose:
                 tic = time.time()
                 print(
