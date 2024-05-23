@@ -432,3 +432,33 @@ def test_manual_relative_path_and_auto_name(dummy_file, relative_path):
         assert getattr(r, "dataset.name") == "auto_name_dataset"
         assert getattr(r, "dataset.relative_path") == relative_path
         assert i < 1
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        ("slashes/are/bad"),
+        (r"slashes\are\bad"),
+        ("questions?"),
+        ("stars*"),
+        ("dollar$"),
+        ("amper&sand"),
+    ],
+)
+def test_illegal_dataset_name(dummy_file,name):
+    """
+    Registering datasets with illegal names should fail
+
+    Illegal names are those with characters "/\?*$&"
+    """
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    # Add entry with bad name
+    with pytest.raises(ValueError, match="Cannot have character"):
+        d_id = _insert_dataset_entry(
+            datareg,
+            name,
+            "1.0.0",
+        )

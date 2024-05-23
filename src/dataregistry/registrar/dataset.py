@@ -19,6 +19,7 @@ from .registrar_util import (
 )
 from .dataset_util import set_dataset_status, get_dataset_status
 
+_ILLEGAL_NAME_CHAR = ["$","*","&","/","?","\\"]
 
 class DatasetTable(BaseTable):
     def __init__(self, db_connection, root_dir, owner, owner_type, execution_table):
@@ -119,6 +120,11 @@ class DatasetTable(BaseTable):
             The execution ID associated with the dataset
         """
 
+        # If `old_location` is None, we need a relative path
+        if old_location is None and location_type == "dataregistry":
+            if relative_path is None:
+                raise ValueError("`relative_path` is required when `old_location` is None")
+
         # If no name, we need a `relative_path`
         if name is None:
             if relative_path is None:
@@ -188,6 +194,11 @@ class DatasetTable(BaseTable):
         # If `name` is None, generate it from the `relative_path`
         if name is None:
             name = _name_from_relpath(relative_path)
+
+        # Make sure `name` is legal (i.e., no illegal characters)
+        for i_char in _ILLEGAL_NAME_CHAR:
+            if i_char in name:
+                raise ValueError(f"Cannot have character {i_char} in name string")
 
         # Look for previous entries. Fail if not overwritable
         previous = self._find_previous(relative_path, owner, owner_type)
