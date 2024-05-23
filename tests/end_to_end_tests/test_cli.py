@@ -42,7 +42,7 @@ def test_dataset_entry_with_execution(dummy_file):
     # Register a dataset with many options
     cmd = "register dataset my_cli_dataset3 1.2.3 --location_type dummy"
     cmd += " --description 'This is my dataset description'"
-    cmd += " --access_API 'Awesome API' --owner DESC --owner_type group"
+    cmd += " --access_api 'Awesome API' --owner DESC --owner_type group"
     cmd += " --version_suffix test --creation_date '2020-01-01'"
     cmd += " --input_datasets 1 2 --execution_name 'I have given the execution a name'"
     cmd += " --is_overwritable"
