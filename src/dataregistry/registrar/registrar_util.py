@@ -12,6 +12,7 @@ __all__ = [
     "_form_dataset_path",
     "get_directory_info",
     "_name_from_relpath",
+    "_relpath_from_name",
     "_copy_data",
 ]
 VERSION_SEPARATOR = "."
@@ -340,3 +341,31 @@ def _copy_data(dataset_organization, source, dest, do_checksum=True):
         )
 
         raise Exception(e)
+
+def _relpath_from_name(name, version, version_suffix):
+    """
+    Construct a relative path from the name and version of a dataset.
+
+    We use this when the `relative_path` is not explicitly defined.
+
+    Parameters
+    ----------
+    name : str
+        Dataset name
+    version : str
+        Dataset version
+    version_suffix : str
+        Dataset version suffix
+
+    Returns
+    -------
+    relative_path : str
+        Automatically generated `relative_path`
+    """
+
+    if version_suffix is not None:
+        relative_path = f"{name}_{version}_{version_suffix}"
+    else:
+        relative_path = f"{name}_{version}"
+    
+    return relative_path

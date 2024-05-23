@@ -67,7 +67,7 @@ def test_pipeline_entry(dummy_file):
     # Datasets for stage 1
     d_id_1 = _insert_dataset_entry(
         datareg,
-        "DESC/datasets/my_first_pipeline_stage1",
+        "DESC:datasets:my_first_pipeline_stage1",
         "0.0.1",
         execution_id=ex_id_1,
     )
@@ -85,7 +85,7 @@ def test_pipeline_entry(dummy_file):
     # Datasets for stage 2
     d_id_2 = _insert_dataset_entry(
         datareg,
-        "DESC/datasets/my_first_pipeline_stage2a",
+        "DESC:datasets:my_first_pipeline_stage2a",
         "0.0.1",
         execution_id=ex_id_2,
     )
@@ -93,7 +93,7 @@ def test_pipeline_entry(dummy_file):
 
     d_id_3 = _insert_dataset_entry(
         datareg,
-        "DESC/datasets/my_first_pipeline_stage2b",
+        "DESC:datasets:my_first_pipeline_stage2b",
         "0.0.1",
         execution_id=ex_id_2,
     )

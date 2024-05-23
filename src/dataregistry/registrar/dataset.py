@@ -11,13 +11,15 @@ from .registrar_util import (
     _bump_version,
     _copy_data,
     _form_dataset_path,
-    _name_from_relpath,
+    _relpath_from_name,
     _parse_version_string,
     _read_configuration_file,
     get_directory_info,
+    _name_from_relpath
 )
 from .dataset_util import set_dataset_status, get_dataset_status
 
+_ILLEGAL_NAME_CHAR = ["$","*","&","/","?","\\"]
 
 class DatasetTable(BaseTable):
     def __init__(self, db_connection, root_dir, owner, owner_type, execution_table):
@@ -29,10 +31,9 @@ class DatasetTable(BaseTable):
 
     def register(
         self,
-        relative_path,
+        name,
         version,
         version_suffix=None,
-        name=None,
         creation_date=None,
         description=None,
         execution_id=None,
@@ -55,6 +56,7 @@ class DatasetTable(BaseTable):
         location_type="dataregistry",
         url=None,
         contact_email=None,
+        relative_path=None,
     ):
         """
         Create a new dataset entry in the DESC data registry.
@@ -70,10 +72,9 @@ class DatasetTable(BaseTable):
 
         Parameters
         ----------
-        relative_path** : str
+        name** : str
         version** : str
         version_suffix** : str, optional
-        name** : str, optional
         creation_date** : datetime, optional
         description** : str, optional
         execution_id** : int, optional
@@ -109,6 +110,7 @@ class DatasetTable(BaseTable):
         url**: str, optional
             For `location_type="external"` only
         contact_email**: str, optional
+        relative_path** : str, optional
 
         Returns
         -------
@@ -117,6 +119,16 @@ class DatasetTable(BaseTable):
         execution_id : int
             The execution ID associated with the dataset
         """
+
+        # If `old_location` is None, we need a relative path
+        if old_location is None and location_type == "dataregistry":
+            if relative_path is None:
+                raise ValueError("`relative_path` is required when `old_location` is None")
+
+        # If no name, we need a `relative_path`
+        if name is None:
+            if relative_path is None:
+                raise ValueError("`relative_path` is required when `name` is None")
 
         # If external dataset, check for either a `url` or `contact_email`
         if location_type == "external":
@@ -161,19 +173,8 @@ class DatasetTable(BaseTable):
                     "Only owner_type='production' can go in the production schema"
                 )
 
-        # If `name` not passed, automatically generate a name from the relative path
-        if name is None:
-            name = _name_from_relpath(relative_path)
-
-        # Look for previous entries. Fail if not overwritable
-        dataset_table = self._get_table_metadata("dataset")
-        previous = self._find_previous(relative_path, owner, owner_type)
-
-        if previous is None:
-            print(f"Dataset {relative_path} exists, and is not overwritable")
-            return None, None
-
         # Deal with version string (non-special case)
+        dataset_table = self._get_table_metadata("dataset")
         if version not in ["major", "minor", "patch"]:
             v_fields = _parse_version_string(version)
             version_string = version
@@ -184,6 +185,27 @@ class DatasetTable(BaseTable):
             version_string = (
                 f"{v_fields['major']}.{v_fields['minor']}.{v_fields['patch']}"
             )
+
+        # If `relative_path` not passed, automatically generate one from the
+        # name, version and version_suffix
+        if relative_path is None:
+            relative_path = _relpath_from_name(name, version_string, version_suffix)
+
+        # If `name` is None, generate it from the `relative_path`
+        if name is None:
+            name = _name_from_relpath(relative_path)
+
+        # Make sure `name` is legal (i.e., no illegal characters)
+        for i_char in _ILLEGAL_NAME_CHAR:
+            if i_char in name:
+                raise ValueError(f"Cannot have character {i_char} in name string")
+
+        # Look for previous entries. Fail if not overwritable
+        previous = self._find_previous(relative_path, owner, owner_type)
+
+        if previous is None:
+            print(f"Dataset {relative_path} exists, and is not overwritable")
+            return None, None
 
         # If no execution_id is supplied, create a minimal entry
         if execution_id is None:

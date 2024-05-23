@@ -24,7 +24,7 @@ def test_bad_register_dataset_external(dummy_file):
     with pytest.raises(ValueError, match="require either a url or contact_email"):
         d_id = _insert_dataset_entry(
             datareg,
-            "DESC/datasets/my_first_external_dataset",
+            "DESC:datasets:my_first_external_dataset",
             "0.0.1",
             location_type="external",
         )
@@ -48,7 +48,7 @@ def test_register_dataset_external(dummy_file, contact_email, url, rel_path):
     # Add entry
     d_id = _insert_dataset_entry(
         datareg,
-        f"DESC/datasets/{rel_path}",
+        f"DESC:datasets:{rel_path}",
         "0.0.1",
         location_type="external",
         contact_email=contact_email,

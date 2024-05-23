@@ -24,7 +24,7 @@ def test_modify_dataset(dummy_file, dataset_name, column, new_value):
     # Add entry
     d_id = _insert_dataset_entry(
         datareg,
-        f"DESC/datasets/{dataset_name}",
+        f"DESC:datasets:{dataset_name}",
         "0.0.1",
         location_type="dummy",
     )
@@ -85,7 +85,7 @@ def test_modify_not_allowed(dummy_file):
     # Add entry
     d_id = _insert_dataset_entry(
         datareg,
-        f"DESC/datasets/bad_modify",
+        f"DESC:datasets:bad_modify",
         "0.0.1",
         location_type="dummy",
     )

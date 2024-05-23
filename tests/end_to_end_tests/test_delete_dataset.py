@@ -56,7 +56,7 @@ def test_delete_dataset_entry(dummy_file, is_dummy, dataset_name):
     # Add entry
     d_id = _insert_dataset_entry(
         datareg,
-        f"DESC/datasets/{dataset_name}",
+        f"DESC:datasets:{dataset_name}",
         "0.0.1",
         location_type=location_type,
         old_location=data_path,

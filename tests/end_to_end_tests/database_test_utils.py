@@ -144,12 +144,11 @@ def _insert_execution_entry(
 
 def _insert_dataset_entry(
     datareg,
-    relpath,
+    name,
     version,
     owner_type=None,
     owner=None,
     description=None,
-    name=None,
     execution_id=None,
     version_suffix=None,
     old_location=None,
@@ -164,15 +163,15 @@ def _insert_dataset_entry(
     location_type="dummy",
     contact_email=None,
     url=None,
+    relative_path=None,
 ):
     """
     Wrapper to create dataset entry
 
     Parameters
     ----------
-    relpath : str
-        Relative path within the data registry to store the data
-        Relative to <ROOT>/<owner_type>/<owner>/...
+    name : str
+        A user selected name for the dataset
     version : str
         Semantic version string (i.e., M.N.P) or
         "major", "minor", "patch" to automatically bump the version previous
@@ -182,8 +181,6 @@ def _insert_dataset_entry(
         Dataset owner
     description : str
         Description of dataset
-    name : str
-        A manually selected name for the dataset
     execution_id : int
         Execution entry related to this dataset
     version_suffix : str
@@ -205,10 +202,13 @@ def _insert_dataset_entry(
         List of dataset ids that were the input to this execution
     location_type : str, optional
         "dataregistry", "external" or "dummy"
-    contact_email : str
+    contact_email : str, optional
         Contact email for external datasets
-    url : str
+    url : str, optional
         Url for external datasets
+    relative_path : str, optional
+        Relative path within the data registry to store the data
+        Relative to <ROOT>/<owner_type>/<owner>/...
 
     Returns
     -------
@@ -221,10 +221,9 @@ def _insert_dataset_entry(
 
     # Add new entry.
     dataset_id, execution_id = datareg.Registrar.dataset.register(
-        relpath,
+        name,
         version,
         version_suffix=version_suffix,
-        name=name,
         creation_date=None,
         description=description,
         old_location=old_location,
@@ -243,6 +242,7 @@ def _insert_dataset_entry(
         location_type=location_type,
         contact_email=contact_email,
         url=url,
+        relative_path=relative_path,
     )
 
     assert dataset_id is not None, "Trying to create a dataset that already exists"
