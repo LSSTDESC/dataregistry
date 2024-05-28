@@ -87,7 +87,7 @@ def test_modify_dataset_with_keywords(dummy_file):
     """
     Register a basic dataset without any keywords.
 
-    Then add keywords with `modify()`.
+    Then add keywords with `add_keywords()`.
 
     Then query to make sure the keyword was tagged.
     """
@@ -101,11 +101,9 @@ def test_modify_dataset_with_keywords(dummy_file):
         datareg,
         "DESC/datasets/my_first_modify_dataset_with_keywords",
         "0.0.1",
+        keywords=["simulation"]
     )
 
-    # Add keyword to already registered dataset
-    datareg.Registrar.dataset.modify(d_id, {"keywords": ["simulation", "observation"]})
-    
     # Query for the dataset
     f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
     results = datareg.Query.find_datasets(
@@ -114,6 +112,24 @@ def test_modify_dataset_with_keywords(dummy_file):
         return_format="cursorresult",
     )
 
+    # Should only be 1 keyword at this point
+    assert results.rowcount == 1
+
+    # Add a keyword
+    datareg.Registrar.dataset.add_keywords(d_id, ["simulation", "observation"])
+
+    # Should now be two keywords (no duplicates)
+    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.Query.find_datasets(
+        ["dataset.dataset_id", "keyword.keyword"],
+        [f],
+        return_format="cursorresult",
+    )
+
+    # Should only be 1 keyword at this point
+    assert results.rowcount == 2
+
+    # Check the keywords are right
     for i, r in enumerate(results):
         assert getattr(r, "dataset.dataset_id") == d_id
         assert getattr(r, "keyword.keyword") in ["simulation", "observation"]

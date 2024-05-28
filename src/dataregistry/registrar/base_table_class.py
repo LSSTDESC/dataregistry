@@ -117,12 +117,6 @@ class BaseTable:
 
         # Loop over each column to be modified
         for key, v in modify_fields.items():
-            # Keywords are a special many-to-many case
-            if key == "keywords":
-                if self.which_table != "dataset":
-                    raise ValueError("Only the dataset table has keywords")
-                continue
-
             # Make sure the column is in the schema
             if key not in self.schema_yaml[self.which_table].keys():
                 raise ValueError(f"The column {key} does not exist in the schema")
@@ -130,13 +124,6 @@ class BaseTable:
             # Make sure the column is modifiable
             if not self.schema_yaml[self.which_table][key]["modifiable"]:
                 raise ValueError(f"The column {key} is not modifiable")
-
-        # Validate keywords
-        keyword_ids = None
-        if "keywords" in modify_fields.keys():
-            if len(modify_fields["keywords"]) > 0:
-                keyword_ids = self._validate_keywords(modify_fields["keywords"])
-                del modify_fields["keywords"]
 
         with self._engine.connect() as conn:
             # Update the metadata
@@ -147,18 +134,7 @@ class BaseTable:
                     .values(modify_fields)
                 )
                 conn.execute(update_stmt)
-
-            # Update the keywords
-            if keyword_ids is not None:
-                keyword_table = self._get_table_metadata("dataset_keyword")
-                for k_id in keyword_ids:
-                    add_table_row(
-                        conn,
-                        keyword_table,
-                        {"dataset_id": entry_id, "keyword_id": k_id},
-                        commit=False,
-                    )
-
+            
             conn.commit()
 
 
