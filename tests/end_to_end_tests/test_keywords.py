@@ -113,7 +113,7 @@ def test_modify_dataset_with_keywords(dummy_file):
     )
 
     # Should only be 1 keyword at this point
-    assert results.rowcount == 1
+    assert len(list(results)) == 1
 
     # Add a keyword
     datareg.Registrar.dataset.add_keywords(d_id, ["simulation", "observation"])
@@ -127,7 +127,7 @@ def test_modify_dataset_with_keywords(dummy_file):
     )
 
     # Should only be 1 keyword at this point
-    assert results.rowcount == 2
+    assert len(list(results)) == 2
 
     # Check the keywords are right
     for i, r in enumerate(results):
