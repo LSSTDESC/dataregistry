@@ -2,6 +2,9 @@
 
 Add ability to tag datasets with keywords/labels to make them easier to catagorize.
 
+- Can tag keywords when registering datasets through the Python API or CLI. Can
+  add keywords after registration using the `add_keywords()` method in the
+  Python API.
 - Database version bumped to 3.0.0
 - New table `keyword` that stores both the system and user keywords.
 - New table `dataset_keyword` that links keywords to datasets.
@@ -13,7 +16,6 @@ Add ability to tag datasets with keywords/labels to make them easier to catagori
   dataset-keyword association table. So the user can query for all datasets
   with a given keyword, for example.
 - Added keywords information to the documentation
-- Can tag keywords when registering datasets through the CLI
 - Can run `dregs show keywords` from CLI to display all pre-registered keywords
 
 ## Version 0.4.1
