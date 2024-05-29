@@ -226,7 +226,7 @@ dataset:
     cli_optional: True
   access_api_configuration:
     type: "String"
-    description: "Additional (text) info which may be needed by access_API"
+    description: "Additional (text) info which may be needed by access_api"
   owner:
     type: "String"
     description: "Owner of the dataset (defaults to $USER)"

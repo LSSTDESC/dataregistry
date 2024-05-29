@@ -1,3 +1,14 @@
+## Version 0.5.0
+Separate out creation of production schema and non-production schema
+since, under normal circumstances, there will be a single "real" production
+schema (owner type == production only) but possibly multiple non-production
+schemas to keep track of entries for the other owner types.
+Add a field to the provenance table so a schema can discover the name of
+its associated production schema and form foreign key constraints correctly.
+
+Bumped database version to 2.3.0.  This code requires
+database version >= 2.3.0
+
 ## Version 0.4.1
 
 Add ability to register "external" datasets. For example datasets that are not

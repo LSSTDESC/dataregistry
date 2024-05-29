@@ -6,6 +6,7 @@ import yaml
 import os
 from datetime import datetime
 from dataregistry import __version__
+from dataregistry.exceptions import DataRegistryException
 
 """
 Low-level utility routines and classes for accessing the registry
@@ -177,7 +178,9 @@ class TableMetadata:
         else:
             prov_name = ".".join([self._schema, "provenance"])
 
-            # prov_table = self._metadata.tables[prov_name]
+        if prov_name not in self._metadata.tables:
+            raise DataRegistryException("Incompatible database: no Provenance table")
+
         if prov_name in self._metadata.tables and get_db_version:
             prov_table = self._metadata.tables[prov_name]
             stmt = select(column("associated_production")).select_from(prov_table)
@@ -189,6 +192,7 @@ class TableMetadata:
             self._prod_schema = r[0]
 
             cols = ["db_version_major", "db_version_minor", "db_version_patch"]
+
             stmt = select(*[column(c) for c in cols])
             stmt = stmt.select_from(prov_table)
             stmt = stmt.order_by(prov_table.c.provenance_id.desc())
@@ -251,7 +255,7 @@ def _insert_provenance(
     comment : str, optional
         Briefly describe reason for new version
     associated_production : str, defaults to "production"
-        Namae of production schema, if any, this schema may reference
+        Name of production schema, if any, this schema may reference
 
     Returns
     -------
