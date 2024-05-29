@@ -48,7 +48,8 @@ def test_db_version():
     """
     Test if db version is what we think it should be.
     CI makes a fresh database, hence actual db versions should match
-    versions to be used when new db is created
+    versions to be used when new db is created.
+    Add a line so github uses this code  (I hope)
     """
     actual_major, actual_minor, actual_patch = datareg.Query.get_db_versioning()
     assert actual_major == 2, "db major version doesn't match expected"
