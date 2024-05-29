@@ -52,5 +52,5 @@ def test_db_version():
     """
     actual_major, actual_minor, actual_patch = datareg.Query.get_db_versioning()
     assert actual_major == 2, "db major version doesn't match expected"
-    assert actual_minor == 2, "db minor version doesn't match expected"
+    assert actual_minor == 3, "db minor version doesn't match expected"
     assert actual_patch == 0, "db patch version doesn't match expected"
