@@ -187,7 +187,6 @@ class TableMetadata:
             stmt = stmt.order_by(prov_table.c.provenance_id.desc())
             with self._engine.connect() as conn:
                 results = conn.execute(stmt)
-                conn.commit()
                 r = results.fetchone()
             self._prod_schema = r[0]
 
@@ -198,7 +197,6 @@ class TableMetadata:
             stmt = stmt.order_by(prov_table.c.provenance_id.desc())
             with self._engine.connect() as conn:
                 results = conn.execute(stmt)
-                conn.commit()
             r = results.fetchone()
             self._db_major = r[0]
             self._db_minor = r[1]
