@@ -43,7 +43,7 @@ def register_dataset(args):
         name=args.name,
         version_suffix=args.version_suffix,
         creation_date=args.creation_date,
-        access_API=args.access_API,
+        access_api=args.access_api,
         execution_id=args.execution_id,
         is_overwritable=args.is_overwritable,
         description=args.description,

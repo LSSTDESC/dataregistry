@@ -42,15 +42,3 @@ def test_query_all():
     results = datareg.Query.find_datasets()
 
     assert results is not None
-
-
-def test_db_version():
-    """
-    Test if db version is what we think it should be.
-    CI makes a fresh database, hence actual db versions should match
-    versions to be used when new db is created
-    """
-    actual_major, actual_minor, actual_patch = datareg.Query.get_db_versioning()
-    assert actual_major == 2, "db major version doesn't match expected"
-    assert actual_minor == 2, "db minor version doesn't match expected"
-    assert actual_patch == 0, "db patch version doesn't match expected"

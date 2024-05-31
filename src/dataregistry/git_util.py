@@ -1,5 +1,4 @@
 import os
-import git
 
 __all__ = ["get_git_info"]
 
@@ -14,6 +13,8 @@ def get_git_info(pkg_root):
     is_clean    boolean
 
     """
+    import git
+
     repo = git.Repo(pkg_root)
     has_uncommitted = repo.is_dirty()
     has_untracked = len(repo.untracked_files) > 0

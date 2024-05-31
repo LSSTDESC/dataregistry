@@ -16,11 +16,12 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 keywords = ["desc", "python", "registry"]
+# NOTE: Those needing to create a database will also need to install the
+#       GitPython package. It is not needed for accessing an existing db.
 dependencies = [
     'psycopg2',
     'sqlalchemy',
     'pyaml',
-    'GitPython',
     'pandas'
 ]
 requires-python = ">=3.7" # For setuptools >= 61.0 support

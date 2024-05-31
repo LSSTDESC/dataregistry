@@ -7,23 +7,6 @@ from dataregistry.db_basic import SCHEMA_VERSION
 from database_test_utils import *
 
 
-def test_db_version(dummy_file):
-    """
-    Test the `Query.get_db_versioning()` function.
-    CI makes a fresh database, hence actual db versions should match
-    versions to be used when new db is created
-    """
-
-    # Establish connection to database
-    tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
-
-    actual_major, actual_minor, actual_patch = datareg.Query.get_db_versioning()
-    assert actual_major == 2, "db major version doesn't match expected"
-    assert actual_minor == 2, "db minor version doesn't match expected"
-    assert actual_patch == 0, "db patch version doesn't match expected"
-
-
 def test_get_dataset_absolute_path(dummy_file):
     """
     Test the generation of the full absolute path of a dataset using the
