@@ -251,17 +251,7 @@ class DatasetTable(BaseTable):
 
         # Create a new row in the data registry database.
         with self._engine.connect() as conn:
-            prim_key = add_table_row(conn, dataset_table, values, commit=False)
-
-            if len(previous) > 0:
-                # Update previous rows, setting is_overwritten to True
-                update_stmt = (
-                    update(dataset_table)
-                    .where(dataset_table.c.dataset_id.in_(previous))
-                    .values(is_overwritten=True)
-                )
-                conn.execute(update_stmt)
-            conn.commit()
+            prim_key = add_table_row(conn, dataset_table, values, commit=True)
 
         # Get dataset characteristics; copy to `root_dir` if requested
         if location_type == "dataregistry":
@@ -285,8 +275,9 @@ class DatasetTable(BaseTable):
         if creation_date:
             ds_creation_date = creation_date
 
-        # Copy was successful, update the entry with dataset metadata
+        # Copy was successful
         with self._engine.connect() as conn:
+            # Update the entry with dataset metadata
             update_stmt = (
                 update(dataset_table)
                 .where(dataset_table.c.dataset_id == prim_key)
@@ -299,6 +290,16 @@ class DatasetTable(BaseTable):
                 )
             )
             conn.execute(update_stmt)
+
+            # Update overwritten datasets `is_overwritten` values
+            if len(previous) > 0:
+                update_stmt = (
+                    update(dataset_table)
+                    .where(dataset_table.c.dataset_id.in_(previous))
+                    .values(is_overwritten=True)
+                )
+                conn.execute(update_stmt)
+
             conn.commit()
 
         return prim_key, execution_id
