@@ -63,7 +63,7 @@ def get_parser():
     # --------
     
     # Load the schema information (help strings are loaded from here)
-    schema_data = load_schema()
+    schema_data, _ = load_schema()
     
     # Conversion from string types in `schema.yaml` to SQLAlchemy
     _TYPE_TRANSLATE = {

@@ -39,7 +39,7 @@ _TYPE_TRANSLATE = {
 }
 
 # Load the schema from the `schema.yaml` file
-schema_yaml = load_schema()
+schema_columns, schema_unique = load_schema()
 
 
 def _get_column_definitions(schema, table):
@@ -59,34 +59,34 @@ def _get_column_definitions(schema, table):
     """
 
     return_dict = {}
-    for column in schema_yaml[table].keys():
+    for column in schema_columns[table].keys():
         # Special case where column has a foreign key
-        if schema_yaml[table][column]["foreign_key"]:
+        if schema_columns[table][column]["foreign_key"]:
             fk_schema = schema
-            if schema_yaml[table][column]["foreign_key_schema"] != "self":
-                fk_schema = schema_yaml[table][column]["foreign_key_schema"]
+            if schema_columns[table][column]["foreign_key_schema"] != "self":
+                fk_schema = schema_columns[table][column]["foreign_key_schema"]
 
             return_dict[column] = Column(
                 column,
-                _TYPE_TRANSLATE[schema_yaml[table][column]["type"]],
+                _TYPE_TRANSLATE[schema_columns[table][column]["type"]],
                 ForeignKey(
                     _get_ForeignKey_str(
                         fk_schema,
-                        schema_yaml[table][column]["foreign_key_table"],
-                        schema_yaml[table][column]["foreign_key_column"],
+                        schema_columns[table][column]["foreign_key_table"],
+                        schema_columns[table][column]["foreign_key_column"],
                     )
                 ),
-                primary_key=schema_yaml[table][column]["primary_key"],
-                nullable=schema_yaml[table][column]["nullable"],
+                primary_key=schema_columns[table][column]["primary_key"],
+                nullable=schema_columns[table][column]["nullable"],
             )
 
         # Normal case
         else:
             return_dict[column] = Column(
                 column,
-                _TYPE_TRANSLATE[schema_yaml[table][column]["type"]],
-                primary_key=schema_yaml[table][column]["primary_key"],
-                nullable=schema_yaml[table][column]["nullable"],
+                _TYPE_TRANSLATE[schema_columns[table][column]["type"]],
+                primary_key=schema_columns[table][column]["primary_key"],
+                nullable=schema_columns[table][column]["nullable"],
             )
 
     return return_dict
@@ -161,13 +161,19 @@ def _ExecutionAlias(schema):
     # Table metadata
     meta = {
         "__tablename__": "execution_alias",
-        "__table_args__": (
-            UniqueConstraint("alias",
-                             "register_date",
-                             name="execution_u_register"),
-            {"schema": schema},
-        ),
     }
+
+    # Add unique constraints
+    if "execution_alias" in schema_unique.keys():
+        meta["__table_args__"] = (
+            UniqueConstraint(
+                *schema_unique["execution_alias"]["unique_list"],
+                name=schema_unique["execution_alias"]["name"],
+            ),
+            {"schema": schema},
+        )
+    else:
+        meta["__table_args__"] = {"schema": schema}
 
     Model = type(class_name, (Base,), {**columns, **meta})
     return Model
@@ -184,13 +190,19 @@ def _DatasetAlias(schema):
     # Table metadata
     meta = {
         "__tablename__": "dataset_alias",
-        "__table_args__": (
-            UniqueConstraint("alias",
-                             "register_date",
-                             name="dataset_u_register"),
-            {"schema": schema},
-        ),
     }
+
+    # Add unique constraints
+    if "dataset_alias" in schema_unique.keys():
+        meta["__table_args__"] = (
+            UniqueConstraint(
+                *schema_unique["dataset_alias"]["unique_list"],
+                name=schema_unique["dataset_alias"]["name"],
+            ),
+            {"schema": schema},
+        )
+    else:
+        meta["__table_args__"] = {"schema": schema}
 
     Model = type(class_name, (Base,), {**columns, **meta})
     return Model
@@ -207,17 +219,23 @@ def _Dataset(schema):
     # Table metadata
     meta = {
         "__tablename__": "dataset",
-        "__table_args__": (
+    }
+
+    # Add unique constraints
+    if "dataset" in schema_unique.keys():
+        meta["__table_args__"] = (
             UniqueConstraint(
-                "name",
-                "version_string",
-                "version_suffix",
-                name="dataset_u_version"
+                *schema_unique["dataset"]["unique_list"],
+                name=schema_unique["dataset"]["name"],
             ),
             Index("relative_path", "owner", "owner_type"),
             {"schema": schema},
-        ),
-    }
+        )
+    else:
+        meta["__table_args__"] = (
+            Index("relative_path", "owner", "owner_type"),
+            {"schema": schema},
+        )
 
     Model = type(class_name, (Base,), {**columns, **meta})
     return Model
@@ -248,15 +266,12 @@ def _Dependency(schema, has_production, production="production"):
         if production != "production":
             old_col = columns["input_production_id"]
             fkey = ForeignKey(f"{production}.dataset.dataset_id")
-            new_input_production_id = Column(old_col.name,
-                                             old_col.type,
-                                             fkey)
+            new_input_production_id = Column(old_col.name, old_col.type, fkey)
             del columns["input_production_id"]
             columns["input_production_id"] = new_input_production_id
 
     # Table metadata
-    meta = {"__tablename__": "dependency",
-            "__table_args__": {"schema": schema}}
+    meta = {"__tablename__": "dependency", "__table_args__": {"schema": schema}}
 
     Model = type(class_name, (Base,), {**columns, **meta})
     return Model
@@ -281,7 +296,8 @@ parser.add_argument(
     default=f"{SCHEMA_VERSION}",
 )
 parser.add_argument(
-    "--production-schema", default="production",
+    "--production-schema",
+    default="production",
     help="name of schema containing production tables.",
 )
 parser.add_argument("--config", help="Path to the data registry config file")
@@ -311,7 +327,11 @@ else:
                 conn.commit()
         except Exception:
             raise RuntimeError("production schema does not exist or is ill-formed")
-        if result["db_version_major"][0] != _DB_VERSION_MAJOR | int(result["db_version_minor"][0]) > _DB_VERSION_MINOR:
+        if (
+            result["db_version_major"][0]
+            != _DB_VERSION_MAJOR | int(result["db_version_minor"][0])
+            > _DB_VERSION_MINOR
+        ):
             raise RuntimeError("production schema version incompatible")
 
 if schema:
@@ -330,7 +350,7 @@ if schema:
             conn.execute(text(usage_prv))
             conn.execute(text(select_prv))
 
-            if schema == prod_schema:      # also grant privileges to reg_writer
+            if schema == prod_schema:  # also grant privileges to reg_writer
                 acct = "reg_writer"
                 usage_priv = f"GRANT USAGE ON SCHEMA {schema} to {acct}"
                 select_priv = f"GRANT SELECT ON ALL TABLES IN SCHEMA {schema} to {acct}"
@@ -344,8 +364,7 @@ if schema:
 # for SCHEMA in SCHEMA_LIST:
 _Dataset(schema)
 _DatasetAlias(schema)
-_Dependency(schema, db_connection.dialect != "sqlite",
-            production=prod_schema)
+_Dependency(schema, db_connection.dialect != "sqlite", production=prod_schema)
 _Execution(schema)
 _ExecutionAlias(schema)
 _Provenance(schema)

@@ -73,7 +73,7 @@ class BaseTable:
         self._DEFAULT_MAX_CONFIG = _DEFAULT_MAX_CONFIG
 
         # Load and store the schema yaml file
-        self.schema_yaml = load_schema()
+        self.schema_yaml, _ = load_schema()
 
     def _get_table_metadata(self, tbl):
         return self._metadata_getter.get(tbl)
