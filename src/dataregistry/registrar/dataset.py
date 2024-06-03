@@ -263,13 +263,11 @@ class DatasetTable(BaseTable):
             ) = self._handle_data(
                 relative_path, old_location, owner, owner_type, verbose
             )
-            valid_status = 1
         else:
             dataset_organization = location_type
             num_files = 0
             total_size = 0
             ds_creation_date = None
-            valid_status = 0
 
         # Case where use is overwriting the dateset `creation_date`
         if creation_date:
