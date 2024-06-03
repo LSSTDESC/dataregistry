@@ -39,7 +39,8 @@ _TYPE_TRANSLATE = {
 }
 
 # Load the schema from the `schema.yaml` file
-schema_columns, schema_unique = load_schema()
+schema_data = load_schema()
+schema_data = schema_data["tables"]
 
 
 def _get_column_definitions(schema, table):
@@ -59,37 +60,101 @@ def _get_column_definitions(schema, table):
     """
 
     return_dict = {}
-    for column in schema_columns[table].keys():
+    for column in schema_data[table]["column_definitions"].keys():
         # Special case where column has a foreign key
-        if schema_columns[table][column]["foreign_key"]:
+        if schema_data[table]["column_definitions"][column]["foreign_key"]:
             fk_schema = schema
-            if schema_columns[table][column]["foreign_key_schema"] != "self":
-                fk_schema = schema_columns[table][column]["foreign_key_schema"]
+            if (
+                schema_data[table]["column_definitions"][column]["foreign_key_schema"]
+                != "self"
+            ):
+                fk_schema = schema_data[table]["column_definitions"][column][
+                    "foreign_key_schema"
+                ]
 
             return_dict[column] = Column(
                 column,
-                _TYPE_TRANSLATE[schema_columns[table][column]["type"]],
+                _TYPE_TRANSLATE[
+                    schema_data[table]["column_definitions"][column]["type"]
+                ],
                 ForeignKey(
                     _get_ForeignKey_str(
                         fk_schema,
-                        schema_columns[table][column]["foreign_key_table"],
-                        schema_columns[table][column]["foreign_key_column"],
+                        schema_data[table]["column_definitions"][column][
+                            "foreign_key_table"
+                        ],
+                        schema_data[table]["column_definitions"][column][
+                            "foreign_key_column"
+                        ],
                     )
                 ),
-                primary_key=schema_columns[table][column]["primary_key"],
-                nullable=schema_columns[table][column]["nullable"],
+                primary_key=schema_data[table]["column_definitions"][column][
+                    "primary_key"
+                ],
+                nullable=schema_data[table]["column_definitions"][column]["nullable"],
             )
 
         # Normal case
         else:
             return_dict[column] = Column(
                 column,
-                _TYPE_TRANSLATE[schema_columns[table][column]["type"]],
-                primary_key=schema_columns[table][column]["primary_key"],
-                nullable=schema_columns[table][column]["nullable"],
+                _TYPE_TRANSLATE[
+                    schema_data[table]["column_definitions"][column]["type"]
+                ],
+                primary_key=schema_data[table]["column_definitions"][column][
+                    "primary_key"
+                ],
+                nullable=schema_data[table]["column_definitions"][column]["nullable"],
             )
 
     return return_dict
+
+
+def _get_table_metadata(schema, table):
+    """
+    Build the table meta data dict, e.g., the schema name and any unique
+    constraints, for this table.
+
+    Parameters
+    ----------
+    schema : str
+    table : str
+
+    Returns
+    -------
+    meta : dict
+        The table metadata
+    """
+
+    # Table metadata
+    meta = {
+        "__tablename__": table,
+    }
+
+    if (
+        "index" in schema_data[table].keys()
+        and "unique_constraints" in schema_data[table].keys()
+    ):
+        meta["__table_args__"] = (
+            UniqueConstraint(
+                *schema_data[table]["unique_constraints"]["unique_list"],
+                name=schema_data[table]["unique_constraints"]["name"],
+            ),
+            Index(*schema_data[table]["index"]["index_list"]),
+            {"schema": schema},
+        )
+    elif "unique_constraints" in schema_data[table].keys():
+        meta["__table_args__"] = (
+            UniqueConstraint(
+                *schema_data[table]["unique_constraints"]["unique_list"],
+                name=schema_data[table]["unique_constraints"]["name"],
+            ),
+            {"schema": schema},
+        )
+    else:
+        meta["__table_args__"] = {"schema": schema}
+
+    return meta
 
 
 class Base(DeclarativeBase):
@@ -120,142 +185,20 @@ def _get_ForeignKey_str(schema, table, column):
         return f"{schema}.{table}.{column}"
 
 
-def _Provenance(schema):
-    """Keeps track of database/schema versions."""
-
-    class_name = f"{schema}_provenance"
-
-    # Load columns from `schema.yaml` file
-    columns = _get_column_definitions(schema, "provenance")
-
-    # Table metadata
-    meta = {"__tablename__": "provenance", "__table_args__": {"schema": schema}}
-
-    Model = type(class_name, (Base,), {**columns, **meta})
-    return Model
-
-
-def _Execution(schema):
-    """Stores executions, which datasets can be linked to."""
-
-    class_name = f"{schema}_execution"
-
-    # Load columns from `schema.yaml` file
-    columns = _get_column_definitions(schema, "execution")
-
-    # Table metadata
-    meta = {"__tablename__": "execution", "__table_args__": {"schema": schema}}
-
-    Model = type(class_name, (Base,), {**columns, **meta})
-    return Model
-
-
-def _ExecutionAlias(schema):
-    """To asscociate an alias to an execution."""
-
-    class_name = f"{schema}_execution_alias"
-
-    # Load columns from `schema.yaml` file
-    columns = _get_column_definitions(schema, "execution_alias")
-
-    # Table metadata
-    meta = {
-        "__tablename__": "execution_alias",
-    }
-
-    # Add unique constraints
-    if "execution_alias" in schema_unique.keys():
-        meta["__table_args__"] = (
-            UniqueConstraint(
-                *schema_unique["execution_alias"]["unique_list"],
-                name=schema_unique["execution_alias"]["name"],
-            ),
-            {"schema": schema},
-        )
-    else:
-        meta["__table_args__"] = {"schema": schema}
-
-    Model = type(class_name, (Base,), {**columns, **meta})
-    return Model
-
-
-def _DatasetAlias(schema):
-    """To asscociate an alias to a dataset."""
-
-    class_name = f"{schema}_dataset_alias"
-
-    # Load columns from `schema.yaml` file
-    columns = _get_column_definitions(schema, "dataset_alias")
-
-    # Table metadata
-    meta = {
-        "__tablename__": "dataset_alias",
-    }
-
-    # Add unique constraints
-    if "dataset_alias" in schema_unique.keys():
-        meta["__table_args__"] = (
-            UniqueConstraint(
-                *schema_unique["dataset_alias"]["unique_list"],
-                name=schema_unique["dataset_alias"]["name"],
-            ),
-            {"schema": schema},
-        )
-    else:
-        meta["__table_args__"] = {"schema": schema}
-
-    Model = type(class_name, (Base,), {**columns, **meta})
-    return Model
-
-
-def _Dataset(schema):
-    """Primary table, stores dataset information."""
-
-    class_name = f"{schema}_dataset"
-
-    # Load columns from `schema.yaml` file
-    columns = _get_column_definitions(schema, "dataset")
-
-    # Table metadata
-    meta = {
-        "__tablename__": "dataset",
-    }
-
-    # Add unique constraints
-    if "dataset" in schema_unique.keys():
-        meta["__table_args__"] = (
-            UniqueConstraint(
-                *schema_unique["dataset"]["unique_list"],
-                name=schema_unique["dataset"]["name"],
-            ),
-            Index("relative_path", "owner", "owner_type"),
-            {"schema": schema},
-        )
-    else:
-        meta["__table_args__"] = (
-            Index("relative_path", "owner", "owner_type"),
-            {"schema": schema},
-        )
-
-    Model = type(class_name, (Base,), {**columns, **meta})
-    return Model
-
-
-def _Dependency(schema, has_production, production="production"):
+def _FixDependencyColumns(columns, has_production, production):
     """
-    Links datasets through "dependencies".
+    Special case for dependencies table where some column names need to be tweeked.
+
+    Columns dict is modified in place.
 
     Parameters
     ----------
-    schema          str      Name of schema we're writing to
-    has_production  boolean  True if this schema refers to production schema
-    production      string   Name of production schema
+    columns : dict
+    has_production : bool
+        True if database has a production schema
+    production : str
+        Name of the production schema
     """
-
-    class_name = f"{schema}_dependency"
-
-    # Load columns from `schema.yaml` file
-    columns = _get_column_definitions(schema, "dependency")
 
     # Remove link to production schema if unneeded.
     if not has_production:
@@ -270,8 +213,36 @@ def _Dependency(schema, has_production, production="production"):
             del columns["input_production_id"]
             columns["input_production_id"] = new_input_production_id
 
-    # Table metadata
-    meta = {"__tablename__": "dependency", "__table_args__": {"schema": schema}}
+
+def _BuildTable(schema, table_name, has_production, production):
+    """
+    Builds a generic schema table from the information in the `schema.yaml` file.
+
+    Parameters
+    ----------
+    schema : str
+    table_name : str
+    has_production : bool
+        True if database has a production schema
+    production : str
+        Name of the production schema
+
+    Returns
+    -------
+    Model : class object
+    """
+
+    class_name = f"{schema}_{table_name}"
+
+    # Column definitions (from `schema.yaml` file)
+    columns = _get_column_definitions(schema, table_name)
+
+    # Special case for dependencies table
+    if table_name == "dependency":
+        _FixDependencyColumns(columns, has_production, production)
+
+    # Table metadata (from `schema.yaml` file)
+    meta = _get_table_metadata(schema, table_name)
 
     Model = type(class_name, (Base,), {**columns, **meta})
     return Model
@@ -361,13 +332,15 @@ if schema:
         print(f"Could not grant access to {acct} on schema {schema}")
 
 # Create the tables
-# for SCHEMA in SCHEMA_LIST:
-_Dataset(schema)
-_DatasetAlias(schema)
-_Dependency(schema, db_connection.dialect != "sqlite", production=prod_schema)
-_Execution(schema)
-_ExecutionAlias(schema)
-_Provenance(schema)
+for table_name in [
+    "dataset",
+    "dataset_alias",
+    "dependency",
+    "execution",
+    "execution_alias",
+    "provenance",
+]:
+    _BuildTable(schema, table_name, db_connection.dialect != "sqlite", prod_schema)
 
 # Generate the database
 if schema:

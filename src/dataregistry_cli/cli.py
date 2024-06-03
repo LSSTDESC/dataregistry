@@ -63,7 +63,7 @@ def get_parser():
     # --------
     
     # Load the schema information (help strings are loaded from here)
-    schema_data, _ = load_schema()
+    schema_data = load_schema()
     
     # Conversion from string types in `schema.yaml` to SQLAlchemy
     _TYPE_TRANSLATE = {
@@ -93,31 +93,31 @@ def get_parser():
     arg_register_dataset = arg_register_sub.add_parser("dataset", help="Register a dataset")
     
     # Get some information from the `schema.yaml` file
-    for column in schema_data["dataset"]:
+    for column in schema_data["tables"]["dataset"]["column_definitions"]:
         extra_args = {}
     
         # Any default?
-        if schema_data["dataset"][column]["cli_default"] is not None:
-            extra_args["default"] = schema_data["dataset"][column]["cli_default"]
+        if schema_data["tables"]["dataset"]["column_definitions"][column]["cli_default"] is not None:
+            extra_args["default"] = schema_data["tables"]["dataset"]["column_definitions"][column]["cli_default"]
             default_str = f" (default={extra_args['default']})"
         else:
             default_str = ""
     
         # Restricted to choices?
-        if schema_data["dataset"][column]["choices"] is not None:
-            extra_args["choices"] = schema_data["dataset"][column]["choices"]
+        if schema_data["tables"]["dataset"]["column_definitions"][column]["choices"] is not None:
+            extra_args["choices"] = schema_data["tables"]["dataset"]["column_definitions"][column]["choices"]
     
         # Is this a boolean flag?
-        if schema_data["dataset"][column]["type"] == "Boolean":
+        if schema_data["tables"]["dataset"]["column_definitions"][column]["type"] == "Boolean":
             extra_args["action"] = "store_true"
         else:
-            extra_args["type"] = _TYPE_TRANSLATE[schema_data["dataset"][column]["type"]]
+            extra_args["type"] = _TYPE_TRANSLATE[schema_data["tables"]["dataset"]["column_definitions"][column]["type"]]
     
         # Add flag
-        if schema_data["dataset"][column]["cli_optional"]:
+        if schema_data["tables"]["dataset"]["column_definitions"][column]["cli_optional"]:
             arg_register_dataset.add_argument(
                 "--" + column,
-                help=schema_data["dataset"][column]["description"] + default_str,
+                help=schema_data["tables"]["dataset"]["column_definitions"][column]["description"] + default_str,
                 **extra_args,
             )
     

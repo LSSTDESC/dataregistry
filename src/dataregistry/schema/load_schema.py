@@ -25,10 +25,10 @@ def _populate_defaults(mydict):
 
     # Loop over eah row and ingest
     for table in mydict.keys():
-        for row in mydict[table].keys():
+        for row in mydict[table]["column_definitions"].keys():
             for att in atts.keys():
-                if att not in mydict[table][row].keys():
-                    mydict[table][row][att] = atts[att]
+                if att not in mydict[table]["column_definitions"][row].keys():
+                    mydict[table]["column_definitions"][row][att] = atts[att]
 
 
 def load_schema():
@@ -42,6 +42,6 @@ def load_schema():
         yaml_data = yaml.safe_load(file)
 
     # Populate defaults
-    _populate_defaults(yaml_data["column_definitions"])
+    _populate_defaults(yaml_data["tables"])
 
-    return yaml_data["column_definitions"], yaml_data["unique_constraints"]
+    return yaml_data
