@@ -135,9 +135,9 @@ def _get_table_metadata(schema, table):
 
     # Handle column indexes
     if "indexs" in schema_data[table].keys():
-        for index_att in schema_data[table]["index"].keys():
+        for index_att in schema_data[table]["indexs"].keys():
             table_args.append(
-                Index(*schema_data[table]["index"][index_att]["index_list"])
+                Index(*schema_data[table]["indexs"][index_att]["index_list"])
             )
 
     # Handle unique constraints
