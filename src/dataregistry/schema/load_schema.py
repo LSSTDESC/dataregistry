@@ -38,3 +38,15 @@ def load_schema():
     _populate_defaults(yaml_data)
 
     return yaml_data
+
+def load_preset_keywords():
+    """Load the system preset keywords from the yaml file"""
+
+    # Load
+    yaml_file_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "keywords.yaml"
+    )
+    with open(yaml_file_path, "r") as file:
+        yaml_data = yaml.safe_load(file)
+
+    return yaml_data

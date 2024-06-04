@@ -164,6 +164,7 @@ def _insert_dataset_entry(
     location_type="dummy",
     contact_email=None,
     url=None,
+    keywords=[],
 ):
     """
     Wrapper to create dataset entry
@@ -209,6 +210,8 @@ def _insert_dataset_entry(
         Contact email for external datasets
     url : str
         Url for external datasets
+    keywords : list[str]
+        List of keywords to tag
 
     Returns
     -------
@@ -243,6 +246,7 @@ def _insert_dataset_entry(
         location_type=location_type,
         contact_email=contact_email,
         url=url,
+        keywords=keywords,
     )
 
     assert dataset_id is not None, "Trying to create a dataset that already exists"
