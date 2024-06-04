@@ -264,18 +264,7 @@ class DatasetTable(BaseTable):
 
         # Create a new row in the data registry database.
         with self._engine.connect() as conn:
-            prim_key = add_table_row(conn, dataset_table, values, commit=False)
-
-            # Update the rows of the overwritten dataset
-            if len(previous) > 0:
-                update_stmt = (
-                    update(dataset_table)
-                    .where(dataset_table.c.dataset_id.in_(previous))
-                    .values(is_overwritten=True)
-                )
-                conn.execute(update_stmt)
-
-            conn.commit()
+            prim_key = add_table_row(conn, dataset_table, values, commit=True)
 
         # Get dataset characteristics; copy to `root_dir` if requested
         if location_type == "dataregistry":
@@ -287,20 +276,19 @@ class DatasetTable(BaseTable):
             ) = self._handle_data(
                 relative_path, old_location, owner, owner_type, verbose
             )
-            valid_status = 1
         else:
             dataset_organization = location_type
             num_files = 0
             total_size = 0
             ds_creation_date = None
-            valid_status = 0
 
         # Case where user is overwriting the dataset `creation_date`
         if creation_date:
             ds_creation_date = creation_date
 
-        # Copy was successful, update the entry with dataset metadata
+        # Copy was successful
         with self._engine.connect() as conn:
+            # Update the entry with dataset metadata
             update_stmt = (
                 update(dataset_table)
                 .where(dataset_table.c.dataset_id == prim_key)
@@ -314,6 +302,15 @@ class DatasetTable(BaseTable):
             )
             conn.execute(update_stmt)
 
+            # Update overwritten datasets `is_overwritten` values
+            if len(previous) > 0:
+                update_stmt = (
+                    update(dataset_table)
+                    .where(dataset_table.c.dataset_id.in_(previous))
+                    .values(is_overwritten=True)
+                )
+                conn.execute(update_stmt)
+            
             # Add any keyword tags
             if len(keywords) > 0:
                 keyword_table = self._get_table_metadata("dataset_keyword")
