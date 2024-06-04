@@ -1,6 +1,7 @@
-## Version 0.4.2
+## Version 0.5.1
 
-Add ability to tag datasets with keywords/labels to make them easier to catagorize.
+Add ability to tag datasets with keywords/labels to make them easier to
+catagorize.
 
 - Can tag keywords when registering datasets through the Python API or CLI. Can
   add keywords after registration using the `add_keywords()` method in the
@@ -17,6 +18,24 @@ Add ability to tag datasets with keywords/labels to make them easier to catagori
   with a given keyword, for example.
 - Added keywords information to the documentation
 - Can run `dregs show keywords` from CLI to display all pre-registered keywords
+
+## Version 0.5.0
+
+Separate out creation of production schema and non-production schema since,
+under normal circumstances, there will be a single "real" production schema
+(owner type == production only) but possibly multiple non-production schemas to
+keep track of entries for the other owner types.  Add a field to the provenance
+table so a schema can discover the name of its associated production schema and
+form foreign key constraints correctly.
+
+Bumped database version to 2.3.0.  This code requires database version >= 2.3.0
+
+## Version 0.4.2
+
+- Add check during dataset registration to raise an exception if the `root_dir`
+  does not exist
+- Add check before copying any data (i.e., `old_location != None`) that the
+  user has write permission to the `root_dir` folder.
 
 ## Version 0.4.1
 

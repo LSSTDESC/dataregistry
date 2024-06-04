@@ -82,6 +82,10 @@ provenance:
   comment:
     type: "StringLong"
     description: "Comment relating to new provenance entry"
+  associated_production:
+    type: "String"
+    description: "Name of production schema associated with this schema"
+
 
 execution_alias:
   execution_alias_id:
@@ -261,10 +265,13 @@ dataset:
     type: "StringShort"
     description: "UID of person who registered the entry"
     nullable: False
-  access_API:
+  access_api:
     type: "StringShort"
     description: "Describes the software that can read the dataset (e.g., 'gcr-catalogs', 'skyCatalogs')"
     cli_optional: True
+  access_api_configuration:
+    type: "String"
+    description: "Additional (text) info which may be needed by access_api"
   owner:
     type: "String"
     description: "Owner of the dataset (defaults to $USER)"

@@ -319,6 +319,7 @@ if db_connection.dialect == "sqlite":
         raise ValueError("Production not available for sqlite databases")
     # In fact we don't use schemas at all for sqlite
     schema = None
+    prod_schema = None
 else:
     if schema != prod_schema:
         # production schema, tables must already exists and schema
@@ -346,26 +347,6 @@ if schema:
         conn.execute(text(stmt))
         conn.commit()
 
-    # Grant reg_reader access
-    try:
-        with db_connection.engine.connect() as conn:
-            # Grant reg_reader access.
-            acct = "reg_reader"
-            usage_prv = f"GRANT USAGE ON SCHEMA {schema} to {acct}"
-            select_prv = f"GRANT SELECT ON ALL TABLES IN SCHEMA {schema} to {acct}"
-            conn.execute(text(usage_prv))
-            conn.execute(text(select_prv))
-
-            if schema == prod_schema:  # also grant privileges to reg_writer
-                acct = "reg_writer"
-                usage_priv = f"GRANT USAGE ON SCHEMA {schema} to {acct}"
-                select_priv = f"GRANT SELECT ON ALL TABLES IN SCHEMA {schema} to {acct}"
-                conn.execute(text(usage_priv))
-                conn.execute(text(select_priv))
-                conn.commit()
-    except Exception as e:
-        print(f"Could not grant access to {acct} on schema {schema}")
-
 # Create the tables
 # for SCHEMA in SCHEMA_LIST:
 _Dataset(schema)
@@ -383,6 +364,28 @@ if schema:
         Base.metadata.reflect(db_connection.engine, prod_schema)
 Base.metadata.create_all(db_connection.engine)
 
+# Grant access to other accounts.  Can only grant access to objects
+# after they've been created
+try:
+    with db_connection.engine.connect() as conn:
+        # Grant reg_reader access.
+        acct = "reg_reader"
+        usage_prv = f"GRANT USAGE ON SCHEMA {schema} to {acct}"
+        select_prv = f"GRANT SELECT ON ALL TABLES IN SCHEMA {schema} to {acct}"
+        conn.execute(text(usage_prv))
+        conn.execute(text(select_prv))
+
+        if schema == prod_schema:      # also grant privileges to reg_writer
+            acct = "reg_writer"
+            usage_priv = f"GRANT USAGE ON SCHEMA {schema} to {acct}"
+            select_priv = f"GRANT SELECT ON ALL TABLES IN SCHEMA {schema} to {acct}"
+            conn.execute(text(usage_priv))
+            conn.execute(text(select_priv))
+        conn.commit()
+except Exception:
+    print(f"Could not grant access to {acct} on schema {schema}")
+
+
 # Add initial provenance information
 db = DbConnection(args.config, schema)
 prov_id = _insert_provenance(
@@ -392,6 +395,7 @@ prov_id = _insert_provenance(
     _DB_VERSION_PATCH,
     "CREATE",
     comment=_DB_VERSION_COMMENT,
+    associated_production=prod_schema,
 )
 
 # Populate the preset system keywords for datasets
