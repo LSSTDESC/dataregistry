@@ -28,6 +28,8 @@ def _populate_defaults(mydict):
         for row in mydict[table]["column_definitions"].keys():
             for att in atts.keys():
                 if att not in mydict[table]["column_definitions"][row].keys():
+                    if att not in atts.keys():
+                        raise ValueError(f"The {att} attribute has no default value") 
                     mydict[table]["column_definitions"][row][att] = atts[att]
 
 

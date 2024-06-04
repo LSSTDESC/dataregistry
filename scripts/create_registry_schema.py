@@ -131,26 +131,29 @@ def _get_table_metadata(schema, table):
         "__tablename__": table,
     }
 
-    if (
-        "index" in schema_data[table].keys()
-        and "unique_constraints" in schema_data[table].keys()
-    ):
-        meta["__table_args__"] = (
-            UniqueConstraint(
-                *schema_data[table]["unique_constraints"]["unique_list"],
-                name=schema_data[table]["unique_constraints"]["name"],
-            ),
-            Index(*schema_data[table]["index"]["index_list"]),
-            {"schema": schema},
-        )
-    elif "unique_constraints" in schema_data[table].keys():
-        meta["__table_args__"] = (
-            UniqueConstraint(
-                *schema_data[table]["unique_constraints"]["unique_list"],
-                name=schema_data[table]["unique_constraints"]["name"],
-            ),
-            {"schema": schema},
-        )
+    table_args = []
+
+    # Handle column indexes
+    if "indexs" in schema_data[table].keys():
+        for index_att in schema_data[table]["index"].keys():
+            table_args.append(
+                Index(*schema_data[table]["index"][index_att]["index_list"])
+            )
+
+    # Handle unique constraints
+    if "unique_constraints" in schema_data[table].keys():
+        for uq_att in schema_data[table]["unique_constraints"].keys():
+            table_args.append(
+                UniqueConstraint(
+                    *schema_data[table]["unique_constraints"][uq_att]["unique_list"],
+                    name=uq_att,
+                )
+            )
+
+    # Bring it together
+    if len(table_args) > 0:
+        table_args.append({"schema": schema})
+        meta["__table_args__"] = tuple(table_args)
     else:
         meta["__table_args__"] = {"schema": schema}
 
@@ -332,14 +335,7 @@ if schema:
         print(f"Could not grant access to {acct} on schema {schema}")
 
 # Create the tables
-for table_name in [
-    "dataset",
-    "dataset_alias",
-    "dependency",
-    "execution",
-    "execution_alias",
-    "provenance",
-]:
+for table_name in schema_data.keys():
     _BuildTable(schema, table_name, db_connection.dialect != "sqlite", prod_schema)
 
 # Generate the database

@@ -1,4 +1,68 @@
 ---
+# Stores table information for the schema.
+#
+# List each table name under the `tables` key.
+#
+# Column definitions
+# ------------------
+# For each table, the `column_definitions` key is required, which lists, as its keys, each column in the table. Each column contains metadata to describe it, including:
+#
+# - `type` (required):
+#     "String", "Integer", "DateTime", "StringShort", "StringLong", "Boolean",
+#     "Float"
+# - `description` (required):
+#     Text description of the column
+# - `primary_key` (optional, default=False):
+#     True if this column is the primary key of the table
+# - `nullable` (optional, default=False):
+#     True if column is nullable 
+# - `foreign_key` (optional, default=False):
+#     True if this is a foreign_key, then you must also define
+#     `foreign_key_schema`, `foreign_key_table` and `foreign_key_column`.
+# - `cli_optional` (optional, default=False):
+#     Add this column as an optional choice during CLI registration
+# - `cli_default` (optional, default=None):
+#     Default value in the CLI
+# - `modifiable` (optional, default=False):
+#     Is this column modifiable after registration
+# - `choices` (optional, default=None):
+#     If the column only has fixed allowed values  
+#
+# Indexes
+# -------
+# Tables can have an optional `indexes` key, which can have under it any number
+# of indexes for that table.  Each key under `indexes` will be the referenced
+# `name` of the index in the database, and must contain a `index_list` entry
+# underneath, which is a list of columns that builds that index.
+#
+# For example:
+#
+# tables:
+#   mytable:
+#     indexes:
+#       index_name:
+#         index_list: ["column1", "column2"]
+#       seconds_index_name:
+#         index_list: ["column1", "column4"]
+#
+# Unique constraints
+# ------------------
+# Tables can have an optional `unique_constraints` key, which can have under it
+# any number of unique constraints for that table.  Each key under
+# `unique_constraints` will be the referenced `name` of the constraint in the
+# database, and must contain a `unique_list` entry underneath, which is a list
+# of columns that builds that unique constraint.
+#
+# For example:
+#
+# tables:
+#   mytable:
+#     unique_constraints:
+#       unique_constraint_name:
+#         unique_list: ["column1", "column2"]
+#       second_unique_constraint_name:
+#         unique_list: ["column1", "column4"]
+
 tables:
 
   execution:
@@ -92,8 +156,8 @@ tables:
   execution_alias:
 
     unique_constraints:
-      unique_list: ["alias","register_date"]
-      name: "execution_alias_unique"
+      execution_alias_unique:
+        unique_list: ["alias","register_date"]
     
     column_definitions:
       execution_alias_id:
@@ -126,8 +190,8 @@ tables:
   dataset_alias:
 
     unique_constraints:
-      unique_list: ["alias","register_date"]
-      name: "dataset_alias_unique"
+      dataset_alias_unique:
+        unique_list: ["alias","register_date"]
 
     column_definitions:
       dataset_alias_id:
@@ -192,12 +256,13 @@ tables:
   
   dataset:
 
-    index:
-      index_list: ["relative_path", "owner", "owner_type"]
+    indexs:
+      dataset_index:
+        index_list: ["relative_path", "owner", "owner_type"]
 
     unique_constraints:
-      unique_list: ["name", "version_string", "version_suffix", "owner", "owner_type"]
-      name: "dataset_unique"
+      dataset_unique:
+        unique_list: ["name", "version_string", "version_suffix", "owner", "owner_type"]
 
     column_definitions:
       dataset_id:
