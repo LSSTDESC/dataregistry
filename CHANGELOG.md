@@ -1,3 +1,8 @@
+## Version 0.5.2
+
+When registering a dataset that is overwriting a previous dataset, don't tag
+the previous datasets as `valid=False` until any data copying is successful.
+
 ## Version 0.5.1
 
 Add ability to tag datasets with keywords/labels to make them easier to
