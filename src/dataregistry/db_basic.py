@@ -304,3 +304,44 @@ def _insert_provenance(
         id = add_table_row(conn, prov_table, values)
 
         return id
+
+def _insert_keyword(
+    db_connection,
+    keyword,
+    system,
+    creator_uid=None,
+):
+    """
+    Write a row to a keyword table.
+
+    Parameters
+    ----------
+    db_connection : DbConnection class
+        Conenction to the database
+    keyword : str
+        Keyword to add
+    system : bool
+        True if this is a preset system keyword (False for user custom keyword)
+    creator_uid : int, optional
+
+    Returns
+    -------
+    id : int
+        Id of new row in keyword table
+    """
+
+    values = dict()
+    values["keyword"] = keyword
+    values["system"] = system
+    if creator_uid is None:
+        values["creator_uid"] = os.getenv("USER")
+    else:
+        values["creator_uid"] = creator_uid
+    values["creation_date"] = datetime.now()
+    values["active"] = True
+
+    keyword_table = TableMetadata(db_connection, get_db_version=False).get("keyword")
+    with db_connection.engine.connect() as conn:
+        id = add_table_row(conn, keyword_table, values)
+
+        return id

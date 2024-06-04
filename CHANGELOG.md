@@ -1,13 +1,34 @@
-## Version 0.5.0
-Separate out creation of production schema and non-production schema
-since, under normal circumstances, there will be a single "real" production
-schema (owner type == production only) but possibly multiple non-production
-schemas to keep track of entries for the other owner types.
-Add a field to the provenance table so a schema can discover the name of
-its associated production schema and form foreign key constraints correctly.
+## Version 0.5.1
 
-Bumped database version to 2.3.0.  This code requires
-database version >= 2.3.0
+Add ability to tag datasets with keywords/labels to make them easier to
+catagorize.
+
+- Can tag keywords when registering datasets through the Python API or CLI. Can
+  add keywords after registration using the `add_keywords()` method in the
+  Python API.
+- Database version bumped to 3.0.0
+- New table `keyword` that stores both the system and user keywords.
+- New table `dataset_keyword` that links keywords to datasets.
+- System keywords are stored in `src/dataregistry/schema/keywords.yaml`, which
+  is used to populate the `keywords` table during database creation.
+- Added `datareg.Registrar.dataset.get_keywords()` function to return the list
+  of currently registered keywords.
+- When the keyword table is queried, an automatic join is made with the
+  dataset-keyword association table. So the user can query for all datasets
+  with a given keyword, for example.
+- Added keywords information to the documentation
+- Can run `dregs show keywords` from CLI to display all pre-registered keywords
+
+## Version 0.5.0
+
+Separate out creation of production schema and non-production schema since,
+under normal circumstances, there will be a single "real" production schema
+(owner type == production only) but possibly multiple non-production schemas to
+keep track of entries for the other owner types.  Add a field to the provenance
+table so a schema can discover the name of its associated production schema and
+form foreign key constraints correctly.
+
+Bumped database version to 2.3.0.  This code requires database version >= 2.3.0
 
 ## Version 0.4.2
 

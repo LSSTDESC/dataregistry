@@ -95,3 +95,15 @@ def test_get_modifiable_columns(dummy_file):
 
     mod_list = datareg.Registrar.execution.get_modifiable_columns()
     assert "description" in mod_list
+
+def test_get_keywords(dummy_file):
+    """Test the `get_keywords()` function"""
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    keywords = datareg.Registrar.dataset.get_keywords()
+
+    assert "simulation" in keywords
+    assert "observation" in keywords

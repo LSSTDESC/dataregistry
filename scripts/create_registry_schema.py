@@ -12,8 +12,8 @@ from sqlalchemy import (
 from sqlalchemy import ForeignKey, UniqueConstraint, text
 from sqlalchemy.orm import DeclarativeBase
 from dataregistry.db_basic import DbConnection, SCHEMA_VERSION
-from dataregistry.db_basic import _insert_provenance
-from dataregistry.schema import load_schema
+from dataregistry.db_basic import _insert_provenance, _insert_keyword
+from dataregistry.schema import load_schema, load_preset_keywords
 
 """
 A script to create a schema.
@@ -25,6 +25,8 @@ The schema contains the following six tables:
     - "execution_alias" : Table to asscociate "alias" names to executions
     - "dependancy"      : Tracks dependencies between datasets
     - "provenance"      : Contains information about the database/schema
+    - "keyword"         : A list of keywords that can be tagged to datasets
+    - "dataset_keyword" : Many-many link between keywords and datasets
 """
 
 # Conversion from string types in `schema.yaml` to SQLAlchemy
@@ -162,9 +164,7 @@ def _ExecutionAlias(schema):
     meta = {
         "__tablename__": "execution_alias",
         "__table_args__": (
-            UniqueConstraint("alias",
-                             "register_date",
-                             name="execution_u_register"),
+            UniqueConstraint("alias", "register_date", name="execution_u_register"),
             {"schema": schema},
         ),
     }
@@ -185,9 +185,7 @@ def _DatasetAlias(schema):
     meta = {
         "__tablename__": "dataset_alias",
         "__table_args__": (
-            UniqueConstraint("alias",
-                             "register_date",
-                             name="dataset_u_register"),
+            UniqueConstraint("alias", "register_date", name="dataset_u_register"),
             {"schema": schema},
         ),
     }
@@ -209,10 +207,7 @@ def _Dataset(schema):
         "__tablename__": "dataset",
         "__table_args__": (
             UniqueConstraint(
-                "name",
-                "version_string",
-                "version_suffix",
-                name="dataset_u_version"
+                "name", "version_string", "version_suffix", name="dataset_u_version"
             ),
             Index("relative_path", "owner", "owner_type"),
             {"schema": schema},
@@ -248,26 +243,52 @@ def _Dependency(schema, has_production, production="production"):
         if production != "production":
             old_col = columns["input_production_id"]
             fkey = ForeignKey(f"{production}.dataset.dataset_id")
-            new_input_production_id = Column(old_col.name,
-                                             old_col.type,
-                                             fkey)
+            new_input_production_id = Column(old_col.name, old_col.type, fkey)
             del columns["input_production_id"]
             columns["input_production_id"] = new_input_production_id
 
     # Table metadata
-    meta = {"__tablename__": "dependency",
-            "__table_args__": {"schema": schema}}
+    meta = {"__tablename__": "dependency", "__table_args__": {"schema": schema}}
 
     Model = type(class_name, (Base,), {**columns, **meta})
     return Model
 
+def _Keyword(schema):
+    """Stores the list of keywords."""
+
+    class_name = f"{schema}_keyword"
+
+    # Load columns from `schema.yaml` file
+    columns = _get_column_definitions(schema, "keyword")
+
+    # Table metadata
+    meta = {"__tablename__": "keyword", "__table_args__": (UniqueConstraint(
+                "keyword", name="keyword_u_keyword"
+            ), {"schema": schema},)}
+
+    Model = type(class_name, (Base,), {**columns, **meta})
+    return Model
+
+def _DatasetKeyword(schema):
+    """Many-Many link between datasets and keywords."""
+
+    class_name = f"{schema}_dataset_keyword"
+
+    # Load columns from `schema.yaml` file
+    columns = _get_column_definitions(schema, "dataset_keyword")
+
+    # Table metadata
+    meta = {"__tablename__": "dataset_keyword", "__table_args__": {"schema": schema}}
+
+    Model = type(class_name, (Base,), {**columns, **meta})
+    return Model
 
 # The following should be adjusted whenever there is a change to the structure
 # of the database tables.
-_DB_VERSION_MAJOR = 2
-_DB_VERSION_MINOR = 3
+_DB_VERSION_MAJOR = 3
+_DB_VERSION_MINOR = 0
 _DB_VERSION_PATCH = 0
-_DB_VERSION_COMMENT = "Add `provenance.associated_production`;  lowercase for all dataset table columne names"
+_DB_VERSION_COMMENT = "Add keywords and dataset_keywords table"
 
 # Parse command line arguments
 parser = argparse.ArgumentParser(
@@ -281,7 +302,8 @@ parser.add_argument(
     default=f"{SCHEMA_VERSION}",
 )
 parser.add_argument(
-    "--production-schema", default="production",
+    "--production-schema",
+    default="production",
     help="name of schema containing production tables.",
 )
 parser.add_argument("--config", help="Path to the data registry config file")
@@ -312,7 +334,11 @@ else:
                 conn.commit()
         except Exception:
             raise RuntimeError("production schema does not exist or is ill-formed")
-        if result["db_version_major"][0] != _DB_VERSION_MAJOR | int(result["db_version_minor"][0]) > _DB_VERSION_MINOR:
+        if (
+            result["db_version_major"][0]
+            != _DB_VERSION_MAJOR | int(result["db_version_minor"][0])
+            > _DB_VERSION_MINOR
+        ):
             raise RuntimeError("production schema version incompatible")
 
 if schema:
@@ -325,11 +351,12 @@ if schema:
 # for SCHEMA in SCHEMA_LIST:
 _Dataset(schema)
 _DatasetAlias(schema)
-_Dependency(schema, db_connection.dialect != "sqlite",
-            production=prod_schema)
+_Dependency(schema, db_connection.dialect != "sqlite", production=prod_schema)
 _Execution(schema)
 _ExecutionAlias(schema)
 _Provenance(schema)
+_DatasetKeyword(schema)
+_Keyword(schema)
 
 # Generate the database
 if schema:
@@ -360,8 +387,9 @@ except Exception:
 
 
 # Add initial provenance information
+db = DbConnection(args.config, schema)
 prov_id = _insert_provenance(
-    DbConnection(args.config, schema),
+    db,
     _DB_VERSION_MAJOR,
     _DB_VERSION_MINOR,
     _DB_VERSION_PATCH,
@@ -369,3 +397,8 @@ prov_id = _insert_provenance(
     comment=_DB_VERSION_COMMENT,
     associated_production=prod_schema,
 )
+
+# Populate the preset system keywords for datasets
+keywords = load_preset_keywords()
+for att in keywords["dataset"]:
+    _insert_keyword(db, att, True)

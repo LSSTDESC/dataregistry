@@ -15,6 +15,7 @@ from .registrar_util import (
     get_directory_info,
 )
 from .dataset_util import set_dataset_status, get_dataset_status
+from dataregistry.db_basic import add_table_row
 
 # Allowed owner types
 _OWNER_TYPES = {"user", "project", "group", "production"}
@@ -124,15 +125,18 @@ class BaseTable:
             if not self.schema_yaml[self.which_table][key]["modifiable"]:
                 raise ValueError(f"The column {key} is not modifiable")
 
-        # Update the entries
         with self._engine.connect() as conn:
-            update_stmt = (
-                update(my_table)
-                .where(getattr(my_table.c, self.entry_id) == entry_id)
-                .values(modify_fields)
-            )
-            conn.execute(update_stmt)
+            # Update the metadata
+            if len(modify_fields.keys()) > 0:
+                update_stmt = (
+                    update(my_table)
+                    .where(getattr(my_table.c, self.entry_id) == entry_id)
+                    .values(modify_fields)
+                )
+                conn.execute(update_stmt)
+            
             conn.commit()
+
 
     def find_entry(self, entry_id, raise_if_not_found=False):
         """
@@ -188,3 +192,27 @@ class BaseTable:
                 mod_list.append(att)
 
         return mod_list
+
+    def get_keywords(self):
+        """
+        Returns the list of system keywords that are allowed.
+
+        Returns
+        -------
+        keywords : list[str]
+        """
+
+        keywords = []
+
+        # Query for all keywords
+        keyword_table = self._get_table_metadata("keyword")
+        stmt = select(keyword_table.c.keyword)
+
+        with self._engine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        for r in result:
+            keywords.append(r.keyword)
+
+        return keywords

@@ -42,4 +42,4 @@ where = ["src"]
 dregs = "dataregistry_cli.cli:main"
 
 [tool.setuptools.package-data]
-"dataregistry" = ["site_config/site_rootdir.yaml", "schema/schema.yaml"]
+"dataregistry" = ["site_config/site_rootdir.yaml", "schema/*.yaml"]
