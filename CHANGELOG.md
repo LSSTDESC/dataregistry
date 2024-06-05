@@ -1,3 +1,10 @@
+## Version 0.5.3
+
+- Update the `schema.yaml` file to include unique constraints and table
+  indexes.  
+- Update the unique constraints for the dataset table to be `owner`,
+  `owner_type`, `name`, `version`, `version_suffix`.
+
 ## Version 0.5.2
 
 When registering a dataset that is overwriting a previous dataset, don't tag
