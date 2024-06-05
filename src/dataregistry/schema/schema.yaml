@@ -15,7 +15,7 @@
 # - `primary_key` (optional, default=False):
 #     True if this column is the primary key of the table
 # - `nullable` (optional, default=False):
-#     True if column is nullable 
+#     True if column is nullable
 # - `foreign_key` (optional, default=False):
 #     True if this is a foreign_key, then you must also define
 #     `foreign_key_schema`, `foreign_key_table` and `foreign_key_column`.
@@ -26,7 +26,7 @@
 # - `modifiable` (optional, default=False):
 #     Is this column modifiable after registration
 # - `choices` (optional, default=None):
-#     If the column only has fixed allowed values  
+#     If the column only has fixed allowed values
 #
 # Indexes
 # -------
@@ -117,7 +117,7 @@ tables:
         nullable: False
 
   execution:
-    
+
     column_definitions:
       execution_id:
         type: "Integer"
@@ -147,7 +147,7 @@ tables:
         type: "StringShort"
         description: "UID of person who registered the entry"
         nullable: False
-  
+
   provenance:
 
     column_definitions:
@@ -212,7 +212,7 @@ tables:
     unique_constraints:
       execution_alias_unique:
         unique_list: ["alias","register_date"]
-    
+
     column_definitions:
       execution_alias_id:
         description: "Unique identifier for execution alias"
@@ -240,7 +240,7 @@ tables:
         foreign_key_table: "execution"
         foreign_key_column: "execution_id"
         description: "Execution this alias is linked to"
-  
+
   dataset_alias:
 
     unique_constraints:
@@ -274,7 +274,7 @@ tables:
         foreign_key_table: "dataset"
         foreign_key_column: "dataset_id"
         description: "Dataset this alias is linked to"
-  
+
   dependency:
 
     column_definitions:
@@ -307,7 +307,7 @@ tables:
         foreign_key_table: "execution"
         foreign_key_column: "execution_id"
         description: "Execution this dependency is linked to"
-  
+
   dataset:
 
     indexs:
@@ -368,6 +368,9 @@ tables:
         type: "StringShort"
         description: "Describes the software that can read the dataset (e.g., 'gcr-catalogs', 'skyCatalogs')"
         cli_optional: True
+      access_api_configuration:
+        type: "String"
+        description: "Additional (text) info which may be needed by access_api"
       owner:
         type: "String"
         description: "Owner of the dataset (defaults to $USER)"
