@@ -43,7 +43,7 @@ def register_dataset(args):
         name=args.name,
         version_suffix=args.version_suffix,
         creation_date=args.creation_date,
-        access_API=args.access_API,
+        access_api=args.access_api,
         execution_id=args.execution_id,
         is_overwritable=args.is_overwritable,
         description=args.description,
@@ -60,6 +60,7 @@ def register_dataset(args):
         location_type=args.location_type,
         url=args.url,
         contact_email=args.contact_email,
+        keywords=args.keywords,
     )
 
     print(f"Created dataset entry with id {new_id}")

@@ -12,8 +12,8 @@ from sqlalchemy import (
 from sqlalchemy import ForeignKey, UniqueConstraint, text
 from sqlalchemy.orm import DeclarativeBase
 from dataregistry.db_basic import DbConnection, SCHEMA_VERSION
-from dataregistry.db_basic import _insert_provenance
-from dataregistry.schema import load_schema
+from dataregistry.db_basic import _insert_provenance, _insert_keyword
+from dataregistry.schema import load_schema, load_preset_keywords
 
 """
 A script to create a schema.
@@ -25,6 +25,8 @@ The schema contains the following six tables:
     - "execution_alias" : Table to asscociate "alias" names to executions
     - "dependancy"      : Tracks dependencies between datasets
     - "provenance"      : Contains information about the database/schema
+    - "keyword"         : A list of keywords that can be tagged to datasets
+    - "dataset_keyword" : Many-many link between keywords and datasets
 """
 
 # Conversion from string types in `schema.yaml` to SQLAlchemy
@@ -216,7 +218,6 @@ def _FixDependencyColumns(columns, has_production, production):
             del columns["input_production_id"]
             columns["input_production_id"] = new_input_production_id
 
-
 def _BuildTable(schema, table_name, has_production, production):
     """
     Builds a generic schema table from the information in the `schema.yaml` file.
@@ -250,13 +251,42 @@ def _BuildTable(schema, table_name, has_production, production):
     Model = type(class_name, (Base,), {**columns, **meta})
     return Model
 
+def _Keyword(schema):
+    """Stores the list of keywords."""
+
+    class_name = f"{schema}_keyword"
+
+    # Load columns from `schema.yaml` file
+    columns = _get_column_definitions(schema, "keyword")
+
+    # Table metadata
+    meta = {"__tablename__": "keyword", "__table_args__": (UniqueConstraint(
+                "keyword", name="keyword_u_keyword"
+            ), {"schema": schema},)}
+
+    Model = type(class_name, (Base,), {**columns, **meta})
+    return Model
+
+def _DatasetKeyword(schema):
+    """Many-Many link between datasets and keywords."""
+
+    class_name = f"{schema}_dataset_keyword"
+
+    # Load columns from `schema.yaml` file
+    columns = _get_column_definitions(schema, "dataset_keyword")
+
+    # Table metadata
+    meta = {"__tablename__": "dataset_keyword", "__table_args__": {"schema": schema}}
+
+    Model = type(class_name, (Base,), {**columns, **meta})
+    return Model
 
 # The following should be adjusted whenever there is a change to the structure
 # of the database tables.
-_DB_VERSION_MAJOR = 2
-_DB_VERSION_MINOR = 2
+_DB_VERSION_MAJOR = 3
+_DB_VERSION_MINOR = 0
 _DB_VERSION_PATCH = 0
-_DB_VERSION_COMMENT = "Add `location_type` for dataset table"
+_DB_VERSION_COMMENT = "Add keywords and dataset_keywords table"
 
 # Parse command line arguments
 parser = argparse.ArgumentParser(
@@ -287,6 +317,7 @@ if db_connection.dialect == "sqlite":
         raise ValueError("Production not available for sqlite databases")
     # In fact we don't use schemas at all for sqlite
     schema = None
+    prod_schema = None
 else:
     if schema != prod_schema:
         # production schema, tables must already exists and schema
@@ -344,12 +375,41 @@ if schema:
         Base.metadata.reflect(db_connection.engine, prod_schema)
 Base.metadata.create_all(db_connection.engine)
 
+# Grant access to other accounts.  Can only grant access to objects
+# after they've been created
+try:
+    with db_connection.engine.connect() as conn:
+        # Grant reg_reader access.
+        acct = "reg_reader"
+        usage_prv = f"GRANT USAGE ON SCHEMA {schema} to {acct}"
+        select_prv = f"GRANT SELECT ON ALL TABLES IN SCHEMA {schema} to {acct}"
+        conn.execute(text(usage_prv))
+        conn.execute(text(select_prv))
+
+        if schema == prod_schema:      # also grant privileges to reg_writer
+            acct = "reg_writer"
+            usage_priv = f"GRANT USAGE ON SCHEMA {schema} to {acct}"
+            select_priv = f"GRANT SELECT ON ALL TABLES IN SCHEMA {schema} to {acct}"
+            conn.execute(text(usage_priv))
+            conn.execute(text(select_priv))
+        conn.commit()
+except Exception:
+    print(f"Could not grant access to {acct} on schema {schema}")
+
+
 # Add initial provenance information
+db = DbConnection(args.config, schema)
 prov_id = _insert_provenance(
-    DbConnection(args.config, schema),
+    db,
     _DB_VERSION_MAJOR,
     _DB_VERSION_MINOR,
     _DB_VERSION_PATCH,
     "CREATE",
     comment=_DB_VERSION_COMMENT,
+    associated_production=prod_schema,
 )
+
+# Populate the preset system keywords for datasets
+keywords = load_preset_keywords()
+for att in keywords["dataset"]:
+    _insert_keyword(db, att, True)

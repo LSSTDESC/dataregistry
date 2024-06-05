@@ -1,15 +1,12 @@
 from sqlalchemy import engine_from_config
 from sqlalchemy.engine import make_url
-from sqlalchemy import MetaData, Table, Column
-from sqlalchemy import column, text, insert, select
-from sqlalchemy.exc import DBAPIError, IntegrityError
+from sqlalchemy import MetaData
+from sqlalchemy import column,  insert, select
 import yaml
 import os
 from datetime import datetime
-from collections import namedtuple
 from dataregistry import __version__
-from dataregistry.git_util import get_git_info
-from git import InvalidGitRepositoryError
+from dataregistry.exceptions import DataRegistryException
 
 """
 Low-level utility routines and classes for accessing the registry
@@ -61,7 +58,7 @@ def _get_dataregistry_config(config_file=None, verbose=False):
     elif os.getenv("DATAREG_CONFIG"):
         if verbose:
             print(
-                f"Using DATAREG_CONFIG env var for config file",
+                "Using DATAREG_CONFIG env var for config file",
                 f"({os.getenv('DATAREG_CONFIG')})",
             )
         return os.getenv("DATAREG_CONFIG")
@@ -163,7 +160,7 @@ class TableMetadata:
         db_connection : DbConnection object
             Stores information about the DB connection
         get_db_version : bool, optional
-            True to extract the DB version from the provinance table
+            True to extract the DB version from the provenance table
         """
 
         self._metadata = MetaData(schema=db_connection.schema)
@@ -173,20 +170,33 @@ class TableMetadata:
         # Load all existing tables
         self._metadata.reflect(self._engine, db_connection.schema)
 
-        # Fetch and save db versioning if present and requested
+        # Fetch and save db versioning, assoc. production schema
+        # if present and requested
+        self._prod_schema = None
         if db_connection.dialect == "sqlite":
             prov_name = "provenance"
         else:
             prov_name = ".".join([self._schema, "provenance"])
+
+        if prov_name not in self._metadata.tables:
+            raise DataRegistryException("Incompatible database: no Provenance table")
+
         if prov_name in self._metadata.tables and get_db_version:
             prov_table = self._metadata.tables[prov_name]
+            stmt = select(column("associated_production")).select_from(prov_table)
+            stmt = stmt.order_by(prov_table.c.provenance_id.desc())
+            with self._engine.connect() as conn:
+                results = conn.execute(stmt)
+                r = results.fetchone()
+            self._prod_schema = r[0]
+
             cols = ["db_version_major", "db_version_minor", "db_version_patch"]
+
             stmt = select(*[column(c) for c in cols])
             stmt = stmt.select_from(prov_table)
             stmt = stmt.order_by(prov_table.c.provenance_id.desc())
             with self._engine.connect() as conn:
                 results = conn.execute(stmt)
-                conn.commit()
             r = results.fetchone()
             self._db_major = r[0]
             self._db_minor = r[1]
@@ -215,9 +225,8 @@ class TableMetadata:
         if tbl not in self._metadata.tables.keys():
             try:
                 self._metadata.reflect(self._engine, only=[tbl])
-            except:
+            except Exception:
                 raise ValueError(f"No such table {tbl}")
-
         return self._metadata.tables[tbl]
 
 
@@ -228,6 +237,7 @@ def _insert_provenance(
     db_version_patch,
     update_method,
     comment=None,
+    associated_production="production",
 ):
     """
     Write a row to the provenance table. Includes version of db schema,
@@ -242,12 +252,17 @@ def _insert_provenance(
         One of "create", "migrate"
     comment : str, optional
         Briefly describe reason for new version
+    associated_production : str, defaults to "production"
+        Name of production schema, if any, this schema may reference
 
     Returns
     -------
     id : int
         Id of new row in provenance table
     """
+    from dataregistry.git_util import get_git_info
+    from git import InvalidGitRepositoryError
+
     version_fields = __version__.split(".")
     patch = version_fields[2]
     suffix = None
@@ -274,16 +289,59 @@ def _insert_provenance(
         git_hash, is_clean = get_git_info(pkg_root)
         values["git_hash"] = git_hash
         values["repo_is_clean"] = is_clean
-    except InvalidGitRepositoryError as e:
+    except InvalidGitRepositoryError:
         # no git repo; this is an install. Code version is sufficient
         pass
 
     values["update_method"] = update_method
     if comment is not None:
         values["comment"] = comment
-
-    prov_table = TableMetadata(db_connection, get_db_version=False).get("provenance")
+    if associated_production is not None:  # None is normal for sqlite
+        values["associated_production"] = associated_production
+    prov_table = TableMetadata(db_connection,
+                               get_db_version=False).get("provenance")
     with db_connection.engine.connect() as conn:
         id = add_table_row(conn, prov_table, values)
+
+        return id
+
+def _insert_keyword(
+    db_connection,
+    keyword,
+    system,
+    creator_uid=None,
+):
+    """
+    Write a row to a keyword table.
+
+    Parameters
+    ----------
+    db_connection : DbConnection class
+        Conenction to the database
+    keyword : str
+        Keyword to add
+    system : bool
+        True if this is a preset system keyword (False for user custom keyword)
+    creator_uid : int, optional
+
+    Returns
+    -------
+    id : int
+        Id of new row in keyword table
+    """
+
+    values = dict()
+    values["keyword"] = keyword
+    values["system"] = system
+    if creator_uid is None:
+        values["creator_uid"] = os.getenv("USER")
+    else:
+        values["creator_uid"] = creator_uid
+    values["creation_date"] = datetime.now()
+    values["active"] = True
+
+    keyword_table = TableMetadata(db_connection, get_db_version=False).get("keyword")
+    with db_connection.engine.connect() as conn:
+        id = add_table_row(conn, keyword_table, values)
 
         return id
