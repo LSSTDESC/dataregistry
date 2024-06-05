@@ -118,11 +118,11 @@ class BaseTable:
         # Loop over each column to be modified
         for key, v in modify_fields.items():
             # Make sure the column is in the schema
-            if key not in self.schema_yaml[self.which_table].keys():
+            if key not in self.schema_yaml["tables"][self.which_table]["column_definitions"].keys():
                 raise ValueError(f"The column {key} does not exist in the schema")
 
             # Make sure the column is modifiable
-            if not self.schema_yaml[self.which_table][key]["modifiable"]:
+            if not self.schema_yaml["tables"][self.which_table]["column_definitions"][key]["modifiable"]:
                 raise ValueError(f"The column {key} is not modifiable")
 
         with self._engine.connect() as conn:
@@ -187,8 +187,8 @@ class BaseTable:
         """
 
         mod_list = []
-        for att in self.schema_yaml[self.which_table]:
-            if self.schema_yaml[self.which_table][att]["modifiable"]:
+        for att in self.schema_yaml["tables"][self.which_table]["column_definitions"]:
+            if self.schema_yaml["tables"][self.which_table]["column_definitions"][att]["modifiable"]:
                 mod_list.append(att)
 
         return mod_list

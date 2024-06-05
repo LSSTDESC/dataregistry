@@ -13,15 +13,24 @@ def _populate_defaults(mydict):
     """
 
     # Attributes we check for and populate with these default value if missing
-    atts = {"nullable": True, "primary_key": False, "foreign_key": False, "cli_optional": False,
-            "cli_default": None, "choices": None, "modifiable": False}
+    atts = {
+        "nullable": True,
+        "primary_key": False,
+        "foreign_key": False,
+        "cli_optional": False,
+        "cli_default": None,
+        "choices": None,
+        "modifiable": False,
+    }
 
     # Loop over eah row and ingest
     for table in mydict.keys():
-        for row in mydict[table].keys():
+        for row in mydict[table]["column_definitions"].keys():
             for att in atts.keys():
-                if att not in mydict[table][row].keys():
-                    mydict[table][row][att] = atts[att]
+                if att not in mydict[table]["column_definitions"][row].keys():
+                    if att not in atts.keys():
+                        raise ValueError(f"The {att} attribute has no default value") 
+                    mydict[table]["column_definitions"][row][att] = atts[att]
 
 
 def load_schema():
@@ -35,7 +44,7 @@ def load_schema():
         yaml_data = yaml.safe_load(file)
 
     # Populate defaults
-    _populate_defaults(yaml_data)
+    _populate_defaults(yaml_data["tables"])
 
     return yaml_data
 
