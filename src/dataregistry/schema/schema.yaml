@@ -65,6 +65,57 @@
 
 tables:
 
+  keyword:
+    unique_constraints:
+      keyword_unique:
+        unique_list: ["keyword"]
+
+    column_definitions:
+      keyword_id:
+        description: "Unique identifier for keyword"
+        type: "Integer"
+        primary_key: True
+      keyword:
+        type: "StringLong"
+        description: "The keyword (max 250 characters)"
+        nullable: False
+      system:
+        type: "Boolean"
+        description: "True is this is a preset system keyword. System keywords cannot be disabled."
+        nullable: False
+      active:
+        type: "Boolean"
+        description: "True if this keyword is active and avaliable to use"
+        nullable: False
+      creator_uid:
+        type: "StringShort"
+        description: "UID of keyword creator"
+        nullable: False
+      creation_date:
+        type: "DateTime"
+        description: "When this keyword was created"
+        nullable: False
+
+  dataset_keyword:
+    column_definitions:
+      dataset_keyword_id:
+        type: "Integer"
+        primary_key: True
+      dataset_id:
+        type: "Integer"
+        foreign_key: True
+        foreign_key_schema: "self"
+        foreign_key_table: "dataset"
+        foreign_key_column: "dataset_id"
+        nullable: False
+      keyword_id:
+        type: "Integer"
+        foreign_key: True
+        foreign_key_schema: "self"
+        foreign_key_table: "keyword"
+        foreign_key_column: "keyword_id"
+        nullable: False
+
   execution:
     
     column_definitions:
@@ -152,7 +203,10 @@ tables:
       comment:
         type: "StringLong"
         description: "Comment relating to new provenance entry"
-  
+      associated_production:
+        type: "String"
+        description: "Name of production schema associated with this schema"
+
   execution_alias:
 
     unique_constraints:
@@ -310,7 +364,7 @@ tables:
         type: "StringShort"
         description: "UID of person who registered the entry"
         nullable: False
-      access_API:
+      access_api:
         type: "StringShort"
         description: "Describes the software that can read the dataset (e.g., 'gcr-catalogs', 'skyCatalogs')"
         cli_optional: True
