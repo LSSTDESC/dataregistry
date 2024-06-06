@@ -184,17 +184,23 @@ class DatasetTable(BaseTable):
                     "Only owner_type='production' can go in the production schema"
                 )
 
-        # If `name` not passed, automatically generate a name from the relative path
+        # If `name` not passed, automatically generate a name from the
+        # relative path
         if name is None:
             name = _name_from_relpath(relative_path)
 
-        # Look for previous entries. Fail if not overwritable
         dataset_table = self._get_table_metadata("dataset")
-        previous = self._find_previous(relative_path, owner, owner_type)
 
-        if previous is None:
-            print(f"Dataset {relative_path} exists, and is not overwritable")
-            return None, None
+        # Look for previous entries at the same location if dataset
+        # is in our managed area.   Fail if not overwritable
+        if location_type in ["dataregistry", "dummy"]:
+            previous = self._find_previous(relative_path, owner, owner_type)
+
+            if previous is None:
+                print(f"Dataset {relative_path} exists, and is not overwritable")
+                return None, None
+        else:
+            previous = []
 
         # Deal with version string (non-special case)
         if version not in ["major", "minor", "patch"]:
@@ -310,7 +316,7 @@ class DatasetTable(BaseTable):
                     .values(is_overwritten=True)
                 )
                 conn.execute(update_stmt)
-            
+
             # Add any keyword tags
             if len(keywords) > 0:
                 keyword_table = self._get_table_metadata("dataset_keyword")
