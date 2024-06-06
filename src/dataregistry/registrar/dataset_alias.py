@@ -13,9 +13,10 @@ class DatasetAliasTable(BaseTable):
         self.which_table = "dataset_alias"
         self.entry_id = "dataset_alias_id"
 
-    def register(self, aliasname, dataset_id):
+    def register(self, aliasname, dataset_id, ref_alias_id=None):
         """
         Create a new `dataset_alias` entry in the DESC data registry.
+        It may refer to a dataset (default) or another alias
 
         Any args marked with '**' share their name with the associated column
         in the registry schema. Descriptions of what these columns are can be
@@ -25,6 +26,8 @@ class DatasetAliasTable(BaseTable):
         ----------
         aliasname** : str
         dataset_id** : int
+        ref_alias_id : int
+
 
         Returns
         -------
@@ -32,9 +35,16 @@ class DatasetAliasTable(BaseTable):
             The dataset_alias ID of the new row relating to this entry
         """
 
+        if not dataset_id and not ref_alias_id:
+            raise ValueError("""DatasetAliasTable.register: one of dataset_id,
+                                ref_alias_id must have a value""")
+
         now = datetime.now()
         values = {"alias": aliasname}
-        values["dataset_id"] = dataset_id
+        if dataset_id:
+            values["dataset_id"] = dataset_id
+        else:
+            values["ref_alias_id"] = ref_alias_id
         values["register_date"] = now
         values["creator_uid"] = self._uid
 

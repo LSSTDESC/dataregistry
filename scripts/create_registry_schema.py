@@ -284,9 +284,9 @@ def _DatasetKeyword(schema):
 # The following should be adjusted whenever there is a change to the structure
 # of the database tables.
 _DB_VERSION_MAJOR = 3
-_DB_VERSION_MINOR = 0
+_DB_VERSION_MINOR = 1
 _DB_VERSION_PATCH = 0
-_DB_VERSION_COMMENT = "Add keywords and dataset_keywords table"
+_DB_VERSION_COMMENT = "Add dataset.access_api_configuration and dataset_alias.ref_alias_id"
 
 # Parse command line arguments
 parser = argparse.ArgumentParser(

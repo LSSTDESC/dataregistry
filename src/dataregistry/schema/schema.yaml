@@ -254,7 +254,7 @@ tables:
         primary_key: True
       supersede_date:
         type: "DateTime"
-        description: "If a new entry has been added to the table with the same alias name (but different `dataset_id`), the old entry will be superseded. `supersede_date` in the old entry tracks when this happened. If the entry has not been superseded, `supersede_date` will be None"
+        description: "If a new entry has been added to the table with the same alias name (but different `dataset_id`or `alias_id`), the old entry will be superseded. `supersede_date` in the old entry tracks when this happened. If the entry has not been superseded, `supersede_date` will be None"
       creator_uid:
         type: "StringShort"
         description: "UID of person who registered the entry"
@@ -265,7 +265,7 @@ tables:
         nullable: False
       alias:
         type: "String"
-        description: "User given dataset alias name"
+        description: "User-given dataset alias name"
         nullable: False
       dataset_id:
         type: "Integer"
@@ -274,6 +274,13 @@ tables:
         foreign_key_table: "dataset"
         foreign_key_column: "dataset_id"
         description: "Dataset this alias is linked to"
+      ref_alias_id:
+        type: "Integer"
+        foreign_key: True
+        foreign_key_schema: "self"
+        foreign_key_table: "dataset_alias"
+        foreign_key_column: "dataset_alias_id"
+        description: "Alias this alias is linked to"
 
   dependency:
 
@@ -439,11 +446,11 @@ tables:
         description: "Date the dataset was last moved"
       location_type:
         type: "String"
-        choices: ["dataregistry", "external", "dummy"]
+        choices: ["dataregistry", "external", "meta_only",  "dummy"]
         cli_default: "dataregistry"
         cli_optional: True
         nullable: False
-        description: "What is the physical location of the data? 'dataregistry' means the data is located within the `<root_dir>` and managed by the `dataregistry`, external means the data is not managed by the dataregistry, either because it is off-site or because it is stored outside <root_dir> therefore there is only a database entry (in this case a `url` or `contact_email` must be provided during registration) and 'dummy' is a dataset for testing purposes only (only a database entry is created in this case)."
+        description: "What is the physical location of the data? 'dataregistry' means the data is located within the `<root_dir>` and managed by the `dataregistry`, external means the data is not managed by the dataregistry, either because it is off-site or because it is stored outside <root_dir> therefore there is only a database entry (in this case a `url` or `contact_email` must be provided during registration), 'meta_only' is for a legitimate entry involving no actual data and 'dummy' is a dataset for internal testing purposes only. The data registry will only attempt to manage data created with this field set to 'dataregistry'."
       url:
         type: "String"
         description: "URL that points to the data (used in the case of external datasets, i.e., `location_type='external'`)."
