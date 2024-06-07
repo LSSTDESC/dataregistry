@@ -281,6 +281,10 @@ tables:
         foreign_key_table: "dataset_alias"
         foreign_key_column: "dataset_alias_id"
         description: "Alias this alias is linked to"
+      access_api:
+        type: "StringShort"
+        description: "Describes the software that can read the dataset (e.g., 'gcr-catalogs', 'skyCatalogs')"
+        cli_optional: True
 
   dependency:
 

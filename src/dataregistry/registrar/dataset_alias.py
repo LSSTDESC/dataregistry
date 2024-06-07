@@ -13,7 +13,8 @@ class DatasetAliasTable(BaseTable):
         self.which_table = "dataset_alias"
         self.entry_id = "dataset_alias_id"
 
-    def register(self, aliasname, dataset_id, ref_alias_id=None):
+    def register(self, aliasname, dataset_id, ref_alias_id=None,
+                 access_api=None):
         """
         Create a new `dataset_alias` entry in the DESC data registry.
         It may refer to a dataset (default) or another alias
@@ -27,6 +28,7 @@ class DatasetAliasTable(BaseTable):
         aliasname** : str
         dataset_id** : int
         ref_alias_id : int
+        access_api   : str
 
 
         Returns
@@ -45,6 +47,8 @@ class DatasetAliasTable(BaseTable):
             values["dataset_id"] = dataset_id
         else:
             values["ref_alias_id"] = ref_alias_id
+        if access_api:
+            values["access_api"] = access_api
         values["register_date"] = now
         values["creator_uid"] = self._uid
 
