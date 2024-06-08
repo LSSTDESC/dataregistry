@@ -2,6 +2,7 @@ from datetime import datetime
 
 from dataregistry.db_basic import add_table_row
 from sqlalchemy import update
+from .registrar_util import _read_configuration_file
 
 from .base_table_class import BaseTable
 
@@ -14,7 +15,7 @@ class DatasetAliasTable(BaseTable):
         self.entry_id = "dataset_alias_id"
 
     def register(self, aliasname, dataset_id, ref_alias_id=None,
-                 access_api=None):
+                 access_api=None, access_api_configuration=None):
         """
         Create a new `dataset_alias` entry in the DESC data registry.
         It may refer to a dataset (default) or another alias
@@ -25,10 +26,13 @@ class DatasetAliasTable(BaseTable):
 
         Parameters
         ----------
-        aliasname** : str
-        dataset_id** : int
-        ref_alias_id : int
-        access_api   : str
+        aliasname                  : str  alias name
+        dataset_id**               : int  not None if alias refers to dataset
+        ref_alias_id**             : int  not None if alias refers to
+                                          another alias
+        access_api**               : str  api, if any, which can read the
+                                          dataset
+        access_api_configuration** : str  extra information for access_api
 
 
         Returns
@@ -49,6 +53,10 @@ class DatasetAliasTable(BaseTable):
             values["ref_alias_id"] = ref_alias_id
         if access_api:
             values["access_api"] = access_api
+        if access_api_configuration:
+            values["access_api_configuration"] = _read_configuration_file(
+                access_api_configuration, None
+            )
         values["register_date"] = now
         values["creator_uid"] = self._uid
 

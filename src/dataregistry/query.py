@@ -467,7 +467,7 @@ class Query:
         """
         tbl = self._tables["dataset_alias"]
         if isinstance(alias, int):
-            filter_column = "dataset_alias.dataset_alias_id"
+            filter_column = "resolve_alias: dataset_alias.dataset_alias_id"
         elif isinstance(alias, str):
             filter_column = "dataset_alias.alias"
         else:
@@ -494,3 +494,97 @@ class Query:
             return row[0], "dataset"
         else:
             return row[1], "alias"
+
+    def resolve_alias_fully(self, alias):
+        """
+          Given alias id or name, return id of dataset it ultimately
+          references
+        """
+        id, id_type = self.resolve(alias)
+        while id_type == "alias":
+            id, id_type = self.resolve(id)
+
+        return id
+
+    def find_aliases(
+        self,
+        property_names=None,
+        filters=[],
+        verbose=False,
+        return_format="property_dict",
+    ):
+
+        """
+        Return requested columns from dataset_alias table, subject to filters
+
+        Parameters
+        ----------
+        property_names : list(str), optional
+            List of database columns to return (SELECT clause)
+        filters : list(Filter), optional
+            List of filters (WHERE clauses) to apply
+        verbose : bool, optional
+            True for more output relating to the query
+        return_format : str, optional
+            The format the query result is returned in.  Options are
+            "CursorResult" (SQLAlchemy default format), "DataFrame", or
+            "proprety_dict". Note this is not case sensitive.
+        """
+
+        # Make sure return format is valid.
+        _allowed_return_formats = ["cursorresult", "dataframe", "property_dict"]
+        if return_format.lower() not in _allowed_return_formats:
+            raise ValueError(
+                f"{return_format} is a bad return format (valid={_allowed_return_formats})"
+            )
+
+        # This is always a query of a single table: dataset_alias
+        tbl_name = "dataset_alias"
+        tbl = self._tables[tbl_name]
+        if property_names is None:
+            stmt = select("*").select_from(tbl)
+
+        else:
+            cols = []
+            for p in property_names:
+                cmps = p.split(".")
+                if len(cmps) == 1:
+                    cols.append(tbl.c[p])
+                elif len(cmps) == 2:
+                    if cmps[0] == "dataset_alias":  # all is well
+                        cols.append(tbl.c[cmps[1]])
+                    else:
+                        raise DataRegistryException(
+                            f"find_aliases: no such column {p}"
+                        )
+                else:
+                    raise DataRegistryException(
+                        f"find_aliases: no such column {p}"
+                    )
+            stmt = select(*[p.label("dataset_alias." + p.name) for p in cols])
+        # Append filters if acceptable
+        if len(filters) > 0:
+            for f in filters:
+                stmt = self._render_filter(f, stmt)
+
+        # Report the constructed SQL query
+        if verbose:
+            print(f"Executing query: {stmt}")
+
+        # Execute the query
+        with self._engine.connect() as conn:
+            try:
+                result = conn.execute(stmt)
+            except DBAPIError as e:
+                print("Original error:")
+                print(e.StatementError.orig)
+                return None
+
+        # Make sure we are working with the correct return format.
+        if return_format.lower() != "cursorresult":
+            result = pd.DataFrame(result)
+
+            if return_format.lower() == "property_dict":
+                result = result.to_dict("list")
+
+        return result
