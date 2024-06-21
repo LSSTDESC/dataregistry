@@ -60,8 +60,10 @@ class DatasetAliasTable(BaseTable):
             values["access_api_configuration"] = _read_configuration_file(
                 access_api_configuration, None
             )
-        values["register_date"] = now
+        # Make a trivial change (swapping lines) so CI will run
+        # with latest
         values["creator_uid"] = self._uid
+        values["register_date"] = now
 
         alias_table = self._get_table_metadata("dataset_alias")
 
