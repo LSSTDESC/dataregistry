@@ -20,7 +20,7 @@ def test_register_dataset_alias(dummy_file):
 
     d2_id = _insert_dataset_entry(
         datareg,
-        "alias_test_entry",
+        "alias_test_entry_2",
         "0.0.2",
     )
 
