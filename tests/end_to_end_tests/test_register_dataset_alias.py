@@ -53,7 +53,7 @@ def test_register_dataset_alias(dummy_file):
     assert a2_id is not None
 
     # Add an alias to the alias
-    aa_id = _insert_alias_entry(datareg.Registar, "alias_to_alias", None,
+    aa_id = _insert_alias_entry(datareg.Registrar, "alias_to_alias", None,
                                 a2_id)
     id, ref_type = datareg.Query.resolve_alias("alias_to_alias")
     assert id == a2_id
