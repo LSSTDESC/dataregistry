@@ -68,8 +68,8 @@ class DatasetAliasTable(BaseTable):
         # If not supersede, check if alias name has already been used
         with self._engine.connect() as conn:
             if not supersede:
-                q = select(alias_table.c.aliasname).where(
-                    alias_table.c.aliasname == aliasname)
+                q = select(alias_table.c.alias).where(
+                    alias_table.c.alias == aliasname)
                 result = conn.execute(q)
                 if result.fetchone():
                     print(f"Alias {aliasname} already exists. Specify 'supersede=True' to override")
