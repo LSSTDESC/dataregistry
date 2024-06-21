@@ -465,7 +465,7 @@ class Query:
         """
         tbl = self._tables["dataset_alias"]
         if isinstance(alias, int):
-            filter_column = "resolve_alias: dataset_alias.dataset_alias_id"
+            filter_column = "dataset_alias.dataset_alias_id"
         elif isinstance(alias, str):
             filter_column = "dataset_alias.alias"
         else:
