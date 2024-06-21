@@ -13,19 +13,19 @@ def test_register_dataset_alias(dummy_file):
 
     # Add two dataset
     d_id = _insert_dataset_entry(
-        datareg.registrar,
+        datareg,
         "alias_test_entry",
         "0.0.1",
     )
 
     d2_id = _insert_dataset_entry(
-        datareg.registrar,
+        datareg,
         "alias_test_entry",
         "0.0.2",
     )
 
     # Add alias
-    a_id = _insert_alias_entry(datareg.registrar, "nice_dataset_name", d_id)
+    a_id = _insert_alias_entry(datareg.Registrar, "nice_dataset_name", d_id)
 
     # Query
     f = datareg.Query.gen_filter("dataset_alias.alias", "==", "nice_dataset_name")
@@ -44,16 +44,16 @@ def test_register_dataset_alias(dummy_file):
         assert getattr(r, "dataset_alias.dataset_id") == d_id
 
     # Try to reuse alias without supersede.  Should fail
-    a2_id = _insert_alias_entry(datareg.registrar, "nice_dataset_name", d2_id)
+    a2_id = _insert_alias_entry(datareg.Registrar, "nice_dataset_name", d2_id)
     assert a2_id is None
 
     # Try again with supersede
-    a2_id = _insert_alias_entry(datareg.registrar, "nice_dataset_name", d2_id,
+    a2_id = _insert_alias_entry(datareg.Registrar, "nice_dataset_name", d2_id,
                                 supersede=True)
     assert a2_id is not None
 
     # Add an alias to the alias
-    aa_id = _insert_alias_entry(datareg.registar, "alias_to_alias", None,
+    aa_id = _insert_alias_entry(datareg.Registar, "alias_to_alias", None,
                                 a2_id)
     id, ref_type = datareg.Query.resolve_alias("alias_to_alias")
     assert id == a2_id
