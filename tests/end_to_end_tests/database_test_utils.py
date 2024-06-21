@@ -75,16 +75,21 @@ def dummy_file(tmp_path):
     return tmp_src_dir, tmp_root_dir
 
 
-def _insert_alias_entry(datareg, name, dataset_id):
+def _insert_alias_entry(reg, name, dataset_id, ref_alias_id=None,
+                        supersede=False):
     """
     Wrapper to create dataset alias entry
 
     Parameters
     ----------
+    reg : an instance of the Registrar class
     name : str
         Name of alias
     dataset_id : int
         Dataset we are assigning alias name to
+    ref_alias_id : int
+        Optional.  If dataset_id is None, the new alias will point to
+        the one identified by alias_id
 
     Returns
     -------
@@ -92,9 +97,15 @@ def _insert_alias_entry(datareg, name, dataset_id):
         The alias ID for this new entry
     """
 
-    new_id = datareg.Registrar.dataset_alias.register(name, dataset_id)
+    new_id = reg.dataset_alias.register(name, dataset_id,
+                                        ref_alias_id=ref_alias_id,
+                                        supersede=supersede)
+    if not new_id:
+        print("Dataset alias entry creation failed")
+        if not supersede:
+            print("Did you mean to supersede?")
+        return None
 
-    assert new_id is not None, "Trying to create a dataset alias that already exists"
     print(f"Created dataset alias entry with id {new_id}")
 
     return new_id
