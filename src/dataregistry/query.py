@@ -498,9 +498,9 @@ class Query:
           Given alias id or name, return id of dataset it ultimately
           references
         """
-        id, id_type = self.resolve(alias)
+        id, id_type = self.resolve_alias(alias)
         while id_type == "alias":
-            id, id_type = self.resolve(id)
+            id, id_type = self.resolve_alias(id)
 
         return id
 
