@@ -56,7 +56,7 @@ def test_register_dataset_alias(dummy_file):
     f = datareg.Query.gen_filter("dataset_alias.dataset_alias_id", "==", a_id)
     results = datareg.Query.find_aliases(property_names=["dataset_alias.supersede_date"],
                                          filters=[f])
-    assert results["supersede_date"][0] is not None
+    assert results["dataset_alias.supersede_date"][0] is not None
 
     # Add an alias to the alias
     aa_id = _insert_alias_entry(datareg.Registrar, "alias_to_alias", None,
