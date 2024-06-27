@@ -54,7 +54,7 @@ def test_register_dataset_alias(dummy_file):
 
     # Check that old entry with this alias has been marked as superseded
     f = datareg.Query.gen_filter("dataset_alias.dataset_alias_id", "==", a_id)
-    results = datareg.Query.find_aliases(property_names=["supersede_date"],
+    results = datareg.Query.find_aliases(property_names=["dataset_alias.supersede_date"],
                                          filters=[f])
     assert results["supersede_date"][0] is not None
 
