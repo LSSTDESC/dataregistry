@@ -90,6 +90,9 @@ def _insert_alias_entry(reg, name, dataset_id, ref_alias_id=None,
     ref_alias_id : int
         Optional.  If dataset_id is None, the new alias will point to
         the one identified by alias_id
+    supersed : boolean
+        If True, make the entry even if the alias was already used. In this
+        case mark old entries as superseded.
 
     Returns
     -------

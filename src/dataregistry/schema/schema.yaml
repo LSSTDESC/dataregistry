@@ -380,7 +380,7 @@ tables:
         nullable: False
       access_api:
         type: "StringShort"
-        description: "Describes the software that can read the dataset (e.g., 'gcr-catalogs', 'skyCatalogs')"
+        description: "Describes the software that can read the dataset (e.g., 'GCRCatalogs', 'skyCatalogs')"
         cli_optional: True
       access_api_configuration:
         type: "String"
@@ -457,7 +457,7 @@ tables:
         cli_default: "dataregistry"
         cli_optional: True
         nullable: False
-        description: "What is the physical location of the data? 'dataregistry' means the data is located within the `<root_dir>` and managed by the `dataregistry`, external means the data is not managed by the dataregistry, either because it is off-site or because it is stored outside <root_dir> therefore there is only a database entry (in this case a `url` or `contact_email` must be provided during registration), 'meta_only' is for a legitimate entry involving no actual data and 'dummy' is a dataset for internal testing purposes only. The data registry will only attempt to manage data created with this field set to 'dataregistry'."
+        description: "What is the physical location of the data? 'dataregistry' means the data is located within the `<root_dir>` and managed by the `dataregistry`. External means the data is not managed by the dataregistry, either because it is off-site or because it is stored outside <root_dir> therefore there is only a database entry (in this case a `url` or `contact_email` must be provided during registration). 'meta_only' is for a legitimate entry involving no actual data, but possibly referring to other entries which do directly reference managed data, as may happen for some GCRCatalogs entries,  and 'dummy' is a dataset for internal testing purposes only. The data registry will only attempt to manage data created with this field set to 'dataregistry'."
       url:
         type: "String"
         description: "URL that points to the data (used in the case of external datasets, i.e., `location_type='external'`)."

@@ -452,6 +452,9 @@ class Query:
 
     def resolve_alias(self, alias):
         """
+        Find what an alias points to.  May be either a dataset or another
+        alias (or nothing)
+
         Parameters
         ----------
         alias      String or int      Either name or id of an alias
@@ -462,6 +465,8 @@ class Query:
                                       referred to
         ref_type   string             type of object aliased to,
                                       either "dataset" or "alias"
+
+        If no such alias is found, return None, None
         """
         tbl = self._tables["dataset_alias"]
         if isinstance(alias, int):
@@ -486,7 +491,6 @@ class Query:
 
         row = result.fetchone()
         if not row:
-            # Print warning?
             return None, None
         if row[0]:
             return row[0], "dataset"
