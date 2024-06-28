@@ -74,7 +74,8 @@ def test_find_entry(dummy_file):
     assert r.name == "test_find_entry_execution"
 
     # Make a dataset alias
-    da_id = _insert_alias_entry(datareg, "test_find_entry_alias", d_id)
+    da_id = _insert_alias_entry(datareg.Registrar,
+                                "test_find_entry_alias", d_id)
 
     # Find it
     r = datareg.Registrar.dataset_alias.find_entry(da_id)

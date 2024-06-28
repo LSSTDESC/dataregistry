@@ -15,7 +15,7 @@
 # - `primary_key` (optional, default=False):
 #     True if this column is the primary key of the table
 # - `nullable` (optional, default=False):
-#     True if column is nullable 
+#     True if column is nullable
 # - `foreign_key` (optional, default=False):
 #     True if this is a foreign_key, then you must also define
 #     `foreign_key_schema`, `foreign_key_table` and `foreign_key_column`.
@@ -26,7 +26,7 @@
 # - `modifiable` (optional, default=False):
 #     Is this column modifiable after registration
 # - `choices` (optional, default=None):
-#     If the column only has fixed allowed values  
+#     If the column only has fixed allowed values
 #
 # Indexes
 # -------
@@ -117,7 +117,7 @@ tables:
         nullable: False
 
   execution:
-    
+
     column_definitions:
       execution_id:
         type: "Integer"
@@ -147,7 +147,7 @@ tables:
         type: "StringShort"
         description: "UID of person who registered the entry"
         nullable: False
-  
+
   provenance:
 
     column_definitions:
@@ -212,7 +212,7 @@ tables:
     unique_constraints:
       execution_alias_unique:
         unique_list: ["alias","register_date"]
-    
+
     column_definitions:
       execution_alias_id:
         description: "Unique identifier for execution alias"
@@ -240,7 +240,7 @@ tables:
         foreign_key_table: "execution"
         foreign_key_column: "execution_id"
         description: "Execution this alias is linked to"
-  
+
   dataset_alias:
 
     unique_constraints:
@@ -254,7 +254,7 @@ tables:
         primary_key: True
       supersede_date:
         type: "DateTime"
-        description: "If a new entry has been added to the table with the same alias name (but different `dataset_id`), the old entry will be superseded. `supersede_date` in the old entry tracks when this happened. If the entry has not been superseded, `supersede_date` will be None"
+        description: "If a new entry has been added to the table with the same alias name (but different `dataset_id`or `alias_id`), the old entry will be superseded. `supersede_date` in the old entry tracks when this happened. If the entry has not been superseded, `supersede_date` will be None"
       creator_uid:
         type: "StringShort"
         description: "UID of person who registered the entry"
@@ -265,7 +265,7 @@ tables:
         nullable: False
       alias:
         type: "String"
-        description: "User given dataset alias name"
+        description: "User-given dataset alias name"
         nullable: False
       dataset_id:
         type: "Integer"
@@ -274,7 +274,21 @@ tables:
         foreign_key_table: "dataset"
         foreign_key_column: "dataset_id"
         description: "Dataset this alias is linked to"
-  
+      ref_alias_id:
+        type: "Integer"
+        foreign_key: True
+        foreign_key_schema: "self"
+        foreign_key_table: "dataset_alias"
+        foreign_key_column: "dataset_alias_id"
+        description: "Alias this alias is linked to"
+      access_api:
+        type: "StringShort"
+        description: "Describes the software that can read the dataset (e.g., 'gcr-catalogs', 'skyCatalogs')"
+        cli_optional: True
+      access_api_configuration:
+        type: "String"
+        description: "Additional (text) info which may be needed by access_api"
+
   dependency:
 
     column_definitions:
@@ -307,7 +321,7 @@ tables:
         foreign_key_table: "execution"
         foreign_key_column: "execution_id"
         description: "Execution this dependency is linked to"
-  
+
   dataset:
 
     indexs:
@@ -366,8 +380,11 @@ tables:
         nullable: False
       access_api:
         type: "StringShort"
-        description: "Describes the software that can read the dataset (e.g., 'gcr-catalogs', 'skyCatalogs')"
+        description: "Describes the software that can read the dataset (e.g., 'GCRCatalogs', 'skyCatalogs')"
         cli_optional: True
+      access_api_configuration:
+        type: "String"
+        description: "Additional (text) info which may be needed by access_api"
       owner:
         type: "String"
         description: "Owner of the dataset (defaults to $USER)"
@@ -436,11 +453,11 @@ tables:
         description: "Date the dataset was last moved"
       location_type:
         type: "String"
-        choices: ["dataregistry", "external", "dummy"]
+        choices: ["dataregistry", "external", "meta_only",  "dummy"]
         cli_default: "dataregistry"
         cli_optional: True
         nullable: False
-        description: "What is the physical location of the data? 'dataregistry' means the data is located within the `<root_dir>` and managed by the `dataregistry`, external means the data is not managed by the dataregistry, either because it is off-site or because it is stored outside <root_dir> therefore there is only a database entry (in this case a `url` or `contact_email` must be provided during registration) and 'dummy' is a dataset for testing purposes only (only a database entry is created in this case)."
+        description: "What is the physical location of the data? 'dataregistry' means the data is located within the `<root_dir>` and managed by the `dataregistry`. External means the data is not managed by the dataregistry, either because it is off-site or because it is stored outside <root_dir> therefore there is only a database entry (in this case a `url` or `contact_email` must be provided during registration). 'meta_only' is for a legitimate entry involving no actual data, but possibly referring to other entries which do directly reference managed data, as may happen for some GCRCatalogs entries,  and 'dummy' is a dataset for internal testing purposes only. The data registry will only attempt to manage data created with this field set to 'dataregistry'."
       url:
         type: "String"
         description: "URL that points to the data (used in the case of external datasets, i.e., `location_type='external'`)."

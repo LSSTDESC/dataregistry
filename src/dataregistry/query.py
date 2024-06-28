@@ -1,10 +1,9 @@
 from collections import namedtuple
-from sqlalchemy import text, select
+from sqlalchemy import select
 import sqlalchemy.sql.sqltypes as sqltypes
 import pandas as pd
 from dataregistry.registrar.registrar_util import _form_dataset_path
 from dataregistry.exceptions import DataRegistryNYI, DataRegistryException
-import os
 
 try:
     import sqlalchemy.dialects.postgresql as pgtypes
@@ -19,7 +18,7 @@ try:
         pgtypes.DATE,
     }
 
-except:
+except ModuleNotFoundError:
     PG_TYPES = {}
 try:
     import sqlalchemy.dialects.sqlite as lite_types
@@ -33,7 +32,7 @@ try:
         lite_types.TIME,
         lite_types.TIMESTAMP,
     }
-except:
+except ModuleNotFoundError:
     LITE_TYPES = {}
 
 from sqlalchemy.exc import DBAPIError, NoSuchColumnError
@@ -44,10 +43,10 @@ __all__ = ["Query", "Filter"]
 """
 Filters describe a restricted set of expressions which, ultimately,
 may end up in an sql WHERE clause.
-property_name must refer to a property belonging to datasets (column in dataset
-or joinable table).
-op may be one of '==', '!=', '<', '>', '<=', '>='. If the property in question is of
-datatype string, only '==' or '!=' may be used.
+property_name must refer to a property belonging to datasets (column in
+dataset or joinable table).
+op may be one of '==', '!=', '<', '>', '<=', '>='. If the property in question
+is of datatype string, only '==' or '!=' may be used.
 value should be a constant (or expression?) of the same type as the property.
 """
 Filter = namedtuple("Filter", ["property_name", "bin_op", "value"])
@@ -118,7 +117,7 @@ class Query:
 
     def get_all_columns(self):
         """
-        Return all columns of the database in <table_name>.<column_name> format.
+        Return all columns of the db in <table_name>.<column_name> format.
 
         Returns
         -------
@@ -164,7 +163,8 @@ class Query:
         format. If they are in <column_name> format the column name must be
         unique through all tables in the database.
 
-        If column_names is None, all columns from the dataset table will be selected.
+        If column_names is None, all columns from the dataset table will be
+        selected.
 
         Parameters
         ----------
@@ -251,7 +251,8 @@ class Query:
         else:
             the_op = _colops[f[1]]
 
-        # Extract the property we are ordering on (also making sure is is orderable)
+        # Extract the property we are ordering on (also making sure it
+        # is orderable)
         if not column_is_orderable[0] and f[1] not in ["==", "=", "!="]:
             raise ValueError('check_filter: Cannot apply "{f[1]}" to "{f[0]}"')
         else:
@@ -448,3 +449,144 @@ class Query:
         else:
             print(f"No dataset with dataset_id={dataset_id}")
             return None
+
+    def resolve_alias(self, alias):
+        """
+        Find what an alias points to.  May be either a dataset or another
+        alias (or nothing)
+
+        Parameters
+        ----------
+        alias      String or int      Either name or id of an alias
+
+        Returns
+        -------
+        id         int                id of item (dataset or alias)
+                                      referred to
+        ref_type   string             type of object aliased to,
+                                      either "dataset" or "alias"
+
+        If no such alias is found, return None, None
+        """
+        tbl = self._tables["dataset_alias"]
+        if isinstance(alias, int):
+            filter_column = "dataset_alias.dataset_alias_id"
+        elif isinstance(alias, str):
+            filter_column = "dataset_alias.alias"
+        else:
+            raise ValueError("Argument 'alias' must be int or str")
+        f = Filter(filter_column, "==", alias)
+
+        stmt = select(tbl.c.dataset_id, tbl.c.ref_alias_id)
+        stmt = stmt.select_from(tbl)
+        stmt = self._render_filter(f, stmt)
+
+        with self._engine.connect() as conn:
+            try:
+                result = conn.execute(stmt)
+            except DBAPIError as e:
+                print("Original error:")
+                print(e.StatementError.orig)
+                return None
+
+        row = result.fetchone()
+        if not row:
+            return None, None
+        if row[0]:
+            return row[0], "dataset"
+        else:
+            return row[1], "alias"
+
+    def resolve_alias_fully(self, alias):
+        """
+          Given alias id or name, return id of dataset it ultimately
+          references
+        """
+        id, id_type = self.resolve_alias(alias)
+        while id_type == "alias":
+            id, id_type = self.resolve_alias(id)
+
+        return id
+
+    def find_aliases(
+        self,
+        property_names=None,
+        filters=[],
+        verbose=False,
+        return_format="property_dict",
+    ):
+
+        """
+        Return requested columns from dataset_alias table, subject to filters
+
+        Parameters
+        ----------
+        property_names : list(str), optional
+            List of database columns to return (SELECT clause)
+        filters : list(Filter), optional
+            List of filters (WHERE clauses) to apply
+        verbose : bool, optional
+            True for more output relating to the query
+        return_format : str, optional
+            The format the query result is returned in.  Options are
+            "CursorResult" (SQLAlchemy default format), "DataFrame", or
+            "proprety_dict". Note this is not case sensitive.
+        """
+
+        # Make sure return format is valid.
+        _allowed_return_formats = ["cursorresult", "dataframe", "property_dict"]
+        if return_format.lower() not in _allowed_return_formats:
+            raise ValueError(
+                f"{return_format} is a bad return format (valid={_allowed_return_formats})"
+            )
+
+        # This is always a query of a single table: dataset_alias
+        tbl_name = "dataset_alias"
+        tbl = self._tables[tbl_name]
+        if property_names is None:
+            stmt = select("*").select_from(tbl)
+
+        else:
+            cols = []
+            for p in property_names:
+                cmps = p.split(".")
+                if len(cmps) == 1:
+                    cols.append(tbl.c[p])
+                elif len(cmps) == 2:
+                    if cmps[0] == "dataset_alias":  # all is well
+                        cols.append(tbl.c[cmps[1]])
+                    else:
+                        raise DataRegistryException(
+                            f"find_aliases: no such column {p}"
+                        )
+                else:
+                    raise DataRegistryException(
+                        f"find_aliases: no such column {p}"
+                    )
+            stmt = select(*[p.label("dataset_alias." + p.name) for p in cols])
+        # Append filters if acceptable
+        if len(filters) > 0:
+            for f in filters:
+                stmt = self._render_filter(f, stmt)
+
+        # Report the constructed SQL query
+        if verbose:
+            print(f"Executing query: {stmt}")
+
+        # Execute the query
+        with self._engine.connect() as conn:
+            try:
+                result = conn.execute(stmt)
+            except DBAPIError as e:
+                print("Original error:")
+                print(e.StatementError.orig)
+                return None
+
+        # Make sure we are working with the correct return format.
+        if return_format.lower() != "cursorresult":
+            result = pd.DataFrame(result)
+
+            if return_format.lower() == "property_dict":
+                result = result.to_dict("list")
+
+        return result
