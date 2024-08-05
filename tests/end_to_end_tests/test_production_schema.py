@@ -27,14 +27,14 @@ def test_register_with_production_dependencies(dummy_file):
     # Make a dataset in each schema
     d_id_prod = _insert_dataset_entry(
         datareg_prod,
-        "DESC/datasets/production_dataset_for_deps",
+        "DESC:datasets:production_dataset_for_deps",
         "0.0.1",
         owner_type="production",
     )
 
     d_id = _insert_dataset_entry(
         datareg,
-        "DESC/datasets/nonproduction_dataset_for_deps",
+        "DESC:datasets:nonproduction_dataset_for_deps",
         "0.0.1",
     )
 
@@ -80,7 +80,7 @@ def test_production_schema_register(dummy_file):
 
     d_id = _insert_dataset_entry(
         datareg,
-        "DESC/datasets/production_dataset_1",
+        "DESC:datasets:production_dataset_1",
         "0.0.1",
         owner_type="production",
     )
@@ -116,7 +116,7 @@ def test_production_schema_bad_register(dummy_file):
     with pytest.raises(ValueError, match="can go in the production schema"):
         d_id = _insert_dataset_entry(
             datareg,
-            "DESC/datasets/bad_production_dataset_1",
+            "DESC:datasets:bad_production_dataset_1",
             "0.0.1",
             owner_type="user",
         )
@@ -125,7 +125,7 @@ def test_production_schema_bad_register(dummy_file):
     with pytest.raises(ValueError, match="Cannot overwrite production entries"):
         d_id = _insert_dataset_entry(
             datareg,
-            "DESC/datasets/bad_production_dataset_2",
+            "DESC:datasets:bad_production_dataset_2",
             "0.0.1",
             owner_type="production",
             is_overwritable=True,
@@ -137,7 +137,7 @@ def test_production_schema_bad_register(dummy_file):
     ):
         d_id = _insert_dataset_entry(
             datareg,
-            "DESC/datasets/bad_production_dataset_3",
+            "DESC:datasets:bad_production_dataset_3",
             "0.0.1",
             owner_type="production",
             version_suffix="prod",

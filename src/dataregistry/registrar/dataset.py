@@ -15,9 +15,11 @@ from .registrar_util import (
     _parse_version_string,
     _read_configuration_file,
     get_directory_info,
+    _relpath_from_name,
 )
 from .dataset_util import set_dataset_status, get_dataset_status
 
+_ILLEGAL_NAME_CHAR = ["$","*","&","/","?","\\"," "]
 
 class DatasetTable(BaseTable):
     def __init__(self, db_connection, root_dir, owner, owner_type, execution_table):
@@ -35,10 +37,9 @@ class DatasetTable(BaseTable):
 
     def register(
         self,
-        relative_path,
+        name,
         version,
         version_suffix=None,
-        name=None,
         creation_date=None,
         description=None,
         execution_id=None,
@@ -63,6 +64,7 @@ class DatasetTable(BaseTable):
         url=None,
         contact_email=None,
         test_production=False,
+        relative_path=None,
     ):
         """
         Create a new dataset entry in the DESC data registry.
@@ -78,10 +80,9 @@ class DatasetTable(BaseTable):
 
         Parameters
         ----------
-        relative_path** : str
+        name** : str
         version** : str
         version_suffix** : str, optional
-        name** : str, optional
         creation_date** : datetime, optional
         description** : str, optional
         execution_id** : int, optional
@@ -122,6 +123,7 @@ class DatasetTable(BaseTable):
         contact_email**: str, optional
         test_production: boolean, default False.  Set to True for testing
                          code for production owner_type
+        relative_path** : str, optional
 
         Returns
         -------
@@ -130,6 +132,15 @@ class DatasetTable(BaseTable):
         execution_id : int
             The execution ID associated with the dataset
         """
+
+        # Make sure `name` is legal (i.e., no illegal characters)
+        if name is None:
+            raise ValueError("Name cannot be None")
+        if type(name) != str:
+            raise ValueError("Name must be a valid string")
+        for i_char in _ILLEGAL_NAME_CHAR:
+            if i_char in name:
+                raise ValueError(f"Cannot have character {i_char} in name string")
 
         # If the root_dir does not exist, stop
         if not self.root_dir_exists:
@@ -184,11 +195,6 @@ class DatasetTable(BaseTable):
                     "Only owner_type='production' can go in the production schema"
                 )
 
-        # If `name` not passed, automatically generate a name from the
-        # relative path
-        if name is None:
-            name = _name_from_relpath(relative_path)
-
         dataset_table = self._get_table_metadata("dataset")
 
         # Look for previous entries at the same location if dataset
@@ -213,6 +219,10 @@ class DatasetTable(BaseTable):
             version_string = (
                 f"{v_fields['major']}.{v_fields['minor']}.{v_fields['patch']}"
             )
+
+        # If `relative_path` not passed, automatically generate it
+        if relative_path is None:
+            relative_path = _relpath_from_name(name, version_string, version_suffix)
 
         # If no execution_id is supplied, create a minimal entry
         if execution_id is None:

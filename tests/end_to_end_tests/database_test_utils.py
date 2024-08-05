@@ -75,8 +75,7 @@ def dummy_file(tmp_path):
     return tmp_src_dir, tmp_root_dir
 
 
-def _insert_alias_entry(reg, name, dataset_id, ref_alias_id=None,
-                        supersede=False):
+def _insert_alias_entry(reg, name, dataset_id, ref_alias_id=None, supersede=False):
     """
     Wrapper to create dataset alias entry
 
@@ -100,9 +99,9 @@ def _insert_alias_entry(reg, name, dataset_id, ref_alias_id=None,
         The alias ID for this new entry
     """
 
-    new_id = reg.dataset_alias.register(name, dataset_id,
-                                        ref_alias_id=ref_alias_id,
-                                        supersede=supersede)
+    new_id = reg.dataset_alias.register(
+        name, dataset_id, ref_alias_id=ref_alias_id, supersede=supersede
+    )
     if not new_id:
         print("Dataset alias entry creation failed")
         if not supersede:
@@ -158,12 +157,11 @@ def _insert_execution_entry(
 
 def _insert_dataset_entry(
     datareg,
-    relpath,
+    name,
     version,
     owner_type=None,
     owner=None,
     description=None,
-    name=None,
     execution_id=None,
     version_suffix=None,
     old_location=None,
@@ -179,15 +177,15 @@ def _insert_dataset_entry(
     contact_email=None,
     url=None,
     keywords=[],
+    relative_path=None,
 ):
     """
     Wrapper to create dataset entry
 
     Parameters
     ----------
-    relpath : str
-        Relative path within the data registry to store the data
-        Relative to <ROOT>/<owner_type>/<owner>/...
+    name : str
+        A manually selected name for the dataset
     version : str
         Semantic version string (i.e., M.N.P) or
         "major", "minor", "patch" to automatically bump the version previous
@@ -226,6 +224,9 @@ def _insert_dataset_entry(
         Url for external datasets
     keywords : list[str]
         List of keywords to tag
+    relative_path : str
+        Relative path within the data registry to store the data
+        Relative to <ROOT>/<owner_type>/<owner>/...
 
     Returns
     -------
@@ -238,10 +239,9 @@ def _insert_dataset_entry(
 
     # Add new entry.
     dataset_id, execution_id = datareg.Registrar.dataset.register(
-        relpath,
+        name,
         version,
         version_suffix=version_suffix,
-        name=name,
         creation_date=None,
         description=description,
         old_location=old_location,
@@ -261,6 +261,7 @@ def _insert_dataset_entry(
         contact_email=contact_email,
         url=url,
         keywords=keywords,
+        relative_path=relative_path,
     )
 
     assert dataset_id is not None, "Trying to create a dataset that already exists"

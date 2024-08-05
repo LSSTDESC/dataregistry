@@ -28,7 +28,7 @@ def test_copy_data(dummy_file, data_org):
     # Add entry
     d_id = _insert_dataset_entry(
         datareg,
-        f"DESC/datasets/copy_real_{data_org}",
+        f"DESC:datasets:copy_real_{data_org}",
         "0.0.1",
         old_location=data_path,
         location_type="dataregistry",
@@ -76,11 +76,12 @@ def test_on_location_data(dummy_file, data_org, data_path, v_str, overwritable):
 
     d_id = _insert_dataset_entry(
         datareg,
-        data_path,
+        f"DESC:datasets:test_on_location_data_{data_org}",
         v_str,
         old_location=None,
         location_type="dataregistry",
         is_overwritable=overwritable,
+        relative_path=data_path,
     )
 
     f = datareg.Query.gen_filter("dataset.relative_path", "==", data_path)

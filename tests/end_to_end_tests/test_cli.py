@@ -8,6 +8,7 @@ from dataregistry.db_basic import SCHEMA_VERSION
 from database_test_utils import dummy_file
 from dataregistry.registrar.dataset_util import get_dataset_status, set_dataset_status
 
+
 def test_simple_query(dummy_file):
     """Make a simple entry, and make sure the query returns the correct result"""
 
@@ -20,7 +21,7 @@ def test_simple_query(dummy_file):
     cli.main(shlex.split(cmd))
 
     # Update the registered dataset
-    cmd = "register dataset my_cli_dataset2 patch --location_type dummy --name my_cli_dataset"
+    cmd = "register dataset my_cli_dataset patch --location_type dummy"
     cmd += f" --schema {SCHEMA_VERSION} --root_dir {str(tmp_root_dir)}"
     cli.main(shlex.split(cmd))
 
@@ -28,7 +29,7 @@ def test_simple_query(dummy_file):
     datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
     f = datareg.Query.gen_filter("dataset.name", "==", "my_cli_dataset")
     results = datareg.Query.find_datasets(
-        ["dataset.name", "dataset.version_string", "dataset.relative_path"], [f]
+        ["dataset.name", "dataset.version_string"], [f]
     )
     assert len(results["dataset.name"]) == 2, "Bad result from query dcli1"
 
@@ -56,7 +57,6 @@ def test_dataset_entry_with_execution(dummy_file):
         [
             "dataset.name",
             "dataset.version_string",
-            "dataset.relative_path",
             "execution.name",
             "execution.execution_id",
             "dataset.is_overwritable",
@@ -86,7 +86,7 @@ def test_production_entry(dummy_file):
         # Check
         f = datareg.Query.gen_filter("dataset.name", "==", "my_production_cli_dataset")
         results = datareg.Query.find_datasets(
-            ["dataset.name", "dataset.version_string", "dataset.relative_path"], [f]
+            ["dataset.name", "dataset.version_string"], [f]
         )
         assert len(results["dataset.name"]) == 1, "Bad result from query dcli3"
         assert results["dataset.version_string"][0] == "0.1.2"
@@ -132,6 +132,7 @@ def test_delete_dataset(dummy_file):
         assert get_dataset_status(getattr(r, "dataset.status"), "deleted")
         assert getattr(r, "dataset.delete_date") is not None
         assert getattr(r, "dataset.delete_uid") is not None
+
 
 def test_dataset_entry_with_keywords(dummy_file):
     """Make a dataset with some keywords tagged"""

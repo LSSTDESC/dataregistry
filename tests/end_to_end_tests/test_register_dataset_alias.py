@@ -48,19 +48,20 @@ def test_register_dataset_alias(dummy_file):
     assert a2_id is None
 
     # Try again with supersede
-    a2_id = _insert_alias_entry(datareg.Registrar, "nice_dataset_name", d2_id,
-                                supersede=True)
+    a2_id = _insert_alias_entry(
+        datareg.Registrar, "nice_dataset_name", d2_id, supersede=True
+    )
     assert a2_id is not None
 
     # Check that old entry with this alias has been marked as superseded
     f = datareg.Query.gen_filter("dataset_alias.dataset_alias_id", "==", a_id)
-    results = datareg.Query.find_aliases(property_names=["dataset_alias.supersede_date"],
-                                         filters=[f])
+    results = datareg.Query.find_aliases(
+        property_names=["dataset_alias.supersede_date"], filters=[f]
+    )
     assert results["dataset_alias.supersede_date"][0] is not None
 
     # Add an alias to the alias
-    aa_id = _insert_alias_entry(datareg.Registrar, "alias_to_alias", None,
-                                a2_id)
+    aa_id = _insert_alias_entry(datareg.Registrar, "alias_to_alias", None, a2_id)
     id, ref_type = datareg.Query.resolve_alias("alias_to_alias")
     assert id == a2_id
     assert ref_type == "alias"
