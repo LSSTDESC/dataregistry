@@ -261,7 +261,7 @@ def _read_configuration_file(configuration_file, max_config_length):
     return contents
 
 
-def _copy_data(dataset_organization, source, dest, do_checksum=True):
+def _copy_data(dataset_organization, source, dest, do_checksum=False):
     """
     Copy data from one location to another (for ingesting directories and files
     into the `root_dir` shared space.
@@ -331,13 +331,16 @@ def _copy_data(dataset_organization, source, dest, do_checksum=True):
     except Exception as e:
         if os.path.exists(temp_dest):
             if os.path.exists(dest):
-                rmtree(dest)
+                if dataset_organization == "file":
+                    os.remove(dest)
+                else:
+                    rmtree(dest)
             os.rename(temp_dest, dest)
 
         print(
             "Something went wrong during data copying, aborting."
             "Note an entry in the registry database will still have"
-            "been created"
+            f"been created ({e})"
         )
 
         raise Exception(e)
