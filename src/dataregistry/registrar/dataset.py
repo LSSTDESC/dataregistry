@@ -197,17 +197,6 @@ class DatasetTable(BaseTable):
 
         dataset_table = self._get_table_metadata("dataset")
 
-        # Look for previous entries at the same location if dataset
-        # is in our managed area.   Fail if not overwritable
-        if location_type in ["dataregistry", "dummy"]:
-            previous = self._find_previous(relative_path, owner, owner_type)
-
-            if previous is None:
-                print(f"Dataset {relative_path} exists, and is not overwritable")
-                return None, None
-        else:
-            previous = []
-
         # Deal with version string (non-special case)
         if version not in ["major", "minor", "patch"]:
             v_fields = _parse_version_string(version)
@@ -223,6 +212,17 @@ class DatasetTable(BaseTable):
         # If `relative_path` not passed, automatically generate it
         if relative_path is None:
             relative_path = _relpath_from_name(name, version_string, version_suffix)
+
+        # Look for previous entries at the same location if dataset
+        # is in our managed area.   Fail if not overwritable
+        if location_type in ["dataregistry", "dummy"]:
+            previous = self._find_previous(relative_path, owner, owner_type)
+
+            if previous is None:
+                print(f"Dataset {relative_path} exists, and is not overwritable")
+                return None, None
+        else:
+            previous = []
 
         # If no execution_id is supplied, create a minimal entry
         if execution_id is None:
