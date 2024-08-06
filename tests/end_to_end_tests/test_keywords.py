@@ -29,19 +29,20 @@ def test_register_dataset_with_bad_keywords(dummy_file):
     with pytest.raises(ValueError, match="not a valid keyword string"):
         _ = _insert_dataset_entry(
             datareg,
-            "DESC/datasets/my_first_dataset_with_bad_keywords",
+            "DESC:datasets:my_first_dataset_with_bad_keywords",
             "0.0.1",
-            keywords=[10,20]
+            keywords=[10, 20],
         )
 
     # Test case where keywords are not previously registered in keyword table
     with pytest.raises(ValueError, match="Not all keywords"):
         _ = _insert_dataset_entry(
             datareg,
-            "DESC/datasets/my_second_dataset_with_bad_keywords",
+            "DESC:datasets:my_second_dataset_with_bad_keywords",
             "0.0.1",
-            keywords=["bad_keyword"]
+            keywords=["bad_keyword"],
         )
+
 
 def test_register_dataset_with_keywords(dummy_file):
     """
@@ -57,16 +58,16 @@ def test_register_dataset_with_keywords(dummy_file):
     # Register two datasets with keywords
     d_id = _insert_dataset_entry(
         datareg,
-        "DESC/datasets/my_first_dataset_with_keywords",
+        "DESC:datasets:my_first_dataset_with_keywords",
         "0.0.1",
-        keywords=["simulation", "observation"]
+        keywords=["simulation", "observation"],
     )
 
     d_id2 = _insert_dataset_entry(
         datareg,
-        "DESC/datasets/my_second_dataset_with_keywords",
+        "DESC:datasets:my_second_dataset_with_keywords",
         "0.0.1",
-        keywords=["simulation"]
+        keywords=["simulation"],
     )
 
     # Query on the "simulation" keyword
@@ -82,6 +83,7 @@ def test_register_dataset_with_keywords(dummy_file):
         assert tmp_id in results["dataset.dataset_id"]
     for tmp_k in results["keyword.keyword"]:
         assert tmp_k == "simulation"
+
 
 def test_modify_dataset_with_keywords(dummy_file):
     """
@@ -99,9 +101,9 @@ def test_modify_dataset_with_keywords(dummy_file):
     # Register a dataset with keywords
     d_id = _insert_dataset_entry(
         datareg,
-        "DESC/datasets/my_first_modify_dataset_with_keywords",
+        "DESC:datasets:my_first_modify_dataset_with_keywords",
         "0.0.1",
-        keywords=["simulation"]
+        keywords=["simulation"],
     )
 
     # Query for the dataset

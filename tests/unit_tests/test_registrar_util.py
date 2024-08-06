@@ -7,6 +7,7 @@ from dataregistry.registrar.registrar_util import (
     _parse_version_string,
     _read_configuration_file,
     get_directory_info,
+    _relpath_from_name,
 )
 
 
@@ -158,3 +159,34 @@ def test_read_file(tmpdir, nchars, max_config_length, ans):
     # Make sure we raise an exception when the file doesn't exist
     with pytest.raises(FileNotFoundError, match="not found"):
         _read_configuration_file("i_dont_exist.txt", 10)
+
+@pytest.mark.parametrize(
+    "name,version_string,version_suffix,ans",
+    [
+        ("mydataset", "1.1.1", None, "mydataset_1.1.1"),
+        ("mydataset", "1.1.1", "v1", "mydataset_1.1.1_v1"),
+    ],
+)
+def test_relpath_from_name(name, version_string, version_suffix, ans):
+    """
+    Test dataset path construction
+    Datasets should come back with the format:
+        <root_dir>/<owner_type>/<owner>/<relative_path>
+    """
+
+    tmp = _relpath_from_name(name, version_string, version_suffix)
+    assert tmp == ans
+
+@pytest.mark.parametrize(
+    "rel_path,ans",
+    [
+        ("/testing/test", "test"),
+        ("./testing/test", "test"),
+        ("/testing/test/", "test"),
+        ("test", "test"),
+    ],
+)
+def test_name_from_relpath(rel_path,ans):
+    """Make sure names are extracted from paths correctly"""
+
+    assert _name_from_relpath(rel_path) == ans
