@@ -75,7 +75,9 @@ def test_query_between_columns(dummy_file):
     _V_STRING = "0.0.1"
     d_id = _insert_dataset_entry(datareg, _NAME, _V_STRING)
 
-    a_id = _insert_alias_entry(datareg.Registrar, "nice_dataset_name", d_id)
+    a_id = _insert_alias_entry(
+        datareg.Registrar, "alias:test_query_between_columns", d_id
+    )
 
     e_id = _insert_execution_entry(
         datareg, "test_query_between_columns", "test", input_datasets=[d_id]
@@ -100,7 +102,7 @@ def test_query_between_columns(dummy_file):
             filters=f,
             return_format="cursorresult",
         )
-    
+
         for i, r in enumerate(results):
             assert i < 1
             assert getattr(r, "dataset.name") == _NAME
