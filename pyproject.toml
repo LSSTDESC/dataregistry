@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 dynamic = ["version"]
-name = "dataregistry"
+name = "lsstdesc-dataregistry"
 description = "Creation and user API for DESC data registry."
 readme = "README.md"
 authors = [
@@ -24,7 +24,7 @@ keywords = ["desc", "python", "registry"]
 dependencies = [
     'psycopg2',
     'sqlalchemy',
-    'pyaml',
+    'pyyaml',
     'pandas'
 ]
 requires-python = ">=3.9,<3.12" # Supported versions (in CI)
