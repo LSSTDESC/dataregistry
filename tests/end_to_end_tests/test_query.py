@@ -1,0 +1,107 @@
+import os
+import pandas as pd
+import sqlalchemy
+from sqlalchemy import inspect
+
+from dataregistry import DataRegistry
+from dataregistry.db_basic import SCHEMA_VERSION
+from database_test_utils import *
+
+# Establish connection to database (default schema)
+datareg = DataRegistry(root_dir="temp")
+
+
+def test_query_return_format():
+    """Test we get back correct data format from queries"""
+
+    # Default, SQLAlchemy CursorResult
+    results = datareg.Query.find_datasets(
+        ["dataset.name", "dataset.version_string", "dataset.relative_path"],
+        [],
+        return_format="cursorresult",
+    )
+    assert type(results) == sqlalchemy.engine.cursor.CursorResult
+
+    # Pandas DataFrame
+    results = datareg.Query.find_datasets(
+        ["dataset.name", "dataset.version_string", "dataset.relative_path"],
+        [],
+        return_format="dataframe",
+    )
+    assert type(results) == pd.DataFrame
+
+    # Property dictionary (each key is a property with a list for each row)
+    results = datareg.Query.find_datasets(
+        ["dataset.name", "dataset.version_string", "dataset.relative_path"],
+        [],
+    )
+    assert type(results) == dict
+
+
+def test_query_all(dummy_file):
+    """Test a query where no properties are chosen, i.e., 'return *'"""
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    # Add entry
+    d_id = _insert_dataset_entry(
+        datareg,
+        "DESC:datasets:test_query_all",
+        "0.0.1",
+    )
+
+    # `property_names=None` should return all columns
+    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.Query.find_datasets(property_names=None, filters=[f])
+
+    for c, v in results.items():
+        assert len(v) == 1
+
+
+def test_query_between_columns(dummy_file):
+    """
+    Make sure when querying with a filter from one table, but only returning
+    columns from another table, we get the right result.
+    """
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    # Add entry
+    _NAME = "DESC:datasets:test_query_between_columns"
+    _V_STRING = "0.0.1"
+    d_id = _insert_dataset_entry(datareg, _NAME, _V_STRING)
+
+    a_id = _insert_alias_entry(datareg.Registrar, "nice_dataset_name", d_id)
+
+    e_id = _insert_execution_entry(
+        datareg, "test_query_between_columns", "test", input_datasets=[d_id]
+    )
+
+    for i in range(3):
+        if i == 0:
+            # Query on execution, but only return dataset columns
+            f = [datareg.Query.gen_filter("execution.execution_id", "==", e_id)]
+        elif i == 1:
+            # Query on alias, but only return dataset columns
+            f = [datareg.Query.gen_filter("dataset_alias.dataset_alias_id", "==", a_id)]
+        else:
+            # Query on execution and alias, but only return dataset columns
+            f = [
+                datareg.Query.gen_filter("execution.execution_id", "==", e_id),
+                datareg.Query.gen_filter("dataset_alias.dataset_alias_id", "==", a_id),
+            ]
+
+        results = datareg.Query.find_datasets(
+            property_names=["dataset.name", "dataset.version_string"],
+            filters=f,
+            return_format="cursorresult",
+        )
+    
+        for i, r in enumerate(results):
+            assert i < 1
+            assert getattr(r, "dataset.name") == _NAME
+            assert getattr(r, "dataset.version_string") == _V_STRING

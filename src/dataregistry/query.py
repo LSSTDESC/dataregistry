@@ -260,6 +260,36 @@ class Query:
 
         return stmt.where(column_ref[0].__getattribute__(the_op)(value))
 
+    def _append_filter_tables(self, tables_required, filters):
+        """
+        A list of tables required to join is initially built from the return
+        columns in `property_names`. However there may be additional tables in
+        the filters that are not part of the return columns, add them here.
+
+        Parameters
+        ----------
+        tables_required : list
+            Current list of tables from `property_names`
+        filters : list
+            The list of filters
+
+        Returns
+        -------
+        tables_required : list
+            Updated list of tables required now also considering filters
+        """
+
+        tables_required = set(tables_required)
+
+        # Loop over each filter and add the tables to the list
+        for f in filters:
+            tmp_tables_required, _, _ = self._parse_selected_columns([f[0]])
+
+            for t in tmp_tables_required:
+                tables_required.add(t)
+
+        return list(tables_required)
+
     def get_db_versioning(self):
         """
         returns
@@ -320,6 +350,7 @@ class Query:
 
         # What tables and what columns are required for this query?
         tables_required, column_list, _ = self._parse_selected_columns(property_names)
+        tables_required = self._append_filter_tables(tables_required, filters)
 
         # Construct query
 
