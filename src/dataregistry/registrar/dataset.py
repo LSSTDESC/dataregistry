@@ -1,7 +1,9 @@
+import inspect
 import os
 import time
 from datetime import datetime
 import shutil
+from functools import wraps
 
 from dataregistry.db_basic import add_table_row
 from sqlalchemy import select, update
@@ -19,7 +21,8 @@ from .registrar_util import (
 )
 from .dataset_util import set_dataset_status, get_dataset_status
 
-_ILLEGAL_NAME_CHAR = ["$","*","&","/","?","\\"," "]
+_ILLEGAL_NAME_CHAR = ["$", "*", "&", "/", "?", "\\", " "]
+
 
 class DatasetTable(BaseTable):
     def __init__(self, db_connection, root_dir, owner, owner_type, execution_table):
@@ -35,7 +38,15 @@ class DatasetTable(BaseTable):
         # Does the user have write permission to the root_dir?
         self.root_dir_write_access = os.access(root_dir, os.W_OK)
 
-    def register(
+    def register(self, *args, **kwargs):
+        kwargs["caller_function"] = "register"
+        return self._register_or_replace(*args, **kwargs)
+
+    def replace(self, *args, **kwargs):
+        kwargs["caller_function"] = "replace"
+        return self._register_or_replace(*args, **kwargs)
+
+    def _register_or_replace(
         self,
         name,
         version,
@@ -65,6 +76,7 @@ class DatasetTable(BaseTable):
         contact_email=None,
         test_production=False,
         relative_path=None,
+        caller_function=None,
     ):
         """
         Create a new dataset entry in the DESC data registry.
@@ -202,6 +214,9 @@ class DatasetTable(BaseTable):
             v_fields = _parse_version_string(version)
             version_string = version
         else:
+            if caller_function == "replace":
+                raise ValueError("No version bumping when replacing a dataset")
+
             # Generate new version fields based on previous entries
             # with the same name field (i.e., bump)
             v_fields = _bump_version(name, version, dataset_table, self._engine)
@@ -213,16 +228,44 @@ class DatasetTable(BaseTable):
         if relative_path is None:
             relative_path = _relpath_from_name(name, version_string, version_suffix)
 
-        # Look for previous entries at the same location if dataset
-        # is in our managed area.   Fail if not overwritable
+        # See if there is already and entry with this name/version combination
         if location_type in ["dataregistry", "dummy"]:
-            previous = self._find_previous(relative_path, owner, owner_type)
+            previous = self._find_previous(
+                name, version_string, version_suffix, owner, owner_type
+            )
 
-            if previous is None:
-                print(f"Dataset {relative_path} exists, and is not overwritable")
-                return None, None
-        else:
-            previous = []
+            # When replacing, need to find what we are replacing
+            if caller_function == "replace":
+                if previous is None:
+                    raise ValueError(
+                        f"Dataset '{name}' does not exist, or it not overwritable"
+                    )
+
+            # When registering, a previous (non-overwritten) entry cannot exist
+            if caller_function == "register":
+                if previous is not None:
+                    raise ValueError(
+                        "There is already a dataset with combination name,"
+                        "version_string, version_suffix, owner, owner_type"
+                    )
+
+        # When replacing, tag the old dataset as overwritten, and delete
+        if caller_function == "replace":
+            with self._engine.connect() as conn:
+                update_stmt = (
+                    update(dataset_table)
+                    .where(dataset_table.c.dataset_id == previous)
+                    .values(is_overwritten=True)
+                )
+                conn.execute(update_stmt)
+                conn.commit()
+
+            # Delete the old data
+            self.delete(previous)
+
+        # ---------------------
+        # Now regsister dataset
+        # ---------------------
 
         # If no execution_id is supplied, create a minimal entry
         if execution_id is None:
@@ -318,15 +361,6 @@ class DatasetTable(BaseTable):
             )
             conn.execute(update_stmt)
 
-            # Update overwritten datasets `is_overwritten` values
-            if len(previous) > 0:
-                update_stmt = (
-                    update(dataset_table)
-                    .where(dataset_table.c.dataset_id.in_(previous))
-                    .values(is_overwritten=True)
-                )
-                conn.execute(update_stmt)
-
             # Add any keyword tags
             if len(keywords) > 0:
                 keyword_table = self._get_table_metadata("dataset_keyword")
@@ -339,6 +373,21 @@ class DatasetTable(BaseTable):
                     )
 
             conn.commit()
+
+        # Update the metadata of the replaced dataset
+        if caller_function == "replace":
+            with self._engine.connect() as conn:
+                update_stmt = (
+                    update(dataset_table)
+                    .where(dataset_table.c.dataset_id == previous)
+                    .values(
+                        replace_date=datetime.now(),
+                        replace_uid=self._uid,
+                        replace_id=prim_key,
+                    )
+                )
+                conn.execute(update_stmt)
+                conn.commit()
 
         return prim_key, execution_id
 
@@ -415,10 +464,11 @@ class DatasetTable(BaseTable):
 
         # Copy data into data registry
         if old_location:
-
             # Stop if we don't have write permission to the root_dir
             if not self.root_dir_write_access:
-                raise Exception(f"Cannot copy data, no write access to {self._root_dir}")
+                raise Exception(
+                    f"Cannot copy data, no write access to {self._root_dir}"
+                )
 
             if verbose:
                 tic = time.time()
@@ -432,32 +482,30 @@ class DatasetTable(BaseTable):
 
         return dataset_organization, num_files, total_size, ds_creation_date
 
-    def _find_previous(self, relative_path, owner, owner_type):
+    def _find_previous(self, name, version_string, version_suffix, owner, owner_type):
         """
-        Find each dataset with combination of `relative_path`, `owner`,
-        `owner_type`.
+        Find all dataset entries with the same `name`, `version` and
+        `version_suffix`.
 
         We want to know, of those datasets, which are overwritable but have not
-        yet been marked as overwritten.
+        yet been marked as overwritten. There should only be one, the latest
+        one.
 
-        If any dataset with the same path has `is_overwritable=False`, the
-        routine returns None, indicating the dataset is not allowed to be
-        overwritten.
+        If there is a dataset with this combination, and the latest one has
+        `is_overwritable=False`, the routine returns None, indicating the
+        dataset is not allowed to be overwritten.
 
         Parameters
         ----------
-        relative_path : str
-            Relative path to dataset
-        owner : str
-            Owner of the dataset
-        owner_type : str
-            Owner type of the dataset
+        name/version/version_suffix/owner/owner_type : str
 
         Returns
         -------
-        dataset_id_list : list
-            List of dataset IDs that have the desired path combination that are
-            overwritable, but have not already previously been overwritten.
+        dataset_id : int
+            The dataset ID of the latest entry with name, version etc
+            combination. If the dataset is not overwritable, the negative
+            dataset_id is returned. If no dataset with this combination is
+            found, return None.
         """
 
         # Search for dataset in the registry.
@@ -469,7 +517,9 @@ class DatasetTable(BaseTable):
         )
 
         stmt = stmt.where(
-            dataset_table.c.relative_path == relative_path,
+            dataset_table.c.name == name,
+            dataset_table.c.version_string == version_string,
+            dataset_table.c.version_suffix == version_suffix,
             dataset_table.c.owner == owner,
             dataset_table.c.owner_type == owner_type,
         )
@@ -479,15 +529,17 @@ class DatasetTable(BaseTable):
             conn.commit()
 
         # Pull out the single result
-        dataset_id_list = []
+        dataset_id = None
         for r in result:
-            if not r.is_overwritable:
-                return None
-
             if not r.is_overwritten:
-                dataset_id_list.append(r.dataset_id)
+                if dataset_id is not None:
+                    raise ValueError("Found more than one entry")
+                if r.is_overwritable:
+                    dataset_id = r.dataset_id
+                else:
+                    dataset_id = -r.dataset_id
 
-        return dataset_id_list
+        return dataset_id
 
     def delete(self, dataset_id):
         """
