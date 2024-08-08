@@ -148,7 +148,8 @@ class Query:
             # Metadata from table
             self._tables[table] = self._metadata.get(table)
 
-            # Pull out column names from table.
+            # Pull out column names from table and store if they are orderable
+            # type.
             setattr(self, f"_{table}_columns", dict())
             for c in self._tables[table].c:
                 getattr(self, f"_{table}_columns")[
@@ -170,8 +171,18 @@ class Query:
         ----------
         column_names : list
             String list of database columns
+
+        Returns
+        -------
+        tables_required : list[str]
+            All table names included in `column_names`
+        column_list : list[sqlalchemy.sql.schema.Column]
+            All column objects for the columns included in `column_names`
+        is_orderable_list : list[bool]
+            Is the column of an orderable type?
         """
 
+        # Select all columns from the dataset table
         if column_names is None:
             column_names = [
                 x.table.name + "." + x.name for x in self._tables["dataset"].c
@@ -215,11 +226,20 @@ class Query:
                         )
                     )
 
+            # Table name
             tables_required.add(table_name)
+
+            # Is this column of orderable type? (see `_get_database_tables()`)
             is_orderable_list.append(
                 getattr(self, f"_{table_name}_columns")[table_name + "." + col_name]
             )
+
+            # Column name
             column_list.append(self._tables[table_name].c[col_name])
+
+        # Checks
+        if len(column_list) != len(is_orderable_list):
+            raise DataRegistryException("Bad parsing of selected columns")
 
         return list(tables_required), column_list, is_orderable_list
 
@@ -238,12 +258,11 @@ class Query:
         Returns
         -------
         - : sql alchemy Query object
-            Updated query with new WHERE clause
+            Updated query appended with additional SQL WHERE clause
         """
 
         # Get the reference to the column being filtered on.
         _, column_ref, column_is_orderable = self._parse_selected_columns([f[0]])
-        assert len(column_ref) == len(column_is_orderable) == 1
 
         # Extract the filter operator (also making sure it is an allowed one)
         if f[1] not in _colops.keys():
