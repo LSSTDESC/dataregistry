@@ -27,8 +27,14 @@ def test_register_dataset_twice(dummy_file):
         )
 
 
-def test_replace_dataset(dummy_file):
+@pytest.mark.parametrize(
+    "_REL_PATH,name_tag",
+    [(None, ""), ("test_replace_dataset/relpath", "_with_relpath")],
+)
+def test_replace_dataset(dummy_file, _REL_PATH, name_tag):
     """Test registering a dataset, then replacing it"""
+
+    _NAME = f"DESC:dataset:test_replace_dataset{name_tag}"
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
@@ -37,16 +43,17 @@ def test_replace_dataset(dummy_file):
     # Add a dataset
     d_id = _insert_dataset_entry(
         datareg,
-        "DESC:dataset:test_replace_dataset",
+        _NAME,
         "0.0.1",
         is_overwritable=True,
         description="Dataset before replace",
+        relative_path=_REL_PATH,
     )
 
     # Add another dataset to replace the first
     d2_id = _replace_dataset_entry(
         datareg,
-        "DESC:dataset:test_replace_dataset",
+        _NAME,
         "0.0.1",
         description="Dataset after replace",
     )
@@ -61,33 +68,42 @@ def test_replace_dataset(dummy_file):
             "dataset.replace_date",
             "dataset.replace_uid",
             "dataset.replace_id",
+            "dataset.relative_path",
         ],
         [f],
-        return_format="cursorresult",
     )
 
-    for i, r in enumerate(results):
-        assert i < 1
-        assert getattr(r, "dataset.name") == "DESC:dataset:test_replace_dataset"
-        assert getattr(r, "dataset.version_string") == "0.0.1"
-        assert getattr(r, "dataset.description") == "Dataset before replace"
-        assert getattr(r, "dataset.replace_date") is not None
-        assert getattr(r, "dataset.replace_uid") is not None
-        assert getattr(r, "dataset.replace_id") == d2_id
+    assert len(results["dataset.name"]) == 1
+
+    assert results["dataset.name"][0] == _NAME
+    assert results["dataset.version_string"][0] == "0.0.1"
+    assert results["dataset.description"][0] == "Dataset before replace"
+    assert results["dataset.replace_date"][0] is not None
+    assert results["dataset.replace_uid"][0] is not None
+    assert results["dataset.replace_id"][0] == d2_id
 
     f = datareg.Query.gen_filter("dataset.dataset_id", "==", d2_id)
-    results = datareg.Query.find_datasets(
+    results2 = datareg.Query.find_datasets(
         [
             "dataset.name",
             "dataset.version_string",
             "dataset.description",
+            "dataset.replace_date",
+            "dataset.replace_uid",
+            "dataset.replace_id",
+            "dataset.relative_path",
         ],
         [f],
-        return_format="cursorresult",
     )
 
-    for i, r in enumerate(results):
-        assert i < 1
-        assert getattr(r, "dataset.name") == "DESC:dataset:test_replace_dataset"
-        assert getattr(r, "dataset.version_string") == "0.0.1"
-        assert getattr(r, "dataset.description") == "Dataset after replace"
+    assert len(results2["dataset.name"]) == 1
+
+    assert results2["dataset.name"][0] == _NAME
+    assert results2["dataset.version_string"][0] == "0.0.1"
+    assert results2["dataset.description"][0] == "Dataset after replace"
+    assert results2["dataset.replace_date"][0] is None
+    assert results2["dataset.replace_uid"][0] is None
+    assert results2["dataset.replace_id"][0] is None
+
+    # Make sure the relative paths are the same for each dataset
+    assert results["dataset.relative_path"][0] == results2["dataset.relative_path"][0]

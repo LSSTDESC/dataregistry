@@ -230,7 +230,7 @@ class DatasetTable(BaseTable):
 
         # See if there is already and entry with this name/version combination
         if location_type in ["dataregistry", "dummy"]:
-            previous = self._find_previous(
+            previous, previous_relpath = self._find_previous(
                 name, version_string, version_suffix, owner, owner_type
             )
 
@@ -240,6 +240,7 @@ class DatasetTable(BaseTable):
                     raise ValueError(
                         f"Dataset '{name}' does not exist, or it not overwritable"
                     )
+                relative_path = previous_relpath
 
             # When registering, a previous (non-overwritten) entry cannot exist
             if caller_function == "register":
@@ -484,16 +485,12 @@ class DatasetTable(BaseTable):
 
     def _find_previous(self, name, version_string, version_suffix, owner, owner_type):
         """
-        Find all dataset entries with the same `name`, `version` and
-        `version_suffix`.
+        Find all dataset entries with the same `name`, `version`,
+        `version_suffix`, `owner` and `owner_type`.
 
         We want to know, of those datasets, which are overwritable but have not
         yet been marked as overwritten. There should only be one, the latest
         one.
-
-        If there is a dataset with this combination, and the latest one has
-        `is_overwritable=False`, the routine returns None, indicating the
-        dataset is not allowed to be overwritten.
 
         Parameters
         ----------
@@ -503,9 +500,10 @@ class DatasetTable(BaseTable):
         -------
         dataset_id : int
             The dataset ID of the latest entry with name, version etc
-            combination. If the dataset is not overwritable, the negative
-            dataset_id is returned. If no dataset with this combination is
-            found, return None.
+            combination. If no dataset with this combination is found, return
+            None.
+        relative_path : str
+            The `relative_path` of the discovered dataset
         """
 
         # Search for dataset in the registry.
@@ -514,6 +512,7 @@ class DatasetTable(BaseTable):
             dataset_table.c.dataset_id,
             dataset_table.c.is_overwritable,
             dataset_table.c.is_overwritten,
+            dataset_table.c.relative_path,
         )
 
         stmt = stmt.where(
@@ -530,16 +529,15 @@ class DatasetTable(BaseTable):
 
         # Pull out the single result
         dataset_id = None
+        relative_path = None
         for r in result:
             if not r.is_overwritten:
                 if dataset_id is not None:
                     raise ValueError("Found more than one entry")
-                if r.is_overwritable:
-                    dataset_id = r.dataset_id
-                else:
-                    dataset_id = -r.dataset_id
+                dataset_id = r.dataset_id
+                relative_path = r.relative_path
 
-        return dataset_id
+        return dataset_id, relative_path
 
     def delete(self, dataset_id):
         """
