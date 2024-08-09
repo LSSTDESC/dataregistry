@@ -8,6 +8,7 @@ __all__ = [
     "_insert_alias_entry",
     "_insert_execution_entry",
     "_insert_dataset_entry",
+    "_replace_dataset_entry",
 ]
 
 
@@ -155,7 +156,7 @@ def _insert_execution_entry(
     return new_id
 
 
-def _insert_dataset_entry(
+def _insert_or_replace_dataset_entry(
     datareg,
     name,
     version,
@@ -178,6 +179,7 @@ def _insert_dataset_entry(
     url=None,
     keywords=[],
     relative_path=None,
+    insert_or_replace="insert"
 ):
     """
     Wrapper to create dataset entry
@@ -234,11 +236,16 @@ def _insert_dataset_entry(
         The dataset it created for this entry
     """
 
+    if insert_or_replace == "insert":
+        f = datareg.Registrar.dataset.register
+    else:
+        f = datareg.Registrar.dataset.replace
+
     # Some defaults over all test datasets
     make_sym_link = False
 
     # Add new entry.
-    dataset_id, execution_id = datareg.Registrar.dataset.register(
+    dataset_id, execution_id = f(
         name,
         version,
         version_suffix=version_suffix,
@@ -269,3 +276,9 @@ def _insert_dataset_entry(
     print(f"Created dataset entry with id {dataset_id}")
 
     return dataset_id
+
+def _insert_dataset_entry(*args, **kwargs):
+    return _insert_or_replace_dataset_entry(*args, **kwargs, insert_or_replace="insert")
+
+def _replace_dataset_entry(*args, **kwargs):
+    return _insert_or_replace_dataset_entry(*args, **kwargs, insert_or_replace="replace")

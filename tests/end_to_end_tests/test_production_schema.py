@@ -29,6 +29,7 @@ def test_register_with_production_dependencies(dummy_file):
         datareg_prod,
         "DESC:datasets:production_dataset_for_deps",
         "0.0.1",
+        owner="production",
         owner_type="production",
     )
 
@@ -82,6 +83,7 @@ def test_production_schema_register(dummy_file):
         datareg,
         "DESC:datasets:production_dataset_1",
         "0.0.1",
+        owner="production",
         owner_type="production",
     )
 
@@ -139,6 +141,7 @@ def test_production_schema_bad_register(dummy_file):
             datareg,
             "DESC:datasets:bad_production_dataset_3",
             "0.0.1",
+            owner="production",
             owner_type="production",
             version_suffix="prod",
         )

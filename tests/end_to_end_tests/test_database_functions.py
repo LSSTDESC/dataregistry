@@ -29,7 +29,7 @@ def test_get_dataset_absolute_path(dummy_file):
         "0.0.1",
         owner_type=dset_ownertype,
         owner=dset_owner,
-        relative_path=dset_relpath
+        relative_path=dset_relpath,
     )
 
     v = datareg.Query.get_dataset_absolute_path(d_id_1)
