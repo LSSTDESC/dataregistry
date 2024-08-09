@@ -50,6 +50,7 @@ class DatasetTable(BaseTable):
         self,
         name,
         version,
+        version_suffix,
         owner,
         owner_type,
         location_type,
@@ -272,6 +273,7 @@ class DatasetTable(BaseTable):
         owner, owner_type = self._validate_register_inputs(
             name,
             version,
+            version_suffix,
             owner,
             owner_type,
             location_type,
@@ -319,6 +321,8 @@ class DatasetTable(BaseTable):
                         "version_string, version_suffix, owner, owner_type"
                     )
                 replace_iteration = 0
+        else:
+            replace_iteration = 0
 
         # When replacing, tag the old dataset as overwritten, and delete
         dataset_table = self._get_table_metadata("dataset")
