@@ -69,6 +69,7 @@ def test_replace_dataset(dummy_file, _REL_PATH, name_tag):
             "dataset.replace_uid",
             "dataset.replace_id",
             "dataset.relative_path",
+            "dataset.replace_iteration",
         ],
         [f],
     )
@@ -81,6 +82,7 @@ def test_replace_dataset(dummy_file, _REL_PATH, name_tag):
     assert results["dataset.replace_date"][0] is not None
     assert results["dataset.replace_uid"][0] is not None
     assert results["dataset.replace_id"][0] == d2_id
+    assert results["dataset.replace_iteration"][0] == 0
 
     f = datareg.Query.gen_filter("dataset.dataset_id", "==", d2_id)
     results2 = datareg.Query.find_datasets(
@@ -92,6 +94,7 @@ def test_replace_dataset(dummy_file, _REL_PATH, name_tag):
             "dataset.replace_uid",
             "dataset.replace_id",
             "dataset.relative_path",
+            "dataset.replace_iteration",
         ],
         [f],
     )
@@ -104,6 +107,7 @@ def test_replace_dataset(dummy_file, _REL_PATH, name_tag):
     assert results2["dataset.replace_date"][0] is None
     assert results2["dataset.replace_uid"][0] is None
     assert results2["dataset.replace_id"][0] is None
+    assert results2["dataset.replace_iteration"][0] == 1
 
     # Make sure the relative paths are the same for each dataset
     assert results["dataset.relative_path"][0] == results2["dataset.relative_path"][0]

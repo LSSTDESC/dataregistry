@@ -149,6 +149,7 @@ def _get_table_metadata(schema, table):
                 UniqueConstraint(
                     *schema_data[table]["unique_constraints"][uq_att]["unique_list"],
                     name=uq_att,
+                    postgresql_nulls_not_distinct=True,
                 )
             )
 

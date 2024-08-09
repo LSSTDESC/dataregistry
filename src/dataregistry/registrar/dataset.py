@@ -46,6 +46,129 @@ class DatasetTable(BaseTable):
         kwargs["caller_function"] = "replace"
         return self._register_or_replace(*args, **kwargs)
 
+    def _validate_register_inputs(
+        self,
+        name,
+        version,
+        owner,
+        owner_type,
+        location_type,
+        url,
+        contact_email,
+        is_overwritable,
+        test_production,
+    ):
+        """
+        An internal helper function to ensure the inputs to the register
+        function are valid.
+
+        If something is invalid, an exception is raised.
+
+        Parameters
+        ----------
+        See `register()` function
+
+        Returns
+        -------
+        owner : str
+        owner_type : str
+            These may have been updated from the global owner/owner_type
+        """
+
+        # If the root_dir does not exist, stop
+        if not self.root_dir_exists:
+            raise FileNotFoundError(f"root_dir {self._root_dir} does not exist")
+
+        # `name` and `version` are mandatory, and should be strings
+        if name is None or version is None:
+            raise ValueError("A valid `name` and `version` are required")
+        for att in [name, version]:
+            if type(att) != str:
+                raise ValueError(f"{att} is not a valid string")
+
+        # Make sure `name` is legal (i.e., no illegal characters)
+        for i_char in _ILLEGAL_NAME_CHAR:
+            if i_char in name:
+                raise ValueError(f"Cannot have character {i_char} in name string")
+
+        # If external dataset, check for either a `url` or `contact_email`
+        if location_type == "external":
+            if url is None and contact_email is None:
+                raise ValueError(
+                    "External datasets require either a url or contact_email"
+                )
+
+        # Assign the `owner_type`
+        if owner_type is None:
+            if self._owner_type is not None:
+                owner_type = self._owner_type
+            else:
+                owner_type = "user"
+
+        # Assign the `owner`
+        if owner is None:
+            if self._owner is not None:
+                owner = self._owner
+            else:
+                owner = self._uid
+
+        # Make sure owner type is valid
+        if owner_type not in self._OWNER_TYPES:
+            raise ValueError(f"{owner_type} is not a valid owner_type")
+
+        # Checks for production datasets
+        if owner_type == "production":
+            if is_overwritable:
+                raise ValueError("Cannot overwrite production entries")
+            if version_suffix is not None:
+                raise ValueError("Production entries can't have version suffix")
+            if self._schema != "production" and not test_production:
+                raise ValueError(
+                    "Only the production schema can handle owner_type='production'"
+                )
+
+            # The only owner allowed for production datasets is "production"
+            if owner != "production":
+                raise ValueError("`owner` for production datasets must be 'production'")
+        else:
+            if self._schema == "production" or test_production:
+                raise ValueError(
+                    "Only owner_type='production' can go in the production schema"
+                )
+
+        return owner, owner_type
+
+    def _compute_version_string(self, name, version):
+        """
+        Compute version string (either manually, or from bumping)
+
+        Parameters
+        ----------
+        name : str
+        version : str
+
+        Returns
+        -------
+        v_fields : dict
+        version_string : str
+        """
+
+        # Deal with version string (non-special case)
+        if version not in ["major", "minor", "patch"]:
+            v_fields = _parse_version_string(version)
+            version_string = version
+        else:
+            # Generate new version fields based on previous entries
+            # with the same name field (i.e., bump)
+            v_fields = _bump_version(
+                name, version, self._get_table_metadata("dataset"), self._engine
+            )
+            version_string = (
+                f"{v_fields['major']}.{v_fields['minor']}.{v_fields['patch']}"
+            )
+
+        return v_fields, version_string
+
     def _register_or_replace(
         self,
         name,
@@ -145,84 +268,29 @@ class DatasetTable(BaseTable):
             The execution ID associated with the dataset
         """
 
-        # Make sure `name` is legal (i.e., no illegal characters)
-        if name is None:
-            raise ValueError("Name cannot be None")
-        if type(name) != str:
-            raise ValueError("Name must be a valid string")
-        for i_char in _ILLEGAL_NAME_CHAR:
-            if i_char in name:
-                raise ValueError(f"Cannot have character {i_char} in name string")
-
-        # If the root_dir does not exist, stop
-        if not self.root_dir_exists:
-            raise FileNotFoundError(f"root_dir {self._root_dir} does not exist")
+        # Validate the inputs we are working with
+        owner, owner_type = self._validate_register_inputs(
+            name,
+            version,
+            owner,
+            owner_type,
+            location_type,
+            url,
+            contact_email,
+            is_overwritable,
+            test_production,
+        )
 
         # Validate the keywords (make sure they are registered)
         if len(keywords) > 0:
             keyword_ids = self._validate_keywords(keywords)
 
-        # If external dataset, check for either a `url` or `contact_email`
-        if location_type == "external":
-            if url is None and contact_email is None:
-                raise ValueError(
-                    "External datasets require either a url or contact_email"
-                )
-
         # Set max configuration file length
         if max_config_length is None:
             max_config_length = self._DEFAULT_MAX_CONFIG
 
-        # Make sure the owner_type is legal
-        if owner_type is None:
-            if self._owner_type is not None:
-                owner_type = self._owner_type
-            else:
-                owner_type = "user"
-        if owner_type not in self._OWNER_TYPES:
-            raise ValueError(f"{owner_type} is not a valid owner_type")
-
-        # Establish the dataset owner
-        if owner is None:
-            if self._owner is not None:
-                owner = self._owner
-            else:
-                owner = self._uid
-        if owner_type == "production":
-            owner = "production"
-
-        # Checks for production datasets
-        if owner_type == "production":
-            if is_overwritable:
-                raise ValueError("Cannot overwrite production entries")
-            if version_suffix is not None:
-                raise ValueError("Production entries can't have version suffix")
-            if self._schema != "production" and not test_production:
-                raise ValueError(
-                    "Only the production schema can handle owner_type='production'"
-                )
-        else:
-            if self._schema == "production" or test_production:
-                raise ValueError(
-                    "Only owner_type='production' can go in the production schema"
-                )
-
-        dataset_table = self._get_table_metadata("dataset")
-
-        # Deal with version string (non-special case)
-        if version not in ["major", "minor", "patch"]:
-            v_fields = _parse_version_string(version)
-            version_string = version
-        else:
-            if caller_function == "replace":
-                raise ValueError("No version bumping when replacing a dataset")
-
-            # Generate new version fields based on previous entries
-            # with the same name field (i.e., bump)
-            v_fields = _bump_version(name, version, dataset_table, self._engine)
-            version_string = (
-                f"{v_fields['major']}.{v_fields['minor']}.{v_fields['patch']}"
-            )
+        # Compute version string
+        v_fields, version_string = self._compute_version_string(name, version)
 
         # If `relative_path` not passed, automatically generate it
         if relative_path is None:
@@ -230,7 +298,7 @@ class DatasetTable(BaseTable):
 
         # See if there is already and entry with this name/version combination
         if location_type in ["dataregistry", "dummy"]:
-            previous, previous_relpath = self._find_previous(
+            previous, previous_relpath, replace_iteration = self._find_previous(
                 name, version_string, version_suffix, owner, owner_type
             )
 
@@ -241,6 +309,7 @@ class DatasetTable(BaseTable):
                         f"Dataset '{name}' does not exist, or it not overwritable"
                     )
                 relative_path = previous_relpath
+                replace_iteration = replace_iteration + 1
 
             # When registering, a previous (non-overwritten) entry cannot exist
             if caller_function == "register":
@@ -249,8 +318,10 @@ class DatasetTable(BaseTable):
                         "There is already a dataset with combination name,"
                         "version_string, version_suffix, owner, owner_type"
                     )
+                replace_iteration = 0
 
         # When replacing, tag the old dataset as overwritten, and delete
+        dataset_table = self._get_table_metadata("dataset")
         if caller_function == "replace":
             with self._engine.connect() as conn:
                 update_stmt = (
@@ -317,6 +388,7 @@ class DatasetTable(BaseTable):
             values["url"] = url
         if contact_email:
             values["contact_email"] = contact_email
+        values["replace_iteration"] = replace_iteration
 
         # We tentatively start with an "invalid" dataset in the database. This
         # will be upgraded to valid if the data copying (if any) was successful.
@@ -504,6 +576,8 @@ class DatasetTable(BaseTable):
             None.
         relative_path : str
             The `relative_path` of the discovered dataset
+        replace_iteration : int
+            The number of times the dataset has been overwritten
         """
 
         # Search for dataset in the registry.
@@ -513,6 +587,7 @@ class DatasetTable(BaseTable):
             dataset_table.c.is_overwritable,
             dataset_table.c.is_overwritten,
             dataset_table.c.relative_path,
+            dataset_table.c.replace_iteration,
         )
 
         stmt = stmt.where(
@@ -530,14 +605,16 @@ class DatasetTable(BaseTable):
         # Pull out the single result
         dataset_id = None
         relative_path = None
+        replace_iteration = None
         for r in result:
             if not r.is_overwritten:
                 if dataset_id is not None:
                     raise ValueError("Found more than one entry")
                 dataset_id = r.dataset_id
                 relative_path = r.relative_path
+                replace_iteration = r.replace_iteration
 
-        return dataset_id, relative_path
+        return dataset_id, relative_path, replace_iteration
 
     def delete(self, dataset_id):
         """
