@@ -32,7 +32,14 @@ def test_register_dataset_twice(dummy_file):
     [(None, ""), ("test_replace_dataset/relpath", "_with_relpath")],
 )
 def test_replace_dataset(dummy_file, _REL_PATH, name_tag):
-    """Test registering a dataset, then replacing it"""
+    """
+    Test registering a dataset, then replacing it using the `replace` function.
+
+    Test with and without a manual `relative_path`. The replaced dataset should
+    keep the relative path of the original, as well as the
+    name/version/suffix/owner/owner_type combination. All other properties are
+    not carried over to the new dataset.
+    """
 
     _NAME = f"DESC:dataset:test_replace_dataset{name_tag}"
 

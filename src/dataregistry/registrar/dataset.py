@@ -3,10 +3,10 @@ import os
 import time
 from datetime import datetime
 import shutil
-from functools import wraps
 
 from dataregistry.db_basic import add_table_row
 from sqlalchemy import select, update
+from functools import wraps
 
 from .base_table_class import BaseTable
 from .registrar_util import (
@@ -38,26 +38,11 @@ class DatasetTable(BaseTable):
         # Does the user have write permission to the root_dir?
         self.root_dir_write_access = os.access(root_dir, os.W_OK)
 
-    def register(self, *args, **kwargs):
-        kwargs["caller_function"] = "register"
-        return self._register_or_replace(*args, **kwargs)
-
-    def replace(self, *args, **kwargs):
-        kwargs["caller_function"] = "replace"
-        return self._register_or_replace(*args, **kwargs)
-
     def _validate_register_inputs(
         self,
         name,
         version,
-        version_suffix,
-        owner,
-        owner_type,
-        location_type,
-        url,
-        contact_email,
-        is_overwritable,
-        test_production,
+        kwargs_dict,
     ):
         """
         An internal helper function to ensure the inputs to the register
@@ -65,15 +50,13 @@ class DatasetTable(BaseTable):
 
         If something is invalid, an exception is raised.
 
+        Some properties may be overwritten given the value of other properties,
+        or automatically generated, hence why some properties are returned back
+        from this function.
+
         Parameters
         ----------
         See `register()` function
-
-        Returns
-        -------
-        owner : str
-        owner_type : str
-            These may have been updated from the global owner/owner_type
         """
 
         # If the root_dir does not exist, stop
@@ -93,65 +76,71 @@ class DatasetTable(BaseTable):
                 raise ValueError(f"Cannot have character {i_char} in name string")
 
         # If external dataset, check for either a `url` or `contact_email`
-        if location_type == "external":
-            if url is None and contact_email is None:
+        if kwargs_dict["location_type"] == "external":
+            if kwargs_dict["url"] is None and kwargs_dict["contact_email"] is None:
                 raise ValueError(
                     "External datasets require either a url or contact_email"
                 )
 
         # Assign the `owner_type`
-        if owner_type is None:
+        if kwargs_dict["owner_type"] is None:
             if self._owner_type is not None:
-                owner_type = self._owner_type
+                kwargs_dict["owner_type"] = self._owner_type
             else:
-                owner_type = "user"
+                kwargs_dict["owner_type"] = "user"
 
         # Assign the `owner`
-        if owner is None:
+        if kwargs_dict["owner"] is None:
             if self._owner is not None:
-                owner = self._owner
+                kwargs_dict["owner"] = self._owner
             else:
-                owner = self._uid
+                kwargs_dict["owner"] = self._uid
 
         # Make sure owner type is valid
-        if owner_type not in self._OWNER_TYPES:
+        if kwargs_dict["owner_type"] not in self._OWNER_TYPES:
             raise ValueError(f"{owner_type} is not a valid owner_type")
 
         # Checks for production datasets
-        if owner_type == "production":
-            if is_overwritable:
+        if kwargs_dict["owner_type"] == "production":
+            if kwargs_dict["is_overwritable"]:
                 raise ValueError("Cannot overwrite production entries")
-            if version_suffix is not None:
+            if kwargs_dict["version_suffix"] is not None:
                 raise ValueError("Production entries can't have version suffix")
-            if self._schema != "production" and not test_production:
+            if self._schema != "production" and not kwargs_dict["test_production"]:
                 raise ValueError(
                     "Only the production schema can handle owner_type='production'"
                 )
 
             # The only owner allowed for production datasets is "production"
-            if owner != "production":
+            if kwargs_dict["owner"] != "production":
                 raise ValueError("`owner` for production datasets must be 'production'")
         else:
-            if self._schema == "production" or test_production:
+            if self._schema == "production" or kwargs_dict["test_production"]:
                 raise ValueError(
                     "Only owner_type='production' can go in the production schema"
                 )
 
-        return owner, owner_type
+        # Validate the keywords (make sure they are registered)
+        if len(kwargs_dict["keywords"]) > 0:
+            kwargs_dict["keyword_ids"] = self._validate_keywords(
+                kwargs_dict["keywords"]
+            )
 
-    def _compute_version_string(self, name, version):
+        # Set max configuration file length
+        if kwargs_dict["max_config_length"] is None:
+            kwargs_dict["max_config_length"] = self._DEFAULT_MAX_CONFIG
+
+    def _compute_version_string(self, name, version, kwargs_dict):
         """
         Compute version string (either manually, or from bumping)
+
+        The `kwargs_dict` is updated in place.
 
         Parameters
         ----------
         name : str
         version : str
-
-        Returns
-        -------
-        v_fields : dict
-        version_string : str
+        kwargs_dict : list
         """
 
         # Deal with version string (non-special case)
@@ -168,9 +157,154 @@ class DatasetTable(BaseTable):
                 f"{v_fields['major']}.{v_fields['minor']}.{v_fields['patch']}"
             )
 
-        return v_fields, version_string
+        kwargs_dict["version_major"] = v_fields["major"]
+        kwargs_dict["version_minor"] = v_fields["minor"]
+        kwargs_dict["version_patch"] = v_fields["patch"]
+        kwargs_dict["version_string"] = version_string
 
-    def _register_or_replace(
+    def _extract_kwargs_to_dict(func):
+        """
+        Decorator function to extract the kwargs from the `replace` and
+        `register` functions, storing them in a dict called `kwargs_dict` that
+        is then accessible within the two functions.
+        """
+
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            # Get the function's signature
+            sig = inspect.signature(func)
+
+            # Extract kwargs into a dict
+            kwargs_dict = dict(kwargs)
+
+            # Check for missing arguments and use their default values if present
+            for param_name, param in sig.parameters.items():
+                if (
+                    param_name not in kwargs_dict
+                    and param.default is not inspect.Parameter.empty
+                ):
+                    kwargs_dict[param_name] = param.default
+
+            # Call the original function with kwargs and the extracted dict
+            return func(self, *args, **kwargs, kwargs_dict=kwargs_dict)
+
+        return wrapper
+
+    def _register_row(self, name, version, kwargs_dict):
+        """
+        Register a new row in the dataset table
+
+        Parameters
+        ----------
+        name : str
+        version : str
+        kwargs_dict : dict
+
+        Returns
+        -------
+        prim_key : int
+            The dataset ID of the new row relating to this entry (else None)
+        """
+
+        # If no execution_id is supplied, create a minimal entry
+        if kwargs_dict["execution_id"] is None:
+            if kwargs_dict["execution_name"] is None:
+                kwargs_dict[
+                    "execution_name"
+                ] = f"for_dataset_{name}-{kwargs_dict['version_string']}"
+                if kwargs_dict["version_suffix"]:
+                    kwargs_dict[
+                        "execution_name"
+                    ] = f"{kwargs_dict['execution_name']}-{kwargs_dict['version_suffix']}"
+            if kwargs_dict["execution_description"] is None:
+                kwargs_dict[
+                    "execution_description"
+                ] = "Fabricated execution for dataset"
+            kwargs_dict["execution_id"] = self.execution_table.register(
+                kwargs_dict["execution_name"],
+                description=kwargs_dict["execution_description"],
+                execution_start=kwargs_dict["execution_start"],
+                site=kwargs_dict["execution_site"],
+                configuration=kwargs_dict["execution_configuration"],
+                input_datasets=kwargs_dict["input_datasets"],
+                input_production_datasets=kwargs_dict["input_production_datasets"],
+            )
+
+        # Fill final values into the dict
+        kwargs_dict["name"] = name
+        kwargs_dict["register_date"] = datetime.now()
+        kwargs_dict["creator_uid"] = self._uid
+        kwargs_dict["register_root_dir"] = self._root_dir
+        if kwargs_dict["access_api_configuration"]:
+            kwargs_dict["access_api_configuration"] = _read_configuration_file(
+                kwargs_dict["access_api_configuration"],
+                kwargs_dict["max_config_length"],
+            )
+        kwargs_dict["is_overwritten"] = False
+        kwargs_dict["is_archived"] = False
+
+        # We tentatively start with an "invalid" dataset in the database. This
+        # will be upgraded to valid if the data copying (if any) was successful.
+        kwargs_dict["status"] = 0
+
+        # Create a new row in the data registry database.
+        dataset_table = self._get_table_metadata("dataset")
+        with self._engine.connect() as conn:
+            prim_key = add_table_row(conn, dataset_table, kwargs_dict, commit=True)
+
+        # Get dataset characteristics; copy to `root_dir` if requested
+        if kwargs_dict["location_type"] == "dataregistry":
+            (
+                dataset_organization,
+                num_files,
+                total_size,
+                ds_creation_date,
+            ) = self._handle_data(
+                relative_path, old_location, owner, owner_type, verbose
+            )
+        else:
+            dataset_organization = kwargs_dict["location_type"]
+            num_files = 0
+            total_size = 0
+            ds_creation_date = None
+
+        # Case where user is overwriting the dataset `creation_date`
+        if kwargs_dict["creation_date"]:
+            ds_creation_date = kwargs_dict["creation_date"]
+
+        # Copy was successful
+        with self._engine.connect() as conn:
+            # Update the entry with dataset metadata
+            update_stmt = (
+                update(dataset_table)
+                .where(dataset_table.c.dataset_id == prim_key)
+                .values(
+                    data_org=dataset_organization,
+                    nfiles=num_files,
+                    total_disk_space=total_size / 1024 / 1024,
+                    creation_date=ds_creation_date,
+                    status=set_dataset_status(kwargs_dict["status"], valid=True),
+                )
+            )
+            conn.execute(update_stmt)
+
+            # Add any keyword tags
+            if len(kwargs_dict["keywords"]) > 0:
+                keyword_table = self._get_table_metadata("dataset_keyword")
+                for k_id in kwargs_dict["keyword_ids"]:
+                    add_table_row(
+                        conn,
+                        keyword_table,
+                        {"dataset_id": prim_key, "keyword_id": k_id},
+                        commit=False,
+                    )
+
+            conn.commit()
+
+        return prim_key
+
+    @_extract_kwargs_to_dict
+    def register(
         self,
         name,
         version,
@@ -200,7 +334,7 @@ class DatasetTable(BaseTable):
         contact_email=None,
         test_production=False,
         relative_path=None,
-        caller_function=None,
+        kwargs_dict=None,
     ):
         """
         Create a new dataset entry in the DESC data registry.
@@ -260,6 +394,10 @@ class DatasetTable(BaseTable):
         test_production: boolean, default False.  Set to True for testing
                          code for production owner_type
         relative_path** : str, optional
+        kwargs_dict : dict
+            Stores all the keyword arguments passed to this function (and
+            defaults). Automatically generated by the decorator, do not pass
+            manually.
 
         Returns
         -------
@@ -270,203 +408,163 @@ class DatasetTable(BaseTable):
         """
 
         # Validate the inputs we are working with
-        owner, owner_type = self._validate_register_inputs(
-            name,
-            version,
-            version_suffix,
-            owner,
-            owner_type,
-            location_type,
-            url,
-            contact_email,
-            is_overwritable,
-            test_production,
-        )
-
-        # Validate the keywords (make sure they are registered)
-        if len(keywords) > 0:
-            keyword_ids = self._validate_keywords(keywords)
-
-        # Set max configuration file length
-        if max_config_length is None:
-            max_config_length = self._DEFAULT_MAX_CONFIG
+        self._validate_register_inputs(name, version, kwargs_dict)
 
         # Compute version string
-        v_fields, version_string = self._compute_version_string(name, version)
+        self._compute_version_string(name, version, kwargs_dict)
 
         # If `relative_path` not passed, automatically generate it
-        if relative_path is None:
-            relative_path = _relpath_from_name(name, version_string, version_suffix)
-
-        # See if there is already and entry with this name/version combination
-        if location_type in ["dataregistry", "dummy"]:
-            previous, previous_relpath, replace_iteration = self._find_previous(
-                name, version_string, version_suffix, owner, owner_type
+        if kwargs_dict["relative_path"] is None:
+            kwargs_dict["relative_path"] = _relpath_from_name(
+                name, kwargs_dict["version_string"], kwargs_dict["version_suffix"]
             )
 
-            # When replacing, need to find what we are replacing
-            if caller_function == "replace":
-                if previous is None:
-                    raise ValueError(
-                        f"Dataset '{name}' does not exist, or it not overwritable"
-                    )
-                relative_path = previous_relpath
-                replace_iteration = replace_iteration + 1
+        # Make sure there is not already an entry with this name/version combination
+        kwargs_dict["replace_iteration"] = 0
+        if kwargs_dict["location_type"] in ["dataregistry", "dummy"]:
+            previous, _, _ = self._find_previous(
+                name,
+                kwargs_dict["version_string"],
+                kwargs_dict["version_suffix"],
+                kwargs_dict["owner"],
+                kwargs_dict["owner_type"],
+            )
 
-            # When registering, a previous (non-overwritten) entry cannot exist
-            if caller_function == "register":
-                if previous is not None:
-                    raise ValueError(
-                        "There is already a dataset with combination name,"
-                        "version_string, version_suffix, owner, owner_type"
-                    )
-                replace_iteration = 0
-        else:
-            replace_iteration = 0
-
-        # When replacing, tag the old dataset as overwritten, and delete
-        dataset_table = self._get_table_metadata("dataset")
-        if caller_function == "replace":
-            with self._engine.connect() as conn:
-                update_stmt = (
-                    update(dataset_table)
-                    .where(dataset_table.c.dataset_id == previous)
-                    .values(is_overwritten=True)
+            if previous is not None:
+                raise ValueError(
+                    "There is already a dataset with combination name,"
+                    "version_string, version_suffix, owner, owner_type"
                 )
-                conn.execute(update_stmt)
-                conn.commit()
 
-            # Delete the old data
-            self.delete(previous)
+        # Register the new row in the dataset table
+        prim_key = self._register_row(name, version, kwargs_dict)
 
-        # ---------------------
-        # Now regsister dataset
-        # ---------------------
+        return prim_key, kwargs_dict["execution_id"]
 
-        # If no execution_id is supplied, create a minimal entry
-        if execution_id is None:
-            if execution_name is None:
-                execution_name = f"for_dataset_{name}-{version_string}"
-                if version_suffix:
-                    execution_name = f"{execution_name}-{version_suffix}"
-            if execution_description is None:
-                execution_description = "Fabricated execution for dataset"
-            execution_id = self.execution_table.register(
-                execution_name,
-                description=execution_description,
-                execution_start=execution_start,
-                site=execution_site,
-                configuration=execution_configuration,
-                input_datasets=input_datasets,
-                input_production_datasets=input_production_datasets,
+    @_extract_kwargs_to_dict
+    def replace(
+        self,
+        name,
+        version,
+        version_suffix=None,
+        creation_date=None,
+        description=None,
+        execution_id=None,
+        access_api=None,
+        access_api_configuration=None,
+        is_overwritable=False,
+        old_location=None,
+        copy=True,
+        verbose=False,
+        owner=None,
+        owner_type=None,
+        execution_name=None,
+        execution_description=None,
+        execution_start=None,
+        execution_site=None,
+        execution_configuration=None,
+        input_datasets=[],
+        input_production_datasets=[],
+        max_config_length=None,
+        keywords=[],
+        location_type="dataregistry",
+        url=None,
+        contact_email=None,
+        test_production=False,
+        relative_path=None,
+        kwargs_dict=None,
+    ):
+        """
+        Replace a dataset in the registry.
+
+        This is so a user can keep the same
+        name/version/version_suffix/ower/owner_type combination as a previous
+        dataset. Note the original dataset must have `is_overwritable=True` to
+        allow the replace to work.
+
+        The process is as follows:
+            - The original dataset is deleted, and the entry in the database
+              tagged accordingly
+            - A new entry is made with the same name/version combination as
+              before, and the data goes into the same relative_path as before.
+              All other properties are what the user specifies in the replace
+              function
+            - The old dataset gets pointed to the new dataset saying it is the
+              most up to date itteration
+
+        Returns
+        -------
+        prim_key : int
+            The dataset ID of the new row relating to this entry (else None)
+        execution_id : int
+            The execution ID associated with the dataset
+        """
+
+        # Validate the inputs we are working with
+        self._validate_register_inputs(name, version, kwargs_dict)
+
+        # Compute version string
+        self._compute_version_string(name, version, kwargs_dict)
+
+        # If `relative_path` not passed, automatically generate it
+        if kwargs_dict["relative_path"] is None:
+            kwargs_dict["relative_path"] = _relpath_from_name(
+                name, kwargs_dict["version_string"], kwargs_dict["version_suffix"]
             )
 
-        # Pull the dataset properties together
-        values = {"name": name, "relative_path": relative_path}
-        values["version_major"] = v_fields["major"]
-        values["version_minor"] = v_fields["minor"]
-        values["version_patch"] = v_fields["patch"]
-        values["version_string"] = version_string
-        if version_suffix:
-            values["version_suffix"] = version_suffix
-        if description:
-            values["description"] = description
-        if execution_id:
-            values["execution_id"] = execution_id
-        if access_api:
-            values["access_api"] = access_api
-        if access_api_configuration:
-            values["access_api_configuration"] = _read_configuration_file(
-                access_api_configuration, max_config_length
+        # Find the previous entry
+        if kwargs_dict["location_type"] in ["dataregistry", "dummy"]:
+            previous, relative_path, replace_iteration = self._find_previous(
+                name,
+                kwargs_dict["version_string"],
+                kwargs_dict["version_suffix"],
+                kwargs_dict["owner"],
+                kwargs_dict["owner_type"],
             )
-        values["is_overwritable"] = is_overwritable
-        values["is_overwritten"] = False
-        values["is_archived"] = False
-        values["register_date"] = datetime.now()
-        values["owner_type"] = owner_type
-        values["owner"] = owner
-        values["creator_uid"] = self._uid
-        values["register_root_dir"] = self._root_dir
-        values["location_type"] = location_type
-        if url and location_type == "external":
-            values["url"] = url
-        if contact_email:
-            values["contact_email"] = contact_email
-        values["replace_iteration"] = replace_iteration
 
-        # We tentatively start with an "invalid" dataset in the database. This
-        # will be upgraded to valid if the data copying (if any) was successful.
-        values["status"] = 0
-
-        # Create a new row in the data registry database.
-        with self._engine.connect() as conn:
-            prim_key = add_table_row(conn, dataset_table, values, commit=True)
-
-        # Get dataset characteristics; copy to `root_dir` if requested
-        if location_type == "dataregistry":
-            (
-                dataset_organization,
-                num_files,
-                total_size,
-                ds_creation_date,
-            ) = self._handle_data(
-                relative_path, old_location, owner, owner_type, verbose
-            )
+            if previous is None:
+                raise ValueError(
+                    f"Dataset '{name}' does not exist, or it not overwritable"
+                )
+            kwargs_dict["relative_path"] = relative_path
+            kwargs_dict["replace_iteration"] = replace_iteration + 1
         else:
-            dataset_organization = location_type
-            num_files = 0
-            total_size = 0
-            ds_creation_date = None
+            raise NotImplementedError(
+                "Can only currently replace dataregistry type entires"
+            )
 
-        # Case where user is overwriting the dataset `creation_date`
-        if creation_date:
-            ds_creation_date = creation_date
-
-        # Copy was successful
+        # Tag the old dataset as overwritten, and delete
+        dataset_table = self._get_table_metadata("dataset")
         with self._engine.connect() as conn:
-            # Update the entry with dataset metadata
             update_stmt = (
                 update(dataset_table)
-                .where(dataset_table.c.dataset_id == prim_key)
+                .where(dataset_table.c.dataset_id == previous)
+                .values(is_overwritten=True)
+            )
+            conn.execute(update_stmt)
+            conn.commit()
+
+        # Delete the old data
+        self.delete(previous)
+
+        # Register the new row in the dataset table
+        prim_key = self._register_row(name, version, kwargs_dict)
+
+        # Update the metadata of the replaced dataset
+        with self._engine.connect() as conn:
+            update_stmt = (
+                update(dataset_table)
+                .where(dataset_table.c.dataset_id == previous)
                 .values(
-                    data_org=dataset_organization,
-                    nfiles=num_files,
-                    total_disk_space=total_size / 1024 / 1024,
-                    creation_date=ds_creation_date,
-                    status=set_dataset_status(values["status"], valid=True),
+                    replace_date=datetime.now(),
+                    replace_uid=self._uid,
+                    replace_id=prim_key,
                 )
             )
             conn.execute(update_stmt)
-
-            # Add any keyword tags
-            if len(keywords) > 0:
-                keyword_table = self._get_table_metadata("dataset_keyword")
-                for k_id in keyword_ids:
-                    add_table_row(
-                        conn,
-                        keyword_table,
-                        {"dataset_id": prim_key, "keyword_id": k_id},
-                        commit=False,
-                    )
-
             conn.commit()
 
-        # Update the metadata of the replaced dataset
-        if caller_function == "replace":
-            with self._engine.connect() as conn:
-                update_stmt = (
-                    update(dataset_table)
-                    .where(dataset_table.c.dataset_id == previous)
-                    .values(
-                        replace_date=datetime.now(),
-                        replace_uid=self._uid,
-                        replace_id=prim_key,
-                    )
-                )
-                conn.execute(update_stmt)
-                conn.commit()
-
-        return prim_key, execution_id
+        return prim_key, kwargs_dict["execution_id"]
 
     def _handle_data(self, relative_path, old_location, owner, owner_type, verbose):
         """
@@ -606,10 +704,10 @@ class DatasetTable(BaseTable):
             result = conn.execute(stmt)
             conn.commit()
 
-        # Pull out the single result
+        # There should only be a single result that is not overwritten
         dataset_id = None
+        replace_iteration = 0
         relative_path = None
-        replace_iteration = None
         for r in result:
             if not r.is_overwritten:
                 if dataset_id is not None:
