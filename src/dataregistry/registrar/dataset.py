@@ -260,7 +260,11 @@ class DatasetTable(BaseTable):
                 total_size,
                 ds_creation_date,
             ) = self._handle_data(
-                relative_path, old_location, owner, owner_type, verbose
+                kwargs_dict["relative_path"],
+                kwargs_dict["old_location"],
+                kwargs_dict["owner"],
+                kwargs_dict["owner_type"],
+                kwargs_dict["verbose"],
             )
         else:
             dataset_organization = kwargs_dict["location_type"]
