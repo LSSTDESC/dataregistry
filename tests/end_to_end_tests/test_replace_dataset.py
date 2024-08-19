@@ -118,3 +118,54 @@ def test_replace_dataset(dummy_file, _REL_PATH, name_tag):
 
     # Make sure the relative paths are the same for each dataset
     assert results["dataset.relative_path"][0] == results2["dataset.relative_path"][0]
+
+
+def test_replacing_deleted_dataset(dummy_file):
+    """Should not be able to replace a dataset that has been previously deleted"""
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    # Add dataset
+    d_id = _insert_dataset_entry(
+        datareg,
+        "DESC:dataset:test_replacing_deleted_dataset",
+        "0.0.1",
+        is_overwritable=True,
+    )
+
+    # Delete dataset
+    datareg.Registrar.dataset.delete(d_id)
+
+    # Try to replace deleted dataset (should fail)
+    with pytest.raises(ValueError, match="is not a valid status"):
+        d2_id = _replace_dataset_entry(
+            datareg,
+            "DESC:dataset:test_replacing_deleted_dataset",
+            "0.0.1",
+        )
+
+
+def test_replacing_non_overwritable_dataset(dummy_file):
+    """Should not be able to replace a non-overwritable dataset"""
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    # Add dataset
+    d_id = _insert_dataset_entry(
+        datareg,
+        "DESC:dataset:test_replacing_non_overwritable_dataset",
+        "0.0.1",
+        is_overwritable=False,
+    )
+
+    # Try to replace non-overwritable dataset (should fail)
+    with pytest.raises(ValueError, match="is not overwritable"):
+        d2_id = _replace_dataset_entry(
+            datareg,
+            "DESC:dataset:test_replacing_non_overwritable_dataset",
+            "0.0.1",
+        )

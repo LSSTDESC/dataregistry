@@ -48,11 +48,10 @@ class DatasetTable(BaseTable):
         An internal helper function to ensure the inputs to the register
         function are valid.
 
-        If something is invalid, an exception is raised.
+        Additionally some properties in kwargs_dict may be overwritten or
+        automatically generated, depending on the value of other properties.
 
-        Some properties may be overwritten given the value of other properties,
-        or automatically generated, hence why some properties are returned back
-        from this function.
+        If something is invalid, an exception is raised.
 
         Parameters
         ----------
@@ -426,7 +425,7 @@ class DatasetTable(BaseTable):
         # Make sure there is not already an entry with this name/version combination
         kwargs_dict["replace_iteration"] = 0
         if kwargs_dict["location_type"] in ["dataregistry", "dummy"]:
-            previous, _, _ = self._find_previous(
+            previous_dataset = self._find_previous(
                 name,
                 kwargs_dict["version_string"],
                 kwargs_dict["version_suffix"],
@@ -434,7 +433,7 @@ class DatasetTable(BaseTable):
                 kwargs_dict["owner_type"],
             )
 
-            if previous is not None:
+            if previous_dataset["found"] > 0:
                 raise ValueError(
                     "There is already a dataset with combination name,"
                     "version_string, version_suffix, owner, owner_type"
@@ -494,7 +493,7 @@ class DatasetTable(BaseTable):
               All other properties are what the user specifies in the replace
               function
             - The old dataset gets pointed to the new dataset saying it is the
-              most up to date itteration
+              most up to date iteration
 
         Returns
         -------
@@ -507,18 +506,16 @@ class DatasetTable(BaseTable):
         # Validate the inputs we are working with
         self._validate_register_inputs(name, version, kwargs_dict)
 
+        # Replace function cannot accept bumping version strings
+        if version in ["major", "minor", "patch"]:
+            raise ValueError("Invalid version string for replace, no bumping")
+
         # Compute version string
         self._compute_version_string(name, version, kwargs_dict)
 
-        # If `relative_path` not passed, automatically generate it
-        if kwargs_dict["relative_path"] is None:
-            kwargs_dict["relative_path"] = _relpath_from_name(
-                name, kwargs_dict["version_string"], kwargs_dict["version_suffix"]
-            )
-
         # Find the previous entry
         if kwargs_dict["location_type"] in ["dataregistry", "dummy"]:
-            previous, relative_path, replace_iteration = self._find_previous(
+            previous_dataset = self._find_previous(
                 name,
                 kwargs_dict["version_string"],
                 kwargs_dict["version_suffix"],
@@ -526,12 +523,23 @@ class DatasetTable(BaseTable):
                 kwargs_dict["owner_type"],
             )
 
-            if previous is None:
+            if previous_dataset["found"] == 0:
+                raise ValueError(f"Dataset {name} does not exist")
+            if previous_dataset["is_overwritable"][-1] == False:
                 raise ValueError(
-                    f"Dataset '{name}' does not exist, or it not overwritable"
+                    f"Dataset {name}'s latest iteration "
+                    f"({previous_dataset['replace_iteration'][-1]}) is not overwritable"
                 )
-            kwargs_dict["relative_path"] = relative_path
-            kwargs_dict["replace_iteration"] = replace_iteration + 1
+            if previous_dataset["status"][-1] != 1:
+                raise ValueError(
+                    f"Dataset {name} is not a valid status ",
+                    f"to be replaced (status={previous_dataset['status'][-1]}",
+                )
+
+            kwargs_dict["relative_path"] = previous_dataset["relative_path"][-1]
+            kwargs_dict["replace_iteration"] = (
+                previous_dataset["replace_iteration"][-1] + 1
+            )
         else:
             raise NotImplementedError(
                 "Can only currently replace dataregistry type entires"
@@ -542,14 +550,14 @@ class DatasetTable(BaseTable):
         with self._engine.connect() as conn:
             update_stmt = (
                 update(dataset_table)
-                .where(dataset_table.c.dataset_id == previous)
+                .where(dataset_table.c.dataset_id == previous_dataset["dataset_id"][-1])
                 .values(is_overwritten=True)
             )
             conn.execute(update_stmt)
             conn.commit()
 
         # Delete the old data
-        self.delete(previous)
+        self.delete(previous_dataset["dataset_id"][-1])
 
         # Register the new row in the dataset table
         prim_key = self._register_row(name, version, kwargs_dict)
@@ -558,7 +566,7 @@ class DatasetTable(BaseTable):
         with self._engine.connect() as conn:
             update_stmt = (
                 update(dataset_table)
-                .where(dataset_table.c.dataset_id == previous)
+                .where(dataset_table.c.dataset_id == previous_dataset["dataset_id"][-1])
                 .values(
                     replace_date=datetime.now(),
                     replace_uid=self._uid,
@@ -666,9 +674,11 @@ class DatasetTable(BaseTable):
         Find all dataset entries with the same `name`, `version`,
         `version_suffix`, `owner` and `owner_type`.
 
-        We want to know, of those datasets, which are overwritable but have not
-        yet been marked as overwritten. There should only be one, the latest
-        one.
+        Returns results a dict stating what iteration those datasets are, the
+        relative path their data is located, and if they can be overwritten.
+
+        Only "valid", non-deleted, non-archived datasets are returned, i.e.,
+        those with `status==1`.
 
         Parameters
         ----------
@@ -676,14 +686,9 @@ class DatasetTable(BaseTable):
 
         Returns
         -------
-        dataset_id : int
-            The dataset ID of the latest entry with name, version etc
-            combination. If no dataset with this combination is found, return
-            None.
-        relative_path : str
-            The `relative_path` of the discovered dataset
-        replace_iteration : int
-            The number of times the dataset has been overwritten
+        data : dict
+            Constains information about discovered datasets, ordered descending
+            by `replace_iteraction^
         """
 
         # Search for dataset in the registry.
@@ -694,6 +699,7 @@ class DatasetTable(BaseTable):
             dataset_table.c.is_overwritten,
             dataset_table.c.relative_path,
             dataset_table.c.replace_iteration,
+            dataset_table.c.status,
         )
 
         stmt = stmt.where(
@@ -704,23 +710,28 @@ class DatasetTable(BaseTable):
             dataset_table.c.owner_type == owner_type,
         )
 
+        # Order by `replace_iteration`
+        stmt = stmt.order_by(dataset_table.c.replace_iteration.desc())
+
         with self._engine.connect() as conn:
             result = conn.execute(stmt)
-            conn.commit()
 
-        # There should only be a single result that is not overwritten
-        dataset_id = None
-        replace_iteration = 0
-        relative_path = None
+        # Pull out information for the resulting datasets
+        _return_atts = [
+            "relative_path",
+            "replace_iteration",
+            "dataset_id",
+            "is_overwritable",
+            "status",
+        ]
+        data = {att: [] for att in _return_atts}
+        data["found"] = 0
         for r in result:
-            if not r.is_overwritten:
-                if dataset_id is not None:
-                    raise ValueError("Found more than one entry")
-                dataset_id = r.dataset_id
-                relative_path = r.relative_path
-                replace_iteration = r.replace_iteration
+            data["found"] += 1
+            for att in _return_atts:
+                data[att].append(getattr(r, att))
 
-        return dataset_id, relative_path, replace_iteration
+        return data
 
     def delete(self, dataset_id):
         """
