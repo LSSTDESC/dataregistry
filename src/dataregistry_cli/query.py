@@ -91,7 +91,12 @@ def dregs_ls(args):
     ]
     if args.extended:
         _print_cols.extend(
-            ["relative_path", "status", "register_date", "is_overwritable"]
+            [
+                "dataset.relative_path",
+                "dataset.status",
+                "dataset.register_date",
+                "dataset.is_overwritable",
+            ]
         )
 
     # Add keywords filter
@@ -130,6 +135,9 @@ def dregs_ls(args):
 
         if "register_date" in results.keys():
             results["register_date"] = results["register_date"].dt.date
+
+        if "keyword.keyword" in results.keys():
+            del results["keyword.keyword"]
 
         # Print
         with pd.option_context(
