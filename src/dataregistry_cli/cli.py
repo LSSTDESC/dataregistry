@@ -69,9 +69,24 @@ def get_parser():
     arg_ls.add_argument(
         "--owner_type",
         help="List datasets for a given owner type",
-        choices=["user", "group", "production"],
+        choices=["user", "group", "production", "project"],
     )
     arg_ls.add_argument("--all", help="List all datasets", action="store_true")
+    arg_ls.add_argument(
+        "--extended", help="List more properties than the default", action="store_true"
+    )
+    arg_ls.add_argument(
+        "--max_rows",
+        help="Maximum number of rows to print (default 500)",
+        type=int,
+        default=500,
+    )
+    arg_ls.add_argument(
+        "--max_chars",
+        help="Maximum number of characters to print in a column (default 40)",
+        type=int,
+        default=40,
+    )
     _add_generic_arguments(arg_ls)
 
     # --------
@@ -115,27 +130,49 @@ def get_parser():
         extra_args = {}
 
         # Any default?
-        if schema_data["tables"]["dataset"]["column_definitions"][column]["cli_default"] is not None:
-            extra_args["default"] = schema_data["tables"]["dataset"]["column_definitions"][column]["cli_default"]
+        if (
+            schema_data["tables"]["dataset"]["column_definitions"][column][
+                "cli_default"
+            ]
+            is not None
+        ):
+            extra_args["default"] = schema_data["tables"]["dataset"][
+                "column_definitions"
+            ][column]["cli_default"]
             default_str = f" (default={extra_args['default']})"
         else:
             default_str = ""
 
         # Restricted to choices?
-        if schema_data["tables"]["dataset"]["column_definitions"][column]["choices"] is not None:
-            extra_args["choices"] = schema_data["tables"]["dataset"]["column_definitions"][column]["choices"]
-    
+        if (
+            schema_data["tables"]["dataset"]["column_definitions"][column]["choices"]
+            is not None
+        ):
+            extra_args["choices"] = schema_data["tables"]["dataset"][
+                "column_definitions"
+            ][column]["choices"]
+
         # Is this a boolean flag?
-        if schema_data["tables"]["dataset"]["column_definitions"][column]["type"] == "Boolean":
+        if (
+            schema_data["tables"]["dataset"]["column_definitions"][column]["type"]
+            == "Boolean"
+        ):
             extra_args["action"] = "store_true"
         else:
-            extra_args["type"] = _TYPE_TRANSLATE[schema_data["tables"]["dataset"]["column_definitions"][column]["type"]]
-        
+            extra_args["type"] = _TYPE_TRANSLATE[
+                schema_data["tables"]["dataset"]["column_definitions"][column]["type"]
+            ]
+
         # Add flag
-        if schema_data["tables"]["dataset"]["column_definitions"][column]["cli_optional"]:
+        if schema_data["tables"]["dataset"]["column_definitions"][column][
+            "cli_optional"
+        ]:
             arg_register_dataset.add_argument(
                 "--" + column,
-                help=schema_data["tables"]["dataset"]["column_definitions"][column]["description"] + default_str,
+                help=schema_data["tables"]["dataset"]["column_definitions"][column][
+                    "description"
+                ]
+                + default_str,
                 **extra_args,
             )
 
