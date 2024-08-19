@@ -1,3 +1,9 @@
+## Version 0.6.1
+
+The `tables_required` list, when doing a query, was only build from the return
+column list. This means if a filter used a table not in the returned column
+list the proper join would not be made. This has been corrected.
+
 ## Version 0.6.0
 
 - Added `replace()` function for datasets. This is functionally very similar to
