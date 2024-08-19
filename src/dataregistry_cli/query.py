@@ -88,10 +88,12 @@ def dregs_ls(args):
         "dataset.version_string",
         "dataset.owner",
         "dataset.owner_type",
+        "dataset.description",
     ]
     if args.extended:
         _print_cols.extend(
             [
+                "dataset.dataset_id",
                 "dataset.relative_path",
                 "dataset.status",
                 "dataset.register_date",

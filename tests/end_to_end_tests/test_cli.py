@@ -161,3 +161,40 @@ def test_dataset_entry_with_keywords(dummy_file):
     for r in results:
         assert getattr(r, "dataset.name") == "my_cli_dataset_keywords"
         assert getattr(r, "keyword.keyword") in ["observation", "simulation"]
+
+def test_modify_dataset(dummy_file):
+    """Make a simple entry, then modify it"""
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+
+    # Register a dataset
+    cmd = "register dataset my_cli_dataset_to_modify 0.0.1 --location_type dummy"
+    cmd += f" --schema {SCHEMA_VERSION} --root_dir {str(tmp_root_dir)}"
+    cli.main(shlex.split(cmd))
+
+    # Find the dataset id
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    f = datareg.Query.gen_filter("dataset.name", "==", "my_cli_dataset_to_modify")
+    results = datareg.Query.find_datasets(["dataset.dataset_id"], [f])
+    assert len(results["dataset.dataset_id"]) == 1, "Bad result from query dcli5"
+    d_id = results["dataset.dataset_id"][0]
+
+    # Modify dataset
+    cmd = f"modify dataset {d_id} description 'Updated CLI desc'"
+    cmd += f" --schema {SCHEMA_VERSION} --root_dir {str(tmp_root_dir)}"
+    cli.main(shlex.split(cmd))
+
+    # Check
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    f = datareg.Query.gen_filter("dataset.name", "==", "my_cli_dataset_to_modify")
+    results = datareg.Query.find_datasets(
+        [
+            "dataset.dataset_id",
+            "dataset.description",
+        ],
+        [f],
+        return_format="cursorresult",
+    )
+    for r in results:
+        assert getattr(r, "dataset.description") == "Updated CLI desc"

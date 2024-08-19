@@ -6,6 +6,7 @@ from .register import register_dataset
 from .delete import delete_dataset
 from .query import dregs_ls
 from .show import dregs_show
+from .modify import modify_dataset
 from dataregistry.schema import load_schema
 
 
@@ -89,6 +90,41 @@ def get_parser():
     )
     arg_ls.add_argument("--keyword", type=str, help="Keyword to filter by")
     _add_generic_arguments(arg_ls)
+
+    # ------
+    # Modify
+    # ------
+
+    # Modify a database entry.
+    arg_modify = subparsers.add_parser("modify", help="Modify an entry in the database")
+
+    arg_modify_sub = arg_modify.add_subparsers(title="modify what?", dest="modify_type")
+
+    # ------------------
+    # Modify a dataset
+    # ------------------
+
+    # Modify a dataset entry.
+    arg_modify_dataset = arg_modify_sub.add_parser("dataset", help="Modify a dataset")
+
+    arg_modify_dataset.add_argument(
+        "dataset_id",
+        help="`dataset_id` of dataset to modify",
+        type=int,
+    )
+
+    arg_modify_dataset.add_argument(
+        "column",
+        help="Column in the dataset table to modify",
+        type=str,
+    )
+
+    arg_modify_dataset.add_argument(
+        "new_value",
+        help="Updated value",
+        type=str,
+    )
+    _add_generic_arguments(arg_modify_dataset)
 
     # --------
     # Register
@@ -303,3 +339,8 @@ def main(cmd=None):
     elif args.subcommand == "show":
         if args.show_type == "keywords":
             dregs_show("keywords", args)
+
+    # Modify an entry
+    if args.subcommand == "modify":
+        if args.modify_type == "dataset":
+            modify_dataset(args)
