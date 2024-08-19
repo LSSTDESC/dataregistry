@@ -87,6 +87,7 @@ def get_parser():
         type=int,
         default=40,
     )
+    arg_ls.add_argument("--keyword", type=str, help="Keyword to filter by")
     _add_generic_arguments(arg_ls)
 
     # --------

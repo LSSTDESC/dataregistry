@@ -36,6 +36,8 @@ def dregs_ls(args):
         Maximum number of character to print per column
     args.max_rows : int
         Maximum number of rows to print
+    args.keywords : list[str]
+        Search by an additional list of keywords
     """
 
     # Establish connection to the regular schema
@@ -81,11 +83,22 @@ def dregs_ls(args):
         print("all datasets", end=" ")
 
     # What columns are we printing
-    _print_cols = ["name", "version_string", "owner", "owner_type"]
+    _print_cols = [
+        "dataset.name",
+        "dataset.version_string",
+        "dataset.owner",
+        "dataset.owner_type",
+    ]
     if args.extended:
         _print_cols.extend(
             ["relative_path", "status", "register_date", "is_overwritable"]
         )
+
+    # Add keywords filter
+    if args.keyword is not None:
+        _print_cols.append("keyword.keyword")
+
+        filters.append(datareg.Query.gen_filter("keyword.keyword", "==", args.keyword))
 
     # Loop over this schema and the production schema and print the results
     for this_datareg in [datareg, datareg_prod]:
@@ -98,13 +111,15 @@ def dregs_ls(args):
 
         # Query
         results = this_datareg.Query.find_datasets(
-            ["dataset." + x for x in _print_cols],
+            [x for x in _print_cols],
             filters,
             return_format="dataframe",
         )
 
         # Strip "dataset." from column names
-        new_col = {x: x.split("dataset.")[1] for x in results.columns}
+        new_col = {
+            x: x.split("dataset.")[1] for x in results.columns if "dataset." in x
+        }
         results.rename(columns=new_col, inplace=True)
 
         # Add compressed columns
