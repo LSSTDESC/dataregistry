@@ -8,6 +8,7 @@ __all__ = [
     "_insert_alias_entry",
     "_insert_execution_entry",
     "_insert_dataset_entry",
+    "_replace_dataset_entry",
 ]
 
 
@@ -126,14 +127,8 @@ def _insert_execution_entry(
 
     Parameters
     ----------
-    name : str
-        Name of execution
-    description : str
-        Description of execution
-    intput_datasets : list
-        List of dataset ids
-    configuration : str
-        Path to configuration file for execution
+    **See `src/dataregistry/registrar/execution.py` for a full description of
+    parameters
 
     Returns
     -------
@@ -155,7 +150,7 @@ def _insert_execution_entry(
     return new_id
 
 
-def _insert_dataset_entry(
+def _insert_or_replace_dataset_entry(
     datareg,
     name,
     version,
@@ -178,55 +173,16 @@ def _insert_dataset_entry(
     url=None,
     keywords=[],
     relative_path=None,
+    access_api=None,
+    insert_or_replace="insert"
 ):
     """
-    Wrapper to create dataset entry
+    Wrapper to create dataset entry during testing
 
     Parameters
     ----------
-    name : str
-        A manually selected name for the dataset
-    version : str
-        Semantic version string (i.e., M.N.P) or
-        "major", "minor", "patch" to automatically bump the version previous
-    owner_type : str
-        Either "production", "group", "user"
-    owner : str
-        Dataset owner
-    description : str
-        Description of dataset
-    name : str
-        A manually selected name for the dataset
-    execution_id : int
-        Execution entry related to this dataset
-    version_suffix : str
-        Append a suffix to the version string
-    old_location : str
-        Path to data to be copied to data registry
-    which_datareg : DataRegistry object
-        In case we want to register using a custom DataRegistry object
-    execution_name : str, optional
-            Typically pipeline name or program name
-    execution_description : str, optional
-        Human readible description of execution
-    execution_start : datetime, optional
-    execution_site : str, optional
-        Where was the execution performed?
-    execution_configuration : str, optional
-        Path to text file used to configure the execution
-    input_datasets : list, optional
-        List of dataset ids that were the input to this execution
-    location_type : str, optional
-        "dataregistry", "external" or "dummy"
-    contact_email : str
-        Contact email for external datasets
-    url : str
-        Url for external datasets
-    keywords : list[str]
-        List of keywords to tag
-    relative_path : str
-        Relative path within the data registry to store the data
-        Relative to <ROOT>/<owner_type>/<owner>/...
+    **See `src/dataregistry/registrar/dataset.py` for a full description of
+    parameters 
 
     Returns
     -------
@@ -234,11 +190,16 @@ def _insert_dataset_entry(
         The dataset it created for this entry
     """
 
+    if insert_or_replace == "insert":
+        f = datareg.Registrar.dataset.register
+    else:
+        f = datareg.Registrar.dataset.replace
+
     # Some defaults over all test datasets
     make_sym_link = False
 
     # Add new entry.
-    dataset_id, execution_id = datareg.Registrar.dataset.register(
+    dataset_id, execution_id = f(
         name,
         version,
         version_suffix=version_suffix,
@@ -262,6 +223,7 @@ def _insert_dataset_entry(
         url=url,
         keywords=keywords,
         relative_path=relative_path,
+        access_api=access_api,
     )
 
     assert dataset_id is not None, "Trying to create a dataset that already exists"
@@ -269,3 +231,9 @@ def _insert_dataset_entry(
     print(f"Created dataset entry with id {dataset_id}")
 
     return dataset_id
+
+def _insert_dataset_entry(*args, **kwargs):
+    return _insert_or_replace_dataset_entry(*args, **kwargs, insert_or_replace="insert")
+
+def _replace_dataset_entry(*args, **kwargs):
+    return _insert_or_replace_dataset_entry(*args, **kwargs, insert_or_replace="replace")

@@ -330,7 +330,7 @@ tables:
 
     unique_constraints:
       dataset_unique:
-        unique_list: ["name", "version_string", "version_suffix", "owner", "owner_type"]
+        unique_list: ["name", "version_string", "version_suffix", "owner", "owner_type", "replace_iteration"]
 
     column_definitions:
       dataset_id:
@@ -466,3 +466,16 @@ tables:
         type: "String"
         description: "Contact information for someone regarding the dataset."
         cli_optional: True
+      replace_date:
+        type: "DateTime"
+        description: "Date the dataset was replaced with new data"
+      replace_uid:
+        type: "String"
+        description: "User ID of person who replaced the dataset with new data"
+      replace_id:
+        type: "Integer"
+        description: "Dataset ID of the new entry that replaced this dataset"
+      replace_iteration:
+        type: "Integer"
+        description: "How many times has this datset been overwritten?"
+        nullable: False
