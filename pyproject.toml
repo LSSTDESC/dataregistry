@@ -23,7 +23,7 @@ keywords = ["desc", "python", "registry"]
 #       GitPython package. It is not needed for accessing an existing db.
 dependencies = [
     'psycopg2',
-    'sqlalchemy',
+    'sqlalchemy>=2.0.16',
     'pyyaml',
     'pandas'
 ]

@@ -79,7 +79,7 @@ def test_production_entry(dummy_file):
     if datareg.Query._dialect != "sqlite":
         # Register a dataset
         cmd = "register dataset my_production_cli_dataset 0.1.2 --location_type dummy"
-        cmd += " --owner_type production"
+        cmd += " --owner_type production --owner production"
         cmd += f" --schema production --root_dir {str(tmp_root_dir)}"
         cli.main(shlex.split(cmd))
 
