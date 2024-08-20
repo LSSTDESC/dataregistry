@@ -425,7 +425,7 @@ class DatasetTable(BaseTable):
         # Make sure there is not already an entry with this name/version combination
         kwargs_dict["replace_iteration"] = 0
         if kwargs_dict["location_type"] in ["dataregistry", "dummy"]:
-            previous_dataset = self._find_previous(
+            previous_datasets = self._find_previous(
                 name,
                 kwargs_dict["version_string"],
                 kwargs_dict["version_suffix"],
@@ -433,7 +433,7 @@ class DatasetTable(BaseTable):
                 kwargs_dict["owner_type"],
             )
 
-            if previous_dataset["found"] > 0:
+            if len(previous_datasets) > 0:
                 raise ValueError(
                     "There is already a dataset with combination name,"
                     "version_string, version_suffix, owner, owner_type"
@@ -515,7 +515,7 @@ class DatasetTable(BaseTable):
 
         # Find the previous entry
         if kwargs_dict["location_type"] in ["dataregistry", "dummy"]:
-            previous_dataset = self._find_previous(
+            previous_datasets = self._find_previous(
                 name,
                 kwargs_dict["version_string"],
                 kwargs_dict["version_suffix"],
@@ -523,22 +523,22 @@ class DatasetTable(BaseTable):
                 kwargs_dict["owner_type"],
             )
 
-            if previous_dataset["found"] == 0:
+            if len(previous_datasets) == 0:
                 raise ValueError(f"Dataset {name} does not exist")
-            if previous_dataset["is_overwritable"][-1] == False:
+            if previous_datasets[-1].is_overwritable == False:
                 raise ValueError(
                     f"Dataset {name}'s latest iteration "
-                    f"({previous_dataset['replace_iteration'][-1]}) is not overwritable"
+                    f"({previous_datasets[-1].replace_iteration}) is not overwritable"
                 )
-            if previous_dataset["status"][-1] != 1:
+            if previous_datasets[-1].status != 1:
                 raise ValueError(
                     f"Dataset {name} is not a valid status ",
-                    f"to be replaced (status={previous_dataset['status'][-1]}",
+                    f"to be replaced (status={previous_datasets[-1].status}",
                 )
 
-            kwargs_dict["relative_path"] = previous_dataset["relative_path"][-1]
+            kwargs_dict["relative_path"] = previous_datasets[-1].relative_path
             kwargs_dict["replace_iteration"] = (
-                previous_dataset["replace_iteration"][-1] + 1
+                previous_datasets[-1].replace_iteration + 1
             )
         else:
             raise NotImplementedError(
@@ -550,14 +550,16 @@ class DatasetTable(BaseTable):
         with self._engine.connect() as conn:
             update_stmt = (
                 update(dataset_table)
-                .where(dataset_table.c.dataset_id == previous_dataset["dataset_id"][-1])
+                .where(
+                    dataset_table.c.dataset_id == previous_datasets[-1].dataset_id
+                )
                 .values(is_overwritten=True)
             )
             conn.execute(update_stmt)
             conn.commit()
 
         # Delete the old data
-        self.delete(previous_dataset["dataset_id"][-1])
+        self.delete(previous_datasets[-1].dataset_id)
 
         # Register the new row in the dataset table
         prim_key = self._register_row(name, version, kwargs_dict)
@@ -566,7 +568,9 @@ class DatasetTable(BaseTable):
         with self._engine.connect() as conn:
             update_stmt = (
                 update(dataset_table)
-                .where(dataset_table.c.dataset_id == previous_dataset["dataset_id"][-1])
+                .where(
+                    dataset_table.c.dataset_id == previous_datasets[-1].dataset_id
+                )
                 .values(
                     replace_date=datetime.now(),
                     replace_uid=self._uid,
@@ -677,16 +681,13 @@ class DatasetTable(BaseTable):
         Returns results a dict stating what iteration those datasets are, the
         relative path their data is located, and if they can be overwritten.
 
-        Only "valid", non-deleted, non-archived datasets are returned, i.e.,
-        those with `status==1`.
-
         Parameters
         ----------
         name/version/version_suffix/owner/owner_type : str
 
         Returns
         -------
-        data : dict
+        rows : list[sqlalchemy Row object]
             Constains information about discovered datasets, ordered descending
             by `replace_iteraction^
         """
@@ -717,21 +718,9 @@ class DatasetTable(BaseTable):
             result = conn.execute(stmt)
 
         # Pull out information for the resulting datasets
-        _return_atts = [
-            "relative_path",
-            "replace_iteration",
-            "dataset_id",
-            "is_overwritable",
-            "status",
-        ]
-        data = {att: [] for att in _return_atts}
-        data["found"] = 0
-        for r in result:
-            data["found"] += 1
-            for att in _return_atts:
-                data[att].append(getattr(r, att))
+        rows = result.all()
 
-        return data
+        return rows
 
     def delete(self, dataset_id):
         """
