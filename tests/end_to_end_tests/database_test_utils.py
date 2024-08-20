@@ -150,7 +150,7 @@ def _insert_execution_entry(
     return new_id
 
 
-def _insert_or_replace_dataset_entry(
+def _insert_dataset_entry(
     datareg,
     name,
     version,
@@ -174,7 +174,6 @@ def _insert_or_replace_dataset_entry(
     keywords=[],
     relative_path=None,
     access_api=None,
-    insert_or_replace="insert"
 ):
     """
     Wrapper to create dataset entry during testing
@@ -190,16 +189,11 @@ def _insert_or_replace_dataset_entry(
         The dataset it created for this entry
     """
 
-    if insert_or_replace == "insert":
-        f = datareg.Registrar.dataset.register
-    else:
-        f = datareg.Registrar.dataset.replace
-
     # Some defaults over all test datasets
     make_sym_link = False
 
     # Add new entry.
-    dataset_id, execution_id = f(
+    dataset_id, execution_id = datareg.Registrar.dataset.register(
         name,
         version,
         version_suffix=version_suffix,
@@ -232,8 +226,73 @@ def _insert_or_replace_dataset_entry(
 
     return dataset_id
 
-def _insert_dataset_entry(*args, **kwargs):
-    return _insert_or_replace_dataset_entry(*args, **kwargs, insert_or_replace="insert")
+def _replace_dataset_entry(
+    datareg,
+    name,
+    version,
+    owner_type=None,
+    owner=None,
+    description=None,
+    execution_id=None,
+    version_suffix=None,
+    old_location=None,
+    is_overwritable=False,
+    which_datareg=None,
+    execution_name=None,
+    execution_description=None,
+    execution_start=None,
+    execution_site=None,
+    execution_configuration=None,
+    input_datasets=[],
+    location_type="dummy",
+    contact_email=None,
+    url=None,
+    keywords=[],
+    relative_path=None,
+    access_api=None,
+):
+    """
+    Wrapper to replace dataset entry during testing
 
-def _replace_dataset_entry(*args, **kwargs):
-    return _insert_or_replace_dataset_entry(*args, **kwargs, insert_or_replace="replace")
+    Parameters
+    ----------
+    **See `src/dataregistry/registrar/dataset.py` for a full description of
+    parameters
+
+    Returns
+    -------
+    dataset_id : int
+        The dataset it created for this entry
+    """
+
+    # Some defaults over all test datasets
+    make_sym_link = False
+
+    # Add new entry.
+    dataset_id, execution_id = datareg.Registrar.dataset.replace(
+        name,
+        version,
+        version_suffix=version_suffix,
+        creation_date=None,
+        description=description,
+        old_location=old_location,
+        copy=(not make_sym_link),
+        execution_id=execution_id,
+        verbose=True,
+        owner=owner,
+        owner_type=owner_type,
+        is_overwritable=is_overwritable,
+        execution_name=execution_name,
+        execution_description=execution_description,
+        execution_start=execution_start,
+        execution_site=execution_site,
+        execution_configuration=execution_configuration,
+        input_datasets=input_datasets,
+        location_type=location_type,
+        contact_email=contact_email,
+        url=url,
+        keywords=keywords,
+        access_api=access_api,
+    )
+
+    return dataset_id
