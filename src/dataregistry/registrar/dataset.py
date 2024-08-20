@@ -474,7 +474,6 @@ class DatasetTable(BaseTable):
         url=None,
         contact_email=None,
         test_production=False,
-        relative_path=None,
         kwargs_dict=None,
     ):
         """
