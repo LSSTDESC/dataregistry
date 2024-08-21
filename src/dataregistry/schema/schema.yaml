@@ -462,12 +462,6 @@ tables:
         type: "String"
         description: "Contact information for someone regarding the dataset."
         cli_optional: True
-      replace_date:
-        type: "DateTime"
-        description: "Date the dataset was replaced with new data"
-      replace_uid:
-        type: "String"
-        description: "User ID of person who replaced the dataset with new data"
       replace_id:
         type: "Integer"
         description: "Dataset ID of the new entry that replaced this dataset"

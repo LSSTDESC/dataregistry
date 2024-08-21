@@ -100,5 +100,5 @@ def test_delete_dataset_entry(dummy_file, is_dummy, dataset_name):
             assert not os.path.isdir(data_path)
 
     # Make sure we can not delete an already deleted entry.
-    with pytest.raises(ValueError, match="has already been deleted"):
+    with pytest.raises(ValueError, match="previously deleted"):
         datareg.Registrar.dataset.delete(d_id)

@@ -545,16 +545,6 @@ class DatasetTable(BaseTable):
 
         # Tag the old dataset as overwritten, and delete
         dataset_table = self._get_table_metadata("dataset")
-        with self._engine.connect() as conn:
-            update_stmt = (
-                update(dataset_table)
-                .where(dataset_table.c.dataset_id == previous_datasets[-1].dataset_id)
-                .values(
-                    status=set_dataset_status(previous_dataset.status, replaced=True),
-                )
-            )
-            conn.execute(update_stmt)
-            conn.commit()
 
         # Delete the old data
         self.delete(previous_datasets[-1].dataset_id)
@@ -569,8 +559,7 @@ class DatasetTable(BaseTable):
                 update(dataset_table)
                 .where(dataset_table.c.dataset_id == previous_datasets[-1].dataset_id)
                 .values(
-                    replace_date=datetime.now(),
-                    replace_uid=self._uid,
+                    status=set_dataset_status(previous_datasets[-1].status, replaced=True),
                     replace_id=prim_key,
                 )
             )
@@ -740,7 +729,8 @@ class DatasetTable(BaseTable):
         if previous_dataset.status != DATASET_ONLY_VALID:
             raise ValueError(
                 f"Dataset {dataset_id} is either invalid, "
-                "previously deleted or previously replaced"
+                "previously deleted or previously replaced "
+                f"status={previous_dataset.status}"
             )
 
         # Update the status of the dataset to deleted

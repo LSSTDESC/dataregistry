@@ -72,8 +72,8 @@ def test_replace_dataset(dummy_file, _REL_PATH, name_tag):
             "dataset.name",
             "dataset.version_string",
             "dataset.description",
-            "dataset.replace_date",
-            "dataset.replace_uid",
+            "dataset.delete_date",
+            "dataset.delete_uid",
             "dataset.replace_id",
             "dataset.relative_path",
             "dataset.replace_iteration",
@@ -86,8 +86,8 @@ def test_replace_dataset(dummy_file, _REL_PATH, name_tag):
     assert results["dataset.name"][0] == _NAME
     assert results["dataset.version_string"][0] == "0.0.1"
     assert results["dataset.description"][0] == "Dataset before replace"
-    assert results["dataset.replace_date"][0] is not None
-    assert results["dataset.replace_uid"][0] is not None
+    assert results["dataset.delete_date"][0] is not None
+    assert results["dataset.delete_uid"][0] is not None
     assert results["dataset.replace_id"][0] == d2_id
     assert results["dataset.replace_iteration"][0] == 0
 
@@ -97,8 +97,8 @@ def test_replace_dataset(dummy_file, _REL_PATH, name_tag):
             "dataset.name",
             "dataset.version_string",
             "dataset.description",
-            "dataset.replace_date",
-            "dataset.replace_uid",
+            "dataset.delete_date",
+            "dataset.delete_uid",
             "dataset.replace_id",
             "dataset.relative_path",
             "dataset.replace_iteration",
@@ -111,8 +111,8 @@ def test_replace_dataset(dummy_file, _REL_PATH, name_tag):
     assert results2["dataset.name"][0] == _NAME
     assert results2["dataset.version_string"][0] == "0.0.1"
     assert results2["dataset.description"][0] == "Dataset after replace"
-    assert results2["dataset.replace_date"][0] is None
-    assert results2["dataset.replace_uid"][0] is None
+    assert results2["dataset.delete_date"][0] is None
+    assert results2["dataset.delete_uid"][0] is None
     assert results2["dataset.replace_id"][0] is None
     assert results2["dataset.replace_iteration"][0] == 1
 
