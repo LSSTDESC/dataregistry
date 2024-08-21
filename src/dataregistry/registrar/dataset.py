@@ -19,7 +19,7 @@ from .registrar_util import (
     get_directory_info,
     _relpath_from_name,
 )
-from .dataset_util import set_dataset_status, get_dataset_status
+from .dataset_util import set_dataset_status, get_dataset_status, DATASET_ONLY_VALID
 
 _ILLEGAL_NAME_CHAR = ["$", "*", "&", "/", "?", "\\", " "]
 
@@ -239,7 +239,6 @@ class DatasetTable(BaseTable):
                 kwargs_dict["access_api_configuration"],
                 kwargs_dict["max_config_length"],
             )
-        kwargs_dict["is_overwritten"] = False
         kwargs_dict["is_archived"] = False
 
         # We tentatively start with an "invalid" dataset in the database. This
@@ -549,10 +548,10 @@ class DatasetTable(BaseTable):
         with self._engine.connect() as conn:
             update_stmt = (
                 update(dataset_table)
-                .where(
-                    dataset_table.c.dataset_id == previous_datasets[-1].dataset_id
+                .where(dataset_table.c.dataset_id == previous_datasets[-1].dataset_id)
+                .values(
+                    status=set_dataset_status(previous_dataset.status, replaced=True),
                 )
-                .values(is_overwritten=True)
             )
             conn.execute(update_stmt)
             conn.commit()
@@ -563,13 +562,12 @@ class DatasetTable(BaseTable):
         # Register the new row in the dataset table
         prim_key = self._register_row(name, version, kwargs_dict)
 
-        # Update the metadata of the replaced dataset
+        # Update the metadata of the replaced dataset to point to the dataset
+        # that replaced it
         with self._engine.connect() as conn:
             update_stmt = (
                 update(dataset_table)
-                .where(
-                    dataset_table.c.dataset_id == previous_datasets[-1].dataset_id
-                )
+                .where(dataset_table.c.dataset_id == previous_datasets[-1].dataset_id)
                 .values(
                     replace_date=datetime.now(),
                     replace_uid=self._uid,
@@ -696,7 +694,6 @@ class DatasetTable(BaseTable):
         stmt = select(
             dataset_table.c.dataset_id,
             dataset_table.c.is_overwritable,
-            dataset_table.c.is_overwritten,
             dataset_table.c.relative_path,
             dataset_table.c.replace_iteration,
             dataset_table.c.status,
@@ -738,13 +735,13 @@ class DatasetTable(BaseTable):
         dataset_table = self._get_table_metadata(self.which_table)
         previous_dataset = self.find_entry(dataset_id, raise_if_not_found=True)
 
-        # Check dataset has not already been deleted
-        if get_dataset_status(previous_dataset.status, "deleted"):
-            raise ValueError(f"Dataset {dataset_id} has already been deleted")
-
-        # Check dataset is valid
-        if not get_dataset_status(previous_dataset.status, "valid"):
-            raise ValueError(f"Dataset {dataset_id} is not a valid entry")
+        # Can only delete "valid" datasets, not invalid ones, or those
+        # previouly deleted or replaced
+        if previous_dataset.status != DATASET_ONLY_VALID:
+            raise ValueError(
+                f"Dataset {dataset_id} is either invalid, "
+                "previously deleted or previously replaced"
+            )
 
         # Update the status of the dataset to deleted
         with self._engine.connect() as conn:

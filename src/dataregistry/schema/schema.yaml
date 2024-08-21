@@ -423,10 +423,6 @@ tables:
         foreign_key_column: "execution_id"
         description: "Execution this dataset is linked to"
         cli_optional: True
-      is_overwritten:
-        type: "Boolean"
-        nullable: False
-        description: "True if the original data for this dataset has been overwritten at some point. This would have required that `is_overwritable` was set to true on the original dataset"
       is_overwritable:
         type: "Boolean"
         nullable: False
