@@ -1,3 +1,8 @@
+## Version 0.6.2
+
+- Bump database version to 3.3.0, removed `is_overwritten` column
+- Added `replaced` bit to the `valid` bitmask
+
 ## Version 0.6.1
 
 The `tables_required` list, when doing a query, was only build from the return
