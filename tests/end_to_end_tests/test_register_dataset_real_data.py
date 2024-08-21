@@ -126,3 +126,25 @@ def test_on_location_data(dummy_file, data_org, data_path, v_str, overwritable):
             else:
                 assert getattr(r, "dataset.is_overwritable") == True
                 assert getattr(r, "dataset.is_overwritten") == True
+
+@pytest.mark.parametrize("link", ["file1_sym.txt", "directory1_sym"])
+def test_registering_symlinks(dummy_file, link):
+    """
+    The dataregistry does not allow registration through symlinks, make sure
+    this raises an error.
+    """
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    data_path = str(tmp_src_dir / link)
+
+    with pytest.raises(ValueError, match="does not support symlinks"):
+        d_id = _insert_dataset_entry(
+            datareg,
+            f"DESC:datasets:test_register_symlink_{link}",
+            "0.0.1",
+            old_location=data_path,
+            location_type="dataregistry",
+        )

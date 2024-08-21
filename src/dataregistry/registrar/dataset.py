@@ -319,7 +319,6 @@ class DatasetTable(BaseTable):
         access_api_configuration=None,
         is_overwritable=False,
         old_location=None,
-        copy=True,
         verbose=False,
         owner=None,
         owner_type=None,
@@ -366,10 +365,6 @@ class DatasetTable(BaseTable):
 
             If None, dataset should already be at correct relative_path within
             the data registry.
-        copy : bool, optional
-            True to copy data from ``old_location`` into the data registry
-            (default behaviour).
-            False to create a symlink.
         verbose : bool, optional
             Provide some additional output information
         owner** : str, optional
@@ -457,7 +452,6 @@ class DatasetTable(BaseTable):
         access_api_configuration=None,
         is_overwritable=False,
         old_location=None,
-        copy=True,
         verbose=False,
         owner=None,
         owner_type=None,
@@ -631,6 +625,8 @@ class DatasetTable(BaseTable):
             loc = dest
 
         # Get metadata on dataset.
+        if os.path.islink(loc):
+            raise ValueError("dataregistry does not support symlinks")
         if os.path.isfile(loc):
             dataset_organization = "file"
         elif os.path.isdir(loc):
