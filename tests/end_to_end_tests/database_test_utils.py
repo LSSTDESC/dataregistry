@@ -24,8 +24,10 @@ def dummy_file(tmp_path):
     |   - <source>
     |     - file1.txt
     |     - file2.txt
+    |     - file1_sym.txt (symlink)
     |     - <directory1>
     |       - file2.txt
+    |     - <directory1_sym> (symlink)
     |   - <root_dir>
     |     - <schema/user/uid>
     |       - <dummy_dir>
@@ -49,10 +51,20 @@ def dummy_file(tmp_path):
     tmp_src_dir = tmp_path / "source"
     tmp_src_dir.mkdir()
 
+    # Make two text files in source
     for i in range(2):
         f = tmp_src_dir / f"file{i+1}.txt"
         f.write_text("i am a dummy file")
 
+    # Make a symlink to `file1.txt`
+    link = tmp_src_dir / "file1_sym.txt"
+    link.symlink_to(tmp_src_dir / "file1.txt")
+
+    # Make a symlink to `directory1`
+    link = tmp_src_dir / "directory1_sym"
+    link.symlink_to(tmp_src_dir / "directory1")
+
+    # Make directory in source and a file within that directory
     p = tmp_src_dir / "directory1"
     p.mkdir()
     f = p / "file2.txt"
@@ -189,9 +201,6 @@ def _insert_dataset_entry(
         The dataset it created for this entry
     """
 
-    # Some defaults over all test datasets
-    make_sym_link = False
-
     # Add new entry.
     dataset_id, execution_id = datareg.Registrar.dataset.register(
         name,
@@ -200,7 +209,6 @@ def _insert_dataset_entry(
         creation_date=None,
         description=description,
         old_location=old_location,
-        copy=(not make_sym_link),
         execution_id=execution_id,
         verbose=True,
         owner=owner,
@@ -265,9 +273,6 @@ def _replace_dataset_entry(
         The dataset it created for this entry
     """
 
-    # Some defaults over all test datasets
-    make_sym_link = False
-
     # Add new entry.
     dataset_id, execution_id = datareg.Registrar.dataset.replace(
         name,
@@ -276,7 +281,6 @@ def _replace_dataset_entry(
         creation_date=None,
         description=description,
         old_location=old_location,
-        copy=(not make_sym_link),
         execution_id=execution_id,
         verbose=True,
         owner=owner,

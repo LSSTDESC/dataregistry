@@ -167,11 +167,6 @@ def get_parser():
         type=str,
     )
     arg_register_dataset.add_argument(
-        "--make_symlink",
-        help="Flag to make symlink to data rather than copy any files.",
-        action="store_true",
-    )
-    arg_register_dataset.add_argument(
         "--execution_name", help="Typically pipeline name or program name", type=str
     )
     arg_register_dataset.add_argument(
