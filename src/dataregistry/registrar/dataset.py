@@ -417,7 +417,23 @@ class DatasetTable(BaseTable):
                 name, kwargs_dict["version_string"], kwargs_dict["version_suffix"]
             )
 
-        # Make sure there is not already an entry with this name/version combination
+        # Make sure the relative_path in the `root_dir` is avaliable
+        dest = _form_dataset_path(
+            kwargs_dict["owner_type"],
+            kwargs_dict["owner"],
+            kwargs_dict["relative_path"],
+            schema=self._schema,
+            root_dir=self._root_dir,
+        )
+
+        if os.path.exists(dest):
+            raise ValueError(
+                f"Destination in the `root_dir`, {dest} is already taken "
+                "by another dataset, please select another `relative_path`"
+            )
+
+        # Make sure there is not already a database entry with this
+        # name/version combination
         kwargs_dict["replace_iteration"] = 0
         if kwargs_dict["location_type"] in ["dataregistry", "dummy"]:
             previous_datasets = self._find_previous(

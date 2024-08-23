@@ -148,3 +148,36 @@ def test_registering_symlinks(dummy_file, link):
             old_location=data_path,
             location_type="dataregistry",
         )
+
+@pytest.mark.parametrize("link", ["file1.txt", "directory1"])
+def test_registering_bad_relative_path(dummy_file, link):
+    """
+    Make sure we cannot register a datataset to a relative path that is already
+    taken.
+    """
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    data_path = str(tmp_src_dir / link)
+
+    d_id = _insert_dataset_entry(
+            datareg,
+            f"DESC:datasets:test_registering_bad_relative_path_{link}",
+            "0.0.1",
+            old_location=data_path,
+            location_type="dataregistry",
+            relative_path="my/relative/path/for/checking"
+        )
+
+    with pytest.raises(ValueError, match="please select another"):
+        d_id = _insert_dataset_entry(
+            datareg,
+            f"DESC:datasets:test_registering_bad_relative_path_2_{link}",
+            "0.0.1",
+            old_location=data_path,
+            location_type="dataregistry",
+            relative_path="my/relative/path/for/checking"
+        )
+
