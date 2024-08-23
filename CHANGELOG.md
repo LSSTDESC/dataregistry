@@ -1,6 +1,7 @@
 ## Version 0.6.2
 
-- Bump database version to 3.3.0, removed `is_overwritten` column
+- Bump database version to 3.3.0, removed `is_overwritten`, `replace_date`,
+  `replace_uid` columns
 - Added `replaced` bit to the `valid` bitmask
 
 ## Version 0.6.1

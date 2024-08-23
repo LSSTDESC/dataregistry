@@ -239,7 +239,6 @@ class DatasetTable(BaseTable):
                 kwargs_dict["access_api_configuration"],
                 kwargs_dict["max_config_length"],
             )
-        kwargs_dict["is_archived"] = False
 
         # We tentatively start with an "invalid" dataset in the database. This
         # will be upgraded to valid if the data copying (if any) was successful.
