@@ -3,6 +3,7 @@ import os
 import time
 from datetime import datetime
 import shutil
+import warnings
 
 from dataregistry.db_basic import add_table_row
 from sqlalchemy import select, update
@@ -19,7 +20,7 @@ from .registrar_util import (
     get_directory_info,
     _relpath_from_name,
 )
-from .dataset_util import set_dataset_status, get_dataset_status, DATASET_ONLY_VALID
+from .dataset_util import set_dataset_status, get_dataset_status
 
 _ILLEGAL_NAME_CHAR = ["$", "*", "&", "/", "?", "\\", " "]
 
@@ -522,14 +523,18 @@ class DatasetTable(BaseTable):
 
             if len(previous_datasets) == 0:
                 raise ValueError(f"Dataset {name} does not exist")
+            full_name = (
+                f"name: {name} v: {kwargs_dict['version_string']} "
+                f"v-suff: {kwargs_dict['version_suffix']}"
+            )
             if previous_datasets[-1].is_overwritable == False:
                 raise ValueError(
-                    f"Dataset {name}'s latest iteration "
+                    f"Dataset {full_name}'s latest iteration "
                     f"({previous_datasets[-1].replace_iteration}) is not overwritable"
                 )
             if previous_datasets[-1].status != 1:
                 raise ValueError(
-                    f"Dataset {name} is not a valid status ",
+                    f"Dataset {full_name} is not a valid status ",
                     f"to be replaced (status={previous_datasets[-1].status}",
                 )
 
@@ -723,13 +728,10 @@ class DatasetTable(BaseTable):
         dataset_table = self._get_table_metadata(self.which_table)
         previous_dataset = self.find_entry(dataset_id, raise_if_not_found=True)
 
-        # Can only delete "valid" datasets, not invalid ones, or those
-        # previouly deleted or replaced
-        if previous_dataset.status != DATASET_ONLY_VALID:
+        # Cant delete already deleted datasets
+        if get_dataset_status(previous_dataset.status, "deleted"):
             raise ValueError(
-                f"Dataset {dataset_id} is either invalid, "
-                "previously deleted or previously replaced "
-                f"status={previous_dataset.status}"
+                f"Dataset {dataset_id} has previously been deleted"
             )
 
         # Update the status of the dataset to deleted
@@ -758,8 +760,12 @@ class DatasetTable(BaseTable):
             print(f"Deleting data {data_path}")
             if os.path.isfile(data_path):
                 os.remove(data_path)
-            else:
+            elif os.path.isdir(data_path):
                 shutil.rmtree(data_path)
+            else:
+                warnings.warn(
+                    f"Dataset {data_path} not found under the `root_dir`, "
+                    "could not delete", UserWarning)
 
         print(f"Deleted {dataset_id} from data registry")
 

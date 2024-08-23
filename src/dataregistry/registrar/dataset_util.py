@@ -11,9 +11,6 @@ VALID_STATUS_BITS = {
     "replaced": 3,
 }
 
-# Dataset `valid` value if dataset is "valid" and nothing else
-DATASET_ONLY_VALID = 1
-
 
 def set_dataset_status(
     current_valid_flag, valid=None, deleted=None, archived=None, replaced=None
