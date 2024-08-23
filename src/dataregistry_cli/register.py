@@ -47,7 +47,6 @@ def register_dataset(args):
         is_overwritable=args.is_overwritable,
         description=args.description,
         old_location=args.old_location,
-        copy=(not args.make_symlink),
         owner=args.owner,
         owner_type=args.owner_type,
         execution_name=args.execution_name,
