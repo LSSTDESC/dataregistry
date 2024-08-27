@@ -432,7 +432,7 @@ class DatasetTable(BaseTable):
                 if not (
                     not get_dataset_status(previous_datasets[-1].status, "valid")
                     or get_dataset_status(previous_datasets[-1].status, "deleted")
-                ):
+                ) or get_dataset_status(previous_datasets[-1].status, "archived"):
                     raise ValueError(
                         f"owner/owner_type/relative_path combination is already "
                         "taken in the registry by "

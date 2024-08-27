@@ -24,6 +24,7 @@ def test_register_dataset_twice(dummy_file):
             datareg,
             "DESC:dataset:test_register_dataset_twice",
             "0.0.1",
+            relative_path="test_register_dataset_twice/test"
         )
 
 
