@@ -522,7 +522,9 @@ class DatasetTable(BaseTable):
 
             if len(previous_datasets) == 0:
                 raise ValueError(f"Dataset {full_name} does not exist")
-            if previous_datasets[-1].is_overwritable == False:
+            if previous_datasets[-1].is_overwritable == False and get_dataset_status(
+                previous_datasets[-1].status, "valid"
+            ):
                 raise ValueError(
                     f"Dataset {full_name}'s latest iteration "
                     f"({previous_datasets[-1].replace_iteration}) is not overwritable"
