@@ -330,7 +330,6 @@ else:
             with db_connection.engine.connect() as conn:
                 result = conn.execute(text(stmt))
                 result = pd.DataFrame(result)
-                conn.commit()
         except Exception:
             raise RuntimeError("production schema does not exist or is ill-formed")
         if (
@@ -362,7 +361,7 @@ if schema:
                 select_priv = f"GRANT SELECT ON ALL TABLES IN SCHEMA {schema} to {acct}"
                 conn.execute(text(usage_priv))
                 conn.execute(text(select_priv))
-                conn.commit()
+            conn.commit()
     except Exception as e:
         print(f"Could not grant access to {acct} on schema {schema}")
 
