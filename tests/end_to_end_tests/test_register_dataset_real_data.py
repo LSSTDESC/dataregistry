@@ -127,6 +127,7 @@ def test_on_location_data(dummy_file, data_org, data_path, v_str, overwritable):
                 assert getattr(r, "dataset.is_overwritable") == True
                 assert getattr(r, "dataset.is_overwritten") == True
 
+
 @pytest.mark.parametrize("link", ["file1_sym.txt", "directory1_sym"])
 def test_registering_symlinks(dummy_file, link):
     """
@@ -149,6 +150,7 @@ def test_registering_symlinks(dummy_file, link):
             location_type="dataregistry",
         )
 
+
 @pytest.mark.parametrize("link", ["file1.txt", "directory1"])
 def test_registering_bad_relative_path(dummy_file, link):
     """
@@ -163,21 +165,53 @@ def test_registering_bad_relative_path(dummy_file, link):
     data_path = str(tmp_src_dir / link)
 
     d_id = _insert_dataset_entry(
-            datareg,
-            f"DESC:datasets:test_registering_bad_relative_path_{link}",
-            "0.0.1",
-            old_location=data_path,
-            location_type="dataregistry",
-            relative_path="my/relative/path/for/checking"
-        )
+        datareg,
+        f"DESC:datasets:test_registering_bad_relative_path_{link}",
+        "0.0.1",
+        old_location=data_path,
+        location_type="dataregistry",
+        relative_path=f"my/relative/path/for/checking/{link}",
+    )
 
-    with pytest.raises(ValueError, match="please select another"):
+    with pytest.raises(ValueError, match="combination is already"):
         d_id = _insert_dataset_entry(
             datareg,
             f"DESC:datasets:test_registering_bad_relative_path_2_{link}",
             "0.0.1",
             old_location=data_path,
             location_type="dataregistry",
-            relative_path="my/relative/path/for/checking"
+            relative_path=f"my/relative/path/for/checking/{link}",
         )
 
+
+@pytest.mark.parametrize("link", ["file1.txt", "directory1"])
+def test_registering_deleted_relative_path(dummy_file, link):
+    """
+    Should be able to use a relative_path of an old deleted dataset
+    """
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    data_path = str(tmp_src_dir / link)
+
+    d_id = _insert_dataset_entry(
+        datareg,
+        f"DESC:datasets:test_registering_deleted_relative_path_{link}",
+        "0.0.1",
+        old_location=data_path,
+        location_type="dataregistry",
+        relative_path=f"my/relative/path/for/checking/{link}",
+    )
+
+    datareg.Registrar.dataset.delete(d_id)
+
+    d_id = _insert_dataset_entry(
+        datareg,
+        f"DESC:datasets:test_registering_deleted_relative_path_2_{link}",
+        "0.0.1",
+        old_location=data_path,
+        location_type="dataregistry",
+        relative_path=f"my/relative/path/for/checking/{link}",
+    )
