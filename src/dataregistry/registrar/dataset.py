@@ -515,22 +515,20 @@ class DatasetTable(BaseTable):
                 kwargs_dict["owner_type"],
             )
 
-            if len(previous_datasets) == 0:
-                raise ValueError(f"Dataset {name} does not exist")
             full_name = (
                 f"name: {name} v: {kwargs_dict['version_string']} "
                 f"v-suff: {kwargs_dict['version_suffix']}"
             )
+
+            if len(previous_datasets) == 0:
+                raise ValueError(f"Dataset {full_name} does not exist")
             if previous_datasets[-1].is_overwritable == False:
                 raise ValueError(
                     f"Dataset {full_name}'s latest iteration "
                     f"({previous_datasets[-1].replace_iteration}) is not overwritable"
                 )
-            if previous_datasets[-1].status != 1:
-                raise ValueError(
-                    f"Dataset {full_name} is not a valid status ",
-                    f"to be replaced (status={previous_datasets[-1].status}",
-                )
+            if get_dataset_status(previous_datasets[-1].status, "archived"):
+                raise ValueError(f"Dataset {full_name} is archived, cannot replace")
 
             kwargs_dict["relative_path"] = previous_datasets[-1].relative_path
             kwargs_dict["replace_iteration"] = (
@@ -544,8 +542,9 @@ class DatasetTable(BaseTable):
         # Tag the old dataset as overwritten, and delete
         dataset_table = self._get_table_metadata("dataset")
 
-        # Delete the old data
-        self.delete(previous_datasets[-1].dataset_id)
+        # Delete the old data (if not already deleted)
+        if not get_dataset_status(previous_datasets[-1].status, "deleted"):
+            self.delete(previous_datasets[-1].dataset_id)
 
         # Register the new row in the dataset table
         prim_key = self._register_row(name, version, kwargs_dict)
@@ -557,7 +556,9 @@ class DatasetTable(BaseTable):
                 update(dataset_table)
                 .where(dataset_table.c.dataset_id == previous_datasets[-1].dataset_id)
                 .values(
-                    status=set_dataset_status(previous_datasets[-1].status, replaced=True),
+                    status=set_dataset_status(
+                        previous_datasets[-1].status, replaced=True
+                    ),
                     replace_id=prim_key,
                 )
             )
@@ -697,7 +698,7 @@ class DatasetTable(BaseTable):
         )
 
         # Order by `replace_iteration`
-        stmt = stmt.order_by(dataset_table.c.replace_iteration.desc())
+        stmt = stmt.order_by(dataset_table.c.replace_iteration.asc())
 
         with self._engine.connect() as conn:
             result = conn.execute(stmt)
@@ -726,9 +727,7 @@ class DatasetTable(BaseTable):
 
         # Cant delete already deleted datasets
         if get_dataset_status(previous_dataset.status, "deleted"):
-            raise ValueError(
-                f"Dataset {dataset_id} has previously been deleted"
-            )
+            raise ValueError(f"Dataset {dataset_id} has previously been deleted")
 
         # Update the status of the dataset to deleted
         with self._engine.connect() as conn:
@@ -761,7 +760,9 @@ class DatasetTable(BaseTable):
             else:
                 warnings.warn(
                     f"Dataset {data_path} not found under the `root_dir`, "
-                    "could not delete", UserWarning)
+                    "could not delete",
+                    UserWarning,
+                )
 
         print(f"Deleted {dataset_id} from data registry")
 
