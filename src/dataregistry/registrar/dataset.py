@@ -522,6 +522,8 @@ class DatasetTable(BaseTable):
 
             if len(previous_datasets) == 0:
                 raise ValueError(f"Dataset {full_name} does not exist")
+
+            # Cannot replace (valid) non-overwritable datasets
             if previous_datasets[-1].is_overwritable == False and get_dataset_status(
                 previous_datasets[-1].status, "valid"
             ):
@@ -529,8 +531,12 @@ class DatasetTable(BaseTable):
                     f"Dataset {full_name}'s latest iteration "
                     f"({previous_datasets[-1].replace_iteration}) is not overwritable"
                 )
+            # Cannot replace archived datasets
             if get_dataset_status(previous_datasets[-1].status, "archived"):
                 raise ValueError(f"Dataset {full_name} is archived, cannot replace")
+            # Cannot replace deleted datasets
+            if get_dataset_status(previous_datasets[-1].status, "deleted"):
+                raise ValueError(f"Dataset {full_name} is deleted, cannot replace")
 
             kwargs_dict["relative_path"] = previous_datasets[-1].relative_path
             kwargs_dict["replace_iteration"] = (

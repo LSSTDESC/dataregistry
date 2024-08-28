@@ -186,23 +186,13 @@ def test_replacing_deleted_dataset(dummy_file):
     # Delete dataset
     datareg.Registrar.dataset.delete(d_id)
 
-    # Try to replace deleted dataset
-    d2_id = _replace_dataset_entry(
-        datareg,
-        _NAME,
-        "0.0.1",
-    )
-
-    # Test first dataset
-    rel_path = _check_replaced_dataset(
-        datareg, d_id, _NAME, "0.0.1", None, d2_id, 0, True
-    )
-
-    # Test second dataset
-    rel_path = _check_replaced_dataset(
-        datareg, d2_id, _NAME, "0.0.1", None, None, 1, False
-    )
-
+    with pytest.raises(ValueError, match="is deleted, cannot replace"):
+        # Try to replace deleted dataset
+        d2_id = _replace_dataset_entry(
+            datareg,
+            _NAME,
+            "0.0.1",
+        )
 
 def test_replacing_non_overwritable_dataset(dummy_file):
     """Should not be able to replace a non-overwritable dataset"""
