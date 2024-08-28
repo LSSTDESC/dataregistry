@@ -428,14 +428,26 @@ class DatasetTable(BaseTable):
                 relative_path=kwargs_dict["relative_path"],
             )
 
+            # If results are found, we can only use the old `relative_path` is
+            # that dataset is now deleted (and not archived)
             if len(previous_datasets) > 0:
-                if not (
-                    not get_dataset_status(previous_datasets[-1].status, "valid")
-                    or get_dataset_status(previous_datasets[-1].status, "deleted")
-                ) or get_dataset_status(previous_datasets[-1].status, "archived"):
+                dest = _form_dataset_path(
+                    kwargs_dict["owner_type"],
+                    kwargs_dict["owner"],
+                    kwargs_dict["relative_path"],
+                    schema=self._schema,
+                    root_dir=self._root_dir,
+                )
+
+                if get_dataset_status(previous_datasets[-1].status, "archived"):
                     raise ValueError(
-                        f"owner/owner_type/relative_path combination is already "
-                        "taken in the registry by "
+                        f"Relative path {dest} is reserved "
+                        f"for archived datasetid={previous_datasets[-1].dataset_id}"
+                    )
+
+                if not get_dataset_status(previous_datasets[-1].status, "deleted"):
+                    raise ValueError(
+                        f"Relative path {dest} is taken by "
                         f"datasetid={previous_datasets[-1].dataset_id}"
                     )
 
@@ -745,7 +757,7 @@ class DatasetTable(BaseTable):
             )
 
         # Order by `replace_iteration`
-        stmt = stmt.order_by(dataset_table.c.replace_iteration.desc())
+        stmt = stmt.order_by(dataset_table.c.replace_iteration.asc())
 
         with self._engine.connect() as conn:
             result = conn.execute(stmt)

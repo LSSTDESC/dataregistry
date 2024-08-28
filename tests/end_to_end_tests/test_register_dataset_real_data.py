@@ -135,7 +135,7 @@ def test_registering_bad_relative_path(dummy_file, link):
         relative_path=f"test/register/bad/relpath/{link}",
     )
 
-    with pytest.raises(ValueError, match="combination is already"):
+    with pytest.raises(ValueError, match="is taken by"):
         d_id = _insert_dataset_entry(
             datareg,
             f"DESC:datasets:test_registering_bad_relative_path_2_{link}",
