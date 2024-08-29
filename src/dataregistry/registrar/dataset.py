@@ -759,8 +759,8 @@ class DatasetTable(BaseTable):
                 dataset_table.c.owner_type == owner_type,
             )
 
-            # Order by creation date
-            stmt = stmt.order_by(dataset_table.c.creation_date.asc())
+            # Order by register date
+            stmt = stmt.order_by(dataset_table.c.register_date.asc())
         else:
             stmt = stmt.where(
                 dataset_table.c.name == name,
