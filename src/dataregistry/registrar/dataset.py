@@ -6,6 +6,7 @@ import shutil
 import warnings
 
 from dataregistry.db_basic import add_table_row
+from dataregistry.exceptions import DataRegistryRootDirBadState
 from sqlalchemy import select, update
 from functools import wraps
 
@@ -656,6 +657,13 @@ class DatasetTable(BaseTable):
         # Is the data already on location, or coming from somewhere new?
         if old_location:
             loc = old_location
+
+            # In the case we are ingesting data, no data should already exist
+            # at `dest`
+            if os.path.exists(dest):
+                raise DataRegistryRootDirBadState(
+                    f"data already exists at {dest}, is should not"
+                )
         else:
             loc = dest
 
