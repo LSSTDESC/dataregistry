@@ -544,7 +544,7 @@ class DatasetTable(BaseTable):
             )
         else:
             raise NotImplementedError(
-                "Can only currently replace dataregistry type entires"
+                "Can only currently replace dataregistry or dummy type entires"
             )
 
         # Tag the old dataset as overwritten, and delete
