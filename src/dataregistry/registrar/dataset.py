@@ -427,7 +427,7 @@ class DatasetTable(BaseTable):
                 relative_path=kwargs_dict["relative_path"],
             )
 
-            # If results are found, we can only use the old `relative_path` is
+            # If results are found, we can only use the old `relative_path` if
             # that dataset is now deleted (and not archived)
             if len(previous_datasets) > 0:
                 dest = _form_dataset_path(
@@ -750,6 +750,9 @@ class DatasetTable(BaseTable):
                 dataset_table.c.owner == owner,
                 dataset_table.c.owner_type == owner_type,
             )
+
+            # Order by creation date
+            stmt = stmt.order_by(dataset_table.c.creation_date.asc())
         else:
             stmt = stmt.where(
                 dataset_table.c.name == name,
@@ -759,8 +762,8 @@ class DatasetTable(BaseTable):
                 dataset_table.c.owner_type == owner_type,
             )
 
-        # Order by `replace_iteration`
-        stmt = stmt.order_by(dataset_table.c.replace_iteration.asc())
+            # Order by `replace_iteration`
+            stmt = stmt.order_by(dataset_table.c.replace_iteration.asc())
 
         with self._engine.connect() as conn:
             result = conn.execute(stmt)

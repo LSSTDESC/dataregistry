@@ -150,7 +150,12 @@ def test_registering_bad_relative_path(dummy_file, link):
 def test_registering_deleted_relative_path(dummy_file, link):
     """
     Should be able to use a relative_path of an old deleted dataset
+
+    Replace the original dataset first to make sure all the internal checks
+    with `replace_iteration` work.
     """
+
+    _N_REPLACE = 6
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
@@ -158,6 +163,7 @@ def test_registering_deleted_relative_path(dummy_file, link):
 
     data_path = str(tmp_src_dir / link)
 
+    # Original insert
     d_id = _insert_dataset_entry(
         datareg,
         f"DESC:datasets:test_registering_deleted_relative_path_{link}",
@@ -165,10 +171,23 @@ def test_registering_deleted_relative_path(dummy_file, link):
         old_location=data_path,
         location_type="dataregistry",
         relative_path=f"my/relative/path/for/checking/{link}",
+        is_overwritable=True
     )
 
-    datareg.Registrar.dataset.delete(d_id)
+    # Replace original a few times
+    for i in range(_N_REPLACE):
+        d2_id = _replace_dataset_entry(
+            datareg,
+            f"DESC:datasets:test_registering_deleted_relative_path_{link}",
+            "0.0.1",
+            old_location=data_path,
+            is_overwritable=True
+        )
 
+    # Now delete
+    datareg.Registrar.dataset.delete(d2_id)
+
+    # Make a new entry (new name) using the original relative path
     d_id = _insert_dataset_entry(
         datareg,
         f"DESC:datasets:test_registering_deleted_relative_path_2_{link}",
@@ -176,4 +195,28 @@ def test_registering_deleted_relative_path(dummy_file, link):
         old_location=data_path,
         location_type="dataregistry",
         relative_path=f"my/relative/path/for/checking/{link}",
+        is_overwritable=True
     )
+
+    # Replace a few times (less times than the original, so `replace_iteration`
+    # is lower)
+    for i in range(_N_REPLACE//2):
+        d2_id = _replace_dataset_entry(
+            datareg,
+            f"DESC:datasets:test_registering_deleted_relative_path_2_{link}",
+            "0.0.1",
+            old_location=data_path,
+            is_overwritable=True
+        )
+
+    # Now register third and final time, new name, same relative path, should
+    # fail as path is still taken by the entry above
+    with pytest.raises(ValueError, match="is taken by"):
+        d_id = _insert_dataset_entry(
+            datareg,
+            f"DESC:datasets:test_registering_deleted_relative_path_3_{link}",
+            "0.0.1",
+            old_location=data_path,
+            location_type="dataregistry",
+            relative_path=f"my/relative/path/for/checking/{link}",
+        )
