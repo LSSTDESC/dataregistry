@@ -62,7 +62,7 @@ def test_register_dataset_defaults(dummy_file):
     assert results["nfiles"][0] == 0
     assert results["total_disk_space"][0] == 0
     assert results["register_root_dir"][0] == str(tmp_root_dir)
-    assert results["is_overwritten"][0] == False
+    assert get_dataset_status(results["status"][0], "replaced") == False
     assert results["is_overwritable"][0] == False
     assert results["status"][0] == 1
     assert results["archive_date"][0] is None
@@ -73,8 +73,6 @@ def test_register_dataset_defaults(dummy_file):
     assert results["location_type"][0] == "dummy"
     assert results["url"][0] is None
     assert results["contact_email"][0] is None
-    assert results["replace_date"][0] is None
-    assert results["replace_uid"][0] is None
     assert results["replace_id"][0] is None
     assert results["replace_iteration"][0] == 0
 
@@ -142,7 +140,7 @@ def test_register_dataset_manual(dummy_file):
     assert results["nfiles"][0] == 0
     assert results["total_disk_space"][0] == 0
     assert results["register_root_dir"][0] == str(tmp_root_dir)
-    assert results["is_overwritten"][0] == False
+    assert get_dataset_status(results["status"][0], "replaced") == False
     assert results["is_overwritable"][0] == _IS_OVERWRITABLE
     assert results["status"][0] == 1
     assert results["archive_date"][0] is None
@@ -153,8 +151,6 @@ def test_register_dataset_manual(dummy_file):
     assert results["location_type"][0] == "dummy"
     assert results["url"][0] is None
     assert results["contact_email"][0] is None
-    assert results["replace_date"][0] is None
-    assert results["replace_uid"][0] is None
     assert results["replace_id"][0] is None
     assert results["replace_iteration"][0] == 0
 
