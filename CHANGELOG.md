@@ -1,3 +1,11 @@
+## Version 0.6.3
+
+There cannot be a unique constraint in the database for the `owner`,
+`owner_type` and `relative_path`, as multiple entries can share theose values,
+however we require that at any one time only one dataset has their data at this
+location. Added a check during register to ensure the `relative_path` is
+avaliable.
+
 ## Version 0.6.2
 
 - Bump database version to 3.3.0, removed `is_overwritten`, `replace_date`,
