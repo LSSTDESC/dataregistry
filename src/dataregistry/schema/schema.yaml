@@ -423,10 +423,6 @@ tables:
         foreign_key_column: "execution_id"
         description: "Execution this dataset is linked to"
         cli_optional: True
-      is_overwritten:
-        type: "Boolean"
-        nullable: False
-        description: "True if the original data for this dataset has been overwritten at some point. This would have required that `is_overwritable` was set to true on the original dataset"
       is_overwritable:
         type: "Boolean"
         nullable: False
@@ -435,7 +431,7 @@ tables:
       status:
         type: "Integer"
         nullable: False
-        description: "What is the status of the dataset? This is a bitmask description of multiple states. Bit number 0=valid (1 if dataset is valid, 0 if copy data failed during creation), 1=deleted (1 if dataset is deleted and no longer on disk, 0 if data is still on disk, database entry is always kept) 3=archived (1 if data has been archived). For example '0b011` would be valid=1, deleted=1 and archived=0."
+        description: "What is the status of the dataset? This is a bitmask description of multiple states. Bit number 0=valid (1 if dataset is valid, 0 if copy data failed during creation), 1=deleted (1 if dataset is deleted and no longer on disk, 0 if data is still on disk, database entry is always kept) 3=archived (1 if data has been archived), 3=replaced (1 if the dataset has been overwritten/replaced). For example '0b0011` would be valid=1, deleted=1, archived=0 and replaced=0."
       archive_date:
         type: "DateTime"
         description: "Dataset archive date"
@@ -466,12 +462,6 @@ tables:
         type: "String"
         description: "Contact information for someone regarding the dataset."
         cli_optional: True
-      replace_date:
-        type: "DateTime"
-        description: "Date the dataset was replaced with new data"
-      replace_uid:
-        type: "String"
-        description: "User ID of person who replaced the dataset with new data"
       replace_id:
         type: "Integer"
         description: "Dataset ID of the new entry that replaced this dataset"

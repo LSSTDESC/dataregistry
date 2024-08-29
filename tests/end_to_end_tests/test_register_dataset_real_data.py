@@ -91,7 +91,7 @@ def test_on_location_data(dummy_file, data_org, data_path, v_str, overwritable):
             "dataset.nfiles",
             "dataset.total_disk_space",
             "dataset.is_overwritable",
-            "dataset.is_overwritten",
+            "dataset.status",
             "dataset.version_string",
         ],
         [f],
@@ -106,26 +106,42 @@ def test_on_location_data(dummy_file, data_org, data_path, v_str, overwritable):
         if getattr(r, "version_string") == "0.0.1":
             if num_results == 1:
                 assert getattr(r, "dataset.is_overwritable") == True
-                assert getattr(r, "dataset.is_overwritten") == False
+                assert (
+                    get_dataset_status(getattr(r, "dataset.status"), "replaced")
+                    == False
+                )
             else:
                 assert getattr(r, "dataset.is_overwritable") == True
-                assert getattr(r, "dataset.is_overwritten") == True
+                assert (
+                    get_dataset_status(getattr(r, "dataset.status"), "replaced") == True
+                )
         elif getattr(r, "version_string") == "0.0.2":
             assert num_results >= 2
             if num_results == 2:
                 assert getattr(r, "dataset.is_overwritable") == True
-                assert getattr(r, "dataset.is_overwritten") == False
+                assert (
+                    get_dataset_status(getattr(r, "dataset.status"), "replaced")
+                    == False
+                )
             elif num_results == 3:
                 assert getattr(r, "dataset.is_overwritable") == True
-                assert getattr(r, "dataset.is_overwritten") == True
+                assert (
+                    get_dataset_status(getattr(r, "dataset.status"), "replaced") == True
+                )
         elif getattr(r, "version_string") == "0.0.3":
             assert num_results >= 3
             if num_results == 3:
                 assert getattr(r, "dataset.is_overwritable") == False
-                assert getattr(r, "dataset.is_overwritten") == False
+                assert (
+                    get_dataset_status(getattr(r, "dataset.status"), "replaced")
+                    == False
+                )
             else:
                 assert getattr(r, "dataset.is_overwritable") == True
-                assert getattr(r, "dataset.is_overwritten") == True
+                assert (
+                    get_dataset_status(getattr(r, "dataset.status"), "replaced") == True
+                )
+
 
 @pytest.mark.parametrize("link", ["file1_sym.txt", "directory1_sym"])
 def test_registering_symlinks(dummy_file, link):

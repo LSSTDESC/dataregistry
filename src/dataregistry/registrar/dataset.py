@@ -3,6 +3,7 @@ import os
 import time
 from datetime import datetime
 import shutil
+import warnings
 
 from dataregistry.db_basic import add_table_row
 from sqlalchemy import select, update
@@ -239,8 +240,6 @@ class DatasetTable(BaseTable):
                 kwargs_dict["access_api_configuration"],
                 kwargs_dict["max_config_length"],
             )
-        kwargs_dict["is_overwritten"] = False
-        kwargs_dict["is_archived"] = False
 
         # We tentatively start with an "invalid" dataset in the database. This
         # will be upgraded to valid if the data copying (if any) was successful.
@@ -516,18 +515,28 @@ class DatasetTable(BaseTable):
                 kwargs_dict["owner_type"],
             )
 
+            full_name = (
+                f"name: {name} v: {kwargs_dict['version_string']} "
+                f"v-suff: {kwargs_dict['version_suffix']}"
+            )
+
             if len(previous_datasets) == 0:
-                raise ValueError(f"Dataset {name} does not exist")
-            if previous_datasets[-1].is_overwritable == False:
+                raise ValueError(f"Dataset {full_name} does not exist")
+
+            # Cannot replace (valid) non-overwritable datasets
+            if previous_datasets[-1].is_overwritable == False and get_dataset_status(
+                previous_datasets[-1].status, "valid"
+            ):
                 raise ValueError(
-                    f"Dataset {name}'s latest iteration "
+                    f"Dataset {full_name}'s latest iteration "
                     f"({previous_datasets[-1].replace_iteration}) is not overwritable"
                 )
-            if previous_datasets[-1].status != 1:
-                raise ValueError(
-                    f"Dataset {name} is not a valid status ",
-                    f"to be replaced (status={previous_datasets[-1].status}",
-                )
+            # Cannot replace archived datasets
+            if get_dataset_status(previous_datasets[-1].status, "archived"):
+                raise ValueError(f"Dataset {full_name} is archived, cannot replace")
+            # Cannot replace deleted datasets
+            if get_dataset_status(previous_datasets[-1].status, "deleted"):
+                raise ValueError(f"Dataset {full_name} is deleted, cannot replace")
 
             kwargs_dict["relative_path"] = previous_datasets[-1].relative_path
             kwargs_dict["replace_iteration"] = (
@@ -535,38 +544,29 @@ class DatasetTable(BaseTable):
             )
         else:
             raise NotImplementedError(
-                "Can only currently replace dataregistry type entires"
+                "Can only currently replace dataregistry or dummy type entires"
             )
 
         # Tag the old dataset as overwritten, and delete
         dataset_table = self._get_table_metadata("dataset")
-        with self._engine.connect() as conn:
-            update_stmt = (
-                update(dataset_table)
-                .where(
-                    dataset_table.c.dataset_id == previous_datasets[-1].dataset_id
-                )
-                .values(is_overwritten=True)
-            )
-            conn.execute(update_stmt)
-            conn.commit()
 
-        # Delete the old data
-        self.delete(previous_datasets[-1].dataset_id)
+        # Delete the old data (if not already deleted)
+        if not get_dataset_status(previous_datasets[-1].status, "deleted"):
+            self.delete(previous_datasets[-1].dataset_id)
 
         # Register the new row in the dataset table
         prim_key = self._register_row(name, version, kwargs_dict)
 
-        # Update the metadata of the replaced dataset
+        # Update the metadata of the replaced dataset to point to the dataset
+        # that replaced it
         with self._engine.connect() as conn:
             update_stmt = (
                 update(dataset_table)
-                .where(
-                    dataset_table.c.dataset_id == previous_datasets[-1].dataset_id
-                )
+                .where(dataset_table.c.dataset_id == previous_datasets[-1].dataset_id)
                 .values(
-                    replace_date=datetime.now(),
-                    replace_uid=self._uid,
+                    status=set_dataset_status(
+                        previous_datasets[-1].status, replaced=True
+                    ),
                     replace_id=prim_key,
                 )
             )
@@ -692,7 +692,6 @@ class DatasetTable(BaseTable):
         stmt = select(
             dataset_table.c.dataset_id,
             dataset_table.c.is_overwritable,
-            dataset_table.c.is_overwritten,
             dataset_table.c.relative_path,
             dataset_table.c.replace_iteration,
             dataset_table.c.status,
@@ -707,7 +706,7 @@ class DatasetTable(BaseTable):
         )
 
         # Order by `replace_iteration`
-        stmt = stmt.order_by(dataset_table.c.replace_iteration.desc())
+        stmt = stmt.order_by(dataset_table.c.replace_iteration.asc())
 
         with self._engine.connect() as conn:
             result = conn.execute(stmt)
@@ -734,13 +733,9 @@ class DatasetTable(BaseTable):
         dataset_table = self._get_table_metadata(self.which_table)
         previous_dataset = self.find_entry(dataset_id, raise_if_not_found=True)
 
-        # Check dataset has not already been deleted
+        # Cant delete already deleted datasets
         if get_dataset_status(previous_dataset.status, "deleted"):
-            raise ValueError(f"Dataset {dataset_id} has already been deleted")
-
-        # Check dataset is valid
-        if not get_dataset_status(previous_dataset.status, "valid"):
-            raise ValueError(f"Dataset {dataset_id} is not a valid entry")
+            raise ValueError(f"Dataset {dataset_id} has previously been deleted")
 
         # Update the status of the dataset to deleted
         with self._engine.connect() as conn:
@@ -768,8 +763,14 @@ class DatasetTable(BaseTable):
             print(f"Deleting data {data_path}")
             if os.path.isfile(data_path):
                 os.remove(data_path)
-            else:
+            elif os.path.isdir(data_path):
                 shutil.rmtree(data_path)
+            else:
+                warnings.warn(
+                    f"Dataset {data_path} not found under the `root_dir`, "
+                    "could not delete",
+                    UserWarning,
+                )
 
         print(f"Deleted {dataset_id} from data registry")
 

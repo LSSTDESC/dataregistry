@@ -285,9 +285,9 @@ def _DatasetKeyword(schema):
 # The following should be adjusted whenever there is a change to the structure
 # of the database tables.
 _DB_VERSION_MAJOR = 3
-_DB_VERSION_MINOR = 2
+_DB_VERSION_MINOR = 3
 _DB_VERSION_PATCH = 0
-_DB_VERSION_COMMENT = "Add replace columns to dataset table"
+_DB_VERSION_COMMENT = "Remove `is_overwritten`, `replace_date` and `replace_uid` columns, the information is in `status`"
 
 # Parse command line arguments
 parser = argparse.ArgumentParser(

@@ -7,10 +7,14 @@ VALID_STATUS_BITS = {
     "deleted": 1,
     # Has the data for this dataset been archived?
     "archived": 2,
+    # Has this dataset been replaced at some point?
+    "replaced": 3,
 }
 
 
-def set_dataset_status(current_valid_flag, valid=None, deleted=None, archived=None):
+def set_dataset_status(
+    current_valid_flag, valid=None, deleted=None, archived=None, replaced=None
+):
     """
     Update a value of a dataset's status bit poistion.
 
@@ -27,6 +31,8 @@ def set_dataset_status(current_valid_flag, valid=None, deleted=None, archived=No
         True to set the dataset as deleted
     archived : bool, optional
         True to set the dataset as archived
+    replaced : bool, optional
+        True to set the dataset as replaced
 
     Returns
     -------
@@ -34,17 +40,14 @@ def set_dataset_status(current_valid_flag, valid=None, deleted=None, archived=No
         The datasets new bitwise representation
     """
 
-    if valid is not None:
-        current_valid_flag &= ~(1 << VALID_STATUS_BITS["valid"])
-        current_valid_flag |= valid << VALID_STATUS_BITS["valid"]
-
-    if deleted is not None:
-        current_valid_flag &= ~(1 << VALID_STATUS_BITS["deleted"])
-        current_valid_flag |= deleted << VALID_STATUS_BITS["deleted"]
-
-    if archived is not None:
-        current_valid_flag &= ~(1 << VALID_STATUS_BITS["archived"])
-        current_valid_flag |= archived << VALID_STATUS_BITS["archived"]
+    # Set the bits for each condition
+    for cond, ref in zip(
+        [valid, deleted, archived, replaced],
+        ["valid", "deleted", "archived", "replaced"],
+    ):
+        if cond is not None:
+            current_valid_flag &= ~(1 << VALID_STATUS_BITS[ref])
+            current_valid_flag |= cond << VALID_STATUS_BITS[ref]
 
     return current_valid_flag
 
