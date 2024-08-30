@@ -32,7 +32,10 @@ def dummy_file(tmp_path):
     |     - <schema/user/uid>
     |       - <dummy_dir>
     |         - file1.txt
+    |       - <dummy_dir_2>
+    |         - file1.txt
     |       - file1.txt
+    |       - file2.txt
 
     Parameters
     ----------
@@ -75,15 +78,17 @@ def dummy_file(tmp_path):
 
     # Make some dummy data already on location
     for THIS_SCHEMA in [SCHEMA_VERSION + "/", ""]:
-        p = tmp_root_dir / f"{THIS_SCHEMA}user/{os.getenv('USER')}/dummy_dir"
-        p.mkdir(parents=True)
+        for f in ["dummy_dir", "dummy_dir_2"]:
+            p = tmp_root_dir / f"{THIS_SCHEMA}user/{os.getenv('USER')}/{f}"
+            p.mkdir(parents=True)
 
-        f = p / "file1.txt"
-        f.write_text("i am another dummy file (but on location in a dir)")
+            f = p / "file1.txt"
+            f.write_text("i am another dummy file (but on location in a dir)")
 
-        p = tmp_root_dir / f"{THIS_SCHEMA}user/{os.getenv('USER')}"
-        f = p / "file1.txt"
-        f.write_text("i am another dummy file (but on location)")
+        for f in ["file1.txt", "file2.txt"]:
+            p = tmp_root_dir / f"{THIS_SCHEMA}user/{os.getenv('USER')}"
+            f = p / f
+            f.write_text("i am another dummy file (but on location)")
 
     return tmp_src_dir, tmp_root_dir
 

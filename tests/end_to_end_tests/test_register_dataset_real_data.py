@@ -7,7 +7,7 @@ from dataregistry import DataRegistry
 from dataregistry.db_basic import SCHEMA_VERSION
 from dataregistry.registrar.dataset_util import get_dataset_status, set_dataset_status
 from dataregistry.registrar.registrar_util import _form_dataset_path
-
+from dataregistry.exceptions import DataRegistryRootDirBadState
 from database_test_utils import *
 
 
@@ -50,24 +50,15 @@ def test_copy_data(dummy_file, data_org):
 
 
 @pytest.mark.parametrize(
-    "data_org,data_path,v_str,overwritable",
+    "data_org,data_path",
     [
-        ("file", "file1.txt", "0.0.1", True),
-        ("file", "file1.txt", "0.0.2", True),
-        ("file", "file1.txt", "0.0.3", False),
-        ("directory", "dummy_dir", "0.0.1", True),
-        ("directory", "dummy_dir", "0.0.2", True),
-        ("directory", "dummy_dir", "0.0.3", False),
+        ("file", "file1.txt"),
+        ("directory", "dummy_dir"),
     ],
 )
-def test_on_location_data(dummy_file, data_org, data_path, v_str, overwritable):
+def test_on_location_data(dummy_file, data_org, data_path):
     """
-    Test ingesting real data into the registry (already on location). Also
-    tests overwriting datasets.
-
-    Does three times for each file, the first is a normal entry with
-    `is_overwritable=True`. The second and third tests overwriting the previous
-    data with a new version.
+    Test ingesting real data into the registry (already on location).
     """
 
     # Establish connection to database
@@ -77,10 +68,9 @@ def test_on_location_data(dummy_file, data_org, data_path, v_str, overwritable):
     d_id = _insert_dataset_entry(
         datareg,
         f"DESC:datasets:test_on_location_data_{data_org}",
-        v_str,
+        "0.0.1",
         old_location=None,
         location_type="dataregistry",
-        is_overwritable=overwritable,
         relative_path=data_path,
     )
 
@@ -90,57 +80,15 @@ def test_on_location_data(dummy_file, data_org, data_path, v_str, overwritable):
             "dataset.data_org",
             "dataset.nfiles",
             "dataset.total_disk_space",
-            "dataset.is_overwritable",
-            "dataset.status",
-            "dataset.version_string",
         ],
         [f],
-        return_format="cursorresult",
     )
 
-    num_results = len(results.all())
-    for i, r in enumerate(results):
-        assert getattr(r, "dataset.data_org") == data_org
-        assert getattr(r, "dataset.nfiles") == 1
-        assert getattr(r, "dataset.total_disk_space") > 0
-        if getattr(r, "version_string") == "0.0.1":
-            if num_results == 1:
-                assert getattr(r, "dataset.is_overwritable") == True
-                assert (
-                    get_dataset_status(getattr(r, "dataset.status"), "replaced")
-                    == False
-                )
-            else:
-                assert getattr(r, "dataset.is_overwritable") == True
-                assert (
-                    get_dataset_status(getattr(r, "dataset.status"), "replaced") == True
-                )
-        elif getattr(r, "version_string") == "0.0.2":
-            assert num_results >= 2
-            if num_results == 2:
-                assert getattr(r, "dataset.is_overwritable") == True
-                assert (
-                    get_dataset_status(getattr(r, "dataset.status"), "replaced")
-                    == False
-                )
-            elif num_results == 3:
-                assert getattr(r, "dataset.is_overwritable") == True
-                assert (
-                    get_dataset_status(getattr(r, "dataset.status"), "replaced") == True
-                )
-        elif getattr(r, "version_string") == "0.0.3":
-            assert num_results >= 3
-            if num_results == 3:
-                assert getattr(r, "dataset.is_overwritable") == False
-                assert (
-                    get_dataset_status(getattr(r, "dataset.status"), "replaced")
-                    == False
-                )
-            else:
-                assert getattr(r, "dataset.is_overwritable") == True
-                assert (
-                    get_dataset_status(getattr(r, "dataset.status"), "replaced") == True
-                )
+    assert len(results["dataset.data_org"]) == 1
+
+    assert results["dataset.data_org"][0] == data_org
+    assert results["dataset.nfiles"][0] == 1
+    assert results["dataset.total_disk_space"][0] > 0
 
 
 @pytest.mark.parametrize("link", ["file1_sym.txt", "directory1_sym"])
@@ -162,5 +110,140 @@ def test_registering_symlinks(dummy_file, link):
             f"DESC:datasets:test_register_symlink_{link}",
             "0.0.1",
             old_location=data_path,
+            location_type="dataregistry",
+        )
+
+
+@pytest.mark.parametrize("link", ["file1.txt", "directory1"])
+def test_registering_bad_relative_path(dummy_file, link):
+    """
+    Make sure we cannot register a datataset to a relative path that is already
+    taken.
+    """
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    data_path = str(tmp_src_dir / link)
+
+    d_id = _insert_dataset_entry(
+        datareg,
+        f"DESC:datasets:test_registering_bad_relative_path_{link}",
+        "0.0.1",
+        old_location=data_path,
+        location_type="dataregistry",
+        relative_path=f"test/register/bad/relpath/{link}",
+    )
+
+    with pytest.raises(ValueError, match="is taken by"):
+        d_id = _insert_dataset_entry(
+            datareg,
+            f"DESC:datasets:test_registering_bad_relative_path_2_{link}",
+            "0.0.1",
+            old_location=data_path,
+            location_type="dataregistry",
+            relative_path=f"test/register/bad/relpath/{link}",
+        )
+
+
+@pytest.mark.parametrize("link", ["file1.txt", "directory1"])
+def test_registering_deleted_relative_path(dummy_file, link):
+    """
+    Should be able to use a relative_path of an old deleted dataset
+
+    Replace the original dataset first to make sure all the internal checks
+    with `replace_iteration` work.
+    """
+
+    _N_REPLACE = 6
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    data_path = str(tmp_src_dir / link)
+
+    # Original insert
+    d_id = _insert_dataset_entry(
+        datareg,
+        f"DESC:datasets:test_registering_deleted_relative_path_{link}",
+        "0.0.1",
+        old_location=data_path,
+        location_type="dataregistry",
+        relative_path=f"my/relative/path/for/checking/{link}",
+        is_overwritable=True,
+    )
+
+    # Replace original a few times
+    for i in range(_N_REPLACE):
+        d2_id = _replace_dataset_entry(
+            datareg,
+            f"DESC:datasets:test_registering_deleted_relative_path_{link}",
+            "0.0.1",
+            old_location=data_path,
+            is_overwritable=True,
+        )
+
+    # Now delete
+    datareg.Registrar.dataset.delete(d2_id)
+
+    # Make a new entry (new name) using the original relative path
+    d_id = _insert_dataset_entry(
+        datareg,
+        f"DESC:datasets:test_registering_deleted_relative_path_2_{link}",
+        "0.0.1",
+        old_location=data_path,
+        location_type="dataregistry",
+        relative_path=f"my/relative/path/for/checking/{link}",
+        is_overwritable=True,
+    )
+
+    # Replace a few times (less times than the original, so `replace_iteration`
+    # is lower)
+    for i in range(_N_REPLACE // 2):
+        d2_id = _replace_dataset_entry(
+            datareg,
+            f"DESC:datasets:test_registering_deleted_relative_path_2_{link}",
+            "0.0.1",
+            old_location=data_path,
+            is_overwritable=True,
+        )
+
+    # Now register third and final time, new name, same relative path, should
+    # fail as path is still taken by the entry above
+    with pytest.raises(ValueError, match="is taken by"):
+        d_id = _insert_dataset_entry(
+            datareg,
+            f"DESC:datasets:test_registering_deleted_relative_path_3_{link}",
+            "0.0.1",
+            old_location=data_path,
+            location_type="dataregistry",
+            relative_path=f"my/relative/path/for/checking/{link}",
+        )
+
+
+@pytest.mark.parametrize(
+    "link,dest", [["file1.txt", "file2.txt"], ["directory1", "dummy_dir_2"]]
+)
+def test_registering_data_already_there(dummy_file, link, dest):
+    """
+    When ingesting data into the `root_dir` with `old_location`, no data should
+    exist at that `relative_path`.
+    """
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    data_path = str(tmp_src_dir / link)
+
+    with pytest.raises(DataRegistryRootDirBadState, match="data already exists at"):
+        d_id = _insert_dataset_entry(
+            datareg,
+            f"DESC:datasets:test_registering_data_already_there_{link}",
+            "0.0.1",
+            old_location=data_path,
+            relative_path=dest,
             location_type="dataregistry",
         )

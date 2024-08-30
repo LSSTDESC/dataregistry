@@ -6,6 +6,7 @@ import shutil
 import warnings
 
 from dataregistry.db_basic import add_table_row
+from dataregistry.exceptions import DataRegistryRootDirBadState
 from sqlalchemy import select, update
 from functools import wraps
 
@@ -416,7 +417,42 @@ class DatasetTable(BaseTable):
                 name, kwargs_dict["version_string"], kwargs_dict["version_suffix"]
             )
 
-        # Make sure there is not already an entry with this name/version combination
+        # Make sure the relative_path in the `root_dir` is avaliable
+        if kwargs_dict["location_type"] in ["dataregistry", "dummy"]:
+            previous_datasets = self._find_previous(
+                None,
+                None,
+                None,
+                kwargs_dict["owner"],
+                kwargs_dict["owner_type"],
+                relative_path=kwargs_dict["relative_path"],
+            )
+
+            # If results are found, we can only use the old `relative_path` if
+            # that dataset is now deleted (and not archived)
+            if len(previous_datasets) > 0:
+                dest = _form_dataset_path(
+                    kwargs_dict["owner_type"],
+                    kwargs_dict["owner"],
+                    kwargs_dict["relative_path"],
+                    schema=self._schema,
+                    root_dir=self._root_dir,
+                )
+
+                if get_dataset_status(previous_datasets[-1].status, "archived"):
+                    raise ValueError(
+                        f"Relative path {dest} is reserved "
+                        f"for archived datasetid={previous_datasets[-1].dataset_id}"
+                    )
+
+                if not get_dataset_status(previous_datasets[-1].status, "deleted"):
+                    raise ValueError(
+                        f"Relative path {dest} is taken by "
+                        f"datasetid={previous_datasets[-1].dataset_id}"
+                    )
+
+        # Make sure there is not already a database entry with this
+        # name/version combination
         kwargs_dict["replace_iteration"] = 0
         if kwargs_dict["location_type"] in ["dataregistry", "dummy"]:
             previous_datasets = self._find_previous(
@@ -621,6 +657,13 @@ class DatasetTable(BaseTable):
         # Is the data already on location, or coming from somewhere new?
         if old_location:
             loc = old_location
+
+            # In the case we are ingesting data, no data should already exist
+            # at `dest`
+            if os.path.exists(dest):
+                raise DataRegistryRootDirBadState(
+                    f"data already exists at {dest}, it should not"
+                )
         else:
             loc = dest
 
@@ -668,10 +711,21 @@ class DatasetTable(BaseTable):
 
         return dataset_organization, num_files, total_size, ds_creation_date
 
-    def _find_previous(self, name, version_string, version_suffix, owner, owner_type):
+    def _find_previous(
+        self,
+        name,
+        version_string,
+        version_suffix,
+        owner,
+        owner_type,
+        relative_path=None,
+    ):
         """
         Find all dataset entries with the same `name`, `version`,
         `version_suffix`, `owner` and `owner_type`.
+
+        If `relative_path` is not None, instead search for all dataset entries
+        with the same `owner`, `owner_type` and `relative_path` combination.
 
         Returns results a dict stating what iteration those datasets are, the
         relative path their data is located, and if they can be overwritten.
@@ -689,6 +743,7 @@ class DatasetTable(BaseTable):
 
         # Search for dataset in the registry.
         dataset_table = self._get_table_metadata("dataset")
+
         stmt = select(
             dataset_table.c.dataset_id,
             dataset_table.c.is_overwritable,
@@ -697,16 +752,26 @@ class DatasetTable(BaseTable):
             dataset_table.c.status,
         )
 
-        stmt = stmt.where(
-            dataset_table.c.name == name,
-            dataset_table.c.version_string == version_string,
-            dataset_table.c.version_suffix == version_suffix,
-            dataset_table.c.owner == owner,
-            dataset_table.c.owner_type == owner_type,
-        )
+        if relative_path is not None:
+            stmt = stmt.where(
+                dataset_table.c.relative_path == relative_path,
+                dataset_table.c.owner == owner,
+                dataset_table.c.owner_type == owner_type,
+            )
 
-        # Order by `replace_iteration`
-        stmt = stmt.order_by(dataset_table.c.replace_iteration.asc())
+            # Order by register date
+            stmt = stmt.order_by(dataset_table.c.register_date.asc())
+        else:
+            stmt = stmt.where(
+                dataset_table.c.name == name,
+                dataset_table.c.version_string == version_string,
+                dataset_table.c.version_suffix == version_suffix,
+                dataset_table.c.owner == owner,
+                dataset_table.c.owner_type == owner_type,
+            )
+
+            # Order by `replace_iteration`
+            stmt = stmt.order_by(dataset_table.c.replace_iteration.asc())
 
         with self._engine.connect() as conn:
             result = conn.execute(stmt)
