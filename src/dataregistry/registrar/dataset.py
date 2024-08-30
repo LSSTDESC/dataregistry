@@ -662,7 +662,7 @@ class DatasetTable(BaseTable):
             # at `dest`
             if os.path.exists(dest):
                 raise DataRegistryRootDirBadState(
-                    f"data already exists at {dest}, is should not"
+                    f"data already exists at {dest}, it should not"
                 )
         else:
             loc = dest
