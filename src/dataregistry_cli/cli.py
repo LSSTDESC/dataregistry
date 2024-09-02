@@ -6,6 +6,7 @@ from .register import register_dataset
 from .delete import delete_dataset
 from .query import dregs_ls
 from .show import dregs_show
+from .modify import modify_dataset
 from dataregistry.schema import load_schema
 
 
@@ -69,10 +70,61 @@ def get_parser():
     arg_ls.add_argument(
         "--owner_type",
         help="List datasets for a given owner type",
-        choices=["user", "group", "production"],
+        choices=["user", "group", "production", "project"],
     )
     arg_ls.add_argument("--all", help="List all datasets", action="store_true")
+    arg_ls.add_argument(
+        "--extended", help="List more properties than the default", action="store_true"
+    )
+    arg_ls.add_argument(
+        "--max_rows",
+        help="Maximum number of rows to print (default 500)",
+        type=int,
+        default=500,
+    )
+    arg_ls.add_argument(
+        "--max_chars",
+        help="Maximum number of characters to print in a column (default 40)",
+        type=int,
+        default=40,
+    )
+    arg_ls.add_argument("--keyword", type=str, help="Keyword to filter by")
     _add_generic_arguments(arg_ls)
+
+    # ------
+    # Modify
+    # ------
+
+    # Modify a database entry.
+    arg_modify = subparsers.add_parser("modify", help="Modify an entry in the database")
+
+    arg_modify_sub = arg_modify.add_subparsers(title="modify what?", dest="modify_type")
+
+    # ------------------
+    # Modify a dataset
+    # ------------------
+
+    # Modify a dataset entry.
+    arg_modify_dataset = arg_modify_sub.add_parser("dataset", help="Modify a dataset")
+
+    arg_modify_dataset.add_argument(
+        "dataset_id",
+        help="`dataset_id` of dataset to modify",
+        type=int,
+    )
+
+    arg_modify_dataset.add_argument(
+        "column",
+        help="Column in the dataset table to modify",
+        type=str,
+    )
+
+    arg_modify_dataset.add_argument(
+        "new_value",
+        help="Updated value",
+        type=str,
+    )
+    _add_generic_arguments(arg_modify_dataset)
 
     # --------
     # Register
@@ -115,27 +167,49 @@ def get_parser():
         extra_args = {}
 
         # Any default?
-        if schema_data["tables"]["dataset"]["column_definitions"][column]["cli_default"] is not None:
-            extra_args["default"] = schema_data["tables"]["dataset"]["column_definitions"][column]["cli_default"]
+        if (
+            schema_data["tables"]["dataset"]["column_definitions"][column][
+                "cli_default"
+            ]
+            is not None
+        ):
+            extra_args["default"] = schema_data["tables"]["dataset"][
+                "column_definitions"
+            ][column]["cli_default"]
             default_str = f" (default={extra_args['default']})"
         else:
             default_str = ""
 
         # Restricted to choices?
-        if schema_data["tables"]["dataset"]["column_definitions"][column]["choices"] is not None:
-            extra_args["choices"] = schema_data["tables"]["dataset"]["column_definitions"][column]["choices"]
-    
+        if (
+            schema_data["tables"]["dataset"]["column_definitions"][column]["choices"]
+            is not None
+        ):
+            extra_args["choices"] = schema_data["tables"]["dataset"][
+                "column_definitions"
+            ][column]["choices"]
+
         # Is this a boolean flag?
-        if schema_data["tables"]["dataset"]["column_definitions"][column]["type"] == "Boolean":
+        if (
+            schema_data["tables"]["dataset"]["column_definitions"][column]["type"]
+            == "Boolean"
+        ):
             extra_args["action"] = "store_true"
         else:
-            extra_args["type"] = _TYPE_TRANSLATE[schema_data["tables"]["dataset"]["column_definitions"][column]["type"]]
-        
+            extra_args["type"] = _TYPE_TRANSLATE[
+                schema_data["tables"]["dataset"]["column_definitions"][column]["type"]
+            ]
+
         # Add flag
-        if schema_data["tables"]["dataset"]["column_definitions"][column]["cli_optional"]:
+        if schema_data["tables"]["dataset"]["column_definitions"][column][
+            "cli_optional"
+        ]:
             arg_register_dataset.add_argument(
                 "--" + column,
-                help=schema_data["tables"]["dataset"]["column_definitions"][column]["description"] + default_str,
+                help=schema_data["tables"]["dataset"]["column_definitions"][column][
+                    "description"
+                ]
+                + default_str,
                 **extra_args,
             )
 
@@ -260,3 +334,8 @@ def main(cmd=None):
     elif args.subcommand == "show":
         if args.show_type == "keywords":
             dregs_show("keywords", args)
+
+    # Modify an entry
+    if args.subcommand == "modify":
+        if args.modify_type == "dataset":
+            modify_dataset(args)

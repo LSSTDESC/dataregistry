@@ -49,7 +49,7 @@ def test_modify_dataset(dummy_file, dataset_name, column, new_value):
 )
 def test_modify_execution(dummy_file, execution_name, column, new_value):
     """
-    Make a dataset entry, then mofify it, then check it was modified.
+    Make a execution entry, then mofify it, then check it was modified.
     """
 
     # Establish connection to database
