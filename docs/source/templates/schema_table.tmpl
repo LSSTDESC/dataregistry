@@ -13,10 +13,10 @@ The {{table}} table
      - description
      - type
 
-{% for item in data[table] %}
+{% for item in data['tables'][table]['column_definitions'] %}
    * - {{item}}
 {% for item2 in ['description', 'type'] %}
-     - {{data[table][item][item2]}}
+     - {{data['tables'][table]['column_definitions'][item][item2]}}
 {% endfor %}
 {% endfor %}
 {% endfor %}

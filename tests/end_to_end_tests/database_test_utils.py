@@ -8,6 +8,7 @@ __all__ = [
     "_insert_alias_entry",
     "_insert_execution_entry",
     "_insert_dataset_entry",
+    "_replace_dataset_entry",
 ]
 
 
@@ -23,13 +24,18 @@ def dummy_file(tmp_path):
     |   - <source>
     |     - file1.txt
     |     - file2.txt
+    |     - file1_sym.txt (symlink)
     |     - <directory1>
     |       - file2.txt
+    |     - <directory1_sym> (symlink)
     |   - <root_dir>
     |     - <schema/user/uid>
     |       - <dummy_dir>
     |         - file1.txt
+    |       - <dummy_dir_2>
+    |         - file1.txt
     |       - file1.txt
+    |       - file2.txt
 
     Parameters
     ----------
@@ -48,10 +54,20 @@ def dummy_file(tmp_path):
     tmp_src_dir = tmp_path / "source"
     tmp_src_dir.mkdir()
 
+    # Make two text files in source
     for i in range(2):
         f = tmp_src_dir / f"file{i+1}.txt"
         f.write_text("i am a dummy file")
 
+    # Make a symlink to `file1.txt`
+    link = tmp_src_dir / "file1_sym.txt"
+    link.symlink_to(tmp_src_dir / "file1.txt")
+
+    # Make a symlink to `directory1`
+    link = tmp_src_dir / "directory1_sym"
+    link.symlink_to(tmp_src_dir / "directory1")
+
+    # Make directory in source and a file within that directory
     p = tmp_src_dir / "directory1"
     p.mkdir()
     f = p / "file2.txt"
@@ -62,15 +78,17 @@ def dummy_file(tmp_path):
 
     # Make some dummy data already on location
     for THIS_SCHEMA in [SCHEMA_VERSION + "/", ""]:
-        p = tmp_root_dir / f"{THIS_SCHEMA}user/{os.getenv('USER')}/dummy_dir"
-        p.mkdir(parents=True)
+        for f in ["dummy_dir", "dummy_dir_2"]:
+            p = tmp_root_dir / f"{THIS_SCHEMA}user/{os.getenv('USER')}/{f}"
+            p.mkdir(parents=True)
 
-        f = p / "file1.txt"
-        f.write_text("i am another dummy file (but on location in a dir)")
+            f = p / "file1.txt"
+            f.write_text("i am another dummy file (but on location in a dir)")
 
-        p = tmp_root_dir / f"{THIS_SCHEMA}user/{os.getenv('USER')}"
-        f = p / "file1.txt"
-        f.write_text("i am another dummy file (but on location)")
+        for f in ["file1.txt", "file2.txt"]:
+            p = tmp_root_dir / f"{THIS_SCHEMA}user/{os.getenv('USER')}"
+            f = p / f
+            f.write_text("i am another dummy file (but on location)")
 
     return tmp_src_dir, tmp_root_dir
 
@@ -126,14 +144,8 @@ def _insert_execution_entry(
 
     Parameters
     ----------
-    name : str
-        Name of execution
-    description : str
-        Description of execution
-    intput_datasets : list
-        List of dataset ids
-    configuration : str
-        Path to configuration file for execution
+    **See `src/dataregistry/registrar/execution.py` for a full description of
+    parameters
 
     Returns
     -------
@@ -178,64 +190,21 @@ def _insert_dataset_entry(
     url=None,
     keywords=[],
     relative_path=None,
+    access_api=None,
 ):
     """
-    Wrapper to create dataset entry
+    Wrapper to create dataset entry during testing
 
     Parameters
     ----------
-    name : str
-        A manually selected name for the dataset
-    version : str
-        Semantic version string (i.e., M.N.P) or
-        "major", "minor", "patch" to automatically bump the version previous
-    owner_type : str
-        Either "production", "group", "user"
-    owner : str
-        Dataset owner
-    description : str
-        Description of dataset
-    name : str
-        A manually selected name for the dataset
-    execution_id : int
-        Execution entry related to this dataset
-    version_suffix : str
-        Append a suffix to the version string
-    old_location : str
-        Path to data to be copied to data registry
-    which_datareg : DataRegistry object
-        In case we want to register using a custom DataRegistry object
-    execution_name : str, optional
-            Typically pipeline name or program name
-    execution_description : str, optional
-        Human readible description of execution
-    execution_start : datetime, optional
-    execution_site : str, optional
-        Where was the execution performed?
-    execution_configuration : str, optional
-        Path to text file used to configure the execution
-    input_datasets : list, optional
-        List of dataset ids that were the input to this execution
-    location_type : str, optional
-        "dataregistry", "external" or "dummy"
-    contact_email : str
-        Contact email for external datasets
-    url : str
-        Url for external datasets
-    keywords : list[str]
-        List of keywords to tag
-    relative_path : str
-        Relative path within the data registry to store the data
-        Relative to <ROOT>/<owner_type>/<owner>/...
+    **See `src/dataregistry/registrar/dataset.py` for a full description of
+    parameters 
 
     Returns
     -------
     dataset_id : int
         The dataset it created for this entry
     """
-
-    # Some defaults over all test datasets
-    make_sym_link = False
 
     # Add new entry.
     dataset_id, execution_id = datareg.Registrar.dataset.register(
@@ -245,7 +214,6 @@ def _insert_dataset_entry(
         creation_date=None,
         description=description,
         old_location=old_location,
-        copy=(not make_sym_link),
         execution_id=execution_id,
         verbose=True,
         owner=owner,
@@ -262,10 +230,78 @@ def _insert_dataset_entry(
         url=url,
         keywords=keywords,
         relative_path=relative_path,
+        access_api=access_api,
     )
 
     assert dataset_id is not None, "Trying to create a dataset that already exists"
     assert execution_id is not None, "Trying to create a execution that already exists"
     print(f"Created dataset entry with id {dataset_id}")
+
+    return dataset_id
+
+def _replace_dataset_entry(
+    datareg,
+    name,
+    version,
+    owner_type=None,
+    owner=None,
+    description=None,
+    execution_id=None,
+    version_suffix=None,
+    old_location=None,
+    is_overwritable=False,
+    which_datareg=None,
+    execution_name=None,
+    execution_description=None,
+    execution_start=None,
+    execution_site=None,
+    execution_configuration=None,
+    input_datasets=[],
+    location_type="dummy",
+    contact_email=None,
+    url=None,
+    keywords=[],
+    relative_path=None,
+    access_api=None,
+):
+    """
+    Wrapper to replace dataset entry during testing
+
+    Parameters
+    ----------
+    **See `src/dataregistry/registrar/dataset.py` for a full description of
+    parameters
+
+    Returns
+    -------
+    dataset_id : int
+        The dataset it created for this entry
+    """
+
+    # Add new entry.
+    dataset_id, execution_id = datareg.Registrar.dataset.replace(
+        name,
+        version,
+        version_suffix=version_suffix,
+        creation_date=None,
+        description=description,
+        old_location=old_location,
+        execution_id=execution_id,
+        verbose=True,
+        owner=owner,
+        owner_type=owner_type,
+        is_overwritable=is_overwritable,
+        execution_name=execution_name,
+        execution_description=execution_description,
+        execution_start=execution_start,
+        execution_site=execution_site,
+        execution_configuration=execution_configuration,
+        input_datasets=input_datasets,
+        location_type=location_type,
+        contact_email=contact_email,
+        url=url,
+        keywords=keywords,
+        access_api=access_api,
+    )
 
     return dataset_id

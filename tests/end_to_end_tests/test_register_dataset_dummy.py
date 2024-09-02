@@ -13,10 +13,13 @@ from dataregistry.registrar.registrar_util import _form_dataset_path
 from database_test_utils import *
 
 
-def test_register_dataset(dummy_file):
-    """Make a simple entry, and make sure the query returns the correct result"""
+def test_register_dataset_defaults(dummy_file):
+    """
+    Make a simple entry, and make sure the query returns the correct results
+    for default values
+    """
 
-    _NAME = "DESC:datasets:my_first_dataset"
+    _NAME = "DESC:datasets:test_register_dataset_defaults"
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
@@ -27,48 +30,67 @@ def test_register_dataset(dummy_file):
         datareg,
         _NAME,
         "0.0.1",
-        description="This is my first DESC dataset",
     )
 
     # Query
     f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
-    results = datareg.Query.find_datasets(
-        [
-            "dataset.name",
-            "dataset.version_string",
-            "dataset.owner",
-            "dataset.owner_type",
-            "dataset.description",
-            "dataset.version_major",
-            "dataset.version_minor",
-            "dataset.version_patch",
-            "dataset.relative_path",
-            "dataset.version_suffix",
-            "dataset.data_org",
-        ],
-        [f],
-        return_format="cursorresult",
-    )
+    results = datareg.Query.find_datasets(None, [f])
 
-    for i, r in enumerate(results):
-        assert getattr(r, "dataset.name") == "DESC:datasets:my_first_dataset"
-        assert getattr(r, "dataset.version_string") == "0.0.1"
-        assert getattr(r, "dataset.version_major") == 0
-        assert getattr(r, "dataset.version_minor") == 0
-        assert getattr(r, "dataset.version_patch") == 1
-        assert getattr(r, "dataset.owner") == os.getenv("USER")
-        assert getattr(r, "dataset.owner_type") == "user"
-        assert getattr(r, "dataset.description") == "This is my first DESC dataset"
-        assert getattr(r, "dataset.relative_path") == f"{_NAME}_0.0.1"
-        assert getattr(r, "dataset.version_suffix") == None
-        assert getattr(r, "dataset.data_org") == "dummy"
-        assert i < 1
+    # First make sure we find a result
+    assert len(results) > 0
+    assert len(results["name"]) == 1
+
+    # Check the result
+    assert results["name"][0] == _NAME
+    assert results["version_string"][0] == "0.0.1"
+    assert results["version_major"][0] == 0
+    assert results["version_minor"][0] == 0
+    assert results["version_patch"][0] == 1
+    assert results["owner"][0] == os.getenv("USER")
+    assert results["owner_type"][0] == "user"
+    assert results["description"][0] == None
+    assert results["relative_path"][0] == f"{_NAME}_0.0.1"
+    assert results["version_suffix"][0] == None
+    assert results["data_org"][0] == "dummy"
+    assert results["execution_id"][0] >= 0
+    assert results["dataset_id"][0] >= 0
+    assert results["creation_date"][0] is None
+    assert results["register_date"][0] is not None
+    assert results["creator_uid"][0] == os.getenv("USER")
+    assert results["access_api"][0] is None
+    assert results["access_api_configuration"][0] is None
+    assert results["nfiles"][0] == 0
+    assert results["total_disk_space"][0] == 0
+    assert results["register_root_dir"][0] == str(tmp_root_dir)
+    assert get_dataset_status(results["status"][0], "replaced") == False
+    assert results["is_overwritable"][0] == False
+    assert results["status"][0] == 1
+    assert results["archive_date"][0] is None
+    assert results["archive_path"][0] is None
+    assert results["delete_date"][0] is None
+    assert results["delete_uid"][0] is None
+    assert results["move_date"][0] is None
+    assert results["location_type"][0] == "dummy"
+    assert results["url"][0] is None
+    assert results["contact_email"][0] is None
+    assert results["replace_id"][0] is None
+    assert results["replace_iteration"][0] == 0
 
 
-def test_manual_relpath_and_vsuffix(dummy_file):
-    """Test setting the relative path and version suffix manually"""
+def test_register_dataset_manual(dummy_file):
+    """
+    Make a simple entry, and make sure the query returns the correct results
+    for manually selected values
+    """
 
-    _NAME = "DESC:datasets:my_second_dataset"
+    _NAME = "DESC:datasets:test_register_dataset_manual"
+    _DESCRIPTION = "A manual description"
+    _OWNER = "test_owner"
+    _OWNER_TYPE = "group"
+    _REL_PATH = "manual/rel/path"
+    _V_SUFFIX = "test"
+    _ACCESS_API = "test_api"
+    _IS_OVERWRITABLE = True
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
@@ -79,23 +101,76 @@ def test_manual_relpath_and_vsuffix(dummy_file):
         datareg,
         _NAME,
         "0.0.1",
-        relative_path="my/custom/relative_path",
+        description=_DESCRIPTION,
+        owner=_OWNER,
+        owner_type=_OWNER_TYPE,
+        relative_path=_REL_PATH,
+        version_suffix=_V_SUFFIX,
+        access_api=_ACCESS_API,
+        is_overwritable=_IS_OVERWRITABLE,
+    )
+
+    # Query
+    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.Query.find_datasets(None, [f])
+
+    # First make sure we find a result
+    assert len(results) > 0
+    assert len(results["name"]) == 1
+
+    # Check the result
+    assert results["name"][0] == _NAME
+    assert results["version_string"][0] == "0.0.1"
+    assert results["version_major"][0] == 0
+    assert results["version_minor"][0] == 0
+    assert results["version_patch"][0] == 1
+    assert results["owner"][0] == _OWNER
+    assert results["owner_type"][0] == _OWNER_TYPE
+    assert results["description"][0] == _DESCRIPTION
+    assert results["relative_path"][0] == _REL_PATH
+    assert results["version_suffix"][0] == _V_SUFFIX
+    assert results["data_org"][0] == "dummy"
+    assert results["execution_id"][0] >= 0
+    assert results["dataset_id"][0] >= 0
+    assert results["creation_date"][0] is None
+    assert results["register_date"][0] is not None
+    assert results["creator_uid"][0] == os.getenv("USER")
+    assert results["access_api"][0] == _ACCESS_API
+    assert results["access_api_configuration"][0] is None
+    assert results["nfiles"][0] == 0
+    assert results["total_disk_space"][0] == 0
+    assert results["register_root_dir"][0] == str(tmp_root_dir)
+    assert get_dataset_status(results["status"][0], "replaced") == False
+    assert results["is_overwritable"][0] == _IS_OVERWRITABLE
+    assert results["status"][0] == 1
+    assert results["archive_date"][0] is None
+    assert results["archive_path"][0] is None
+    assert results["delete_date"][0] is None
+    assert results["delete_uid"][0] is None
+    assert results["move_date"][0] is None
+    assert results["location_type"][0] == "dummy"
+    assert results["url"][0] is None
+    assert results["contact_email"][0] is None
+    assert results["replace_id"][0] is None
+    assert results["replace_iteration"][0] == 0
+
+
+def test_bump_vsuffix(dummy_file):
+    """Should not be able to bump datasets with a version suffix"""
+
+    _NAME = "DESC:datasets:test_bump_vsuffix"
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+
+    # Add entry
+    d_id = _insert_dataset_entry(
+        datareg,
+        _NAME,
+        "0.0.1",
         version_suffix="custom_suffix",
     )
-
-    # Query
-    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
-    results = datareg.Query.find_datasets(
-        ["dataset.name", "dataset.version_suffix", "dataset.relative_path"],
-        [f],
-        return_format="cursorresult",
-    )
-
-    for i, r in enumerate(results):
-        assert getattr(r, "dataset.name") == _NAME
-        assert getattr(r, "dataset.version_suffix") == "custom_suffix"
-        assert getattr(r, "dataset.relative_path") == "my/custom/relative_path"
-        assert i < 1
 
     # Try to bump dataset with version suffix (should fail)
     with pytest.raises(ValueError, match="Cannot bump"):
@@ -107,22 +182,20 @@ def test_manual_relpath_and_vsuffix(dummy_file):
 
 
 @pytest.mark.parametrize(
-    "v_type,ans,name",
+    "v_type,ans",
     [
-        ("major", "1.0.0", "DESC:datasets:my_first_dataset"),
-        ("minor", "1.1.0", "DESC:datasets:my_first_dataset"),
-        ("patch", "1.1.1", "DESC:datasets:my_first_dataset"),
-        ("patch", "1.1.2", "DESC:datasets:my_first_dataset"),
-        ("minor", "1.2.0", "DESC:datasets:my_first_dataset"),
-        ("major", "2.0.0", "DESC:datasets:my_first_dataset"),
+        ("major", "1.0.0"),
+        ("minor", "1.1.0"),
+        ("patch", "1.1.1"),
+        ("patch", "1.1.2"),
+        ("minor", "1.2.0"),
+        ("major", "2.0.0"),
     ],
 )
-def test_dataset_bumping(dummy_file, v_type, ans, name):
-    """
-    Test bumping a dataset and make sure the new version is correct.
+def test_dataset_bumping(dummy_file, v_type, ans):
+    """Test bumping a dataset and make sure the new version is correct"""
 
-    Tests bumping datasets with and without a version suffix.
-    """
+    _NAME = "DESC:datasets:test_register_dataset_defaults"
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
@@ -131,7 +204,7 @@ def test_dataset_bumping(dummy_file, v_type, ans, name):
     # Add entry
     d_id = _insert_dataset_entry(
         datareg,
-        name,
+        _NAME,
         v_type,
     )
 
@@ -140,14 +213,16 @@ def test_dataset_bumping(dummy_file, v_type, ans, name):
     results = datareg.Query.find_datasets(
         ["dataset.name", "dataset.version_string", "dataset.relative_path"],
         [f],
-        return_format="cursorresult",
     )
 
-    for i, r in enumerate(results):
-        assert getattr(r, "dataset.name") == name
-        assert getattr(r, "dataset.version_string") == ans
-        assert getattr(r, "dataset.relative_path") == f"{name}_{ans}"
-        assert i < 1
+    # First make sure we find a result
+    assert len(results) > 0
+    assert len(results["dataset.name"]) == 1
+
+    # Check the result
+    assert results["dataset.name"][0] == _NAME
+    assert results["dataset.version_string"][0] == ans
+    assert results["dataset.relative_path"][0] == f"{_NAME}_{ans}"
 
 
 @pytest.mark.parametrize("owner_type", ["user", "group", "project"])
@@ -170,14 +245,15 @@ def test_dataset_owner_types(dummy_file, owner_type):
 
     # Query
     f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
-    results = datareg.Query.find_datasets(
-        ["dataset.owner_type", "dataset.name"], [f], return_format="cursorresult"
-    )
+    results = datareg.Query.find_datasets(["dataset.owner_type", "dataset.name"], [f])
 
-    for i, r in enumerate(results):
-        assert getattr(r, "dataset.owner_type") == owner_type
-        assert getattr(r, "dataset.name") == _NAME
-        assert i < 1
+    # First make sure we find a result
+    assert len(results) > 0
+    assert len(results["dataset.name"]) == 1
+
+    # Check the result
+    assert results["dataset.owner_type"][0] == owner_type
+    assert results["dataset.name"][0] == _NAME
 
 
 def test_register_dataset_with_global_owner_set(dummy_file):
@@ -212,13 +288,15 @@ def test_register_dataset_with_global_owner_set(dummy_file):
             "dataset.owner_type",
         ],
         [f],
-        return_format="cursorresult",
     )
 
-    for i, r in enumerate(results):
-        assert getattr(r, "dataset.owner") == "DESC group"
-        assert getattr(r, "dataset.owner_type") == "group"
-        assert i < 1
+    # First make sure we find a result
+    assert len(results) > 0
+    assert len(results["dataset.owner"]) == 1
+
+    # Check the result
+    assert results["dataset.owner_type"][0] == "group"
+    assert results["dataset.owner"][0] == "DESC group"
 
 
 def test_register_dataset_with_modified_default_execution(dummy_file):
@@ -258,18 +336,17 @@ def test_register_dataset_with_modified_default_execution(dummy_file):
             "execution.name",
         ],
         [f],
-        return_format="cursorresult",
     )
 
-    for i, r in enumerate(results):
-        assert getattr(r, "execution.name") == "Overwrite execution auto name"
-        assert (
-            getattr(r, "execution.description")
-            == "Overwrite execution auto description"
-        )
-        assert getattr(r, "execution.site") == "TestMachine"
-        ex_id_1 = getattr(r, "execution.execution_id")
-        assert i < 1
+    # First make sure we find a result
+    assert len(results) > 0
+    assert len(results["dataset.name"]) == 1
+
+    # Check the result
+    assert results["execution.name"][0] == "Overwrite execution auto name"
+    assert results["execution.description"][0] == "Overwrite execution auto description"
+    assert results["execution.site"][0] == "TestMachine"
+    ex_id_1 = results["execution.execution_id"][0]
 
     # Query on dependency
     f = datareg.Query.gen_filter("dependency.input_id", "==", d_id_1)
@@ -280,12 +357,14 @@ def test_register_dataset_with_modified_default_execution(dummy_file):
             "dependency.input_id",
         ],
         [f],
-        return_format="cursorresult",
     )
 
-    for i, r in enumerate(results):
-        assert getattr(r, "dependency.execution_id") == ex_id_1
-        assert i < 1
+    # First make sure we find a result
+    assert len(results) > 0
+    assert len(results["dataset.dataset_id"]) == 1
+
+    # Check the result
+    assert results["dependency.execution_id"][0] == ex_id_1
 
 
 @pytest.mark.parametrize(

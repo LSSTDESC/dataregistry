@@ -1,3 +1,36 @@
+## Version 0.6.3
+
+There cannot be a unique constraint in the database for the `owner`,
+`owner_type` and `relative_path`, as multiple entries can share theose values,
+however we require that at any one time only one dataset has their data at this
+location. Added a check during register to ensure the `relative_path` is
+avaliable.
+
+## Version 0.6.2
+
+- Bump database version to 3.3.0, removed `is_overwritten`, `replace_date`,
+  `replace_uid` columns
+- Added `replaced` bit to the `valid` bitmask
+
+## Version 0.6.1
+
+The `tables_required` list, when doing a query, was only build from the return
+column list. This means if a filter used a table not in the returned column
+list the proper join would not be made. This has been corrected.
+
+## Version 0.6.0
+
+- Added `replace()` function for datasets. This is functionally very similar to
+  `register()`, but it allows users to overwrite previous datasets whilst
+  keeping the same name/version/suffix/owner/ownertype combination.
+  Documentation updated.
+- Datasets now have a `replace_iteration` counter and a `replace_id` value
+  which points to the dataset that replaced them. To reflect that the unique
+  constraints now include the `replace_iteration` column.
+- Database version bumped to 3.2.0
+- Tests now use the `property_dict` return type and first make sure that the
+  correct number of results was found before checking the results.
+
 ## Version 0.5.3
 
 - Update the `schema.yaml` file to include unique constraints and table
