@@ -54,6 +54,14 @@ them.
 
 .. toctree::
    :maxdepth: 2
+   :caption: Developer notes:
+   :hidden:
+
+   dev_notes_spin
+   dev_notes_database
+
+.. toctree::
+   :maxdepth: 2
    :caption: Contact:
    :hidden:
 
