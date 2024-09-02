@@ -1,3 +1,10 @@
+## Version 0.6.4
+
+- Update `dregs ls` to be a bit cleaner. Also has `dregs ls --extended` option
+  to give back more quantities. Also can now query on a keyword using `dregs ls
+  --keyword <keyword>`
+- Added `modify` to CLI to update datasets from the command line
+
 ## Version 0.6.3
 
 There cannot be a unique constraint in the database for the `owner`,
