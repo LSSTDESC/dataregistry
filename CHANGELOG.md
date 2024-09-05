@@ -1,3 +1,10 @@
+## Version 1.0.0 (Release)
+
+- Update default NERSC site to
+  `/global/cfs/cdirs/lsst/utilities/desc-data-registry`
+- Update default schema names (now stored in
+  `src/dataregistry/schema/default_schema_names.yaml`
+
 ## Version 0.6.4
 
 - Update `dregs ls` to be a bit cleaner. Also has `dregs ls --extended` option
