@@ -13,7 +13,12 @@ from sqlalchemy import ForeignKey, UniqueConstraint, text
 from sqlalchemy.orm import DeclarativeBase
 from dataregistry.db_basic import DbConnection
 from dataregistry.db_basic import _insert_provenance, _insert_keyword
-from dataregistry.schema import load_schema, load_preset_keywords, DEFAULT_SCHEMA_WORKING, DEFAULT_SCHEMA_PRODUCTION
+from dataregistry.schema import (
+    load_schema,
+    load_preset_keywords,
+    DEFAULT_SCHEMA_WORKING,
+    DEFAULT_SCHEMA_PRODUCTION,
+)
 
 """
 A script to create a schema.
@@ -65,14 +70,15 @@ def _get_column_definitions(schema, table):
     for column in schema_data[table]["column_definitions"].keys():
         # Special case where column has a foreign key
         if schema_data[table]["column_definitions"][column]["foreign_key"]:
-            fk_schema = schema
-            if (
-                schema_data[table]["column_definitions"][column]["foreign_key_schema"]
-                != "self"
-            ):
-                fk_schema = schema_data[table]["column_definitions"][column][
-                    "foreign_key_schema"
-                ]
+            fk_schema = schema_data[table]["column_definitions"][column][
+                "foreign_key_schema"
+            ]
+            if fk_schema == "self":
+                fk_schema = schema
+            elif fk_schema == "production":
+                fk_schema = prod_schema
+            else:
+                raise ValueError(f"{fk_schema} is a bad FK schema")
 
             return_dict[column] = Column(
                 column,
@@ -193,7 +199,11 @@ def _get_ForeignKey_str(schema, table, column):
 
 def _FixDependencyColumns(columns, has_production, production):
     """
-    Special case for dependencies table where some column names need to be tweeked.
+    Special case for dependencies table where some column names need to be
+    tweeked.
+
+    This is because you can link to the production schema from the working
+    schema for dependencies.
 
     Columns dict is modified in place.
 
@@ -212,12 +222,13 @@ def _FixDependencyColumns(columns, has_production, production):
 
     # Update production schema name
     else:
-        if production != "production":
+        if production != DEFAULT_SCHEMA_PRODUCTION:
             old_col = columns["input_production_id"]
             fkey = ForeignKey(f"{production}.dataset.dataset_id")
             new_input_production_id = Column(old_col.name, old_col.type, fkey)
             del columns["input_production_id"]
             columns["input_production_id"] = new_input_production_id
+
 
 def _BuildTable(schema, table_name, has_production, production):
     """
@@ -252,6 +263,7 @@ def _BuildTable(schema, table_name, has_production, production):
     Model = type(class_name, (Base,), {**columns, **meta})
     return Model
 
+
 def _Keyword(schema):
     """Stores the list of keywords."""
 
@@ -261,12 +273,17 @@ def _Keyword(schema):
     columns = _get_column_definitions(schema, "keyword")
 
     # Table metadata
-    meta = {"__tablename__": "keyword", "__table_args__": (UniqueConstraint(
-                "keyword", name="keyword_u_keyword"
-            ), {"schema": schema},)}
+    meta = {
+        "__tablename__": "keyword",
+        "__table_args__": (
+            UniqueConstraint("keyword", name="keyword_u_keyword"),
+            {"schema": schema},
+        ),
+    }
 
     Model = type(class_name, (Base,), {**columns, **meta})
     return Model
+
 
 def _DatasetKeyword(schema):
     """Many-Many link between datasets and keywords."""
@@ -282,6 +299,11 @@ def _DatasetKeyword(schema):
     Model = type(class_name, (Base,), {**columns, **meta})
     return Model
 
+
+# ----------------
+# Database version
+# ----------------
+
 # The following should be adjusted whenever there is a change to the structure
 # of the database tables.
 _DB_VERSION_MAJOR = 3
@@ -289,10 +311,12 @@ _DB_VERSION_MINOR = 3
 _DB_VERSION_PATCH = 0
 _DB_VERSION_COMMENT = "Remove `is_overwritten`, `replace_date` and `replace_uid` columns, the information is in `status`"
 
+# ----------------------------
 # Parse command line arguments
+# ----------------------------
+
 parser = argparse.ArgumentParser(
-    description="""
-Creates dataregistry tables for specified schema and connection information (config)""",
+    description="Creates dataregistry tables for specified schema and connection information (config)",
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
 )
 parser.add_argument(
@@ -306,46 +330,105 @@ parser.add_argument(
     help="name of schema containing production tables.",
 )
 parser.add_argument("--config", help="Path to the data registry config file")
+parser.add_argument(
+    "--create_both",
+    help="Create both the production and working schema",
+    action="store_true",
+)
 
 args = parser.parse_args()
-schema = args.schema
+
+# ------------------
+# Create the schemas
+# ------------------
+
+# What schemas are we creating?
+if args.create_both:
+    schema_list = [args.production_schema, args.schema]
+else:
+    schema_list = [args.schema]
 prod_schema = args.production_schema
 
-# Connect to database to find out what the backend is
-db_connection = DbConnection(args.config, schema)
-if db_connection.dialect == "sqlite":
+# Loop over each schema
+for schema in schema_list:
     if schema == prod_schema:
-        raise ValueError("Production not available for sqlite databases")
-    # In fact we don't use schemas at all for sqlite
-    schema = None
-    prod_schema = None
-else:
-    if schema != prod_schema:
-        # production schema, tables must already exists and schema
-        # must be backwards-compatible with prod_schem.  That is, major
-        # versions must match and minor version of prod_schema cannot
-        # be greater than minor version of schema
-        stmt = f"select db_version_major, db_version_minor from {prod_schema}.provenance order by provenance_id desc limit 1"
+        print(f"Creating production schema {prod_schema}...")
+    else:
+        print(
+            f"Creating schema '{schema}', linking to production schema '{prod_schema}'..."
+        )
+
+    # Connect to database to find out what the backend is
+    db_connection = DbConnection(args.config, schema)
+
+    # Make sure the linked production schema exists / is allowed
+    if db_connection.dialect == "sqlite":
+        if schema == prod_schema:
+            raise ValueError("Production not available for sqlite databases")
+        # In fact we don't use schemas at all for sqlite
+        schema = None
+        prod_schema = None
+    else:
+        if schema != prod_schema:
+            # production schema, tables must already exists and schema
+            # must be backwards-compatible with prod_schem.  That is, major
+            # versions must match and minor version of prod_schema cannot
+            # be greater than minor version of schema
+            stmt = f"select db_version_major, db_version_minor from {prod_schema}.provenance order by provenance_id desc limit 1"
+            try:
+                with db_connection.engine.connect() as conn:
+                    result = conn.execute(text(stmt))
+                    result = pd.DataFrame(result)
+            except Exception:
+                raise RuntimeError("production schema does not exist or is ill-formed")
+            if (
+                result["db_version_major"][0]
+                != _DB_VERSION_MAJOR | int(result["db_version_minor"][0])
+                > _DB_VERSION_MINOR
+            ):
+                raise RuntimeError("production schema version incompatible")
+
+    if schema:
+        stmt = f"CREATE SCHEMA IF NOT EXISTS {schema}"
+        with db_connection.engine.connect() as conn:
+            conn.execute(text(stmt))
+            conn.commit()
+
+        # Grant reg_reader access
         try:
             with db_connection.engine.connect() as conn:
-                result = conn.execute(text(stmt))
-                result = pd.DataFrame(result)
-        except Exception:
-            raise RuntimeError("production schema does not exist or is ill-formed")
-        if (
-            result["db_version_major"][0]
-            != _DB_VERSION_MAJOR | int(result["db_version_minor"][0])
-            > _DB_VERSION_MINOR
-        ):
-            raise RuntimeError("production schema version incompatible")
+                # Grant reg_reader access.
+                acct = "reg_reader"
+                usage_prv = f"GRANT USAGE ON SCHEMA {schema} to {acct}"
+                select_prv = f"GRANT SELECT ON ALL TABLES IN SCHEMA {schema} to {acct}"
+                conn.execute(text(usage_prv))
+                conn.execute(text(select_prv))
 
-if schema:
-    stmt = f"CREATE SCHEMA IF NOT EXISTS {schema}"
-    with db_connection.engine.connect() as conn:
-        conn.execute(text(stmt))
-        conn.commit()
+                if schema == prod_schema:  # also grant privileges to reg_writer
+                    acct = "reg_writer"
+                    usage_priv = f"GRANT USAGE ON SCHEMA {schema} to {acct}"
+                    select_priv = (
+                        f"GRANT SELECT ON ALL TABLES IN SCHEMA {schema} to {acct}"
+                    )
+                    conn.execute(text(usage_priv))
+                    conn.execute(text(select_priv))
+                conn.commit()
+        except Exception as e:
+            print(f"Could not grant access to {acct} on schema {schema}")
 
-    # Grant reg_reader access
+    # Create the tables
+    for table_name in schema_data.keys():
+        _BuildTable(schema, table_name, db_connection.dialect != "sqlite", prod_schema)
+        print(f"Built table {table_name} in {schema}")
+
+    # Generate the database
+    if schema:
+        if schema != prod_schema:
+            Base.metadata.reflect(db_connection.engine, prod_schema)
+    Base.metadata.create_all(db_connection.engine)
+
+    # Grant access to other accounts.  Can only grant access to objects
+    # after they've been created
     try:
         with db_connection.engine.connect() as conn:
             # Grant reg_reader access.
@@ -362,54 +445,22 @@ if schema:
                 conn.execute(text(usage_priv))
                 conn.execute(text(select_priv))
             conn.commit()
-    except Exception as e:
+    except Exception:
         print(f"Could not grant access to {acct} on schema {schema}")
 
-# Create the tables
-for table_name in schema_data.keys():
-    _BuildTable(schema, table_name, db_connection.dialect != "sqlite", prod_schema)
+    # Add initial provenance information
+    db = DbConnection(args.config, schema)
+    prov_id = _insert_provenance(
+        db,
+        _DB_VERSION_MAJOR,
+        _DB_VERSION_MINOR,
+        _DB_VERSION_PATCH,
+        "CREATE",
+        comment=_DB_VERSION_COMMENT,
+        associated_production=prod_schema,
+    )
 
-# Generate the database
-if schema:
-    if schema != prod_schema:
-        Base.metadata.reflect(db_connection.engine, prod_schema)
-Base.metadata.create_all(db_connection.engine)
-
-# Grant access to other accounts.  Can only grant access to objects
-# after they've been created
-try:
-    with db_connection.engine.connect() as conn:
-        # Grant reg_reader access.
-        acct = "reg_reader"
-        usage_prv = f"GRANT USAGE ON SCHEMA {schema} to {acct}"
-        select_prv = f"GRANT SELECT ON ALL TABLES IN SCHEMA {schema} to {acct}"
-        conn.execute(text(usage_prv))
-        conn.execute(text(select_prv))
-
-        if schema == prod_schema:      # also grant privileges to reg_writer
-            acct = "reg_writer"
-            usage_priv = f"GRANT USAGE ON SCHEMA {schema} to {acct}"
-            select_priv = f"GRANT SELECT ON ALL TABLES IN SCHEMA {schema} to {acct}"
-            conn.execute(text(usage_priv))
-            conn.execute(text(select_priv))
-        conn.commit()
-except Exception:
-    print(f"Could not grant access to {acct} on schema {schema}")
-
-
-# Add initial provenance information
-db = DbConnection(args.config, schema)
-prov_id = _insert_provenance(
-    db,
-    _DB_VERSION_MAJOR,
-    _DB_VERSION_MINOR,
-    _DB_VERSION_PATCH,
-    "CREATE",
-    comment=_DB_VERSION_COMMENT,
-    associated_production=prod_schema,
-)
-
-# Populate the preset system keywords for datasets
-keywords = load_preset_keywords()
-for att in keywords["dataset"]:
-    _insert_keyword(db, att, True)
+    # Populate the preset system keywords for datasets
+    keywords = load_preset_keywords()
+    for att in keywords["dataset"]:
+        _insert_keyword(db, att, True)
