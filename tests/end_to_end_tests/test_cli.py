@@ -3,7 +3,7 @@ import shlex
 import dataregistry_cli.cli as cli
 import pytest
 from dataregistry import DataRegistry
-from dataregistry.db_basic import SCHEMA_VERSION
+from dataregistry.schema import DEFAULT_SCHEMA_WORKING, DEFAULT_SCHEMA_PRODUCTION
 
 from database_test_utils import dummy_file
 from dataregistry.registrar.dataset_util import get_dataset_status, set_dataset_status
@@ -17,16 +17,16 @@ def test_simple_query(dummy_file):
 
     # Register a dataset
     cmd = "register dataset my_cli_dataset 0.0.1 --location_type dummy"
-    cmd += f" --schema {SCHEMA_VERSION} --root_dir {str(tmp_root_dir)}"
+    cmd += f" --schema {DEFAULT_SCHEMA_WORKING} --root_dir {str(tmp_root_dir)}"
     cli.main(shlex.split(cmd))
 
     # Update the registered dataset
     cmd = "register dataset my_cli_dataset patch --location_type dummy"
-    cmd += f" --schema {SCHEMA_VERSION} --root_dir {str(tmp_root_dir)}"
+    cmd += f" --schema {DEFAULT_SCHEMA_WORKING} --root_dir {str(tmp_root_dir)}"
     cli.main(shlex.split(cmd))
 
     # Check
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
     f = datareg.Query.gen_filter("dataset.name", "==", "my_cli_dataset")
     results = datareg.Query.find_datasets(
         ["dataset.name", "dataset.version_string"], [f]
@@ -47,11 +47,11 @@ def test_dataset_entry_with_execution(dummy_file):
     cmd += " --version_suffix test --creation_date '2020-01-01'"
     cmd += " --input_datasets 1 2 --execution_name 'I have given the execution a name'"
     cmd += " --is_overwritable"
-    cmd += f" --schema {SCHEMA_VERSION} --root_dir {str(tmp_root_dir)}"
+    cmd += f" --schema {DEFAULT_SCHEMA_WORKING} --root_dir {str(tmp_root_dir)}"
     cli.main(shlex.split(cmd))
 
     # Check
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
     f = datareg.Query.gen_filter("dataset.name", "==", "my_cli_dataset3")
     results = datareg.Query.find_datasets(
         [
@@ -74,13 +74,13 @@ def test_production_entry(dummy_file):
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
 
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema="production")
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_PRODUCTION)
 
     if datareg.Query._dialect != "sqlite":
         # Register a dataset
         cmd = "register dataset my_production_cli_dataset 0.1.2 --location_type dummy"
         cmd += " --owner_type production --owner production"
-        cmd += f" --schema production --root_dir {str(tmp_root_dir)}"
+        cmd += f" --schema {DEFAULT_SCHEMA_PRODUCTION} --root_dir {str(tmp_root_dir)}"
         cli.main(shlex.split(cmd))
 
         # Check
@@ -100,11 +100,11 @@ def test_delete_dataset(dummy_file):
 
     # Register a dataset
     cmd = "register dataset my_cli_dataset_to_delete 0.0.1 --location_type dummy"
-    cmd += f" --schema {SCHEMA_VERSION} --root_dir {str(tmp_root_dir)}"
+    cmd += f" --schema {DEFAULT_SCHEMA_WORKING} --root_dir {str(tmp_root_dir)}"
     cli.main(shlex.split(cmd))
 
     # Find the dataset id
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
     f = datareg.Query.gen_filter("dataset.name", "==", "my_cli_dataset_to_delete")
     results = datareg.Query.find_datasets(["dataset.dataset_id"], [f])
     assert len(results["dataset.dataset_id"]) == 1, "Bad result from query dcli4"
@@ -112,11 +112,11 @@ def test_delete_dataset(dummy_file):
 
     # Delete the dataset
     cmd = f"delete dataset {d_id}"
-    cmd += f" --schema {SCHEMA_VERSION} --root_dir {str(tmp_root_dir)}"
+    cmd += f" --schema {DEFAULT_SCHEMA_WORKING} --root_dir {str(tmp_root_dir)}"
     cli.main(shlex.split(cmd))
 
     # Check
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
     f = datareg.Query.gen_filter("dataset.name", "==", "my_cli_dataset_to_delete")
     results = datareg.Query.find_datasets(
         [
@@ -143,11 +143,11 @@ def test_dataset_entry_with_keywords(dummy_file):
     # Register a dataset with many options
     cmd = "register dataset my_cli_dataset_keywords 1.0.0 --location_type dummy"
     cmd += " --is_overwritable --keywords simulation observation"
-    cmd += f" --schema {SCHEMA_VERSION} --root_dir {str(tmp_root_dir)}"
+    cmd += f" --schema {DEFAULT_SCHEMA_WORKING} --root_dir {str(tmp_root_dir)}"
     cli.main(shlex.split(cmd))
 
     # Check
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
     f = datareg.Query.gen_filter("dataset.name", "==", "my_cli_dataset_keywords")
     results = datareg.Query.find_datasets(
         [
@@ -162,6 +162,7 @@ def test_dataset_entry_with_keywords(dummy_file):
         assert getattr(r, "dataset.name") == "my_cli_dataset_keywords"
         assert getattr(r, "keyword.keyword") in ["observation", "simulation"]
 
+
 def test_modify_dataset(dummy_file):
     """Make a simple entry, then modify it"""
 
@@ -170,11 +171,11 @@ def test_modify_dataset(dummy_file):
 
     # Register a dataset
     cmd = "register dataset my_cli_dataset_to_modify 0.0.1 --location_type dummy"
-    cmd += f" --schema {SCHEMA_VERSION} --root_dir {str(tmp_root_dir)}"
+    cmd += f" --schema {DEFAULT_SCHEMA_WORKING} --root_dir {str(tmp_root_dir)}"
     cli.main(shlex.split(cmd))
 
     # Find the dataset id
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
     f = datareg.Query.gen_filter("dataset.name", "==", "my_cli_dataset_to_modify")
     results = datareg.Query.find_datasets(["dataset.dataset_id"], [f])
     assert len(results["dataset.dataset_id"]) == 1, "Bad result from query dcli5"
@@ -182,11 +183,11 @@ def test_modify_dataset(dummy_file):
 
     # Modify dataset
     cmd = f"modify dataset {d_id} description 'Updated CLI desc'"
-    cmd += f" --schema {SCHEMA_VERSION} --root_dir {str(tmp_root_dir)}"
+    cmd += f" --schema {DEFAULT_SCHEMA_WORKING} --root_dir {str(tmp_root_dir)}"
     cli.main(shlex.split(cmd))
 
     # Check
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
     f = datareg.Query.gen_filter("dataset.name", "==", "my_cli_dataset_to_modify")
     results = datareg.Query.find_datasets(
         [

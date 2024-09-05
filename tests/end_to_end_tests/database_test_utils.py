@@ -1,7 +1,7 @@
 import os
 
 import pytest
-from dataregistry.db_basic import SCHEMA_VERSION
+from dataregistry.schema import DEFAULT_SCHEMA_WORKING
 
 __all__ = [
     "dummy_file",
@@ -77,7 +77,7 @@ def dummy_file(tmp_path):
     tmp_root_dir = tmp_path / "root_dir"
 
     # Make some dummy data already on location
-    for THIS_SCHEMA in [SCHEMA_VERSION + "/", ""]:
+    for THIS_SCHEMA in [DEFAULT_SCHEMA_WORKING + "/", ""]:
         for f in ["dummy_dir", "dummy_dir_2"]:
             p = tmp_root_dir / f"{THIS_SCHEMA}user/{os.getenv('USER')}/{f}"
             p.mkdir(parents=True)

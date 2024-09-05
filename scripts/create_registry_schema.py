@@ -349,6 +349,9 @@ else:
     schema_list = [args.schema]
 prod_schema = args.production_schema
 
+# Load the preset keywords
+keywords = load_preset_keywords()
+
 # Loop over each schema
 for schema in schema_list:
     if schema == prod_schema:
@@ -449,9 +452,8 @@ for schema in schema_list:
         print(f"Could not grant access to {acct} on schema {schema}")
 
     # Add initial provenance information
-    db = DbConnection(args.config, schema)
     prov_id = _insert_provenance(
-        db,
+        db_connection,
         _DB_VERSION_MAJOR,
         _DB_VERSION_MINOR,
         _DB_VERSION_PATCH,
@@ -461,6 +463,5 @@ for schema in schema_list:
     )
 
     # Populate the preset system keywords for datasets
-    keywords = load_preset_keywords()
     for att in keywords["dataset"]:
-        _insert_keyword(db, att, True)
+        _insert_keyword(db_connection, att, True)

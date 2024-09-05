@@ -2,7 +2,7 @@ import os
 
 import pytest
 from dataregistry import DataRegistry
-from dataregistry.db_basic import SCHEMA_VERSION
+from dataregistry.schema import DEFAULT_SCHEMA_WORKING
 from dataregistry.registrar.dataset_util import get_dataset_status
 from dataregistry.registrar.registrar_util import _form_dataset_path
 
@@ -14,7 +14,7 @@ def test_delete_dataset_bad_entry(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
 
     # Make sure we raise an exception trying to delete a dataset that doesn't exist
     with pytest.raises(ValueError, match="not found in"):
@@ -38,7 +38,7 @@ def test_delete_dataset_entry(dummy_file, is_dummy, dataset_name):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
 
     # Where is the real data?
     if is_dummy:
@@ -91,7 +91,7 @@ def test_delete_dataset_entry(dummy_file, is_dummy, dataset_name):
             getattr(r, "dataset.owner_type"),
             getattr(r, "dataset.owner"),
             getattr(r, "dataset.relative_path"),
-            schema=SCHEMA_VERSION,
+            schema=DEFAULT_SCHEMA_WORKING,
             root_dir=str(tmp_root_dir),
         )
         if dataset_name == "real_dataset_to_delete":
