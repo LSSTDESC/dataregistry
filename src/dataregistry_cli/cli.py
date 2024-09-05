@@ -1,7 +1,7 @@
 import os
 import sys
 import argparse
-from dataregistry.db_basic import SCHEMA_VERSION
+from dataregistry.schema import DEFAULT_SCHEMA_WORKING
 from .register import register_dataset
 from .delete import delete_dataset
 from .query import dregs_ls
@@ -30,7 +30,7 @@ def _add_generic_arguments(parser_obj):
     )
     parser_obj.add_argument(
         "--schema",
-        default=f"{SCHEMA_VERSION}",
+        default=f"{DEFAULT_SCHEMA_WORKING}",
         help="Which schema to connect to",
     )
 

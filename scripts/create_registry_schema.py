@@ -11,9 +11,9 @@ from sqlalchemy import (
 )
 from sqlalchemy import ForeignKey, UniqueConstraint, text
 from sqlalchemy.orm import DeclarativeBase
-from dataregistry.db_basic import DbConnection, SCHEMA_VERSION
+from dataregistry.db_basic import DbConnection
 from dataregistry.db_basic import _insert_provenance, _insert_keyword
-from dataregistry.schema import load_schema, load_preset_keywords
+from dataregistry.schema import load_schema, load_preset_keywords, DEFAULT_SCHEMA_WORKING, DEFAULT_SCHEMA_PRODUCTION
 
 """
 A script to create a schema.
@@ -298,11 +298,11 @@ Creates dataregistry tables for specified schema and connection information (con
 parser.add_argument(
     "--schema",
     help="name of schema to contain tables. Will be created if it doesn't already exist",
-    default=f"{SCHEMA_VERSION}",
+    default=f"{DEFAULT_SCHEMA_WORKING}",
 )
 parser.add_argument(
     "--production-schema",
-    default="production",
+    default=f"{DEFAULT_SCHEMA_PRODUCTION}",
     help="name of schema containing production tables.",
 )
 parser.add_argument("--config", help="Path to the data registry config file")

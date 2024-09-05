@@ -7,18 +7,16 @@ import os
 from datetime import datetime
 from dataregistry import __version__
 from dataregistry.exceptions import DataRegistryException
+from dataregistry.schema import DEFAULT_SCHEMA_WORKING
 
 """
 Low-level utility routines and classes for accessing the registry
 """
 
-SCHEMA_VERSION = "registry_beta"
-
 __all__ = [
     "DbConnection",
     "add_table_row",
     "TableMetadata",
-    "SCHEMA_VERSION",
 ]
 
 
@@ -133,7 +131,7 @@ class DbConnection:
             self._schema = None
         else:
             if schema is None:
-                self._schema = SCHEMA_VERSION
+                self._schema = DEFAULT_SCHEMA_WORKING
             else:
                 self._schema = schema
 
