@@ -5,7 +5,7 @@ import yaml
 from dataregistry import DataRegistry
 
 _TEST_ROOT_DIR = "DataRegistry_data"
-_NERSC_SITE = "/global/cfs/cdirs/lsst/utilities/desc-data-registry"
+_NERSC_SITE = "/global/cfs/cdirs/lsst/utilities/data-registry"
 _ENV_SITE = "nersc"
 
 
