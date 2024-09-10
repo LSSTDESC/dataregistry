@@ -694,12 +694,6 @@ class DatasetTable(BaseTable):
 
         # Copy data into data registry
         if old_location:
-            # Stop if we don't have write permission to the root_dir
-            if not self.root_dir_write_access:
-                raise Exception(
-                    f"Cannot copy data, no write access to {self._root_dir}"
-                )
-
             if verbose:
                 tic = time.time()
                 print(
