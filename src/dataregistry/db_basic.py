@@ -177,7 +177,10 @@ class TableMetadata:
             prov_name = ".".join([self._schema, "provenance"])
 
         if prov_name not in self._metadata.tables:
-            raise DataRegistryException(f"Incompatible database: no Provenance table {prov_name}")
+            raise DataRegistryException(
+                f"Incompatible database: no Provenance table {prov_name}, "
+                f"listed tables are {self._metadata.tables}"
+                )
 
         if prov_name in self._metadata.tables and get_db_version:
             prov_table = self._metadata.tables[prov_name]
