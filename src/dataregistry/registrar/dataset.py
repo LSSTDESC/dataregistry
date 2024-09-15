@@ -118,13 +118,11 @@ class DatasetTable(BaseTable):
             if kwargs_dict["owner"] != "production":
                 raise ValueError("`owner` for production datasets must be 'production'")
         else:
-            if (
-                self._metadata_getter.is_production_schema
-                or kwargs_dict["test_production"]
-            ):
-                raise ValueError(
-                    "Only owner_type='production' can go in the production schema"
-                )
+            if self._dialect != "sqlite" and not kwargs_dict["test_production"]:
+                if self._metadata_getter.is_production_schema:
+                    raise ValueError(
+                        "Only owner_type='production' can go in the production schema"
+                    )
 
         # Validate the keywords (make sure they are registered)
         if len(kwargs_dict["keywords"]) > 0:

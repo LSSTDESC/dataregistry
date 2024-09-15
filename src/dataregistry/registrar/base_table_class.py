@@ -56,6 +56,7 @@ class BaseTable:
         # Database engine and dialect.
         self._engine = db_connection.engine
         self._schema = db_connection.schema
+        self._dialect = db_connection._dialect
 
         # Link to Table Metadata.
         self._metadata_getter = TableMetadata(db_connection)
