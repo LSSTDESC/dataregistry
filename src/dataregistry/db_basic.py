@@ -182,7 +182,7 @@ class TableMetadata:
                 f"listed tables are {self._metadata.tables}"
                 )
 
-        if prov_name in self._metadata.tables and get_db_version:
+        if get_db_version:
             prov_table = self._metadata.tables[prov_name]
             stmt = select(column("associated_production")).select_from(prov_table)
             stmt = stmt.order_by(prov_table.c.provenance_id.desc())
@@ -206,6 +206,14 @@ class TableMetadata:
             self._db_major = None
             self._db_minor = None
             self._db_patch = None
+            self._prod_schema = None
+
+    @property
+    def is_production_schema(self):
+        if self._prod_schema == self._schema:
+            return True
+        else:
+            return False
 
     @property
     def db_version_major(self):

@@ -7,7 +7,6 @@ import warnings
 
 from dataregistry.db_basic import add_table_row
 from dataregistry.exceptions import DataRegistryRootDirBadState
-from dataregistry.schema import DEFAULT_SCHEMA_PRODUCTION
 from sqlalchemy import select, update
 from functools import wraps
 
@@ -108,7 +107,9 @@ class DatasetTable(BaseTable):
                 raise ValueError("Cannot overwrite production entries")
             if kwargs_dict["version_suffix"] is not None:
                 raise ValueError("Production entries can't have version suffix")
-            if self._schema != DEFAULT_SCHEMA_PRODUCTION and not kwargs_dict["test_production"]:
+            if (not self._metadata_getter.is_production_schema) and (
+                not kwargs_dict["test_production"]
+            ):
                 raise ValueError(
                     "Only the production schema can handle owner_type='production'"
                 )
@@ -117,7 +118,10 @@ class DatasetTable(BaseTable):
             if kwargs_dict["owner"] != "production":
                 raise ValueError("`owner` for production datasets must be 'production'")
         else:
-            if self._schema == DEFAULT_SCHEMA_PRODUCTION or kwargs_dict["test_production"]:
+            if (
+                self._metadata_getter.is_production_schema
+                or kwargs_dict["test_production"]
+            ):
                 raise ValueError(
                     "Only owner_type='production' can go in the production schema"
                 )
