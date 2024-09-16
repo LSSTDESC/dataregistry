@@ -23,6 +23,18 @@ It connects the user to the database, and serves as a wrapper to both the
 
 .. automethod:: dataregistry.registrar.dataset.DatasetTable.register
 
+.. automethod:: dataregistry.registrar.dataset.DatasetTable.replace
+
+.. automethod:: dataregistry.registrar.dataset.DatasetTable.modify
+
+.. automethod:: dataregistry.registrar.dataset.DatasetTable.delete
+
+.. automethod:: dataregistry.registrar.dataset.DatasetTable.add_keywords
+
+.. automethod:: dataregistry.registrar.dataset.DatasetTable.get_modifiable_columns
+
+.. automethod:: dataregistry.registrar.dataset.DatasetTable.get_keywords
+
 .. automethod:: dataregistry.registrar.execution.ExecutionTable.register
 
 .. automethod:: dataregistry.registrar.dataset_alias.DatasetAliasTable.register
