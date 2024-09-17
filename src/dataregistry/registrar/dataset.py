@@ -107,7 +107,7 @@ class DatasetTable(BaseTable):
                 raise ValueError("Cannot overwrite production entries")
             if kwargs_dict["version_suffix"] is not None:
                 raise ValueError("Production entries can't have version suffix")
-            if (not self._metadata_getter.is_production_schema) and (
+            if (not self._table_metadata.is_production_schema) and (
                 not kwargs_dict["test_production"]
             ):
                 raise ValueError(
@@ -119,7 +119,7 @@ class DatasetTable(BaseTable):
                 raise ValueError("`owner` for production datasets must be 'production'")
         else:
             if self._dialect != "sqlite" and not kwargs_dict["test_production"]:
-                if self._metadata_getter.is_production_schema:
+                if self._table_metadata.is_production_schema:
                     raise ValueError(
                         "Only owner_type='production' can go in the production schema"
                     )

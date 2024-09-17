@@ -59,7 +59,7 @@ class BaseTable:
         self._dialect = db_connection._dialect
 
         # Link to Table Metadata.
-        self._metadata_getter = TableMetadata(db_connection)
+        self._table_metadata = TableMetadata(db_connection)
 
         # Store user id
         self._uid = os.getenv("USER")
@@ -78,7 +78,7 @@ class BaseTable:
         self.schema_yaml = load_schema()
 
     def _get_table_metadata(self, tbl):
-        return self._metadata_getter.get(tbl)
+        return self._table_metadata.get(tbl)
 
     def delete(self, entry_id):
         """

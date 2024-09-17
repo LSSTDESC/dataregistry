@@ -264,42 +264,6 @@ def _BuildTable(schema, table_name, has_production, production):
     return Model
 
 
-def _Keyword(schema):
-    """Stores the list of keywords."""
-
-    class_name = f"{schema}_keyword"
-
-    # Load columns from `schema.yaml` file
-    columns = _get_column_definitions(schema, "keyword")
-
-    # Table metadata
-    meta = {
-        "__tablename__": "keyword",
-        "__table_args__": (
-            UniqueConstraint("keyword", name="keyword_u_keyword"),
-            {"schema": schema},
-        ),
-    }
-
-    Model = type(class_name, (Base,), {**columns, **meta})
-    return Model
-
-
-def _DatasetKeyword(schema):
-    """Many-Many link between datasets and keywords."""
-
-    class_name = f"{schema}_dataset_keyword"
-
-    # Load columns from `schema.yaml` file
-    columns = _get_column_definitions(schema, "dataset_keyword")
-
-    # Table metadata
-    meta = {"__tablename__": "dataset_keyword", "__table_args__": {"schema": schema}}
-
-    Model = type(class_name, (Base,), {**columns, **meta})
-    return Model
-
-
 # ----------------
 # Database version
 # ----------------
@@ -390,34 +354,12 @@ for schema in schema_list:
                 > _DB_VERSION_MINOR
             ):
                 raise RuntimeError("production schema version incompatible")
-
-    if schema:
-        stmt = f"CREATE SCHEMA IF NOT EXISTS {schema}"
-        with db_connection.engine.connect() as conn:
-            conn.execute(text(stmt))
-            conn.commit()
-
-        # Grant reg_reader access
-        try:
-            with db_connection.engine.connect() as conn:
-                # Grant reg_reader access.
-                acct = "reg_reader"
-                usage_prv = f"GRANT USAGE ON SCHEMA {schema} to {acct}"
-                select_prv = f"GRANT SELECT ON ALL TABLES IN SCHEMA {schema} to {acct}"
-                conn.execute(text(usage_prv))
-                conn.execute(text(select_prv))
-
-                if schema == prod_schema:  # also grant privileges to reg_writer
-                    acct = "reg_writer"
-                    usage_priv = f"GRANT USAGE ON SCHEMA {schema} to {acct}"
-                    select_priv = (
-                        f"GRANT SELECT ON ALL TABLES IN SCHEMA {schema} to {acct}"
-                    )
-                    conn.execute(text(usage_priv))
-                    conn.execute(text(select_priv))
-                conn.commit()
-        except Exception as e:
-            print(f"Could not grant access to {acct} on schema {schema}")
+    
+    # Create the schema
+    stmt = f"CREATE SCHEMA IF NOT EXISTS {schema}"
+    with db_connection.engine.connect() as conn:
+        conn.execute(text(stmt))
+        conn.commit()
 
     # Create the tables
     for table_name in schema_data.keys():
@@ -425,9 +367,8 @@ for schema in schema_list:
         print(f"Built table {table_name} in {schema}")
 
     # Generate the database
-    if schema:
-        if schema != prod_schema:
-            Base.metadata.reflect(db_connection.engine, prod_schema)
+    if schema != prod_schema:
+        Base.metadata.reflect(db_connection.engine, prod_schema)
     Base.metadata.create_all(db_connection.engine)
 
     # Grant access to other accounts.  Can only grant access to objects
@@ -440,16 +381,22 @@ for schema in schema_list:
             select_prv = f"GRANT SELECT ON ALL TABLES IN SCHEMA {schema} to {acct}"
             conn.execute(text(usage_prv))
             conn.execute(text(select_prv))
+            conn.commit()
+    except Exception:
+        print(f"Could not grant access to {acct} on schema {schema}")
 
-            if schema == prod_schema:  # also grant privileges to reg_writer
+    if schema == prod_schema:
+        try:
+            with db_connection.engine.connect() as conn:
+                # Grant reg_writer access.
                 acct = "reg_writer"
                 usage_priv = f"GRANT USAGE ON SCHEMA {schema} to {acct}"
                 select_priv = f"GRANT SELECT ON ALL TABLES IN SCHEMA {schema} to {acct}"
                 conn.execute(text(usage_priv))
                 conn.execute(text(select_priv))
-            conn.commit()
-    except Exception:
-        print(f"Could not grant access to {acct} on schema {schema}")
+                conn.commit()
+        except Exception:
+            print(f"Could not grant access to {acct} on schema {schema}")
 
     # Add initial provenance information
     prov_id = _insert_provenance(
