@@ -23,6 +23,8 @@ from dataregistry.schema import (
 """
 A script to create a schema.
 
+At NERSC, this script should be run with the `reg_admin` account.
+
 The schema contains the following six tables:
     - "dataset"         : Primary table, contains information on the datasets
     - "dataset_alias"   : Table to associate "alias" names to datasets
@@ -299,6 +301,11 @@ parser.add_argument(
     help="Create both the production and working schema",
     action="store_true",
 )
+parser.add_argument(
+    "--no_permission_restrictions",
+    help="Both `reg_reader` and `reg_writer` get read/write access to all tables. For the tutorial schemas.",
+    action="store_true",
+)
 
 args = parser.parse_args()
 
@@ -385,7 +392,7 @@ for schema in schema_list:
             try:
                 with db_connection.engine.connect() as conn:
                     usage_prv = f"GRANT USAGE ON SCHEMA {schema} to {acct}"
-                    if acct == "reg_reader" or schema == prod_schema:
+                    if (acct == "reg_reader" or schema == prod_schema) and (not args.no_permission_restrictions):
                         privs = "SELECT"
                     else:
                         privs = f"SELECT, INSERT, UPDATE, DELETE"
