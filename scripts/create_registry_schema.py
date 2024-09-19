@@ -378,30 +378,20 @@ for schema in schema_list:
             Base.metadata.reflect(db_connection.engine, prod_schema)
     Base.metadata.create_all(db_connection.engine)
 
-    # Grant access to other accounts. Can only grant access to objects
-    # after they've been created
+    # Grant access to `reg_writer` and `reg_reader` accounts
     if db_connection.dialect != "sqlite":
-        try:
-            with db_connection.engine.connect() as conn:
-                # Grant reg_reader access.
-                acct = "reg_reader"
-                usage_prv = f"GRANT USAGE ON SCHEMA {schema} to {acct}"
-                select_prv = f"GRANT SELECT ON ALL TABLES IN SCHEMA {schema} to {acct}"
-                conn.execute(text(usage_prv))
-                conn.execute(text(select_prv))
-                conn.commit()
-        except Exception:
-            print(f"Could not grant access to {acct} on schema {schema}")
 
-        if schema == prod_schema:
+        for acct in ["reg_reader", "reg_writer"]:
             try:
                 with db_connection.engine.connect() as conn:
-                    # Grant reg_writer access.
-                    acct = "reg_writer"
-                    usage_priv = f"GRANT USAGE ON SCHEMA {schema} to {acct}"
-                    select_priv = f"GRANT SELECT ON ALL TABLES IN SCHEMA {schema} to {acct}"
-                    conn.execute(text(usage_priv))
-                    conn.execute(text(select_priv))
+                    usage_prv = f"GRANT USAGE ON SCHEMA {schema} to {acct}"
+                    if acct == "reg_reader" or schema == prod_schema:
+                        privs = "SELECT"
+                    else:
+                        privs = f"SELECT, INSERT, UPDATE, DELETE"
+                    select_prv = f"GRANT {privs} ON ALL TABLES IN SCHEMA {schema} to {acct}"
+                    conn.execute(text(usage_prv))
+                    conn.execute(text(select_prv))
                     conn.commit()
             except Exception:
                 print(f"Could not grant access to {acct} on schema {schema}")
