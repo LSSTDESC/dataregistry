@@ -399,6 +399,11 @@ for schema in schema_list:
                     select_prv = f"GRANT {privs} ON ALL TABLES IN SCHEMA {schema} to {acct}"
                     conn.execute(text(usage_prv))
                     conn.execute(text(select_prv))
+
+                    # Need select access to sequences to create entries
+                    if (acct == "reg_writer" and schema != prod_schema) or args.no_permission_restrictions:
+                        privs = f"GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA {schema} TO {acct};"
+                        conn.execute(text(privs))
                     conn.commit()
             except Exception:
                 print(f"Could not grant access to {acct} on schema {schema}")
