@@ -7,6 +7,7 @@
 - There is now a `reg_admin` account which is the only account to create the
   initial schemas. The schema creation script has been updated to give the
   correct `reg_writer` and `reg_reader` privileges.
+- Remove `version_suffix`
 
 ## Version 0.6.4
 

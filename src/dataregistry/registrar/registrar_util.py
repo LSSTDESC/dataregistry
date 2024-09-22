@@ -19,7 +19,7 @@ VERSION_SEPARATOR = "."
 _nonneg_int_re = "0|[1-9][0-9]*"
 
 
-def _parse_version_string(version, with_suffix=False):
+def _parse_version_string(version):
     """
     Parase a version string into its components.
 
@@ -27,32 +27,22 @@ def _parse_version_string(version, with_suffix=False):
     ----------
     version : str
         Version string
-    with_suffix : bool
-        False means version string *must not* include suffix
-        True means it *may* have a suffix
 
     Returns
     -------
     d : dict
-        Dict with keys "major", "minor", "patch" and optionally "suffix"
+        Dict with keys "major", "minor", "patch" 
     """
 
     cmp = version.split(VERSION_SEPARATOR)
-    if not with_suffix:
-        if len(cmp) != 3:
-            raise ValueError("Version string must have 3 components")
-    else:
-        if len(cmp) < 3 or len(cmp) > 4:
-            raise ValueError("Version string must have 3 or 4 components")
-    for c in cmp[0:3]:
+    if len(cmp) != 3:
+        raise ValueError("Version string must have 3 components")
+    for c in cmp:
         if not re.fullmatch(_nonneg_int_re, c):
             raise ValueError(f"Version component {c} is not non-negative int")
     d = {"major": cmp[0]}
     d["minor"] = cmp[1]
     d["patch"] = cmp[2]
-
-    if len(cmp) > 3:
-        d["suffix"] = cmp[3]
 
     return d
 
@@ -152,7 +142,7 @@ def _bump_version(name, v_string, dataset_table, engine):
 
     # Find the previous dataset based on the name and version
     stmt = select(
-        dataset_table.c["version_major", "version_minor", "version_patch", "version_suffix"]
+        dataset_table.c["version_major", "version_minor", "version_patch"]
     ).where(dataset_table.c.name == name)
     stmt = (
         stmt.order_by(dataset_table.c.version_major.desc())
@@ -168,14 +158,6 @@ def _bump_version(name, v_string, dataset_table, engine):
             old_minor = 0
             old_patch = 0
         else:
-            # We don't bump datasets with a version suffix
-            if r.version_suffix is not None:
-                raise ValueError(
-                    "Cannot bump dataset automatically as it "
-                    f"has a version suffix ({r.version_suffix}). "
-                    "Select the version/suffix manually instead."
-                )
-
             old_major = int(r.version_major)
             old_minor = int(r.version_minor)
             old_patch = int(r.version_patch)
@@ -345,7 +327,7 @@ def _copy_data(dataset_organization, source, dest, do_checksum=False):
 
         raise Exception(e)
 
-def _relpath_from_name(name, version, version_suffix):
+def _relpath_from_name(name, version):
     """
     Construct a relative path from the name and version of a dataset.
     We use this when the `relative_path` is not explicitly defined.
@@ -356,17 +338,11 @@ def _relpath_from_name(name, version, version_suffix):
         Dataset name
     version : str
         Dataset version
-    version_suffix : str
-        Dataset version suffix
+    
     Returns
     -------
     relative_path : str
         Automatically generated `relative_path`
     """
 
-    if version_suffix is not None:
-        relative_path = f"{name}_{version}_{version_suffix}"
-    else:
-        relative_path = f"{name}_{version}"
-
-    return relative_path
+    return f"{name}_{version}"

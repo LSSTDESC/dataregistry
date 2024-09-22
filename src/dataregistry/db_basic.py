@@ -273,19 +273,10 @@ def _insert_provenance(
     from git import InvalidGitRepositoryError
 
     version_fields = __version__.split(".")
-    patch = version_fields[2]
-    suffix = None
-    if "-" in patch:
-        subfields = patch.split("-")
-        patch = subfields[0]
-        suffix = "-".join(subfields[1:])
-
     values = dict()
     values["code_version_major"] = version_fields[0]
     values["code_version_minor"] = version_fields[1]
-    values["code_version_patch"] = patch
-    if suffix:
-        values["code_version_suffix"] = suffix
+    values["code_version_patch"] = version_fields[2]
     values["db_version_major"] = db_version_major
     values["db_version_minor"] = db_version_minor
     values["db_version_patch"] = db_version_patch

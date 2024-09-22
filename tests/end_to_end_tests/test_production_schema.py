@@ -135,16 +135,3 @@ def test_production_schema_bad_register(dummy_file):
             owner_type="production",
             is_overwritable=True,
         )
-
-    # Try to have a version suffix
-    with pytest.raises(
-        ValueError, match="Production entries can't have version suffix"
-    ):
-        d_id = _insert_dataset_entry(
-            datareg,
-            "DESC:datasets:bad_production_dataset_3",
-            "0.0.1",
-            owner="production",
-            owner_type="production",
-            version_suffix="prod",
-        )

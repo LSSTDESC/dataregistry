@@ -40,7 +40,6 @@ def register_dataset(args):
     new_id = datareg.Registrar.dataset.register(
         args.name,
         args.version,
-        version_suffix=args.version_suffix,
         creation_date=args.creation_date,
         access_api=args.access_api,
         execution_id=args.execution_id,

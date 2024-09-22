@@ -105,8 +105,6 @@ class DatasetTable(BaseTable):
         if kwargs_dict["owner_type"] == "production":
             if kwargs_dict["is_overwritable"]:
                 raise ValueError("Cannot overwrite production entries")
-            if kwargs_dict["version_suffix"] is not None:
-                raise ValueError("Production entries can't have version suffix")
             if (not self._table_metadata.is_production_schema) and (
                 not kwargs_dict["test_production"]
             ):
@@ -216,10 +214,6 @@ class DatasetTable(BaseTable):
                 kwargs_dict[
                     "execution_name"
                 ] = f"for_dataset_{name}-{kwargs_dict['version_string']}"
-                if kwargs_dict["version_suffix"]:
-                    kwargs_dict[
-                        "execution_name"
-                    ] = f"{kwargs_dict['execution_name']}-{kwargs_dict['version_suffix']}"
             if kwargs_dict["execution_description"] is None:
                 kwargs_dict[
                     "execution_description"
@@ -314,7 +308,6 @@ class DatasetTable(BaseTable):
         self,
         name,
         version,
-        version_suffix=None,
         creation_date=None,
         description=None,
         execution_id=None,
@@ -357,7 +350,6 @@ class DatasetTable(BaseTable):
         ----------
         name** : str
         version** : str
-        version_suffix** : str, optional
         creation_date** : datetime, optional
         description** : str, optional
         execution_id** : int, optional
@@ -417,13 +409,12 @@ class DatasetTable(BaseTable):
         # If `relative_path` not passed, automatically generate it
         if kwargs_dict["relative_path"] is None:
             kwargs_dict["relative_path"] = _relpath_from_name(
-                name, kwargs_dict["version_string"], kwargs_dict["version_suffix"]
+                name, kwargs_dict["version_string"]
             )
 
         # Make sure the relative_path in the `root_dir` is avaliable
         if kwargs_dict["location_type"] in ["dataregistry", "dummy"]:
             previous_datasets = self._find_previous(
-                None,
                 None,
                 None,
                 kwargs_dict["owner"],
@@ -461,7 +452,6 @@ class DatasetTable(BaseTable):
             previous_datasets = self._find_previous(
                 name,
                 kwargs_dict["version_string"],
-                kwargs_dict["version_suffix"],
                 kwargs_dict["owner"],
                 kwargs_dict["owner_type"],
             )
@@ -469,7 +459,7 @@ class DatasetTable(BaseTable):
             if len(previous_datasets) > 0:
                 raise ValueError(
                     "There is already a dataset with combination name,"
-                    "version_string, version_suffix, owner, owner_type"
+                    "version_string, owner, owner_type"
                 )
 
         # Register the new row in the dataset table
@@ -482,7 +472,6 @@ class DatasetTable(BaseTable):
         self,
         name,
         version,
-        version_suffix=None,
         creation_date=None,
         description=None,
         execution_id=None,
@@ -512,7 +501,7 @@ class DatasetTable(BaseTable):
         Replace a dataset in the registry.
 
         This is so a user can keep the same
-        name/version/version_suffix/ower/owner_type combination as a previous
+        name/version/ower/owner_type combination as a previous
         dataset. Note the original dataset must have `is_overwritable=True` to
         allow the replace to work.
 
@@ -549,15 +538,11 @@ class DatasetTable(BaseTable):
             previous_datasets = self._find_previous(
                 name,
                 kwargs_dict["version_string"],
-                kwargs_dict["version_suffix"],
                 kwargs_dict["owner"],
                 kwargs_dict["owner_type"],
             )
 
-            full_name = (
-                f"name: {name} v: {kwargs_dict['version_string']} "
-                f"v-suff: {kwargs_dict['version_suffix']}"
-            )
+            full_name = f"name: {name} v: {kwargs_dict['version_string']}"
 
             if len(previous_datasets) == 0:
                 raise ValueError(f"Dataset {full_name} does not exist")
@@ -712,14 +697,13 @@ class DatasetTable(BaseTable):
         self,
         name,
         version_string,
-        version_suffix,
         owner,
         owner_type,
         relative_path=None,
     ):
         """
         Find all dataset entries with the same `name`, `version`,
-        `version_suffix`, `owner` and `owner_type`.
+        `owner` and `owner_type`.
 
         If `relative_path` is not None, instead search for all dataset entries
         with the same `owner`, `owner_type` and `relative_path` combination.
@@ -729,7 +713,7 @@ class DatasetTable(BaseTable):
 
         Parameters
         ----------
-        name/version/version_suffix/owner/owner_type : str
+        name/version/owner/owner_type : str
 
         Returns
         -------
@@ -762,7 +746,6 @@ class DatasetTable(BaseTable):
             stmt = stmt.where(
                 dataset_table.c.name == name,
                 dataset_table.c.version_string == version_string,
-                dataset_table.c.version_suffix == version_suffix,
                 dataset_table.c.owner == owner,
                 dataset_table.c.owner_type == owner_type,
             )

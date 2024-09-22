@@ -175,7 +175,6 @@ def _insert_dataset_entry(
     owner=None,
     description=None,
     execution_id=None,
-    version_suffix=None,
     old_location=None,
     is_overwritable=False,
     which_datareg=None,
@@ -210,7 +209,6 @@ def _insert_dataset_entry(
     dataset_id, execution_id = datareg.Registrar.dataset.register(
         name,
         version,
-        version_suffix=version_suffix,
         creation_date=None,
         description=description,
         old_location=old_location,
@@ -247,7 +245,6 @@ def _replace_dataset_entry(
     owner=None,
     description=None,
     execution_id=None,
-    version_suffix=None,
     old_location=None,
     is_overwritable=False,
     which_datareg=None,
@@ -282,7 +279,6 @@ def _replace_dataset_entry(
     dataset_id, execution_id = datareg.Registrar.dataset.replace(
         name,
         version,
-        version_suffix=version_suffix,
         creation_date=None,
         description=description,
         old_location=old_location,

@@ -50,7 +50,6 @@ def test_register_dataset_defaults(dummy_file):
     assert results["owner_type"][0] == "user"
     assert results["description"][0] == None
     assert results["relative_path"][0] == f"{_NAME}_0.0.1"
-    assert results["version_suffix"][0] == None
     assert results["data_org"][0] == "dummy"
     assert results["execution_id"][0] >= 0
     assert results["dataset_id"][0] >= 0
@@ -88,7 +87,6 @@ def test_register_dataset_manual(dummy_file):
     _OWNER = "test_owner"
     _OWNER_TYPE = "group"
     _REL_PATH = "manual/rel/path"
-    _V_SUFFIX = "test"
     _ACCESS_API = "test_api"
     _IS_OVERWRITABLE = True
 
@@ -105,7 +103,6 @@ def test_register_dataset_manual(dummy_file):
         owner=_OWNER,
         owner_type=_OWNER_TYPE,
         relative_path=_REL_PATH,
-        version_suffix=_V_SUFFIX,
         access_api=_ACCESS_API,
         is_overwritable=_IS_OVERWRITABLE,
     )
@@ -128,7 +125,6 @@ def test_register_dataset_manual(dummy_file):
     assert results["owner_type"][0] == _OWNER_TYPE
     assert results["description"][0] == _DESCRIPTION
     assert results["relative_path"][0] == _REL_PATH
-    assert results["version_suffix"][0] == _V_SUFFIX
     assert results["data_org"][0] == "dummy"
     assert results["execution_id"][0] >= 0
     assert results["dataset_id"][0] >= 0
@@ -153,32 +149,6 @@ def test_register_dataset_manual(dummy_file):
     assert results["contact_email"][0] is None
     assert results["replace_id"][0] is None
     assert results["replace_iteration"][0] == 0
-
-
-def test_bump_vsuffix(dummy_file):
-    """Should not be able to bump datasets with a version suffix"""
-
-    _NAME = "DESC:datasets:test_bump_vsuffix"
-
-    # Establish connection to database
-    tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
-
-    # Add entry
-    d_id = _insert_dataset_entry(
-        datareg,
-        _NAME,
-        "0.0.1",
-        version_suffix="custom_suffix",
-    )
-
-    # Try to bump dataset with version suffix (should fail)
-    with pytest.raises(ValueError, match="Cannot bump"):
-        d_id = _insert_dataset_entry(
-            datareg,
-            _NAME,
-            "major",
-        )
 
 
 @pytest.mark.parametrize(

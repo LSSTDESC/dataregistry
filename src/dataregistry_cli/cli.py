@@ -223,7 +223,7 @@ def get_parser():
         "name",
         help=(
             "Any convenient, evocative name for the human. Note the "
-            "combination of name, version and version_suffix must be unique."
+            "combination of name and version must be unique."
         ),
         type=str,
     )
