@@ -4,6 +4,9 @@
   `/global/cfs/cdirs/lsst/utilities/desc-data-registry`
 - Update default schema names (now stored in
   `src/dataregistry/schema/default_schema_names.yaml`
+- There is now a `reg_admin` account which is the only account to create the
+  initial schemas. The schema creation script has been updated to give the
+  correct `reg_writer` and `reg_reader` privileges.
 
 ## Version 0.6.4
 
