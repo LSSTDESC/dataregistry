@@ -325,7 +325,6 @@ keywords = load_preset_keywords()
 
 # Loop over each schema
 for schema in schema_list:
-
     # Connect to database to find out what the backend is
     db_connection = DbConnection(args.config, schema)
     print(f"Database dialect is '{db_connection.dialect}'")
@@ -363,7 +362,7 @@ for schema in schema_list:
                 > _DB_VERSION_MINOR
             ):
                 raise RuntimeError("production schema version incompatible")
-    
+
     # Create the schema
     if db_connection.dialect != "sqlite":
         stmt = f"CREATE SCHEMA IF NOT EXISTS {schema}"
@@ -387,21 +386,26 @@ for schema in schema_list:
 
     # Grant access to `reg_writer` and `reg_reader` accounts
     if db_connection.dialect != "sqlite":
-
         for acct in ["reg_reader", "reg_writer"]:
             try:
                 with db_connection.engine.connect() as conn:
                     usage_prv = f"GRANT USAGE ON SCHEMA {schema} to {acct}"
-                    if (acct == "reg_reader" or schema == prod_schema) and (not args.no_permission_restrictions):
+                    if (acct == "reg_reader" or schema == prod_schema) and (
+                        not args.no_permission_restrictions
+                    ):
                         privs = "SELECT"
                     else:
-                        privs = f"SELECT, INSERT, UPDATE, DELETE"
-                    select_prv = f"GRANT {privs} ON ALL TABLES IN SCHEMA {schema} to {acct}"
+                        privs = f"SELECT, INSERT, UPDATE"
+                    select_prv = (
+                        f"GRANT {privs} ON ALL TABLES IN SCHEMA {schema} to {acct}"
+                    )
                     conn.execute(text(usage_prv))
                     conn.execute(text(select_prv))
 
                     # Need select access to sequences to create entries
-                    if (acct == "reg_writer" and schema != prod_schema) or args.no_permission_restrictions:
+                    if (
+                        acct == "reg_writer" and schema != prod_schema
+                    ) or args.no_permission_restrictions:
                         privs = f"GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA {schema} TO {acct};"
                         conn.execute(text(privs))
                     conn.commit()
