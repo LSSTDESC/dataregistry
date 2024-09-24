@@ -6,7 +6,7 @@ import pytest
 import sqlalchemy
 import yaml
 from dataregistry import DataRegistry
-from dataregistry.db_basic import SCHEMA_VERSION
+from dataregistry.schema import DEFAULT_SCHEMA_WORKING
 from dataregistry.registrar.dataset_util import get_dataset_status, set_dataset_status
 from dataregistry.registrar.registrar_util import _form_dataset_path
 
@@ -18,7 +18,7 @@ def test_bad_register_dataset_external(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
 
     # Add entry
     with pytest.raises(ValueError, match="require either a url or contact_email"):
@@ -43,7 +43,7 @@ def test_register_dataset_external(dummy_file, contact_email, url, rel_path):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
 
     # Add entry
     d_id = _insert_dataset_entry(

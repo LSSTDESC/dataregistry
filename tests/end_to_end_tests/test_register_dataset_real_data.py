@@ -4,7 +4,7 @@ import sys
 import pytest
 import yaml
 from dataregistry import DataRegistry
-from dataregistry.db_basic import SCHEMA_VERSION
+from dataregistry.schema import DEFAULT_SCHEMA_WORKING
 from dataregistry.registrar.dataset_util import get_dataset_status, set_dataset_status
 from dataregistry.registrar.registrar_util import _form_dataset_path
 from dataregistry.exceptions import DataRegistryRootDirBadState
@@ -17,7 +17,7 @@ def test_copy_data(dummy_file, data_org):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
 
     # File/directory we are copying in
     if data_org == "file":
@@ -63,7 +63,7 @@ def test_on_location_data(dummy_file, data_org, data_path):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
 
     d_id = _insert_dataset_entry(
         datareg,
@@ -100,7 +100,7 @@ def test_registering_symlinks(dummy_file, link):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
 
     data_path = str(tmp_src_dir / link)
 
@@ -123,7 +123,7 @@ def test_registering_bad_relative_path(dummy_file, link):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
 
     data_path = str(tmp_src_dir / link)
 
@@ -160,7 +160,7 @@ def test_registering_deleted_relative_path(dummy_file, link):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
 
     data_path = str(tmp_src_dir / link)
 
@@ -234,7 +234,7 @@ def test_registering_data_already_there(dummy_file, link, dest):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
 
     data_path = str(tmp_src_dir / link)
 

@@ -1,5 +1,5 @@
 from dataregistry import DataRegistry
-from dataregistry.db_basic import SCHEMA_VERSION
+from dataregistry.schema import DEFAULT_SCHEMA_WORKING
 
 from database_test_utils import *
 import pytest
@@ -10,7 +10,7 @@ def test_register_dataset_twice(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
 
     # Add two dataset
     d_id = _insert_dataset_entry(
@@ -24,7 +24,7 @@ def test_register_dataset_twice(dummy_file):
             datareg,
             "DESC:dataset:test_register_dataset_twice",
             "0.0.1",
-            relative_path="test_register_dataset_twice/test"
+            relative_path="test_register_dataset_twice/test",
         )
 
 
@@ -123,7 +123,7 @@ def test_replace_dataset(dummy_file, _REL_PATH, name_tag):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
 
     # Add a dataset
     d_id = _insert_dataset_entry(
@@ -172,7 +172,7 @@ def test_replacing_deleted_dataset(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
 
     _NAME = "DESC:dataset:test_replacing_deleted_dataset"
 
@@ -195,12 +195,13 @@ def test_replacing_deleted_dataset(dummy_file):
             "0.0.1",
         )
 
+
 def test_replacing_non_overwritable_dataset(dummy_file):
     """Should not be able to replace a non-overwritable dataset"""
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
 
     # Add dataset
     d_id = _insert_dataset_entry(

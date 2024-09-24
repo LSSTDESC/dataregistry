@@ -29,7 +29,7 @@ def _populate_defaults(mydict):
             for att in atts.keys():
                 if att not in mydict[table]["column_definitions"][row].keys():
                     if att not in atts.keys():
-                        raise ValueError(f"The {att} attribute has no default value") 
+                        raise ValueError(f"The {att} attribute has no default value")
                     mydict[table]["column_definitions"][row][att] = atts[att]
 
 
@@ -48,6 +48,7 @@ def load_schema():
 
     return yaml_data
 
+
 def load_preset_keywords():
     """Load the system preset keywords from the yaml file"""
 
@@ -59,3 +60,27 @@ def load_preset_keywords():
         yaml_data = yaml.safe_load(file)
 
     return yaml_data
+
+
+def get_default_schema_working():
+    yaml_file_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "default_schema_names.yaml"
+    )
+    with open(yaml_file_path, "r") as file:
+        yaml_data = yaml.safe_load(file)
+
+    return yaml_data["working"]
+
+
+def get_default_schema_production():
+    yaml_file_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "default_schema_names.yaml"
+    )
+    with open(yaml_file_path, "r") as file:
+        yaml_data = yaml.safe_load(file)
+
+    return yaml_data["production"]
+
+
+DEFAULT_SCHEMA_WORKING = get_default_schema_working()
+DEFAULT_SCHEMA_PRODUCTION = get_default_schema_production()

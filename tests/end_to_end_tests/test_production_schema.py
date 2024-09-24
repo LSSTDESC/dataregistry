@@ -4,13 +4,14 @@ import sys
 import pytest
 import yaml
 from dataregistry import DataRegistry
-from dataregistry.db_basic import SCHEMA_VERSION, DbConnection
+from dataregistry.schema import DEFAULT_SCHEMA_WORKING, DEFAULT_SCHEMA_PRODUCTION
+from dataregistry.db_basic import DbConnection
 
 from database_test_utils import *
 
 # This is just to see what backend we are using
 # Remember no production schema when using sqlite backend
-db_connection = DbConnection(None, schema=SCHEMA_VERSION)
+db_connection = DbConnection(None, schema=DEFAULT_SCHEMA_WORKING)
 
 
 @pytest.mark.skipif(
@@ -21,8 +22,10 @@ def test_register_with_production_dependencies(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
-    datareg_prod = DataRegistry(root_dir=str(tmp_root_dir), schema="production")
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
+    datareg_prod = DataRegistry(
+        root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_PRODUCTION
+    )
 
     # Make a dataset in each schema
     d_id_prod = _insert_dataset_entry(
@@ -77,7 +80,7 @@ def test_production_schema_register(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema="production")
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_PRODUCTION)
 
     d_id = _insert_dataset_entry(
         datareg,
@@ -112,7 +115,7 @@ def test_production_schema_bad_register(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema="production")
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_PRODUCTION)
 
     # Try to register dataset without production owner type
     with pytest.raises(ValueError, match="can go in the production schema"):
@@ -131,17 +134,4 @@ def test_production_schema_bad_register(dummy_file):
             "0.0.1",
             owner_type="production",
             is_overwritable=True,
-        )
-
-    # Try to have a version suffix
-    with pytest.raises(
-        ValueError, match="Production entries can't have version suffix"
-    ):
-        d_id = _insert_dataset_entry(
-            datareg,
-            "DESC:datasets:bad_production_dataset_3",
-            "0.0.1",
-            owner="production",
-            owner_type="production",
-            version_suffix="prod",
         )

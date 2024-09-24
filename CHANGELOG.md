@@ -1,3 +1,14 @@
+## Version 1.0.0 (Release)
+
+- Update default NERSC site to
+  `/global/cfs/cdirs/lsst/utilities/desc-data-registry`
+- Update default schema names (now stored in
+  `src/dataregistry/schema/default_schema_names.yaml`
+- There is now a `reg_admin` account which is the only account to create the
+  initial schemas. The schema creation script has been updated to give the
+  correct `reg_writer` and `reg_reader` privileges.
+- Remove `version_suffix`
+
 ## Version 0.6.4
 
 - Update `dregs ls` to be a bit cleaner. Also has `dregs ls --extended` option

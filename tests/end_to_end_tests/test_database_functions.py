@@ -2,7 +2,7 @@ import os
 
 import pytest
 from dataregistry import DataRegistry
-from dataregistry.db_basic import SCHEMA_VERSION
+from dataregistry.schema import DEFAULT_SCHEMA_WORKING
 
 from database_test_utils import *
 
@@ -15,7 +15,7 @@ def test_get_dataset_absolute_path(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
 
     dset_name = "DESC:datasets:get_dataset_absolute_path_test"
     dset_ownertype = "group"
@@ -40,7 +40,11 @@ def test_get_dataset_absolute_path(dummy_file):
         )
     else:
         assert v == os.path.join(
-            str(tmp_root_dir), SCHEMA_VERSION, dset_ownertype, dset_owner, dset_relpath
+            str(tmp_root_dir),
+            DEFAULT_SCHEMA_WORKING,
+            dset_ownertype,
+            dset_owner,
+            dset_relpath,
         )
 
 
@@ -54,7 +58,7 @@ def test_find_entry(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
 
     # Make a dataset
     d_id = _insert_dataset_entry(datareg, "test_find_entry:dataset", "0.0.1")
@@ -90,7 +94,7 @@ def test_get_modifiable_columns(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
 
     mod_list = datareg.Registrar.dataset.get_modifiable_columns()
     assert "description" in mod_list
@@ -104,7 +108,7 @@ def test_get_keywords(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
 
     keywords = datareg.Registrar.dataset.get_keywords()
 

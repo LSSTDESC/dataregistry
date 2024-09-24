@@ -6,7 +6,7 @@ import pytest
 import sqlalchemy
 import yaml
 from dataregistry import DataRegistry
-from dataregistry.db_basic import SCHEMA_VERSION
+from dataregistry.schema import DEFAULT_SCHEMA_WORKING
 from dataregistry.registrar.dataset_util import get_dataset_status, set_dataset_status
 from dataregistry.registrar.registrar_util import _form_dataset_path
 
@@ -23,7 +23,7 @@ def test_register_dataset_with_bad_keywords(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
 
     # Test case where keywords are not strings
     with pytest.raises(ValueError, match="not a valid keyword string"):
@@ -53,7 +53,7 @@ def test_register_dataset_with_keywords(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
 
     # Register two datasets with keywords
     d_id = _insert_dataset_entry(
@@ -96,7 +96,7 @@ def test_modify_dataset_with_keywords(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
 
     # Register a dataset with keywords
     d_id = _insert_dataset_entry(

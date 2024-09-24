@@ -7,18 +7,16 @@ import os
 from datetime import datetime
 from dataregistry import __version__
 from dataregistry.exceptions import DataRegistryException
+from dataregistry.schema import DEFAULT_SCHEMA_WORKING
 
 """
 Low-level utility routines and classes for accessing the registry
 """
 
-SCHEMA_VERSION = "registry_beta"
-
 __all__ = [
     "DbConnection",
     "add_table_row",
     "TableMetadata",
-    "SCHEMA_VERSION",
 ]
 
 
@@ -133,7 +131,7 @@ class DbConnection:
             self._schema = None
         else:
             if schema is None:
-                self._schema = SCHEMA_VERSION
+                self._schema = DEFAULT_SCHEMA_WORKING
             else:
                 self._schema = schema
 
@@ -179,9 +177,12 @@ class TableMetadata:
             prov_name = ".".join([self._schema, "provenance"])
 
         if prov_name not in self._metadata.tables:
-            raise DataRegistryException("Incompatible database: no Provenance table")
+            raise DataRegistryException(
+                f"Incompatible database: no Provenance table {prov_name}, "
+                f"listed tables are {self._metadata.tables}"
+                )
 
-        if prov_name in self._metadata.tables and get_db_version:
+        if get_db_version:
             prov_table = self._metadata.tables[prov_name]
             stmt = select(column("associated_production")).select_from(prov_table)
             stmt = stmt.order_by(prov_table.c.provenance_id.desc())
@@ -205,6 +206,14 @@ class TableMetadata:
             self._db_major = None
             self._db_minor = None
             self._db_patch = None
+            self._prod_schema = None
+
+    @property
+    def is_production_schema(self):
+        if self._prod_schema == self._schema:
+            return True
+        else:
+            return False
 
     @property
     def db_version_major(self):
@@ -264,19 +273,10 @@ def _insert_provenance(
     from git import InvalidGitRepositoryError
 
     version_fields = __version__.split(".")
-    patch = version_fields[2]
-    suffix = None
-    if "-" in patch:
-        subfields = patch.split("-")
-        patch = subfields[0]
-        suffix = "-".join(subfields[1:])
-
     values = dict()
     values["code_version_major"] = version_fields[0]
     values["code_version_minor"] = version_fields[1]
-    values["code_version_patch"] = patch
-    if suffix:
-        values["code_version_suffix"] = suffix
+    values["code_version_patch"] = version_fields[2]
     values["db_version_major"] = db_version_major
     values["db_version_minor"] = db_version_minor
     values["db_version_patch"] = db_version_patch

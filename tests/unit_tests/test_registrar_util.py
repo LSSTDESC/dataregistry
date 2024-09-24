@@ -15,10 +15,8 @@ from dataregistry.registrar.registrar_util import (
     "v_str,v_len,ans_maj,ans_min,ans_ptc,ans_suf,w_suf,bad",
     [
         ("1.2.3", 3, "1", "2", "3", None, False, False),
-        ("4.5.6.mysuffix", 4, "4", "5", "6", "mysuffix", True, False),
         ("7.8.9", 3, "7", "8", "9", None, True, False),
         ("1.2.3.4.5", 5, "1", "2", "3", None, False, True),
-        ("1.2.3.mysuffix", 4, "1", "2", "3", "mysuffix", False, True),
         ("-1.2.3", 3, "-1", "2", "3", None, False, True),
     ],
 )
@@ -30,18 +28,16 @@ def test_parse_version_string(
     # Test bad cases, should raise ValueError
     if bad:
         with pytest.raises(ValueError):
-            tmp = _parse_version_string(v_str, with_suffix=w_suf)
+            tmp = _parse_version_string(v_str)
 
     # Test good cases
     else:
-        tmp = _parse_version_string(v_str, with_suffix=w_suf)
+        tmp = _parse_version_string(v_str)
         assert type(tmp) == dict
         assert len(tmp.keys()) == v_len
         assert tmp["major"] == ans_maj
         assert tmp["minor"] == ans_min
         assert tmp["patch"] == ans_ptc
-        if v_len == 4:
-            assert tmp["suffix"] == ans_suf
 
 
 @pytest.mark.parametrize(
@@ -161,20 +157,19 @@ def test_read_file(tmpdir, nchars, max_config_length, ans):
         _read_configuration_file("i_dont_exist.txt", 10)
 
 @pytest.mark.parametrize(
-    "name,version_string,version_suffix,ans",
+    "name,version_string,ans",
     [
-        ("mydataset", "1.1.1", None, "mydataset_1.1.1"),
-        ("mydataset", "1.1.1", "v1", "mydataset_1.1.1_v1"),
+        ("mydataset", "1.1.1", "mydataset_1.1.1"),
     ],
 )
-def test_relpath_from_name(name, version_string, version_suffix, ans):
+def test_relpath_from_name(name, version_string, ans):
     """
     Test dataset path construction
     Datasets should come back with the format:
         <root_dir>/<owner_type>/<owner>/<relative_path>
     """
 
-    tmp = _relpath_from_name(name, version_string, version_suffix)
+    tmp = _relpath_from_name(name, version_string)
     assert tmp == ans
 
 @pytest.mark.parametrize(

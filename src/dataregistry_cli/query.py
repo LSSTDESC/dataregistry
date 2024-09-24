@@ -49,10 +49,10 @@ def dregs_ls(args):
     )
 
     # Establish connection to the production schema
-    if datareg.db_connection.schema != "production":
+    if datareg.db_connection.schema != args.prod_schema:
         datareg_prod = DataRegistry(
             config_file=args.config_file,
-            schema="production",
+            schema=args.prod_schema,
             root_dir=args.root_dir,
             site=args.site,
         )

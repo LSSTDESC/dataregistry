@@ -167,9 +167,6 @@ tables:
         type: "Integer"
         description: "Patch version of code when this schema was created"
         nullable: False
-      code_version_suffix:
-        type: "String"
-        description: "Version suffix of code when this schema was created"
       creator_uid:
         type: "StringShort"
         description: "UID of person who registered the entry"
@@ -330,7 +327,7 @@ tables:
 
     unique_constraints:
       dataset_unique:
-        unique_list: ["name", "version_string", "version_suffix", "owner", "owner_type", "replace_iteration"]
+        unique_list: ["name", "version_string", "owner", "owner_type", "replace_iteration"]
 
     column_definitions:
       dataset_id:
@@ -339,11 +336,11 @@ tables:
         description: "Unique identifier for this dataset"
       name:
         type: "String"
-        description: "Any convenient, evocative name for the human. Note the combination of name, version and version_suffix must be unique."
+        description: "Any convenient, evocative name for the human. Note the combination of name and version must be unique."
         nullable: False
       relative_path:
         type: "String"
-        description: "Relative path storing the data, relative to `<root_dir>`. If None, generated from the `name`, `version_string` and `version_suffix`"
+        description: "Relative path storing the data, relative to `<root_dir>`. If None, generated from the `name` and `version_string`"
         nullable: False
         cli_optional: True
       version_major:
@@ -358,10 +355,6 @@ tables:
         type: "Integer"
         description: "Patch version in semantic string (i.e., x.x.X)"
         nullable: False
-      version_suffix:
-        type: "String"
-        description: "Optional version suffix to place at the end of the version string. Cannot be used for production datasets."
-        cli_optional: True
       version_string:
         type: "String"
         description: "Version string"

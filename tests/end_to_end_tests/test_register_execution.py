@@ -4,7 +4,7 @@ import sys
 import pytest
 import yaml
 from dataregistry import DataRegistry
-from dataregistry.db_basic import SCHEMA_VERSION
+from dataregistry.schema import DEFAULT_SCHEMA_WORKING
 
 from database_test_utils import *
 
@@ -28,7 +28,7 @@ def test_register_execution_with_config_file(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=SCHEMA_VERSION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
 
     # Add entry
     _make_dummy_config(tmp_src_dir)

@@ -1,7 +1,7 @@
 import os
 import sys
 import argparse
-from dataregistry.db_basic import SCHEMA_VERSION
+from dataregistry.schema import DEFAULT_SCHEMA_WORKING, DEFAULT_SCHEMA_PRODUCTION
 from .register import register_dataset
 from .delete import delete_dataset
 from .query import dregs_ls
@@ -30,8 +30,13 @@ def _add_generic_arguments(parser_obj):
     )
     parser_obj.add_argument(
         "--schema",
-        default=f"{SCHEMA_VERSION}",
-        help="Which schema to connect to",
+        default=f"{DEFAULT_SCHEMA_WORKING}",
+        help="Which working schema to connect to",
+    )
+    parser_obj.add_argument(
+        "--prod_schema",
+        default=f"{DEFAULT_SCHEMA_PRODUCTION}",
+        help="Which production schema to connect to",
     )
 
 
@@ -218,7 +223,7 @@ def get_parser():
         "name",
         help=(
             "Any convenient, evocative name for the human. Note the "
-            "combination of name, version and version_suffix must be unique."
+            "combination of name and version must be unique."
         ),
         type=str,
     )

@@ -38,8 +38,8 @@ Typing
 
 will list all the metadata properties that can be associated with a dataset
 during registration. As when registering datasets using the ``dataregistry``
-package, the ``relative_path`` and ``version`` string properties are mandatory,
-which will always be the first two parameters passed to the ``dregs register
+package, the dataset ``name`` and ``version`` properties are mandatory, which
+will always be the first two parameters passed to the ``dregs register
 dataset`` command respectively.  
 
 For example, say I have produced some data from my latest DESC publication that
@@ -59,11 +59,9 @@ would run the CLI as follows:
       --description "Data from my_paper_dataset" 
 
 This will recursively copy the ``/some/place/at/nersc/my_paper_dataset/``
-directory into the data registry shared space under the relative path
-``my_paper_dataset``.  As we did not specify a ``--name`` for the dataset, the
-``name`` column in the database will automatically be assigned as
-``my_paper_dataset`` (and all other properties we did not specify will keep
-their default values). 
+directory into the data registry shared space with the
+``name='my_paper_dataset'`` (other non-specified properties will keep their
+default values). 
 
 Updating a dataset
 ------------------
@@ -76,26 +74,18 @@ initial registration, we need to create a new version of the dataset.
 .. code-block:: bash
 
    dregs register dataset \
-      my_paper_dataset_updated \
+      my_paper_dataset \
       patch \
       --old-location /some/place/at/nersc/my_paper_dataset_updated/ \
       --owner_type project \
       --owner "DESC Generic Working Group" \
       --description "Data from my_paper_dataset describing bugfix" \
-      --name my_paper_dataset
 
-Here we associate it with the previous dataset through ``--name
-my_paper_dataset``, and tell the data registry to automatically bump the patch
-version to ``1.0.1`` by specifying "patch" as the version string (you could
-however have entered "1.0.1" here if you prefer).
-
-.. note::
-
-   Remember, if the dataset is non-overwritable, the relative paths in the data
-   registry need to be unique, which is why we could not have the relative path
-   of the second entry match the first.  But for datasets only the ``name``
-   plus ``version`` has to be unique, which is how we could associate them with
-   the same ``name`` column.
+Here we associate it with the previous dataset through ``name=
+my_paper_dataset`` (and making sure we keep the same `owner` and `owner_type`),
+and tell the data registry to automatically bump the patch version to ``1.0.1``
+by specifying "patch" as the version string (you could however have entered
+"1.0.1" here if you prefer).
 
 Querying the data registry
 --------------------------
