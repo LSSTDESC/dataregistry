@@ -33,9 +33,11 @@ jobs:
       fail-fast: false
 
       matrix:
-        python-version: ["3.10"]
+        python-version: ["3.12"]
         include:
           - python-version: 3.9
+            if: github.event_name == 'pull_request'
+          - python-version: 3.10
             if: github.event_name == 'pull_request'
           - python-version: 3.11
             if: github.event_name == 'pull_request'
@@ -111,9 +113,11 @@ jobs:
       fail-fast: false
 
       matrix:
-        python-version: ["3.10"]
+        python-version: ["3.12"]
         include:
           - python-version: 3.9
+            if: github.event_name == 'pull_request'
+          - python-version: 3.10
             if: github.event_name == 'pull_request'
           - python-version: 3.11
             if: github.event_name == 'pull_request'
@@ -174,9 +178,11 @@ jobs:
       fail-fast: false
 
       matrix:
-        python-version: ["3.10"]
+        python-version: ["3.12"]
         include:
           - python-version: 3.9
+            if: github.event_name == 'pull_request'
+          - python-version: 3.10
             if: github.event_name == 'pull_request'
           - python-version: 3.11
             if: github.event_name == 'pull_request'

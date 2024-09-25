@@ -17,6 +17,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 keywords = ["desc", "python", "registry"]
 # NOTE: Those needing to create a database will also need to install the
@@ -27,7 +28,7 @@ dependencies = [
     'pyyaml',
     'pandas'
 ]
-requires-python = ">=3.9,<3.12" # Supported versions (in CI)
+requires-python = ">=3.9,<=3.12" # Supported versions (in CI)
 
 [tool.setuptools.dynamic]
 version = {attr = "dataregistry._version.__version__"}
