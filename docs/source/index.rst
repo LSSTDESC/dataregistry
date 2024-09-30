@@ -59,6 +59,7 @@ them.
 
    dev_notes_spin
    dev_notes_database
+   installation_locally
 
 .. toctree::
    :maxdepth: 2

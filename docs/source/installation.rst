@@ -3,76 +3,44 @@
 Installation
 ============
 
-Currently the DESC data registry software can only be used at NERSC (i.e.,
-PerlMutter).
+Currently the DESC ``dataregistry`` database is only accessible through NERSC
+(i.e., PerlMutter).
 
-Main installation steps
------------------------
+Using the ``dataregistry`` at NERSC
+------------------------------------
 
-When installing the ``dataregistry`` package, it is recommended to work within
-your own Conda or Python virtual environment.
+The ``dataregistry`` package is readily available as part of the
+``desc-python-bleed`` environment (see `here
+<https://confluence.slac.stanford.edu/display/LSSTDESC/Getting+Started+with+Anaconda+Python+at+NERSC>`__
+for details about the *Conda* environments available at NERSC). Therefore
+before getting started, make sure to activate the ``desc-python-bleed``
+environment from the command line, or, when working at the NERSC JupyterHub,
+select the ``desc-python-bleed`` kernel. 
 
-Creating a Conda environment 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If you wish to install the ``dataregistry`` package yourself, see the
+instructions :ref:`here <local-installation>`. 
 
-You can make a new Conda environment via 
+Access accounts
+---------------
 
-.. code-block:: bash
+Authentication to the DESC ``dataregistry`` database works through two primary
+group accounts, ``reg_reader`` and ``reg_writer``. These accounts have
+different privileges depending on the database schema you are connected to.
+Both ``reg_reader`` and ``reg_writer`` have query (read) access to the primary
+working schema (``lsst_desc_working``), but only ``reg_writer`` has write
+access to register new entries in the database. 
 
-   module load conda/Mambaforge-22.11.1-4
-   conda create -p ./datareg_env psycopg2
+Both ``reg_reader`` and ``reg_writer`` accounts have read and write access to
+the tutorial schemas (used for the tutorial notebooks, i.e., the
+``tutorial_working`` and ``tutorial_production`` schemas).
 
-where ``./datareg_env`` is the path where the environment will be installed
-(change this as required). To activate the environment do
+Neither ``reg_reader`` or ``reg_writer`` can write to the main production
+schema (``lsst_desc_production``), however they both have read access. If you
+need to register production entries, please consult one of the data registry
+admins. 
 
-.. code-block:: bash
-
-   conda activate <path to your env>
-
-Creating a Python venv
-~~~~~~~~~~~~~~~~~~~~~~
-
-or, you can work within a Python virtual environment via
-
-.. code-block:: bash
-
-   module load python/3.10
-   python3 -m venv ./datareg_env
-
-where ``./datareg_env`` is the path where the environment will be installed
-(change this as required). To activate the environment do
-
-.. code-block:: bash
-
-   source <path to your env>/bin/activate
-
-Note the specific version of Python used above (``3.10``) is only an example,
-the ``dataregistry`` package is supported on Python versions ``>3.7``.
-
-Installing the ``dataregistry`` package
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Now we can install the DESC data registry software. First clone the GitHub
-repository
-
-.. code-block:: bash
-
-   git clone https://github.com/LSSTDESC/dataregistry.git
-
-then, navigate to the ``dataregistry`` directory and install via *pip* using
-
-.. code-block:: bash
-
-   python3 -m pip install .
-
-You can test to see if the ``dataregistry`` package has installed successfully
-by typing
-
-.. code-block:: bash
-
-   python3 -c "import dataregistry; print(dataregistry.__version__)"
-
-If you see the current package version printed to the console, success!
+Depending on which account you have access to, you will need to perform a
+one-time-setup to authenticate, detailed below.
 
 .. _one-time-setup:
 
@@ -90,7 +58,10 @@ entry
 
 .. code-block:: yaml
 
-   sqlalchemy.url : postgresql://reg_writer@data-registry-dev-loadbalancer.jrb-test.development.svc.spin.nersc.org:5432/desc_data_registry
+   sqlalchemy.url : postgresql://<username>@dataregistry-release-test-loadbalancer.mcalpine-test.development.svc.spin.nersc.org:5432/desc_data_registry 
+
+where ``<username>`` should either be ``reg_writer`` or ``reg_reader``,
+depending on what account you have access to.
 
 Then (if you don't have one already), create a file named ``~/.pgpass`` in your
 ``$HOME`` directory, and append the entry
@@ -98,11 +69,11 @@ Then (if you don't have one already), create a file named ``~/.pgpass`` in your
 .. code-block:: bash
 
    # data registry db
-   data-registry-dev-loadbalancer.jrb-test.development.svc.spin.nersc.org:5432:desc_data_registry:reg_writer:<password>
+   dataregistry-release-test-loadbalancer.mcalpine-test.development.svc.spin.nersc.org:5432:desc_data_registry:<username>:<password>
 
 where ``<password>`` is provided on demand by the DESC data registry admins. As
-a final step, the ``.pgpass`` file must only be readable by you, which you
-can ensure by doing
+a final step, the ``.pgpass`` file must only be readable by you, which you can
+ensure by doing
 
 .. code-block:: bash
 
