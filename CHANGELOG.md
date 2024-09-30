@@ -1,3 +1,8 @@
+
+## Version 1.0.2
+
+Update documentation for release, new installation instructions etc.
+
 ## Version 1.0.0 (Release)
 
 - Update default NERSC site to
