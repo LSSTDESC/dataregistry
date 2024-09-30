@@ -20,6 +20,28 @@ select the ``desc-python-bleed`` kernel.
 If you wish to install the ``dataregistry`` package yourself, see the
 instructions :ref:`here <local-installation>`. 
 
+Access accounts
+---------------
+
+Authentication to the DESC ``dataregistry`` database works through two primary
+group accounts, ``reg_reader`` and ``reg_writer``. These accounts have
+different privileges depending on the database schema you are connected to.
+Both ``reg_reader`` and ``reg_writer`` have query (read) access to the primary
+working schema (``lsst_desc_working``), but only ``reg_writer`` has write
+access to register new entries in the database. 
+
+Both ``reg_reader`` and ``reg_writer`` accounts have read and write access to
+the tutorial schemas (used for the tutorial notebooks, i.e., the
+``tutorial_working`` and ``tutorial_production`` schemas).
+
+Neither ``reg_reader`` or ``reg_writer`` can write to the main production
+schema (``lsst_desc_production``), however they both have read access. If you
+need to register production entries, please consult one of the data registry
+admins. 
+
+Depending on which account you have access to, you will need to perform a
+one-time-setup to authenticate, detailed below.
+
 .. _one-time-setup:
 
 Authenticating with the database
