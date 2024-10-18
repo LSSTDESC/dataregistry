@@ -332,6 +332,11 @@ def _relpath_from_name(name, version):
     Construct a relative path from the name and version of a dataset.
     We use this when the `relative_path` is not explicitly defined.
 
+    Every automatically generated `relative_path` is prefixed with
+    `.gen_paths/`, meaning that all automatically generated `relative_paths` go
+    into this top level folder. This is to prevent clashes with user specified
+    `relative_path`'s.
+
     Parameters
     ----------
     name : str
@@ -345,4 +350,31 @@ def _relpath_from_name(name, version):
         Automatically generated `relative_path`
     """
 
-    return f"{name}_{version}"
+    return os.path.join(".gen_paths", f"{name}_{version}")
+
+def get_first_directory(path):
+    """
+    Get back the root folder of a path
+
+    Parameters
+    ----------
+    path : str
+        Absolute or relative path string
+
+    Returns
+    -------
+    - : str
+        Root (or 1st) folder name
+        Returns None if path had no directory separators 
+    """
+    
+    # Normalize the path and split it into components
+    parts = os.path.normpath(path).split(os.sep)
+    
+    # Filter out any empty strings (in case of absolute paths starting with '/')
+    parts = [part for part in parts if part]
+    
+    # Return the first part, which should be the first directory
+    if parts:
+        return parts[0]
+    return None
