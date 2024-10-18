@@ -20,6 +20,7 @@ from .registrar_util import (
     _read_configuration_file,
     get_directory_info,
     _relpath_from_name,
+    get_first_directory,
 )
 from .dataset_util import set_dataset_status, get_dataset_status
 
@@ -82,6 +83,18 @@ class DatasetTable(BaseTable):
                 raise ValueError(
                     "External datasets require either a url or contact_email"
                 )
+
+        # Make sure the user passed `relative_path` is legal
+        # Only needed for `register` function, `replace` has no `relative_path`
+        # argument as this cannot be changed from the original `register`
+        if "relative_path" in kwargs_dict.keys():
+            if kwargs_dict["relative_path"] is not None:
+                first_dir = get_first_directory(kwargs_dict["relative_path"])
+
+                if first_dir is not None:
+                    if first_dir == ".gen_paths":
+                        raise ValueError("Can't start relative path with .gen_paths, "
+                            "this is reserved for auto-generated `relative_paths")
 
         # Assign the `owner_type`
         if kwargs_dict["owner_type"] is None:

@@ -49,7 +49,7 @@ def test_register_dataset_defaults(dummy_file):
     assert results["owner"][0] == os.getenv("USER")
     assert results["owner_type"][0] == "user"
     assert results["description"][0] == None
-    assert results["relative_path"][0] == f"{_NAME}_0.0.1"
+    assert results["relative_path"][0] == f".gen_paths/{_NAME}_0.0.1"
     assert results["data_org"][0] == "dummy"
     assert results["execution_id"][0] >= 0
     assert results["dataset_id"][0] >= 0
@@ -192,7 +192,7 @@ def test_dataset_bumping(dummy_file, v_type, ans):
     # Check the result
     assert results["dataset.name"][0] == _NAME
     assert results["dataset.version_string"][0] == ans
-    assert results["dataset.relative_path"][0] == f"{_NAME}_{ans}"
+    assert results["dataset.relative_path"][0] == f".gen_paths/{_NAME}_{ans}"
 
 
 @pytest.mark.parametrize("owner_type", ["user", "group", "project"])
