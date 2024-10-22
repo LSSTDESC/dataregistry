@@ -186,20 +186,3 @@ def test_name_from_relpath(rel_path,ans):
     """Make sure names are extracted from paths correctly"""
 
     assert _name_from_relpath(rel_path) == ans
-
-@pytest.mark.parametrize(
-    "path,ans",
-    [
-        ("/testing/test", "testing"),
-        ("./testing/test", "testing"),
-        ("/testing/test/", "testing"),
-        ("test", "test"),
-        (".gen_paths/test", ".gen_paths"),
-        ("test/testing/tested", "test"),
-        ("/test/testing/tested", "test"),
-    ],
-)
-def test_get_first_directory(path,ans):
-    """Make sure the first directory is pulled out correct"""
-
-    assert get_first_directory(path) == ans

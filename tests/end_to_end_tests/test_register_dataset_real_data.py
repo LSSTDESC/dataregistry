@@ -159,7 +159,8 @@ def test_registering_bad_relative_path_2(dummy_file, link):
 
     data_path = str(tmp_src_dir / link)
 
-    with pytest.raises(ValueError, match="Can't start relative path with .gen_paths"):
+    # Test going into the '.gen_paths' folder (not allowed)
+    with pytest.raises(ValueError, match="Can't start relative path with '.gen_paths'"):
         d_id = _insert_dataset_entry(
             datareg,
             f"DESC:datasets:test_registering_bad_relative_path_3_{link}",
@@ -167,6 +168,17 @@ def test_registering_bad_relative_path_2(dummy_file, link):
             old_location=data_path,
             location_type="dataregistry",
             relative_path=f".gen_paths/test/register/bad/relpath/{link}",
+        )
+
+    # Test registering a file or directory as '.gen_paths' (not allowed)
+    with pytest.raises(ValueError, match="Can't start relative path with '.gen_paths'"):
+        d_id = _insert_dataset_entry(
+            datareg,
+            f"DESC:datasets:test_registering_bad_relative_path_4_{link}",
+            "0.0.1",
+            old_location=data_path,
+            location_type="dataregistry",
+            relative_path=f".gen_paths",
         )
 
 @pytest.mark.parametrize("link", ["file1.txt", "directory1"])
