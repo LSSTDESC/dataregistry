@@ -1,3 +1,16 @@
+## Version 1.0.3
+
+Some changes to the way the `relative_path` is automatically generated from the
+`name` and `version`.
+
+- All automatically generated `relative_paths` are placed in a top level
+  `.gen_paths` directory, e.g.,
+  `<root_dir>/<schema>/<owner_type>/<owner>/.gen_paths`. This is to prevent
+  clashes with user specified `relative_paths`.
+- Single files no longer have their filename changed when automatically
+  generating the `relative_path`. Instead a directory containing the `name` and
+  `version` is created, and the file is copied there. This preserves the
+  filname suffix in the relative path.
 
 ## Version 1.0.2
 
