@@ -432,7 +432,7 @@ class DatasetTable(BaseTable):
         # If `relative_path` not passed, automatically generate it
         if kwargs_dict["relative_path"] is None:
             kwargs_dict["relative_path"] = _relpath_from_name(
-                name, kwargs_dict["version_string"]
+                name, kwargs_dict["version_string"], kwargs_dict["old_location"]
             )
 
         # Make sure the relative_path in the `root_dir` is avaliable
