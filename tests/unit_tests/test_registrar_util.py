@@ -8,7 +8,6 @@ from dataregistry.registrar.registrar_util import (
     _read_configuration_file,
     get_directory_info,
     _relpath_from_name,
-    get_first_directory,
 )
 
 
