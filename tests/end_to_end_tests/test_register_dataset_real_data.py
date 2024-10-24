@@ -146,6 +146,40 @@ def test_registering_bad_relative_path(dummy_file, link):
             relative_path=f"test/register/bad/relpath/{link}",
         )
 
+@pytest.mark.parametrize("link", ["file1.txt", "directory1"])
+def test_registering_bad_relative_path_2(dummy_file, link):
+    """
+    Make sure we cannot register a datataset to a relative path that is using
+    the auto generated .gen_paths directry.
+    """
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
+
+    data_path = str(tmp_src_dir / link)
+
+    # Test going into the '.gen_paths' folder (not allowed)
+    with pytest.raises(ValueError, match="Can't start relative path with '.gen_paths'"):
+        d_id = _insert_dataset_entry(
+            datareg,
+            f"DESC:datasets:test_registering_bad_relative_path_3_{link}",
+            "0.0.1",
+            old_location=data_path,
+            location_type="dataregistry",
+            relative_path=f".gen_paths/test/register/bad/relpath/{link}",
+        )
+
+    # Test registering a file or directory as '.gen_paths' (not allowed)
+    with pytest.raises(ValueError, match="Can't start relative path with '.gen_paths'"):
+        d_id = _insert_dataset_entry(
+            datareg,
+            f"DESC:datasets:test_registering_bad_relative_path_4_{link}",
+            "0.0.1",
+            old_location=data_path,
+            location_type="dataregistry",
+            relative_path=f".gen_paths",
+        )
 
 @pytest.mark.parametrize("link", ["file1.txt", "directory1"])
 def test_registering_deleted_relative_path(dummy_file, link):

@@ -159,17 +159,17 @@ def test_read_file(tmpdir, nchars, max_config_length, ans):
 @pytest.mark.parametrize(
     "name,version_string,ans",
     [
-        ("mydataset", "1.1.1", "mydataset_1.1.1"),
+        ("mydataset", "1.1.1", ".gen_paths/mydataset_1.1.1"),
     ],
 )
-def test_relpath_from_name(name, version_string, ans):
+def test_relpath_from_name(name, version_string, ans, old_location=None):
     """
     Test dataset path construction
     Datasets should come back with the format:
         <root_dir>/<owner_type>/<owner>/<relative_path>
     """
 
-    tmp = _relpath_from_name(name, version_string)
+    tmp = _relpath_from_name(name, version_string, old_location)
     assert tmp == ans
 
 @pytest.mark.parametrize(
