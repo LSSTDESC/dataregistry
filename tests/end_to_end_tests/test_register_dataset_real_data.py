@@ -54,6 +54,7 @@ def test_copy_data(dummy_file, data_org):
     [
         ("file", "file1.txt"),
         ("directory", "dummy_dir"),
+        ("same_directory", "dummy_dir")
     ],
 )
 def test_on_location_data(dummy_file, data_org, data_path):
@@ -84,9 +85,12 @@ def test_on_location_data(dummy_file, data_org, data_path):
         [f],
     )
 
-    assert len(results["dataset.data_org"]) == 1
+    if data_org == "same_directory":
+        assert len(results["dataset.data_org"]) == 2
+    else:
+        assert len(results["dataset.data_org"]) == 1
 
-    assert results["dataset.data_org"][0] == data_org
+    assert results["dataset.data_org"][0].endswith(data_org)
     assert results["dataset.nfiles"][0] == 1
     assert results["dataset.total_disk_space"][0] > 0
 

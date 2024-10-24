@@ -414,6 +414,7 @@ class DatasetTable(BaseTable):
 
         # Make sure the relative_path in the `root_dir` is avaliable
         if kwargs_dict["location_type"] in ["dataregistry", "dummy"]:
+            will_copy = kwargs_dict["old_location"]
             previous_datasets = self._find_previous(
                 None,
                 None,
@@ -433,17 +434,27 @@ class DatasetTable(BaseTable):
                     root_dir=self._root_dir,
                 )
 
+                warned = False
                 if get_dataset_status(previous_datasets[-1].status, "archived"):
-                    raise ValueError(
-                        f"Relative path {dest} is reserved "
-                        f"for archived datasetid={previous_datasets[-1].dataset_id}"
-                    )
+                    if will_copy:
+                        raise ValueError(
+                            f"Relative path {dest} is reserved "
+                            f"for archived datasetid={previous_datasets[-1].dataset_id}"
+                        )
+                    else:
+                        print(f"Warning: found existing entry with path {kwargs_dict['relative_path']}")
+                        warned = True
 
                 if not get_dataset_status(previous_datasets[-1].status, "deleted"):
-                    raise ValueError(
-                        f"Relative path {dest} is taken by "
-                        f"datasetid={previous_datasets[-1].dataset_id}"
-                    )
+                    if will_copy:
+                        raise ValueError(
+                            f"Relative path {dest} is taken by "
+                            f"datasetid={previous_datasets[-1].dataset_id}"
+                        )
+                    else:
+                        if not warned:
+                            print(f"Warning: found existing entry with path {kwargs_dict['relative_path']}")
+
 
         # Make sure there is not already a database entry with this
         # name/version combination
