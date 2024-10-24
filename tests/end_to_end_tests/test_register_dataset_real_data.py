@@ -90,7 +90,7 @@ def test_on_location_data(dummy_file, data_org, data_path):
     else:
         assert len(results["dataset.data_org"]) == 1
 
-    assert results["dataset.data_org"][0].endswith(data_org)
+    assert data_org.endswith(results["dataset.data_org"][0])
     assert results["dataset.nfiles"][0] == 1
     assert results["dataset.total_disk_space"][0] > 0
 
