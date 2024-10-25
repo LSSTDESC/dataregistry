@@ -15,7 +15,6 @@ from .registrar_util import (
     _bump_version,
     _copy_data,
     _form_dataset_path,
-    _name_from_relpath,
     _parse_version_string,
     _read_configuration_file,
     get_directory_info,
@@ -68,7 +67,7 @@ class DatasetTable(BaseTable):
         if name is None or version is None:
             raise ValueError("A valid `name` and `version` are required")
         for att in [name, version]:
-            if type(att) != str:
+            if not isinstance(att, str):
                 raise ValueError(f"{att} is not a valid string")
 
         # Make sure `name` is legal (i.e., no illegal characters)
@@ -99,7 +98,7 @@ class DatasetTable(BaseTable):
 
         # Make sure owner type is valid
         if kwargs_dict["owner_type"] not in self._OWNER_TYPES:
-            raise ValueError(f"{owner_type} is not a valid owner_type")
+            raise ValueError(f"{kwargs_dict['owner_type']} is not a valid owner_type")
 
         # Checks for production datasets
         if kwargs_dict["owner_type"] == "production":
@@ -442,19 +441,26 @@ class DatasetTable(BaseTable):
                             f"for archived datasetid={previous_datasets[-1].dataset_id}"
                         )
                     else:
-                        print(f"Warning: found existing entry with path {kwargs_dict['relative_path']}")
+                        warnings.warn(
+                            "Warning: found existing entry with path "
+                            f"{kwargs_dict['relative_path']}",
+                            UserWarning,
+                        )
                         warned = True
 
                 if not get_dataset_status(previous_datasets[-1].status, "deleted"):
                     if will_copy:
                         raise ValueError(
-                            f"Relative path {dest} is taken by "
+                            "Relative path {dest} is taken by "
                             f"datasetid={previous_datasets[-1].dataset_id}"
                         )
                     else:
                         if not warned:
-                            print(f"Warning: found existing entry with path {kwargs_dict['relative_path']}")
-
+                            warnings.warn(
+                                "Warning: found existing entry with path "
+                                f"{kwargs_dict['relative_path']}",
+                                UserWarning,
+                            )
 
         # Make sure there is not already a database entry with this
         # name/version combination
@@ -559,7 +565,7 @@ class DatasetTable(BaseTable):
                 raise ValueError(f"Dataset {full_name} does not exist")
 
             # Cannot replace (valid) non-overwritable datasets
-            if previous_datasets[-1].is_overwritable == False and get_dataset_status(
+            if previous_datasets[-1].is_overwritable is False and get_dataset_status(
                 previous_datasets[-1].status, "valid"
             ):
                 raise ValueError(
@@ -853,7 +859,7 @@ class DatasetTable(BaseTable):
 
         for k in keywords:
             # Make sure keyword is a string
-            if type(k) != str:
+            if not isinstance(k, str):
                 raise ValueError(f"{k} is not a valid keyword string")
 
         # Make sure keywords are all in the keywords table
@@ -873,7 +879,7 @@ class DatasetTable(BaseTable):
 
         # Keyword not found
         if len(keyword_ids) != len(keywords):
-            raise ValueError(f"Not all keywords selected are registered")
+            raise ValueError("Not all keywords selected are registered")
 
         return keyword_ids
 
@@ -892,11 +898,11 @@ class DatasetTable(BaseTable):
         """
 
         # Make sure things are valid
-        if type(keywords) != list:
+        if not isinstance(keywords, list):
             raise ValueError("Passed keywords object must be a list")
 
         for k in keywords:
-            if type(k) != str:
+            if not isinstance(k, str):
                 raise ValueError(f"Keyword {k} is not a valid string")
 
         if len(keywords) == 0:
