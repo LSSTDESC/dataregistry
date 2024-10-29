@@ -112,11 +112,21 @@ For example, to see all the datasets from the DESC Generic Working Group we woul
 
    dregs ls --owner "DESC Generic Working Group"
 
-To list entries from all owners type
+To list entries from all owners do ``--owner none``.
+
+You can search against the ``dataset.name`` column, with wildcard support, e.g.,
 
 .. code-block:: bash
 
-   dregs ls --all
+   dregs ls --name dataset:dc2:%
+
+will search for all datasets whose name starts with the pattern "dataset:dc2:".
+
+To select what columns are printed in the result use the ``--return_cols`` option, e.g.,
+
+.. code-block:: bash
+
+   dregs ls --return_cols dataset_id name description status
 
 Using ``dregs ls`` is a quick an easy way to remind yourself what names you
 gave to previous datasets, and what relative paths they reside at.
