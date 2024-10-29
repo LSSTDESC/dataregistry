@@ -1,3 +1,13 @@
+## Version 1.0.4
+
+Make more options for querying
+
+- There is now a `~=` query operator that can utalise the `.ilike` filter to
+  allow non-case-sensitive filering with wildcards (i.e., the `%` character).
+- `dregs ls` can now filter on the dataset name, including `%` wildcards, using
+  the `--name` option.
+- `dregs_ls` can return arbitrary columns using the `--return_cols` option
+
 ## Version 1.0.3
 
 Some changes to the way the `relative_path` is automatically generated from the

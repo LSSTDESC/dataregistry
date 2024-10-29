@@ -77,10 +77,10 @@ def get_parser():
         help="List datasets for a given owner type",
         choices=["user", "group", "production", "project"],
     )
+    arg_ls.add_argument("--name", help="Only return datasets with a given name (% can be used as a wildcard)")
     arg_ls.add_argument("--all", help="List all datasets", action="store_true")
     arg_ls.add_argument(
-        "--extended", help="List more properties than the default", action="store_true"
-    )
+        "--return_cols", help="List of columns to return in the query", nargs="+", type=str)
     arg_ls.add_argument(
         "--max_rows",
         help="Maximum number of rows to print (default 500)",
