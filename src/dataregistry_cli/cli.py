@@ -80,7 +80,6 @@ def get_parser():
     arg_ls.add_argument(
         "--name", help="Only return datasets with a given name (wildcard support)"
     )
-    arg_ls.add_argument("--all", help="List all datasets", action="store_true")
     arg_ls.add_argument(
         "--return_cols",
         help="List of columns to return in the query",
