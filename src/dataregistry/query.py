@@ -59,6 +59,7 @@ _colops = {
     "<=": "__le__",
     ">": "__gt__",
     ">=": "__ge__",
+    "~=": None,
 }
 
 ALL_ORDERABLE = (
@@ -272,12 +273,17 @@ class Query:
 
         # Extract the property we are ordering on (also making sure it
         # is orderable)
-        if not column_is_orderable[0] and f[1] not in ["==", "=", "!="]:
+        if not column_is_orderable[0] and f[1] not in ["~=", "==", "=", "!="]:
             raise ValueError('check_filter: Cannot apply "{f[1]}" to "{f[0]}"')
         else:
             value = f[2]
 
-        return stmt.where(column_ref[0].__getattribute__(the_op)(value))
+        # Special case where we are partially matching with a wildcard
+        if f[1] == "~=":
+            return stmt.where(column_ref[0].ilike(value))
+        # General case 
+        else:
+            return stmt.where(column_ref[0].__getattribute__(the_op)(value))
 
     def _append_filter_tables(self, tables_required, filters):
         """

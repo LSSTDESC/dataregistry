@@ -107,3 +107,34 @@ def test_query_between_columns(dummy_file):
             assert i < 1
             assert getattr(r, "dataset.name") == _NAME
             assert getattr(r, "dataset.version_string") == _V_STRING
+
+def test_query_name(dummy_file):
+    """Test a quering on a partial name'"""
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
+
+    # Add entry
+    for tag in ["first", "second", "third"]:
+        d_id = _insert_dataset_entry(
+            datareg,
+            f"DESC:datasets:test_query_name_{tag}",
+            "0.0.1",
+        )
+
+    # Do a wildcard search on the name
+    f = datareg.Query.gen_filter("dataset.name", "~=", "DESC:datasets:test_query_name%")
+    results = datareg.Query.find_datasets(property_names=None, filters=[f])
+
+    # Should return all three of our datasets
+    for c, v in results.items():
+        assert len(v) == 3
+
+    # Do an exact search on the name
+    f = datareg.Query.gen_filter("dataset.name", "==", "DESC:datasets:test_query_name_first")
+    results = datareg.Query.find_datasets(property_names=None, filters=[f])
+
+    # Should return just one dataset
+    for c, v in results.items():
+        assert len(v) == 1
