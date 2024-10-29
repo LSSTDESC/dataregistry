@@ -30,17 +30,15 @@ def _render_filters(datareg, args):
     queriables = ["owner", "owner_type", "name"]
 
     print("\nDataRegistry query:", end=" ")
-    if not args.all:
-        for col in queriables:
-            # Add filter on this column
-            if getattr(args, col) is not None:
-                if col == "name":
-                    filters.append(Filter(f"dataset.{col}", "~=", getattr(args, col)))
-                else:
+    for col in queriables:
+        # Add filter on this column
+        if getattr(args, col) is not None:
+            if col == "name":
+                filters.append(Filter(f"dataset.{col}", "~=", getattr(args, col)))
+            else:
+                if not (col == "owner" and getattr(args, col).lower() == "none"):
                     filters.append(Filter(f"dataset.{col}", "==", getattr(args, col)))
-                print(f"{col}=={getattr(args, col)}", end=" ")
-    else:
-        print("all datasets", end=" ")
+            print(f"{col}=={getattr(args, col)}", end=" ")
 
     # Add keywords filter
     if args.keyword is not None:
