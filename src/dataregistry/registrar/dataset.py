@@ -75,6 +75,12 @@ class DatasetTable(BaseTable):
             if i_char in name:
                 raise ValueError(f"Cannot have character {i_char} in name string")
 
+        # If no data is being copied from an `old_location`, `relative_path` is
+        # required
+        if kwargs_dict["old_location"] is None and kwargs_dict["location_type"] == "dataregistry" and kwargs_dict["relative_path"] is None:
+            raise ValueError("A `relative_path` must be passed when `old_location` is None "
+                    "i.e., the data is assumed to be already within the `root_dir`")
+
         # If external dataset, check for either a `url` or `contact_email`
         if kwargs_dict["location_type"] == "external":
             if kwargs_dict["url"] is None and kwargs_dict["contact_email"] is None:
