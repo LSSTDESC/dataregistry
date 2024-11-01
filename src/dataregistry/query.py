@@ -286,7 +286,7 @@ class Query:
         # Case sensitive wildcard matching (wildcard is '*')
         elif f[1] == "~==":
             tmp = value.replace('%', r'\%').replace('_', r'\_').replace('*', '%')
-            return stmt.where(column_ref[0].like(value))
+            return stmt.where(column_ref[0].like(tmp))
         # General case using traditional boolean operator 
         else:
             return stmt.where(column_ref[0].__getattribute__(the_op)(value))
