@@ -114,11 +114,12 @@ For example, to see all the datasets from the DESC Generic Working Group we woul
 
 To list entries from all owners do ``--owner none``.
 
-You can search against the ``dataset.name`` column, with wildcard support, e.g.,
+You can search against the ``dataset.name`` column, with wildcard support,
+where ``*`` is the wildcard character, e.g.,
 
 .. code-block:: bash
 
-   dregs ls --name dataset:dc2:%
+   dregs ls --name dataset:dc2:*
 
 will search for all datasets whose name starts with the pattern "dataset:dc2:"
 (note the ``--name`` queries here are case insensitive).

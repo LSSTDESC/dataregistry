@@ -109,16 +109,17 @@ def test_query_between_columns(dummy_file):
             assert getattr(r, "dataset.name") == _NAME
             assert getattr(r, "dataset.version_string") == _V_STRING
 
+
 @pytest.mark.parametrize(
     "op,qstr,ans,tag",
     [
-        ("~=", "DESC:datasets:test_query_name_nocasewildcard%", 3, "nocasewildcard"),
+        ("~=", "DESC:datasets:test_query_name_nocasewildcard*", 3, "nocasewildcard"),
         ("==", "DESC:datasets:test_query_name_exactmatch_first", 1, "exactmatch"),
-        ("~==", "DESC:datasets:Test_Query_Name_nocasewildcard%", 0, "casewildcardfail"),
-        ("~==", "DESC:datasets:test_query_name_nocasewildcard%", 3, "casewildcardpass"),
+        ("~==", "DESC:datasets:Test_Query_Name_nocasewildcard*", 0, "casewildcardfail"),
+        ("~==", "DESC:datasets:test_query_name_nocasewildcard*", 3, "casewildcardpass"),
     ],
 )
-def test_query_name(dummy_file,op,qstr,ans,tag):
+def test_query_name(dummy_file, op, qstr, ans, tag):
     """Test a quering on a partial name with wildcards"""
 
     # Establish connection to database

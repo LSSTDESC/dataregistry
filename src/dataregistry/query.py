@@ -279,11 +279,13 @@ class Query:
         else:
             value = f[2]
 
-        # Case insensitive wildcard matching
+        # Case insensitive wildcard matching (wildcard is '*')
         if f[1] == "~=":
-            return stmt.where(column_ref[0].ilike(value))
-        # Case sensitive wildcard matching
+            tmp = value.replace('%', r'\%').replace('_', r'\_').replace('*', '%')
+            return stmt.where(column_ref[0].ilike(tmp))
+        # Case sensitive wildcard matching (wildcard is '*')
         elif f[1] == "~==":
+            tmp = value.replace('%', r'\%').replace('_', r'\_').replace('*', '%')
             return stmt.where(column_ref[0].like(value))
         # General case using traditional boolean operator 
         else:
