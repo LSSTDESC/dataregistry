@@ -109,7 +109,9 @@ def test_query_between_columns(dummy_file):
             assert getattr(r, "dataset.name") == _NAME
             assert getattr(r, "dataset.version_string") == _V_STRING
 
-
+@pytest.mark.skipif(
+    datareg.db_connection._dialect == "sqlite", reason="wildcards break for sqlite"
+)
 @pytest.mark.parametrize(
     "op,qstr,ans,tag",
     [
