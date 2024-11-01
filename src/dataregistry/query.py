@@ -60,6 +60,7 @@ _colops = {
     ">": "__gt__",
     ">=": "__ge__",
     "~=": None,
+    "~==": None,
 }
 
 ALL_ORDERABLE = (
@@ -273,15 +274,18 @@ class Query:
 
         # Extract the property we are ordering on (also making sure it
         # is orderable)
-        if not column_is_orderable[0] and f[1] not in ["~=", "==", "=", "!="]:
+        if not column_is_orderable[0] and f[1] not in ["~==", "~=", "==", "=", "!="]:
             raise ValueError('check_filter: Cannot apply "{f[1]}" to "{f[0]}"')
         else:
             value = f[2]
 
-        # Special case where we are partially matching with a wildcard
+        # Case insensitive wildcard matching
         if f[1] == "~=":
             return stmt.where(column_ref[0].ilike(value))
-        # General case 
+        # Case sensitive wildcard matching
+        elif f[1] == "~==":
+            return stmt.where(column_ref[0].like(value))
+        # General case using traditional boolean operator 
         else:
             return stmt.where(column_ref[0].__getattribute__(the_op)(value))
 

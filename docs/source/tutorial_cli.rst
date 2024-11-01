@@ -120,7 +120,8 @@ You can search against the ``dataset.name`` column, with wildcard support, e.g.,
 
    dregs ls --name dataset:dc2:%
 
-will search for all datasets whose name starts with the pattern "dataset:dc2:".
+will search for all datasets whose name starts with the pattern "dataset:dc2:"
+(note the ``--name`` queries here are case insensitive).
 
 To select what columns are printed in the result use the ``--return_cols`` option, e.g.,
 
