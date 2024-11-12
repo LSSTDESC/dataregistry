@@ -76,6 +76,12 @@ ALL_ORDERABLE = (
     .union(LITE_TYPES)
 )
 
+ILIKE_ALLOWED = [
+    "dataset.name",
+    "dataset.owner",
+    "dataset.relative_path",
+    "dataset.access_api"
+]
 
 def is_orderable_type(ctype):
     return type(ctype) in ALL_ORDERABLE
@@ -279,14 +285,20 @@ class Query:
         else:
             value = f[2]
 
-        # Case insensitive wildcard matching (wildcard is '*')
-        if f[1] == "~=":
+        # String partial matching with wildcard
+        if f[1] in ["~=", "~=="]:
+            if f[0] not in ILIKE_ALLOWED:
+                raise ValueError(f"Can only perform ~= search on {ILIKE_ALLOWED}")
+
             tmp = value.replace('%', r'\%').replace('_', r'\_').replace('*', '%')
-            return stmt.where(column_ref[0].ilike(tmp))
-        # Case sensitive wildcard matching (wildcard is '*')
-        elif f[1] == "~==":
-            tmp = value.replace('%', r'\%').replace('_', r'\_').replace('*', '%')
-            return stmt.where(column_ref[0].like(tmp))
+
+            # Case insensitive wildcard matching (wildcard is '*')
+            if f[1] == "~=":
+                return stmt.where(column_ref[0].ilike(tmp))
+            # Case sensitive wildcard matching (wildcard is '*')
+            else:
+                return stmt.where(column_ref[0].like(tmp))
+
         # General case using traditional boolean operator 
         else:
             return stmt.where(column_ref[0].__getattribute__(the_op)(value))
