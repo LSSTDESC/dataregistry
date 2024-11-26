@@ -185,7 +185,7 @@ def test_replacing_deleted_dataset(dummy_file):
     )
 
     # Delete dataset
-    datareg.Registrar.dataset.delete(d_id)
+    datareg.Registrar.dataset._delete_by_id(d_id)
 
     with pytest.raises(ValueError, match="is deleted, cannot replace"):
         # Try to replace deleted dataset

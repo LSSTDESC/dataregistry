@@ -32,4 +32,12 @@ def delete_dataset(args):
         site=args.site,
     )
 
-    datareg.Registrar.dataset.delete(args.dataset_id)
+    # Deleting directly using the dataset ID
+    if hasattr(args, "dataset_id"):
+        datareg.Registrar.dataset._delete_by_id(args.dataset_id, confirm=True)
+
+    # Deleting based on name/version/owner/owner_type
+    else:
+        datareg.Registrar.dataset.delete(
+            args.name, args.version_string, args.owner, args.owner_type, confirm=True
+        )
