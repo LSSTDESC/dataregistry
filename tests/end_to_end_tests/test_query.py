@@ -1,3 +1,4 @@
+import pytest
 import os
 import pandas as pd
 import sqlalchemy
@@ -107,3 +108,42 @@ def test_query_between_columns(dummy_file):
             assert i < 1
             assert getattr(r, "dataset.name") == _NAME
             assert getattr(r, "dataset.version_string") == _V_STRING
+
+@pytest.mark.skipif(
+    datareg.db_connection._dialect == "sqlite", reason="wildcards break for sqlite"
+)
+@pytest.mark.parametrize(
+    "op,qstr,ans,tag",
+    [
+        ("~=", "DESC:datasets:test_query_name_nocasewildcard*", 3, "nocasewildcard"),
+        ("==", "DESC:datasets:test_query_name_exactmatch_first", 1, "exactmatch"),
+        ("~==", "DESC:datasets:Test_Query_Name_nocasewildcard*", 0, "casewildcardfail"),
+        ("~==", "DESC:datasets:test_query_name_nocasewildcard*", 3, "casewildcardpass"),
+    ],
+)
+def test_query_name(dummy_file, op, qstr, ans, tag):
+    """Test a quering on a partial name with wildcards"""
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
+
+    # Add entry
+    for tmp_tag in ["first", "second", "third"]:
+        d_id = _insert_dataset_entry(
+            datareg,
+            f"DESC:datasets:test_query_name_{tag}_{tmp_tag}",
+            "0.0.1",
+        )
+
+    # Do a wildcard search on the name
+    f = datareg.Query.gen_filter("dataset.name", op, qstr)
+    results = datareg.Query.find_datasets(property_names=None, filters=[f])
+
+    # How many datasets did we find
+    if ans == 0:
+        assert len(results) == 0
+    else:
+        assert len(results) > 0
+        for c, v in results.items():
+            assert len(v) == ans

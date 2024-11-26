@@ -1,6 +1,50 @@
 import os
 from dataregistry import DataRegistry
 import pandas as pd
+from dataregistry import Filter
+
+
+def _render_filters(datareg, args):
+    """
+    Apply a filter to the query.
+
+    Both the owner and owner_type columns can be filtered against. In addition,
+    the dataset name column can be filtered against (allowed for % wildcards).
+
+    Keywords can also be filtered against. These have to be treated separately,
+    as they need to be linked to the keywords table.
+
+    Parameters
+    ----------
+    datareg : DataRegistry object
+    args : argparse object
+
+    Returns
+    -------
+    filters : list[Filter]
+    """
+
+    filters = []
+
+    # Dataset columns we can filter by
+    queriables = ["owner", "owner_type", "name"]
+
+    print("\nDataRegistry query:", end=" ")
+    for col in queriables:
+        # Add filter on this column
+        if getattr(args, col) is not None:
+            if col == "name":
+                filters.append(Filter(f"dataset.{col}", "~=", getattr(args, col)))
+            else:
+                if not (col == "owner" and getattr(args, col).lower() == "none"):
+                    filters.append(Filter(f"dataset.{col}", "==", getattr(args, col)))
+            print(f"{col}=={getattr(args, col)}", end=" ")
+
+    # Add keywords filter
+    if args.keyword is not None:
+        filters.append(datareg.Query.gen_filter("keyword.keyword", "==", args.keyword))
+
+    return filters
 
 
 def dregs_ls(args):
@@ -20,6 +64,9 @@ def dregs_ls(args):
         Owner to list dataset entries for
     args.owner_type : str
         Owner type to list dataset entries for
+    args.name : str
+        Filter to only those results with a given dataset name (% can be used
+        as a wildcard)
     args.all : bool
         True to show all datasets, no filters
     args.config_file : str
@@ -30,8 +77,8 @@ def dregs_ls(args):
         Path to root_dir
     args.site : str
         Look up root_dir using a site
-    args.extended : bool
-        True to list more dataset properties
+    args.return_cols : list[str]
+        List of dataset columns to return
     args.max_chars : int
         Maximum number of character to print per column
     args.max_rows : int
@@ -59,28 +106,12 @@ def dregs_ls(args):
     else:
         datareg_prod = None
 
-    # Filter on dataset owner and/or owner_type
-    filters = []
+    # By default, search for "our" dataset
+    if args.owner is None:
+        args.owner = os.getenv("USER")
 
-    print("\nDataRegistry query:", end=" ")
-    if not args.all:
-        # Add owner_type filter
-        if args.owner_type is not None:
-            filters.append(Filter("dataset.owner_type", "==", args.owner_type))
-            print(f"owner_type=={args.owner_type}", end=" ")
-
-        # Add owner filter
-        if args.owner is None:
-            if args.owner_type is None:
-                filters.append(
-                    datareg.Query.gen_filter("dataset.owner", "==", os.getenv("USER"))
-                )
-                print(f"owner=={os.getenv('USER')}", end=" ")
-        else:
-            filters.append(datareg.Query.gen_filter("dataset.owner", "==", args.owner))
-            print(f"owner=={args.owner}", end=" ")
-    else:
-        print("all datasets", end=" ")
+    # Render search filters
+    filters = _render_filters(datareg, args)
 
     # What columns are we printing
     _print_cols = [
@@ -90,22 +121,10 @@ def dregs_ls(args):
         "dataset.owner_type",
         "dataset.description",
     ]
-    if args.extended:
-        _print_cols.extend(
-            [
-                "dataset.dataset_id",
-                "dataset.relative_path",
-                "dataset.status",
-                "dataset.register_date",
-                "dataset.is_overwritable",
-            ]
-        )
-
-    # Add keywords filter
+    if args.return_cols is not None:
+        _print_cols = [f"dataset.{x}" for x in args.return_cols]
     if args.keyword is not None:
         _print_cols.append("keyword.keyword")
-
-        filters.append(datareg.Query.gen_filter("keyword.keyword", "==", args.keyword))
 
     # Loop over this schema and the production schema and print the results
     for this_datareg in [datareg, datareg_prod]:

@@ -59,6 +59,8 @@ _colops = {
     "<=": "__le__",
     ">": "__gt__",
     ">=": "__ge__",
+    "~=": None,
+    "~==": None,
 }
 
 ALL_ORDERABLE = (
@@ -74,6 +76,12 @@ ALL_ORDERABLE = (
     .union(LITE_TYPES)
 )
 
+ILIKE_ALLOWED = [
+    "dataset.name",
+    "dataset.owner",
+    "dataset.relative_path",
+    "dataset.access_api"
+]
 
 def is_orderable_type(ctype):
     return type(ctype) in ALL_ORDERABLE
@@ -272,12 +280,28 @@ class Query:
 
         # Extract the property we are ordering on (also making sure it
         # is orderable)
-        if not column_is_orderable[0] and f[1] not in ["==", "=", "!="]:
+        if not column_is_orderable[0] and f[1] not in ["~==", "~=", "==", "=", "!="]:
             raise ValueError('check_filter: Cannot apply "{f[1]}" to "{f[0]}"')
         else:
             value = f[2]
 
-        return stmt.where(column_ref[0].__getattribute__(the_op)(value))
+        # String partial matching with wildcard
+        if f[1] in ["~=", "~=="]:
+            if f[0] not in ILIKE_ALLOWED:
+                raise ValueError(f"Can only perform ~= search on {ILIKE_ALLOWED}")
+
+            tmp = value.replace('%', r'\%').replace('_', r'\_').replace('*', '%')
+
+            # Case insensitive wildcard matching (wildcard is '*')
+            if f[1] == "~=":
+                return stmt.where(column_ref[0].ilike(tmp))
+            # Case sensitive wildcard matching (wildcard is '*')
+            else:
+                return stmt.where(column_ref[0].like(tmp))
+
+        # General case using traditional boolean operator 
+        else:
+            return stmt.where(column_ref[0].__getattribute__(the_op)(value))
 
     def _append_filter_tables(self, tables_required, filters):
         """
