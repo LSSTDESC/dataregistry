@@ -4,11 +4,13 @@ The ``dataregistry`` package
 ============================
 
 The tutorials for the ``dataregistry`` package come in the form of Jupyter
-Notebooks.
+Notebooks (hosted in the ``docs/source/tutorial_notebooks`` directory in the
+repository).
 
 These tutorial notebooks can be run interactively at NERSC (see :ref:`here
 <interactive-notebooks>` for more info), or serve as standalone reference
-material by viewing the notebooks on GitHub. 
+material by `viewing the notebooks on GitHub
+<https://github.com/LSSTDESC/dataregistry/blob/main/docs/source/tutorial_notebooks/>`__. 
 
 1) Getting started with the data registry
 -----------------------------------------

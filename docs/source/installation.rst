@@ -77,4 +77,4 @@ ensure by doing
 
 .. code-block:: bash
 
-   chmod 600 .pgpass
+   chmod 600 ~/.pgpass
