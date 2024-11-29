@@ -224,7 +224,7 @@ def test_registering_deleted_relative_path(dummy_file, link):
         )
 
     # Now delete
-    datareg.Registrar.dataset.delete(d2_id)
+    datareg.Registrar.dataset._delete_by_id(d2_id)
 
     # Make a new entry (new name) using the original relative path
     d_id = _insert_dataset_entry(

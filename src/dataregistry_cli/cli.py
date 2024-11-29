@@ -299,9 +299,33 @@ def get_parser():
     # ----------------
 
     # Delete a dataset.
-    arg_delete_dataset = arg_delete_sub.add_parser("dataset", help="Delete a dataset")
-    arg_delete_dataset.add_argument(
+    arg_delete_dataset_id = arg_delete_sub.add_parser(
+        "dataset_by_id", help="Delete a dataset using the dataset_id"
+    )
+    arg_delete_dataset_id.add_argument(
         "dataset_id", help="The dataset_id you wish to delete", type=int
+    )
+    _add_generic_arguments(arg_delete_dataset_id)
+
+    arg_delete_dataset = arg_delete_sub.add_parser(
+        "dataset",
+        help="Delete a dataset using the name/version_string/owner/owner_type",
+    )
+    arg_delete_dataset.add_argument(
+        "name", help="The dataset name for the dataset you wish to delete", type=str
+    )
+    arg_delete_dataset.add_argument(
+        "version_string",
+        help="The dataset version_string for the dataset you wish to delete",
+        type=str,
+    )
+    arg_delete_dataset.add_argument(
+        "owner", help="The dataset owner for the dataset you wish to delete", type=str
+    )
+    arg_delete_dataset.add_argument(
+        "owner_type",
+        help="The dataset owner_type for the dataset you wish to delete",
+        type=str,
     )
     _add_generic_arguments(arg_delete_dataset)
 
@@ -333,7 +357,7 @@ def main(cmd=None):
 
     # Delete an entry
     elif args.subcommand == "delete":
-        if args.delete_type == "dataset":
+        if args.delete_type in ["dataset", "dataset_by_id"]:
             delete_dataset(args)
 
     # Query database entries

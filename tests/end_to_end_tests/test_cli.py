@@ -91,8 +91,7 @@ def test_production_entry(dummy_file):
         assert len(results["dataset.name"]) == 1, "Bad result from query dcli3"
         assert results["dataset.version_string"][0] == "0.1.2"
 
-
-def test_delete_dataset(dummy_file):
+def test_delete_dataset_by_id(dummy_file,monkeypatch):
     """Make a simple entry, then delete it"""
 
     # Establish connection to database
@@ -111,8 +110,9 @@ def test_delete_dataset(dummy_file):
     d_id = results["dataset.dataset_id"][0]
 
     # Delete the dataset
-    cmd = f"delete dataset {d_id}"
+    cmd = f"delete dataset_by_id {d_id}"
     cmd += f" --schema {DEFAULT_SCHEMA_WORKING} --root_dir {str(tmp_root_dir)}"
+    monkeypatch.setattr('builtins.input', lambda _: "y")
     cli.main(shlex.split(cmd))
 
     # Check
@@ -133,6 +133,54 @@ def test_delete_dataset(dummy_file):
         assert getattr(r, "dataset.delete_date") is not None
         assert getattr(r, "dataset.delete_uid") is not None
 
+
+def test_delete_dataset_by_name(dummy_file,monkeypatch):
+    """Make a simple entry, then delete it"""
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+
+    DNAME = "my_cli_dataset_to_delete2"
+    DVERSION = "0.0.1"
+    DOWNER = "delete_owner"
+    DOWNER_TYPE = "user"
+
+    # Register a dataset
+    cmd = f"register dataset {DNAME} {DVERSION} --location_type dummy"
+    cmd += f" --schema {DEFAULT_SCHEMA_WORKING} --root_dir {str(tmp_root_dir)}"
+    cmd += f" --owner {DOWNER} --owner_type {DOWNER_TYPE}"
+    monkeypatch.setattr('builtins.input', lambda _: "y")
+    cli.main(shlex.split(cmd))
+
+    # Find the dataset id
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
+    f = datareg.Query.gen_filter("dataset.name", "==", DNAME)
+    results = datareg.Query.find_datasets(["dataset.dataset_id"], [f])
+    assert len(results["dataset.dataset_id"]) == 1, "Bad result from query dcli4"
+    d_id = results["dataset.dataset_id"][0]
+
+    # Delete the dataset
+    cmd = f"delete dataset {DNAME} {DVERSION} {DOWNER} {DOWNER_TYPE}"
+    cmd += f" --schema {DEFAULT_SCHEMA_WORKING} --root_dir {str(tmp_root_dir)}"
+    cli.main(shlex.split(cmd))
+
+    # Check
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
+    f = datareg.Query.gen_filter("dataset.name", "==", DNAME)
+    results = datareg.Query.find_datasets(
+        [
+            "dataset.dataset_id",
+            "dataset.delete_date",
+            "dataset.delete_uid",
+            "dataset.status",
+        ],
+        [f],
+        return_format="cursorresult",
+    )
+    for r in results:
+        assert get_dataset_status(getattr(r, "dataset.status"), "deleted")
+        assert getattr(r, "dataset.delete_date") is not None
+        assert getattr(r, "dataset.delete_uid") is not None
 
 def test_dataset_entry_with_keywords(dummy_file):
     """Make a dataset with some keywords tagged"""
