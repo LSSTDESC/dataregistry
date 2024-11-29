@@ -1,3 +1,12 @@
+## Version 1.0.5
+
+Update delete functionality
+
+- The `delete()` function now takes `name`, `version_string`, `owner` and
+  `owner_type` as arguments, rather than simply the `dataset_id`.
+- One can still delete by the `dataset_id` using the CLI, which now includes a
+  confirmation step.
+
 ## Version 1.0.4
 
 Make more options for querying
