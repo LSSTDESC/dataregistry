@@ -176,7 +176,8 @@ class Query:
         if column_names is None:
             column_names = []
             for table in self.db_connection.metadata["tables"]:
-                if table.split(".")[1] == "dataset":
+                tname = table if self.db_connection.dialect == "sqlite" else table.split(".")[1]
+                if tname == "dataset":
                     column_names.extend(
                         [
                             x.table.name + "." + x.name
@@ -419,6 +420,7 @@ class Query:
 
         # Construct query
         for schema in column_list.keys(): # Loop over each schema
+            schema_str = "" if self.db_connection.dialect == "sqlite" else f"{schema}."
             columns = [f"{p.table.name}.{p.name}" for p in column_list[schema]]
 
             stmt = select(
@@ -427,14 +429,14 @@ class Query:
             
             # Create joins
             if len(tables_required) > 1:
-                j = self.db_connection.metadata["tables"][f"{schema}.dataset"]
+                j = self.db_connection.metadata["tables"][f"{schema_str}dataset"]
                 for i in range(len(tables_required)):
                     if tables_required[i] in ["dataset", "keyword", "dependency"]:
                         continue
 
                     j = j.join(
                         self.db_connection.metadata["tables"][
-                            f"{schema}.{tables_required[i]}"
+                            f"{schema_str}{tables_required[i]}"
                         ]
                     )
 
@@ -442,14 +444,14 @@ class Query:
                 if "keyword" in tables_required:
                     j = j.join(
                         self.db_connection.metadata["tables"][
-                            f"{schema}.dataset_keyword"
+                            f"{schema_str}dataset_keyword"
                         ]
-                    ).join(self.db_connection.metadata["tables"][f"{schema}.keyword"])
+                    ).join(self.db_connection.metadata["tables"][f"{schema_str}keyword"])
 
                 # Special case for dependencies
                 if "dependency" in tables_required:
-                    dataset_table = self.db_connection.metadata["tables"][f"{schema}.dataset"]
-                    dependency_table = self.db_connection.metadata["tables"][f"{schema}.dependency"]
+                    dataset_table = self.db_connection.metadata["tables"][f"{schema_str}dataset"]
+                    dependency_table = self.db_connection.metadata["tables"][f"{schema_str}dependency"]
                     
                     j = j.join(
                         dependency_table,
@@ -460,7 +462,7 @@ class Query:
             else:
                 stmt = stmt.select_from(
                     self.db_connection.metadata["tables"][
-                        f"{schema}.{tables_required[0]}"
+                        f"{schema_str}{tables_required[0]}"
                     ]
                 )
 

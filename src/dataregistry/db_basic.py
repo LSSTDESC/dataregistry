@@ -221,7 +221,7 @@ class DbConnection:
             self.metadata["schema_version"] = f"{r[0]}.{r[1]}.{r[2]}"
 
         # Add production schema tables to metadata
-        if self._prod_schema is not None:
+        if self._prod_schema is not None and self.dialect != "sqlite":
             metadata.reflect(self.engine, self._prod_schema)
             cols.remove("associated_production")
             prov_name = ".".join([self._prod_schema, "provenance"])

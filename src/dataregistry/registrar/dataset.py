@@ -1016,9 +1016,10 @@ class DatasetTable(BaseTable):
                 )
 
                 result = conn.execute(stmt)
+                rows = result.fetchall()
 
                 # If we don't have the keyword, add it
-                if result.rowcount == 0:
+                if len(rows) == 0:
                     add_table_row(
                         conn,
                         dataset_keyword_table,
