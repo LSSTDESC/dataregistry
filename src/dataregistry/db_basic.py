@@ -4,6 +4,7 @@ from sqlalchemy import MetaData
 from sqlalchemy import column,  insert, select
 import yaml
 import os
+import warnings
 from datetime import datetime
 from dataregistry import __version__
 from dataregistry.exceptions import DataRegistryException
@@ -16,7 +17,6 @@ Low-level utility routines and classes for accessing the registry
 __all__ = [
     "DbConnection",
     "add_table_row",
-    "TableMetadata",
 ]
 
 
@@ -79,7 +79,7 @@ def add_table_row(conn, table_meta, values, commit=True):
     ----------
     conn : SQLAlchemy Engine object
         Connection to the database
-    table_meta : TableMetadata object
+    table_meta : SqlAlchemy Metadata object
         Table we are inserting data into
     values : dict
         Properties to be entered
@@ -177,6 +177,14 @@ class DbConnection:
 
     def _reflect(self):
         """
+        Reflect the working and production schemas to get the tables within the database.
+
+        The production schema is automatically derived from the working schema
+        through the provenance table. The tables and versions of each schema
+        are extracted and stored in the `self.metadata` dict.
+
+        Note during schema creating the provenance information will not yet be
+        avaliable, hense the warning rather than an exception.
         """
         # Reflect the working schema to find database tables
         metadata = MetaData(schema=self.schema)
@@ -202,26 +210,54 @@ class DbConnection:
         with self.engine.connect() as conn:
             results = conn.execute(stmt)
             r = results.fetchone()
-        self._prod_schema = r[3]
-        self.metadata["schema_version"] = f"{r[0]}.{r[1]}.{r[2]}"
+        if r is None:
+            warnings.warn(
+                "During reflection no provenance information was found "
+                "(this is normal during database creation)", UserWarning)
+            self._prod_schema = None
+            self.metadata["schema_version"] = None
+        else:
+            self._prod_schema = r[3]
+            self.metadata["schema_version"] = f"{r[0]}.{r[1]}.{r[2]}"
 
         # Add production schema tables to metadata
-        metadata.reflect(self.engine, self._prod_schema)
-        cols.remove("associated_production")
-        prov_name = ".".join([self._prod_schema, "provenance"])
-        stmt = select(*[column(c) for c in cols]).select_from(prov_table)
-        stmt = stmt.order_by(prov_table.c.provenance_id.desc())
-        with self.engine.connect() as conn:
-            results = conn.execute(stmt)
-            r = results.fetchone()
-        self.metadata["prod_schema_version"] = f"{r[0]}.{r[1]}.{r[2]}"
+        if self._prod_schema is not None:
+            metadata.reflect(self.engine, self._prod_schema)
+            cols.remove("associated_production")
+            prov_name = ".".join([self._prod_schema, "provenance"])
+            stmt = select(*[column(c) for c in cols]).select_from(prov_table)
+            stmt = stmt.order_by(prov_table.c.provenance_id.desc())
+            with self.engine.connect() as conn:
+                results = conn.execute(stmt)
+                r = results.fetchone()
+            if r is None:
+                raise DataRegistryException("Cannot find production provenance table")
+            self.metadata["prod_schema_version"] = f"{r[0]}.{r[1]}.{r[2]}"
+        else:
+            self.metadata["prod_schema_version"] = None
 
         # Store metadata
         self.metadata["tables"] = metadata.tables
 
     def get_table(self, tbl, schema=None):
         """
+        Get metadata for a specific table in the database.
 
+        This looks for the table within the `self.metadata` dict. If the dict
+        is empty, i.e., this is is the first call in this instance, the
+        database is reflected first.
+
+        Parameters
+        ----------
+        tbl : str
+            Name of table we want metadata for
+        schema : bool, optional
+            Which schema to get the table from
+            If `None`, the `active_schema` is used
+
+        Returns
+        -------
+        - : SqlAlchemy Metadata object
         """
 
         # Database hasn't been reflected yet
@@ -239,97 +275,6 @@ class DbConnection:
         if tbl not in self.metadata["tables"].keys():
             raise ValueError(f"No such table {tbl}")
         return self.metadata["tables"][tbl]
-
-
-class TableMetadata:
-    def __init__(self, db_connection, get_db_version=True):
-        """
-        Keep and dispense table metadata
-
-        Parameters
-        ----------
-        db_connection : DbConnection object
-            Stores information about the DB connection
-        get_db_version : bool, optional
-            True to extract the DB version from the provenance table
-        """
-
-        self._metadata = MetaData(schema=db_connection.schema)
-        self._engine = db_connection.engine
-        self._schema = db_connection.schema
-
-        # Load all existing tables
-        self._metadata.reflect(self._engine, db_connection.schema)
-
-        # Fetch and save db versioning, assoc. production schema
-        # if present and requested
-        self._prod_schema = None
-        if db_connection.dialect == "sqlite":
-            prov_name = "provenance"
-        else:
-            prov_name = ".".join([self._schema, "provenance"])
-
-        if prov_name not in self._metadata.tables:
-            raise DataRegistryException(
-                f"Incompatible database: no Provenance table {prov_name}, "
-                f"listed tables are {self._metadata.tables}"
-                )
-
-        if get_db_version:
-            prov_table = self._metadata.tables[prov_name]
-            stmt = select(column("associated_production")).select_from(prov_table)
-            stmt = stmt.order_by(prov_table.c.provenance_id.desc())
-            with self._engine.connect() as conn:
-                results = conn.execute(stmt)
-                r = results.fetchone()
-            self._prod_schema = r[0]
-
-            cols = ["db_version_major", "db_version_minor", "db_version_patch"]
-
-            stmt = select(*[column(c) for c in cols])
-            stmt = stmt.select_from(prov_table)
-            stmt = stmt.order_by(prov_table.c.provenance_id.desc())
-            with self._engine.connect() as conn:
-                results = conn.execute(stmt)
-            r = results.fetchone()
-            self._db_major = r[0]
-            self._db_minor = r[1]
-            self._db_patch = r[2]
-        else:
-            self._db_major = None
-            self._db_minor = None
-            self._db_patch = None
-            self._prod_schema = None
-
-    @property
-    def is_production_schema(self):
-        if self._prod_schema == self._schema:
-            return True
-        else:
-            return False
-
-    @property
-    def db_version_major(self):
-        return self._db_major
-
-    @property
-    def db_version_minor(self):
-        return self._db_minor
-
-    @property
-    def db_version_patch(self):
-        return self._db_patch
-
-    def get(self, tbl):
-        if "." not in tbl:
-            if self._schema:
-                tbl = ".".join([self._schema, tbl])
-        if tbl not in self._metadata.tables.keys():
-            try:
-                self._metadata.reflect(self._engine, only=[tbl])
-            except Exception:
-                raise ValueError(f"No such table {tbl}")
-        return self._metadata.tables[tbl]
 
 
 def _insert_provenance(
@@ -391,8 +336,7 @@ def _insert_provenance(
         values["comment"] = comment
     if associated_production is not None:  # None is normal for sqlite
         values["associated_production"] = associated_production
-    prov_table = TableMetadata(db_connection,
-                               get_db_version=False).get("provenance")
+    prov_table = db_connection.get_table("provenance")
     with db_connection.engine.connect() as conn:
         id = add_table_row(conn, prov_table, values)
 
@@ -433,7 +377,7 @@ def _insert_keyword(
     values["creation_date"] = datetime.now()
     values["active"] = True
 
-    keyword_table = TableMetadata(db_connection, get_db_version=False).get("keyword")
+    keyword_table = db_connection.get_table("keyword")
     with db_connection.engine.connect() as conn:
         id = add_table_row(conn, keyword_table, values)
 

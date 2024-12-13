@@ -37,7 +37,6 @@ except ModuleNotFoundError:
     LITE_TYPES = {}
 
 from sqlalchemy.exc import DBAPIError, NoSuchColumnError
-from dataregistry.db_basic import TableMetadata
 
 __all__ = ["Query", "Filter"]
 
@@ -115,19 +114,6 @@ class Query:
         self._schema = db_connection.schema
         self._root_dir = root_dir
 
-        self._metadata = TableMetadata(db_connection)
-
-        # Get table definitions
-        self._table_list = [
-            "dataset",
-            "execution",
-            "dataset_alias",
-            "dependency",
-            "keyword",
-            "dataset_keyword",
-        ]
-        self._get_database_tables()
-
     def get_all_columns(self, include_schema=False):
         """
         Return all columns of the db in <table_name>.<column_name> format.
@@ -159,31 +145,6 @@ class Query:
                     column_list.add(".".join((str(c.table.name), str(c.name))))
 
         return column_list
-
-    def _get_database_tables(self):
-        """
-        Pulls out the table metadata from the data registry database and stores
-        them in the self._tables dict.
-
-        In addition, a dict is created for each table of the database which
-        stores the column names of the table, and if those columns are of an
-        orderable type. The dicts are named as self._<table_name>_columns.
-
-        This helps us with querying against those tables, and joining between
-        them.
-        """
-        self._tables = dict()
-        for table in self._table_list:
-            # Metadata from table
-            self._tables[table] = self._metadata.get(table)
-
-            # Pull out column names from table and store if they are orderable
-            # type.
-            setattr(self, f"_{table}_columns", dict())
-            for c in self._tables[table].c:
-                getattr(self, f"_{table}_columns")[
-                    table + "." + c.name
-                ] = is_orderable_type(c.type)
 
     def _parse_selected_columns(self, column_names):
         """
@@ -388,11 +349,12 @@ class Query:
         major, minor, patch      int   version numbers for db OR
         None, None, None     in case db is too old to contain provenance table
         """
-        return (
-            self._metadata.db_version_major,
-            self._metadata.db_version_minor,
-            self._metadata.db_version_patch,
-        )
+        raise NotImplementedError()
+        #return (
+        #    self._metadata.db_version_major,
+        #    self._metadata.db_version_minor,
+        #    self._metadata.db_version_patch,
+        #)
 
     def find_datasets(
         self,
