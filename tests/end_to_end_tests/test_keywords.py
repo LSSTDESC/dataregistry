@@ -111,14 +111,12 @@ def test_modify_dataset_with_keywords(dummy_file):
     results = datareg.Query.find_datasets(
         ["dataset.dataset_id", "keyword.keyword"],
         [f],
-        return_format="cursorresult",
     )
 
     # Should only be 1 keyword at this point
-    for i, r in enumerate(results):
-        assert getattr(r, "dataset.dataset_id") == d_id
-        assert getattr(r, "keyword.keyword") == "simulation"
-        assert i < 1
+    assert len(results["dataset.dataset_id"]) == 1
+    assert results["dataset.dataset_id"][0] == d_id
+    assert results["keyword.keyword"][0] == "simulation"
 
     # Add a keyword
     datareg.Registrar.dataset.add_keywords(d_id, ["simulation", "observation"])
@@ -127,11 +125,9 @@ def test_modify_dataset_with_keywords(dummy_file):
     results = datareg.Query.find_datasets(
         ["dataset.dataset_id", "keyword.keyword"],
         [f],
-        return_format="cursorresult",
     )
 
     # Should now be two keywords (no duplicates)
-    for i, r in enumerate(results):
-        assert getattr(r, "dataset.dataset_id") == d_id
-        assert getattr(r, "keyword.keyword") in ["simulation", "observation"]
-        assert i < 2
+    assert len(results["dataset.dataset_id"]) == 2
+    assert results["dataset.dataset_id"][0] == d_id
+    assert results["keyword.keyword"][0] in ["simulation", "observation"]

@@ -4,6 +4,7 @@ import sqlalchemy.sql.sqltypes as sqltypes
 import pandas as pd
 from dataregistry.registrar.registrar_util import _form_dataset_path
 from dataregistry.exceptions import DataRegistryNYI, DataRegistryException
+from functools import reduce
 
 try:
     import sqlalchemy.dialects.postgresql as pgtypes
@@ -80,8 +81,9 @@ ILIKE_ALLOWED = [
     "dataset.name",
     "dataset.owner",
     "dataset.relative_path",
-    "dataset.access_api"
+    "dataset.access_api",
 ]
+
 
 def is_orderable_type(ctype):
     return type(ctype) in ALL_ORDERABLE
@@ -105,6 +107,9 @@ class Query:
         root_dir : str
             Used to form absolute path of dataset
         """
+        self.db_connection = db_connection
+        self.db_connection._reflect()
+
         self._engine = db_connection.engine
         self._dialect = db_connection.dialect
         self._schema = db_connection.schema
@@ -123,19 +128,35 @@ class Query:
         ]
         self._get_database_tables()
 
-    def get_all_columns(self):
+    def get_all_columns(self, include_schema=False):
         """
         Return all columns of the db in <table_name>.<column_name> format.
 
+        If `include_schema=True` return all columns of the db in
+        <schema>.<table_name>.<column_name> format. Note this will essentially
+        duplicate the output, as the working and production schemas have the
+        same layout.
+
+        Parameters
+        ----------
+        include_schema : bool, optional
+            If True, also return the schema name in the column name
+
         Returns
         -------
-        column_list : list
+        column_list : set
         """
 
-        column_list = []
-        for table in self._table_list:
-            for att in getattr(self, f"_{table}_columns"):
-                column_list.append(att)
+        column_list = set()
+
+        # Loop over each table
+        for table in self.db_connection.metadata["tables"]:
+            # Loop over each column
+            for c in self.db_connection.metadata["tables"][table].c:
+                if include_schema:
+                    column_list.add(".".join((str(c.table), str(c.name))))
+                else:
+                    column_list.add(".".join((str(c.table.name), str(c.name))))
 
         return column_list
 
@@ -168,9 +189,9 @@ class Query:
         """
         What tables do we need for a given list of column names.
 
-        Column names can be in <column_name> or <table_name>.<column_name>
-        format. If they are in <column_name> format the column name must be
-        unique through all tables in the database.
+        Column names can be in <column_name>, <table_name>.<column_name> or If
+        they are in <column_name> format the column name must be unique through
+        all tables in the database.
 
         If column_names is None, all columns from the dataset table will be
         selected.
@@ -184,74 +205,95 @@ class Query:
         -------
         tables_required : list[str]
             All table names included in `column_names`
-        column_list : list[sqlalchemy.sql.schema.Column]
+        column_list : dict[schema][list[sqlalchemy.sql.schema.Column]]
             All column objects for the columns included in `column_names`
-        is_orderable_list : list[bool]
+        is_orderable_list : dict[schema][list[bool]]
             Is the column of an orderable type?
         """
 
         # Select all columns from the dataset table
         if column_names is None:
-            column_names = [
-                x.table.name + "." + x.name for x in self._tables["dataset"].c
-            ]
+            column_names = []
+            for table in self.db_connection.metadata["tables"]:
+                if table.split(".")[1] == "dataset":
+                    column_names.extend(
+                        [
+                            x.table.name + "." + x.name
+                            for x in self.db_connection.metadata["tables"][table].c
+                        ]
+                    )
+                    break # Dont duplicate with production schema
 
         tables_required = set()
-        column_list = []
-        is_orderable_list = []
+        column_list = {}
+        is_orderable_list = {}
 
-        # Determine the column name and table it comes from
-        for p in column_names:
-            # Case of <table_name>.<column_name> format
-            if "." in p:
-                if len(p.split(".")) != 2:
-                    raise ValueError(f"{p} is bad column name format")
-                table_name = p.split(".")[0]
-                col_name = p.split(".")[1]
+        # Loop over each input column
+        for col_name in column_names:
+            # Stores matches for this input
+            tmp_column_list = {}
 
-            # Case of <column_name> only format
-            else:
-                col_name = p
+            # Split column name into its parts
+            input_parts = col_name.split(".")
+            num_parts = len(input_parts)
 
-                # Now find what table its from.
-                found_count = 0
-                for t in self._table_list:
-                    if f"{t}.{col_name}" in getattr(self, f"_{t}_columns").keys():
-                        found_count += 1
-                        table_name = t
+            if num_parts > 2:
+                raise ValueError(f"{col_name} is not a valid column")
 
-                # Was this column name found, and is it unique in the database?
-                if found_count == 0:
-                    raise NoSuchColumnError(
-                        f"Did not find any columns named {col_name}"
-                    )
-                elif found_count > 1:
-                    raise DataRegistryException(
-                        (
-                            f"Column name '{col_name}' is not unique to one table"
-                            f"in the database, use <table_name>.<column_name>"
-                            f"format instead"
+            # Loop over each column in the database and find matches
+            for table in self.db_connection.metadata["tables"]:
+                for column in self.db_connection.metadata["tables"][table].c:
+                    X = str(column.table) + "." + column.name
+                    table_parts = X.split(".")
+
+                    if column.table.schema not in tmp_column_list.keys():
+                        tmp_column_list[column.table.schema] = []
+
+                    # Match based on the format of column_names
+                    if num_parts == 1:
+                        # Input is in <column> format
+                        if input_parts[0] == table_parts[-1]:
+                            tmp_column_list[column.table.schema].append(column)
+                    elif num_parts == 2:
+                        # Input is in <table>.<column> format
+                        if (
+                            input_parts[0] == table_parts[-2]
+                            and input_parts[1] == table_parts[-1]
+                        ):
+                            tmp_column_list[column.table.schema].append(column)
+
+            # Make sure we don't find multiple matches
+            for s in tmp_column_list.keys(): # Each schema
+                chk = []
+                for x in tmp_column_list[s]: # Each column in schema
+                    if x.name in chk:
+                        raise DataRegistryException(
+                            (
+                                f"Column name '{col_name}' is not unique to one table "
+                                f"in the database, use <table_name>.<column_name> "
+                                f"format instead"
+                            )
                         )
-                    )
+                    chk.append(x.name)
 
-            # Table name
-            tables_required.add(table_name)
+                    # Add this table to the list
+                    tables_required.add(x.table.name)
 
-            # Is this column of orderable type? (see `_get_database_tables()`)
-            is_orderable_list.append(
-                getattr(self, f"_{table_name}_columns")[table_name + "." + col_name]
-            )
+            # Store results
+            for att in tmp_column_list.keys():
+                if att not in column_list.keys():
+                    column_list[att] = []
+                column_list[att].extend(tmp_column_list[att])
 
-            # Column name
-            column_list.append(self._tables[table_name].c[col_name])
-
-        # Checks
-        if len(column_list) != len(is_orderable_list):
-            raise DataRegistryException("Bad parsing of selected columns")
+                if att not in is_orderable_list.keys():
+                    is_orderable_list[att] = []
+                is_orderable_list[att].extend(
+                    [is_orderable_type(c.type) for c in tmp_column_list[att]]
+                )
 
         return list(tables_required), column_list, is_orderable_list
 
-    def _render_filter(self, f, stmt):
+    def _render_filter(self, f, stmt, schema):
         """
         Append SQL statement with an additional WHERE clause based on a
         dataregistry filter.
@@ -280,7 +322,13 @@ class Query:
 
         # Extract the property we are ordering on (also making sure it
         # is orderable)
-        if not column_is_orderable[0] and f[1] not in ["~==", "~=", "==", "=", "!="]:
+        if not column_is_orderable[schema][0] and f[1] not in [
+            "~==",
+            "~=",
+            "==",
+            "=",
+            "!=",
+        ]:
             raise ValueError('check_filter: Cannot apply "{f[1]}" to "{f[0]}"')
         else:
             value = f[2]
@@ -290,18 +338,18 @@ class Query:
             if f[0] not in ILIKE_ALLOWED:
                 raise ValueError(f"Can only perform ~= search on {ILIKE_ALLOWED}")
 
-            tmp = value.replace('%', r'\%').replace('_', r'\_').replace('*', '%')
+            tmp = value.replace("%", r"\%").replace("_", r"\_").replace("*", "%")
 
             # Case insensitive wildcard matching (wildcard is '*')
             if f[1] == "~=":
-                return stmt.where(column_ref[0].ilike(tmp))
+                return stmt.where(column_ref[schema][0].ilike(tmp))
             # Case sensitive wildcard matching (wildcard is '*')
             else:
-                return stmt.where(column_ref[0].like(tmp))
+                return stmt.where(column_ref[schema][0].like(tmp))
 
-        # General case using traditional boolean operator 
+        # General case using traditional boolean operator
         else:
-            return stmt.where(column_ref[0].__getattribute__(the_op)(value))
+            return stmt.where(column_ref[schema][0].__getattribute__(the_op)(value))
 
     def _append_filter_tables(self, tables_required, filters):
         """
@@ -352,6 +400,7 @@ class Query:
         filters=[],
         verbose=False,
         return_format="property_dict",
+        strip_table_names=False,
     ):
         """
         Get specified properties for datasets satisfying all filters
@@ -375,81 +424,116 @@ class Query:
             True for more output relating to the query
         return_format : str, optional
             The format the query result is returned in.  Options are
-            "CursorResult" (SQLAlchemy default format), "DataFrame", or
-            "proprety_dict". Note this is not case sensitive.
+            "DataFrame", or "proprety_dict". Note this is not case sensitive.
+        strip_table_names : bool, optional
+            True to remove the table name in the results columns
+            This only works if a single table is needed for the query 
 
         Returns
         -------
-        result : CursorResult, dict, or DataFrame (depending on `return_format`)
+        result : dict, or DataFrame (depending on `return_format`)
             Requested property values
         """
 
         # Make sure return format is valid.
-        _allowed_return_formats = ["cursorresult", "dataframe", "property_dict"]
+        _allowed_return_formats = ["dataframe", "property_dict"]
         if return_format.lower() not in _allowed_return_formats:
             raise ValueError(
                 f"{return_format} is a bad return format (valid={_allowed_return_formats})"
             )
 
+        results = []
+
         # What tables and what columns are required for this query?
         tables_required, column_list, _ = self._parse_selected_columns(property_names)
         tables_required = self._append_filter_tables(tables_required, filters)
 
+        # Can only strip table names for queries against a single table
+        if strip_table_names and len(tables_required) > 1:
+            raise DataRegistryException(
+                    "Can only strip out table names "
+                    "for single table queries"
+                )
+
         # Construct query
+        for schema in column_list.keys(): # Loop over each schema
+            columns = [f"{p.table.name}.{p.name}" for p in column_list[schema]]
 
-        # No properties requested, return all from dataset table (only)
-        if property_names is None:
-            stmt = select("*").select_from(self._tables["dataset"])
-
-        # Return the selected properties.
-        else:
-            stmt = select(*[p.label(p.table.name + "." + p.name) for p in column_list])
-
+            stmt = select(
+                *[p.label(f"{p.table.name}.{p.name}") for p in column_list[schema]]
+            )
+            
             # Create joins
             if len(tables_required) > 1:
-                j = self._tables["dataset"]
+                j = self.db_connection.metadata["tables"][f"{schema}.dataset"]
                 for i in range(len(tables_required)):
-                    if tables_required[i] in ["dataset", "keyword"]:
+                    if tables_required[i] in ["dataset", "keyword", "dependency"]:
                         continue
 
-                    j = j.join(self._tables[tables_required[i]])
+                    j = j.join(
+                        self.db_connection.metadata["tables"][
+                            f"{schema}.{tables_required[i]}"
+                        ]
+                    )
 
                 # Special case for many-to-many keyword join
                 if "keyword" in tables_required:
-                    j = j.join(self._tables["dataset_keyword"]).join(
-                        self._tables["keyword"]
+                    j = j.join(
+                        self.db_connection.metadata["tables"][
+                            f"{schema}.dataset_keyword"
+                        ]
+                    ).join(self.db_connection.metadata["tables"][f"{schema}.keyword"])
+
+                # Special case for dependencies
+                if "dependency" in tables_required:
+                    dataset_table = self.db_connection.metadata["tables"][f"{schema}.dataset"]
+                    dependency_table = self.db_connection.metadata["tables"][f"{schema}.dependency"]
+                    
+                    j = j.join(
+                        dependency_table,
+                        dependency_table.c.input_id == dataset_table.c.dataset_id  # Explicit join condition
                     )
 
                 stmt = stmt.select_from(j)
             else:
-                stmt = stmt.select_from(self._tables[tables_required[0]])
+                stmt = stmt.select_from(
+                    self.db_connection.metadata["tables"][
+                        f"{schema}.{tables_required[0]}"
+                    ]
+                )
 
-        # Append filters if acceptable
-        if len(filters) > 0:
-            for f in filters:
-                stmt = self._render_filter(f, stmt)
+            # Append filters if acceptable
+            if len(filters) > 0:
+                for f in filters:
+                    stmt = self._render_filter(f, stmt, schema)
 
-        # Report the constructed SQL query
-        if verbose:
-            print(f"Executing query: {stmt}")
+            # Report the constructed SQL query
+            if verbose:
+                print(f"Executing query: {stmt}")
 
-        # Execute the query
-        with self._engine.connect() as conn:
-            try:
-                result = conn.execute(stmt)
-            except DBAPIError as e:
-                print("Original error:")
-                print(e.StatementError.orig)
-                return None
+            # Execute the query
+            with self._engine.connect() as conn:
+                try:
+                    result = conn.execute(stmt)
+                except DBAPIError as e:
+                    print("Original error:")
+                    print(e.StatementError.orig)
+                    return None
 
-        # Make sure we are working with the correct return format.
-        if return_format.lower() != "cursorresult":
-            result = pd.DataFrame(result)
+            # Store result
+            results.append(pd.DataFrame(result))
 
-            if return_format.lower() == "property_dict":
-                result = result.to_dict("list")
+        # Combine results across schemas
+        return_result = pd.concat(results, ignore_index=True)
 
-        return result
+        # Strip out table name from the headers
+        if strip_table_names:
+            return_result.rename(columns=lambda x: x.split('.')[-1], inplace=True)
+
+        if return_format.lower() == "property_dict":
+            return return_result.to_dict("list")
+        else:
+            return return_result
 
     def gen_filter(self, property_name, bin_op, value):
         """
@@ -573,8 +657,8 @@ class Query:
 
     def resolve_alias_fully(self, alias):
         """
-          Given alias id or name, return id of dataset it ultimately
-          references
+        Given alias id or name, return id of dataset it ultimately
+        references
         """
         id, id_type = self.resolve_alias(alias)
         while id_type == "alias":
@@ -589,7 +673,6 @@ class Query:
         verbose=False,
         return_format="property_dict",
     ):
-
         """
         Return requested columns from dataset_alias table, subject to filters
 
@@ -630,13 +713,9 @@ class Query:
                     if cmps[0] == "dataset_alias":  # all is well
                         cols.append(tbl.c[cmps[1]])
                     else:
-                        raise DataRegistryException(
-                            f"find_aliases: no such column {p}"
-                        )
+                        raise DataRegistryException(f"find_aliases: no such column {p}")
                 else:
-                    raise DataRegistryException(
-                        f"find_aliases: no such column {p}"
-                    )
+                    raise DataRegistryException(f"find_aliases: no such column {p}")
             stmt = select(*[p.label("dataset_alias." + p.name) for p in cols])
         # Append filters if acceptable
         if len(filters) > 0:

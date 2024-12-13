@@ -101,7 +101,7 @@ def add_table_row(conn, table_meta, values, commit=True):
 
 
 class DbConnection:
-    def __init__(self, config_file=None, schema=None, verbose=False):
+    def __init__(self, config_file=None, schema=None, verbose=False, production_mode=False):
         """
         Simple class to act as container for connection
 
@@ -114,6 +114,8 @@ class DbConnection:
             Schema to connect to.  If None, default schema is assumed
         verbose : bool, optional
             If True, produce additional output
+        production_mode : bool, optional
+            True to register/modify production schema entries
         """
 
         # Extract connection info from configuration file
@@ -123,10 +125,11 @@ class DbConnection:
         # Build the engine
         self._engine = engine_from_config(connection_parameters)
 
-        # Pull out the working schema version
+        # Pull out the database dialect
         driver = make_url(connection_parameters["sqlalchemy.url"]).drivername
         self._dialect = driver.split("+")[0]
 
+        # Define working schema
         if self._dialect == "sqlite":
             self._schema = None
         else:
@@ -134,6 +137,12 @@ class DbConnection:
                 self._schema = DEFAULT_SCHEMA_WORKING
             else:
                 self._schema = schema
+
+        # Dict to store schema/table information (filled in `_reflect()`)
+        self.metadata = {}
+
+        # Are we working in production mode for this instance?
+        self._production_mode = production_mode
 
     @property
     def engine(self):
@@ -146,6 +155,90 @@ class DbConnection:
     @property
     def schema(self):
         return self._schema
+
+    @property
+    def production_schema(self):
+        # Database hasn't been reflected yet
+        if len(self.metadata) == 0:
+            self._reflect()
+
+        return self._prod_schema
+
+    @property
+    def active_schema(self):
+        if self._production_mode:
+            return self._prod_schema
+        else:
+            return self._schema
+
+    @property
+    def production_mode(self):
+        return self._production_mode
+
+    def _reflect(self):
+        """
+        """
+        # Reflect the working schema to find database tables
+        metadata = MetaData(schema=self.schema)
+        metadata.reflect(self.engine, self.schema)
+
+        # Find the provenance table in the working schema
+        if self.dialect == "sqlite":
+            prov_name = "provenance"
+        else:
+            prov_name = ".".join([self.schema, "provenance"])
+
+        if prov_name not in metadata.tables:
+            raise DataRegistryException(
+                f"Incompatible database: no Provenance table {prov_name}, "
+                f"listed tables are {self._metadata.tables}"
+                )
+
+        # From the procenance table get the associated production schema
+        cols = ["db_version_major", "db_version_minor", "db_version_patch", "associated_production"]
+        prov_table = metadata.tables[prov_name]
+        stmt = select(*[column(c) for c in cols]).select_from(prov_table)
+        stmt = stmt.order_by(prov_table.c.provenance_id.desc())
+        with self.engine.connect() as conn:
+            results = conn.execute(stmt)
+            r = results.fetchone()
+        self._prod_schema = r[3]
+        self.metadata["schema_version"] = f"{r[0]}.{r[1]}.{r[2]}"
+
+        # Add production schema tables to metadata
+        metadata.reflect(self.engine, self._prod_schema)
+        cols.remove("associated_production")
+        prov_name = ".".join([self._prod_schema, "provenance"])
+        stmt = select(*[column(c) for c in cols]).select_from(prov_table)
+        stmt = stmt.order_by(prov_table.c.provenance_id.desc())
+        with self.engine.connect() as conn:
+            results = conn.execute(stmt)
+            r = results.fetchone()
+        self.metadata["prod_schema_version"] = f"{r[0]}.{r[1]}.{r[2]}"
+
+        # Store metadata
+        self.metadata["tables"] = metadata.tables
+
+    def get_table(self, tbl, schema=None):
+        """
+
+        """
+
+        # Database hasn't been reflected yet
+        if len(self.metadata) == 0:
+            self._reflect()
+
+        # Which schema to get the table from
+        if schema is None:
+            schema = self.active_schema
+
+        # Find table
+        if "." not in tbl:
+            if schema:
+                tbl = ".".join([schema, tbl])
+        if tbl not in self.metadata["tables"].keys():
+            raise ValueError(f"No such table {tbl}")
+        return self.metadata["tables"][tbl]
 
 
 class TableMetadata:

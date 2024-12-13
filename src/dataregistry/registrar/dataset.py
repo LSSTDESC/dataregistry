@@ -143,11 +143,11 @@ class DatasetTable(BaseTable):
         if kwargs_dict["owner_type"] == "production":
             if kwargs_dict["is_overwritable"]:
                 raise ValueError("Cannot overwrite production entries")
-            if (not self._table_metadata.is_production_schema) and (
+            if (not self.db_connection.production_mode) and (
                 not kwargs_dict["test_production"]
             ):
                 raise ValueError(
-                    "Only the production schema can handle owner_type='production'"
+                    "Must be in `production_mode` to write to production schema'"
                 )
 
             # The only owner allowed for production datasets is "production"
@@ -155,7 +155,7 @@ class DatasetTable(BaseTable):
                 raise ValueError("`owner` for production datasets must be 'production'")
         else:
             if self._dialect != "sqlite" and not kwargs_dict["test_production"]:
-                if self._table_metadata.is_production_schema:
+                if self.db_connection.production_mode:
                     raise ValueError(
                         "Only owner_type='production' can go in the production schema"
                     )

@@ -1,6 +1,5 @@
 import os
 
-from dataregistry.db_basic import TableMetadata
 from dataregistry.schema import load_schema
 from sqlalchemy import select, update
 from datetime import datetime
@@ -54,12 +53,10 @@ class BaseTable:
         self._root_dir = root_dir
 
         # Database engine and dialect.
+        self.db_connection = db_connection
         self._engine = db_connection.engine
         self._schema = db_connection.schema
         self._dialect = db_connection._dialect
-
-        # Link to Table Metadata.
-        self._table_metadata = TableMetadata(db_connection)
 
         # Store user id
         self._uid = os.getenv("USER")
@@ -78,7 +75,8 @@ class BaseTable:
         self.schema_yaml = load_schema()
 
     def _get_table_metadata(self, tbl):
-        return self._table_metadata.get(tbl)
+        #return self._table_metadata.get(tbl)
+        return self.db_connection.get_table(tbl)
 
     def delete(self, entry_id):
         """

@@ -63,9 +63,8 @@ def test_register_dataset_external(dummy_file, contact_email, url, rel_path):
             "dataset.url",
         ],
         [f],
-        return_format="cursorresult",
     )
 
-    for r in results:
-        assert getattr(r, "dataset.contact_email") == contact_email
-        assert getattr(r, "dataset.url") == url
+    assert len(results["dataset.contact_email"]) == 1
+    assert results["dataset.contact_email"][0] == contact_email
+    assert results["dataset.url"][0] == url

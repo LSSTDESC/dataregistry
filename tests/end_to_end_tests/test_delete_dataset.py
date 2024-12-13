@@ -92,20 +92,19 @@ def test_delete_dataset_entry(dummy_file, is_dummy, dataset_name, delete_by_id):
             "dataset.relative_path",
         ],
         [f],
-        return_format="cursorresult",
     )
 
-    for r in results:
-        assert get_dataset_status(getattr(r, "dataset.status"), "deleted")
-        assert getattr(r, "dataset.delete_date") is not None
-        assert getattr(r, "dataset.delete_uid") is not None
+    assert len(results["dataset.status"]) == 1
+    assert get_dataset_status(results["dataset.status"][0], "deleted")
+    assert results["dataset.delete_date"][0] is not None
+    assert results["dataset.delete_uid"][0] is not None
 
     if not is_dummy:
         # Make sure the file in the root_dir has gone
         data_path = _form_dataset_path(
-            getattr(r, "dataset.owner_type"),
-            getattr(r, "dataset.owner"),
-            getattr(r, "dataset.relative_path"),
+            results["dataset.owner_type"][0],
+            results["dataset.owner"][0],
+            results["dataset.relative_path"][0],
             schema=DEFAULT_SCHEMA_WORKING,
             root_dir=str(tmp_root_dir),
         )
