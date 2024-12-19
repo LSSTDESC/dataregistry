@@ -4,7 +4,6 @@ from sqlalchemy import MetaData
 from sqlalchemy import column,  insert, select
 import yaml
 import os
-import warnings
 from datetime import datetime
 from dataregistry import __version__
 from dataregistry.exceptions import DataRegistryException
@@ -101,9 +100,26 @@ def add_table_row(conn, table_meta, values, commit=True):
 
 
 class DbConnection:
-    def __init__(self, config_file=None, schema=None, verbose=False, production_mode=False):
+    def __init__(self, config_file=None, schema=None, verbose=False, production_mode=False, creation_mode=False):
         """
         Simple class to act as container for connection
+
+        Special cases
+        -------------
+        production_mode :
+            By default a connection to the working schema will be made, and
+            from this the paired production schema will be deduced from the
+            provenance table. In the default mode both schemas
+            working/production are avaliable for queries, but new
+            entries/modifications are done to the working schema. To create new
+            entries/modifications to production entries, `production_mode` must
+            be `True`.
+        creation_mode :
+            During schema creation, the working/production schema pairs are yet
+            to be created. This flag has to be changed to `True` during schema
+            creation to skip querying the provenance table for information. In
+            this mode the passed `schema` can either be the working or
+            production schema name.  
 
         Parameters
         ----------
@@ -111,7 +127,8 @@ class DbConnection:
             Path to config file with low-level connection information.
             If None, default location is assumed
         schema : str, optional
-            Schema to connect to.  If None, default schema is assumed
+            Working schema to connect to.  If None, default working schema is
+            assumed
         verbose : bool, optional
             If True, produce additional output
         production_mode : bool, optional
@@ -144,6 +161,9 @@ class DbConnection:
         # Are we working in production mode for this instance?
         self._production_mode = production_mode
 
+        # Are we in schema creation mode?
+        self._creation_mode = creation_mode
+
     @property
     def engine(self):
         return self._engine
@@ -175,17 +195,21 @@ class DbConnection:
     def production_mode(self):
         return self._production_mode
 
+    @property
+    def creation_mode(self):
+        return self._creation_mode
+
     def _reflect(self):
         """
-        Reflect the working and production schemas to get the tables within the database.
+        Reflect the working and production schemas to get the tables within the
+        database.
 
-        The production schema is automatically derived from the working schema
+        When the connection is *not* in `creation_mode` (which is the default),
+        the production schema is automatically derived from the working schema
         through the provenance table. The tables and versions of each schema
         are extracted and stored in the `self.metadata` dict.
-
-        Note during schema creating the provenance information will not yet be
-        avaliable, hense the warning rather than an exception.
         """
+
         # Reflect the working schema to find database tables
         metadata = MetaData(schema=self.schema)
         metadata.reflect(self.engine, self.schema)
@@ -202,6 +226,11 @@ class DbConnection:
                 f"listed tables are {self._metadata.tables}"
                 )
 
+        # Don't go on to query the provenance table during schema creation
+        if self.creation_mode:
+            self.metadata["tables"] = metadata.tables
+            return
+
         # From the procenance table get the associated production schema
         cols = ["db_version_major", "db_version_minor", "db_version_patch", "associated_production"]
         prov_table = metadata.tables[prov_name]
@@ -211,17 +240,13 @@ class DbConnection:
             results = conn.execute(stmt)
             r = results.fetchone()
         if r is None:
-            warnings.warn(
-                "During reflection no provenance information was found "
-                "(this is normal during database creation)", UserWarning)
-            self._prod_schema = None
-            self.metadata["schema_version"] = None
-        else:
-            self._prod_schema = r[3]
-            self.metadata["schema_version"] = f"{r[0]}.{r[1]}.{r[2]}"
+            raise DataRegistryException(
+                "During reflection no provenance information was found")
+        self._prod_schema = r[3]
+        self.metadata["schema_version"] = f"{r[0]}.{r[1]}.{r[2]}"
 
         # Add production schema tables to metadata
-        if self._prod_schema is not None and self.dialect != "sqlite":
+        if self.dialect != "sqlite":
             metadata.reflect(self.engine, self._prod_schema)
             cols.remove("associated_production")
             prov_name = ".".join([self._prod_schema, "provenance"])
