@@ -3,7 +3,7 @@ import shlex
 import dataregistry_cli.cli as cli
 import pytest
 from dataregistry import DataRegistry
-from dataregistry.schema import DEFAULT_SCHEMA_WORKING, DEFAULT_SCHEMA_PRODUCTION
+from dataregistry.schema import DEFAULT_SCHEMA_WORKING
 
 from database_test_utils import dummy_file
 from dataregistry.registrar.dataset_util import get_dataset_status, set_dataset_status
@@ -74,13 +74,13 @@ def test_production_entry(dummy_file):
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
 
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_PRODUCTION)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir))
 
     if datareg.Query._dialect != "sqlite":
         # Register a dataset
         cmd = "register dataset my_production_cli_dataset 0.1.2 --location_type dummy"
         cmd += " --owner_type production --owner production"
-        cmd += f" --schema {DEFAULT_SCHEMA_PRODUCTION} --root_dir {str(tmp_root_dir)}"
+        cmd += f" --production_mode --root_dir {str(tmp_root_dir)}"
         cli.main(shlex.split(cmd))
 
         # Check
@@ -126,12 +126,12 @@ def test_delete_dataset_by_id(dummy_file,monkeypatch):
             "dataset.status",
         ],
         [f],
-        return_format="cursorresult",
     )
-    for r in results:
-        assert get_dataset_status(getattr(r, "dataset.status"), "deleted")
-        assert getattr(r, "dataset.delete_date") is not None
-        assert getattr(r, "dataset.delete_uid") is not None
+    
+    assert len(results["dataset.dataset_id"]) == 1
+    assert get_dataset_status(results["dataset.status"][0], "deleted")
+    assert results["dataset.delete_date"][0] is not None
+    assert results["dataset.delete_uid"][0] is not None
 
 
 def test_delete_dataset_by_name(dummy_file,monkeypatch):
@@ -175,12 +175,12 @@ def test_delete_dataset_by_name(dummy_file,monkeypatch):
             "dataset.status",
         ],
         [f],
-        return_format="cursorresult",
     )
-    for r in results:
-        assert get_dataset_status(getattr(r, "dataset.status"), "deleted")
-        assert getattr(r, "dataset.delete_date") is not None
-        assert getattr(r, "dataset.delete_uid") is not None
+
+    assert len(results["dataset.dataset_id"]) == 1
+    assert get_dataset_status(results["dataset.status"][0], "deleted")
+    assert results["dataset.delete_date"][0] is not None
+    assert results["dataset.delete_uid"][0] is not None
 
 def test_dataset_entry_with_keywords(dummy_file):
     """Make a dataset with some keywords tagged"""
@@ -204,11 +204,12 @@ def test_dataset_entry_with_keywords(dummy_file):
             "keyword.keyword",
         ],
         [f],
-        return_format="cursorresult",
     )
-    for r in results:
-        assert getattr(r, "dataset.name") == "my_cli_dataset_keywords"
-        assert getattr(r, "keyword.keyword") in ["observation", "simulation"]
+
+    assert len(results["dataset.name"]) == 2
+    for i in range(2):
+        assert results["dataset.name"][i] == "my_cli_dataset_keywords"
+        assert results["keyword.keyword"][i] in ["observation", "simulation"]
 
 
 def test_modify_dataset(dummy_file):
@@ -243,7 +244,7 @@ def test_modify_dataset(dummy_file):
             "dataset.description",
         ],
         [f],
-        return_format="cursorresult",
     )
-    for r in results:
-        assert getattr(r, "dataset.description") == "Updated CLI desc"
+
+    assert len(results["dataset.dataset_id"]) == 1
+    assert results["dataset.description"][0] == "Updated CLI desc"

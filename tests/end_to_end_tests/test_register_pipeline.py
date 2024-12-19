@@ -19,12 +19,10 @@ def _check_dataset_has_right_execution(datareg, d_id, ex_id):
             "dataset.execution_id",
         ],
         [f],
-        return_format="cursorresult",
     )
 
-    for i, r in enumerate(results):
-        assert i < 1
-        assert getattr(r, "dataset.execution_id") == ex_id
+    assert len(results["dataset.execution_id"]) == 1
+    assert results["dataset.execution_id"][0] == ex_id
 
 
 def _check_execution_has_correct_dependencies(datareg, ex_id, input_datasets):
@@ -40,12 +38,11 @@ def _check_execution_has_correct_dependencies(datareg, ex_id, input_datasets):
             "dataset.name",
         ],
         [f],
-        return_format="cursorresult",
     )
 
-    for i, r in enumerate(results):
-        assert getattr(r, "dataset.dataset_id") in input_datasets
-        assert i < len(input_datasets)
+    assert len(results["dataset.name"]) == len(input_datasets)
+    for thisid in results["dataset.dataset_id"]:
+        assert thisid in input_datasets
 
 
 def test_pipeline_entry(dummy_file):

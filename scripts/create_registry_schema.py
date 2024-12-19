@@ -326,7 +326,7 @@ keywords = load_preset_keywords()
 # Loop over each schema
 for schema in schema_list:
     # Connect to database to find out what the backend is
-    db_connection = DbConnection(args.config, schema)
+    db_connection = DbConnection(args.config, schema, creation_mode=True)
     print(f"Database dialect is '{db_connection.dialect}'")
 
     if db_connection.dialect == "sqlite":

@@ -39,14 +39,12 @@ def test_copy_data(dummy_file, data_org):
     results = datareg.Query.find_datasets(
         ["dataset.data_org", "dataset.nfiles", "dataset.total_disk_space"],
         [f],
-        return_format="cursorresult",
     )
 
-    for i, r in enumerate(results):
-        assert getattr(r, "dataset.data_org") == data_org
-        assert getattr(r, "dataset.nfiles") == 1
-        assert getattr(r, "dataset.total_disk_space") > 0
-        assert i < 1
+    assert len(results["dataset.data_org"]) == 1
+    assert results["dataset.data_org"][0] == data_org
+    assert results["dataset.nfiles"][0] == 1
+    assert results["dataset.total_disk_space"][0] > 0
 
 
 @pytest.mark.parametrize(

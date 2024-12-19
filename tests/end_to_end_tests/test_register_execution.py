@@ -47,10 +47,8 @@ def test_register_execution_with_config_file(dummy_file):
             "execution.configuration",
         ],
         [f],
-        return_format="cursorresult",
     )
 
-    for i, r in enumerate(results):
-        assert i < 1
-        assert getattr(r, "execution.configuration") is not None
-        assert getattr(r, "execution.execution_id") == ex_id
+    assert len(results["execution.execution_id"]) == 1
+    assert results["execution.configuration"][0] is not None
+    assert results["execution.execution_id"][0] == ex_id

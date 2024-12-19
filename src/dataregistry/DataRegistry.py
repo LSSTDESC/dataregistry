@@ -18,6 +18,7 @@ class DataRegistry:
         root_dir=None,
         verbose=False,
         site=None,
+        production_mode=False
     ):
         """
         Primary data registry wrapper class.
@@ -54,11 +55,13 @@ class DataRegistry:
             Can be used instead of `root_dir`. Some predefined "sites" are
             built in, such as "nersc", which will set the `root_dir` to the
             data registry's default data location at NERSC.
+        production_mode : bool, optional
+            True to register/modify production schema entries
         """
 
         # Establish connection to database
         self.db_connection = DbConnection(config_file, schema=schema,
-                                          verbose=verbose)
+                                          verbose=verbose, production_mode=production_mode)
 
         # Work out the location of the root directory
         self.root_dir = self._get_root_dir(root_dir, site)
