@@ -266,6 +266,10 @@ class Query:
             Logic filter to be appended to SQL query
         stmt : sql alchemy Query object
             Current SQL query
+        schema : str
+            The dicts returned from `self._parse_selected_columns` are indexed
+            by schema (i.e., working or production), we need to know which
+            schema's columns we are rendering a filter for
 
         Returns
         -------
