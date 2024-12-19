@@ -199,8 +199,19 @@ class Query:
             input_parts = col_name.split(".")
             num_parts = len(input_parts)
 
+            # Make sure column name is value
             if num_parts > 2:
                 raise ValueError(f"{col_name} is not a valid column")
+
+            if num_parts == 1:
+                if col_name in self.db_connection.duplicate_column_names:
+                    raise DataRegistryException(
+                        (
+                            f"Column name '{col_name}' is not unique to one table "
+                            f"in the database, use <table_name>.<column_name> "
+                            f"format instead"
+                        )
+                    )
 
             # Loop over each column in the database and find matches
             for table in self.db_connection.metadata["tables"]:
@@ -216,6 +227,7 @@ class Query:
                         # Input is in <column> format
                         if input_parts[0] == table_parts[-1]:
                             tmp_column_list[column.table.schema].append(column)
+                            tables_required.add(column.table.name)
                     elif num_parts == 2:
                         # Input is in <table>.<column> format
                         if (
@@ -223,23 +235,7 @@ class Query:
                             and input_parts[1] == table_parts[-1]
                         ):
                             tmp_column_list[column.table.schema].append(column)
-
-            # Make sure we don't find multiple matches
-            for s in tmp_column_list.keys(): # Each schema
-                chk = []
-                for x in tmp_column_list[s]: # Each column in schema
-                    if x.name in chk:
-                        raise DataRegistryException(
-                            (
-                                f"Column name '{col_name}' is not unique to one table "
-                                f"in the database, use <table_name>.<column_name> "
-                                f"format instead"
-                            )
-                        )
-                    chk.append(x.name)
-
-                    # Add this table to the list
-                    tables_required.add(x.table.name)
+                            tables_required.add(column.table.name)
 
             # Store results
             for att in tmp_column_list.keys():

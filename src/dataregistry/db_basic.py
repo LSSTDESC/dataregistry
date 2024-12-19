@@ -8,6 +8,7 @@ from datetime import datetime
 from dataregistry import __version__
 from dataregistry.exceptions import DataRegistryException
 from dataregistry.schema import DEFAULT_SCHEMA_WORKING
+from functools import cached_property
 
 """
 Low-level utility routines and classes for accessing the registry
@@ -283,6 +284,36 @@ class DbConnection:
 
         # Store metadata
         self.metadata["tables"] = metadata.tables
+
+    @cached_property
+    def duplicate_column_names(self):
+        """
+        Probe the database for tables which share column names. This is used
+        later for querying.
+
+        Returns
+        -------
+        duplicates : list
+            List of column names that are duplicated across tables
+        """
+
+        # Database hasn't been reflected yet
+        if len(self.metadata) == 0:
+            self._reflect()
+
+        # Find duplicate column names
+        duplicates = set()
+        all_columns = []
+        for table in self.metadata["tables"]:
+            for column in self.metadata["tables"][table].c:
+                if self.metadata["tables"][table].schema != self.active_schema:
+                    continue
+
+                if column.name in all_columns:
+                    duplicates.add(column.name)
+                all_columns.append(column.name)
+
+        return list(duplicates)
 
     def get_table(self, tbl, schema=None):
         """
