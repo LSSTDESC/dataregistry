@@ -343,20 +343,6 @@ class Query:
 
         return list(tables_required)
 
-    def get_db_versioning(self):
-        """
-        returns
-        -------
-        major, minor, patch      int   version numbers for db OR
-        None, None, None     in case db is too old to contain provenance table
-        """
-        raise NotImplementedError()
-        #return (
-        #    self._metadata.db_version_major,
-        #    self._metadata.db_version_minor,
-        #    self._metadata.db_version_patch,
-        #)
-
     def find_datasets(
         self,
         property_names=None,
