@@ -261,7 +261,7 @@ class DbConnection:
         if prov_name not in metadata.tables:
             raise DataRegistryException(
                 f"Incompatible database: no Provenance table {prov_name}, "
-                f"listed tables are {self._metadata.tables}"
+                f"listed tables are {metadata.tables}"
                 )
 
         # Don't go on to query the provenance table during schema creation

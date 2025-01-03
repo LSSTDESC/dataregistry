@@ -580,7 +580,10 @@ class Query:
 
         If no such alias is found, return None, None
         """
-        tbl_name = f"{self.db_connection.active_schema}.dataset_alias"
+        if self.db_connection.dialect == "sqlite":
+            tbl_name = f"dataset_alias"
+        else:
+            tbl_name = f"{self.db_connection.active_schema}.dataset_alias"
         tbl = self.db_connection.metadata["tables"][tbl_name]
         if isinstance(alias, int):
             filter_column = "dataset_alias.dataset_alias_id"
@@ -659,7 +662,10 @@ class Query:
             )
 
         # This is always a query of a single table: dataset_alias
-        tbl_name = f"{self.db_connection.active_schema}.dataset_alias"
+        if self.db_connection.dialect == "sqlite":
+            tbl_name = f"dataset_alias"
+        else:
+            tbl_name = f"{self.db_connection.active_schema}.dataset_alias"
         tbl = self.db_connection.metadata["tables"][tbl_name]
         if property_names is None:
             stmt = select("*").select_from(tbl)
