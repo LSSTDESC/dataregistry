@@ -352,7 +352,9 @@ class Query:
         strip_table_names=False,
     ):
         """
-        Get specified properties for datasets satisfying all filters
+        Get specified properties for datasets satisfying all filters. Both
+        schemas (i.e., the working and production schema) are searched, with
+        the results combined.
 
         If property_names is None, return all properties from the dataset table
         (only). Otherwise, return the property_names columns for each
@@ -563,6 +565,8 @@ class Query:
         Find what an alias points to.  May be either a dataset or another
         alias (or nothing)
 
+        Note this assumes the alias is within the current "active_schema".
+
         Parameters
         ----------
         alias      String or int      Either name or id of an alias
@@ -576,7 +580,8 @@ class Query:
 
         If no such alias is found, return None, None
         """
-        tbl = self._tables["dataset_alias"]
+        tbl_name = f"{self.db_connection.active_schema}.dataset_alias"
+        tbl = self.db_connection.metadata["tables"][tbl_name]
         if isinstance(alias, int):
             filter_column = "dataset_alias.dataset_alias_id"
         elif isinstance(alias, str):
@@ -587,7 +592,7 @@ class Query:
 
         stmt = select(tbl.c.dataset_id, tbl.c.ref_alias_id)
         stmt = stmt.select_from(tbl)
-        stmt = self._render_filter(f, stmt)
+        stmt = self._render_filter(f, stmt, self.db_connection.active_schema)
 
         with self._engine.connect() as conn:
             try:
@@ -626,6 +631,12 @@ class Query:
         """
         Return requested columns from dataset_alias table, subject to filters
 
+        Note this function only searches the "active" schema (unlike
+        `find_datasets` which searches both the working and production schemas
+        jointly). This means when you are in `production_mode` you will search
+        the production schema, else (the default) you will search the working
+        schema.
+
         Parameters
         ----------
         property_names : list(str), optional
@@ -648,8 +659,8 @@ class Query:
             )
 
         # This is always a query of a single table: dataset_alias
-        tbl_name = "dataset_alias"
-        tbl = self._tables[tbl_name]
+        tbl_name = f"{self.db_connection.active_schema}.dataset_alias"
+        tbl = self.db_connection.metadata["tables"][tbl_name]
         if property_names is None:
             stmt = select("*").select_from(tbl)
 
@@ -670,7 +681,7 @@ class Query:
         # Append filters if acceptable
         if len(filters) > 0:
             for f in filters:
-                stmt = self._render_filter(f, stmt)
+                stmt = self._render_filter(f, stmt, self.db_connection.active_schema)
 
         # Report the constructed SQL query
         if verbose:

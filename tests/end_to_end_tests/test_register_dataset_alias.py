@@ -4,7 +4,6 @@ from dataregistry.schema import DEFAULT_SCHEMA_WORKING
 from database_test_utils import *
 import pytest
 
-@pytest.mark.skip
 def test_register_dataset_alias(dummy_file):
     """Register a dataset and make a dataset alias entry for it"""
 
