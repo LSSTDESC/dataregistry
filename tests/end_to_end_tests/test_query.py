@@ -53,7 +53,6 @@ def test_query_all(dummy_file):
         assert len(v) == 1
 
 
-@pytest.mark.skip
 def test_query_between_columns(dummy_file):
     """
     Make sure when querying with a filter from one table, but only returning
@@ -67,16 +66,17 @@ def test_query_between_columns(dummy_file):
     # Add entry
     _NAME = "DESC:datasets:test_query_between_columns"
     _V_STRING = "0.0.1"
-    d_id = _insert_dataset_entry(datareg, _NAME, _V_STRING)
+
+    e_id = _insert_execution_entry(
+        datareg, "test_query_between_columns", "test"
+    )
+
+    d_id = _insert_dataset_entry(datareg, _NAME, _V_STRING, execution_id=e_id)
 
     a_id = _insert_alias_entry(
         datareg.Registrar, "alias:test_query_between_columns", d_id
     )
 
-    e_id = _insert_execution_entry(
-        datareg, "test_query_between_columns", "test", input_datasets=[d_id]
-    )
-    print(e_id)
     for i in range(3):
         if i == 0:
             # Query on execution, but only return dataset columns
@@ -96,7 +96,6 @@ def test_query_between_columns(dummy_file):
             filters=f,
         )
 
-        print(results)
         assert len(results["dataset.name"]) == 1
         assert results["dataset.name"][0] == _NAME
         assert results["dataset.version_string"][0] == _V_STRING
