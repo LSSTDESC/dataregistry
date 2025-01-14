@@ -103,21 +103,31 @@ def add_table_row(conn, table_meta, values, commit=True):
 class DbConnection:
     def __init__(self, config_file=None, schema=None, verbose=False, production_mode=False, creation_mode=False):
         """
-        Simple class to act as container for connection
+        Simple class to act as container for connection.
+
+        The DESC dataregistry internals always expect a working/production
+        schema pairing (except in the case of sqlite where there is only a
+        single "database" and no concept of schemas). Here the `schema` passed
+        is the working schema name, the production schema associated with that
+        working schema is automatially deduced via the `provenance` table. Both
+        the working and production schemas are connected to and reflected here. 
+
+        The `schema` passed to this function should always be the working
+        schema, the only exception is during schema creation, see note below.
 
         Special cases
         -------------
         production_mode :
-            By default a connection to the working schema will be made, and
-            from this the paired production schema will be deduced from the
-            provenance table. In the default mode both schemas
-            working/production are avaliable for queries, but new
-            entries/modifications are done to the working schema. To create new
-            entries/modifications to production entries, `production_mode` must
-            be `True`.
+            Both the working and production schemas are always connected to via
+            the `DbConnection` object. During queries, both schemas are
+            searched by default. However during entry creation, or
+            modification, `production_mode` sets which schema will be used for
+            those instances. By default, when `production_mode=False`, the
+            working schema is used to create/modify entries. If
+            `production_mode=True`, the production schema is used.
         creation_mode :
             During schema creation, the working/production schema pairs are yet
-            to be created. This flag has to be changed to `True` during schema
+            to be created. This flag must be changed to `True` during schema
             creation to skip querying the provenance table for information. In
             this mode the passed `schema` can either be the working or
             production schema name.  
@@ -303,15 +313,17 @@ class DbConnection:
 
         # Find duplicate column names
         duplicates = set()
-        all_columns = []
+        all_columns = set()
         for table in self.metadata["tables"]:
             for column in self.metadata["tables"][table].c:
+
+                # Only need to focus on a single schema (due to duplicate layout)
                 if self.metadata["tables"][table].schema != self.active_schema:
                     continue
 
                 if column.name in all_columns:
                     duplicates.add(column.name)
-                all_columns.append(column.name)
+                all_columns.add(column.name)
 
         return list(duplicates)
 

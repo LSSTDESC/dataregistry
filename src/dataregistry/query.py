@@ -213,12 +213,19 @@ class Query:
                         )
                     )
 
+            # Both working and production schema columns are within
+            # `self.db_connection.metadata["tables"]`. The loop bwlow finds the
+            # columns relavent for our query, and what tables they come from.
+
             # Loop over each column in the database and find matches
             for table in self.db_connection.metadata["tables"]:
                 for column in self.db_connection.metadata["tables"][table].c:
-                    X = str(column.table) + "." + column.name
+
+                    # Construct full name
+                    X = str(column.table) + "." + column.name # <table>.<column>
                     table_parts = X.split(".")
 
+                    # Initialize list to store columns for a given schema
                     if column.table.schema not in tmp_column_list.keys():
                         tmp_column_list[column.table.schema] = []
 
