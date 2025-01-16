@@ -19,6 +19,8 @@ def register_dataset(args):
         Path to root_dir
     args.site : str
         Look up root_dir using a site
+    args.production_mode : bool
+        True to register/modify production entries
 
     Information about the arguments that go into `register_dataset` can be
     found in `src/cli/cli.py` or by running `dregs --help`.
@@ -34,6 +36,7 @@ def register_dataset(args):
         schema=args.schema,
         root_dir=args.root_dir,
         site=args.site,
+        production_mode=args.production_mode,
     )
 
     # Register new dataset.

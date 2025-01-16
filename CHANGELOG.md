@@ -1,3 +1,16 @@
+## Version 1.1.0
+
+When connection to the database, both schemas are connected to and both schemas
+are reflected. This means that for all queries both schemas are queried by
+default and their results combined.
+
+For registering and modifying there is still only a single "active" schema per
+`DataRegistry()` (i.e., `DbConnection()`) instance. If the database was
+connected to with `production_mode=False` (the default), registered datasets
+will go into the working schema. If `production_mode=True` registered datasets
+will go into the production schema. The same logic is true for modifying
+registry entries.
+
 ## Version 1.0.5
 
 Update delete functionality

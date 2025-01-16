@@ -29,6 +29,8 @@ def modify_dataset(args):
         The column in the dataset table we are modifying
     args.value : str
         The updated value
+    args.production_mode : bool
+        True to register/modify production entries
     """
 
     # Connect to database.
@@ -37,6 +39,7 @@ def modify_dataset(args):
         schema=args.schema,
         root_dir=args.root_dir,
         site=args.site,
+        production_mode=args.production_mode,
     )
 
     # Modify dataset.

@@ -53,9 +53,6 @@ def dregs_ls(args):
 
     Can apply a "owner" and/or "owner_type" filter.
 
-    Note that the production schema will always be searched against, even if it
-    is not the passed `schema`.
-
     Parameters
     ----------
     args : argparse object
@@ -95,17 +92,6 @@ def dregs_ls(args):
         site=args.site,
     )
 
-    # Establish connection to the production schema
-    if datareg.db_connection.schema != args.prod_schema:
-        datareg_prod = DataRegistry(
-            config_file=args.config_file,
-            schema=args.prod_schema,
-            root_dir=args.root_dir,
-            site=args.site,
-        )
-    else:
-        datareg_prod = None
-
     # By default, search for "our" dataset
     if args.owner is None:
         args.owner = os.getenv("USER")
@@ -126,42 +112,40 @@ def dregs_ls(args):
     if args.keyword is not None:
         _print_cols.append("keyword.keyword")
 
-    # Loop over this schema and the production schema and print the results
-    for this_datareg in [datareg, datareg_prod]:
-        if this_datareg is None:
-            continue
+    mystr = (
+        f"Schema = {datareg.db_connection.schema} "
+        f"({datareg.db_connection.metadata['schema_version']})\n"
+        f"Production schema: {datareg.db_connection.production_schema} "
+        f"({datareg.db_connection.metadata['prod_schema_version']})"
+    )
+    print(f"\n{mystr}")
+    print("-" * len(mystr))
 
-        mystr = f"Schema = {this_datareg.db_connection.schema}"
-        print(f"\n{mystr}")
-        print("-" * len(mystr))
+    # Query
+    results = datareg.Query.find_datasets(
+        [x for x in _print_cols],
+        filters,
+        return_format="dataframe",
+    )
 
-        # Query
-        results = this_datareg.Query.find_datasets(
-            [x for x in _print_cols],
-            filters,
-            return_format="dataframe",
-        )
+    # Strip "dataset." from column names
+    new_col = {x: x.split("dataset.")[1] for x in results.columns if "dataset." in x}
+    results.rename(columns=new_col, inplace=True)
 
-        # Strip "dataset." from column names
-        new_col = {
-            x: x.split("dataset.")[1] for x in results.columns if "dataset." in x
-        }
-        results.rename(columns=new_col, inplace=True)
+    # Add compressed columns
+    if "owner" in results.keys():
+        results["type/owner"] = results["owner_type"] + "/" + results["owner"]
+        del results["owner"]
+        del results["owner_type"]
 
-        # Add compressed columns
-        if "owner" in results.keys():
-            results["type/owner"] = results["owner_type"] + "/" + results["owner"]
-            del results["owner"]
-            del results["owner_type"]
+    if "register_date" in results.keys():
+        results["register_date"] = results["register_date"].dt.date
 
-        if "register_date" in results.keys():
-            results["register_date"] = results["register_date"].dt.date
+    if "keyword.keyword" in results.keys():
+        del results["keyword.keyword"]
 
-        if "keyword.keyword" in results.keys():
-            del results["keyword.keyword"]
-
-        # Print
-        with pd.option_context(
-            "display.max_colwidth", args.max_chars, "display.max_rows", args.max_rows
-        ):
-            print(results)
+    # Print
+    with pd.option_context(
+        "display.max_colwidth", args.max_chars, "display.max_rows", args.max_rows
+    ):
+        print(results)

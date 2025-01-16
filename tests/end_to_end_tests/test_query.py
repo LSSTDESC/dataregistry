@@ -15,14 +15,6 @@ datareg = DataRegistry(root_dir="temp")
 def test_query_return_format():
     """Test we get back correct data format from queries"""
 
-    # Default, SQLAlchemy CursorResult
-    results = datareg.Query.find_datasets(
-        ["dataset.name", "dataset.version_string", "dataset.relative_path"],
-        [],
-        return_format="cursorresult",
-    )
-    assert type(results) == sqlalchemy.engine.cursor.CursorResult
-
     # Pandas DataFrame
     results = datareg.Query.find_datasets(
         ["dataset.name", "dataset.version_string", "dataset.relative_path"],
@@ -74,14 +66,15 @@ def test_query_between_columns(dummy_file):
     # Add entry
     _NAME = "DESC:datasets:test_query_between_columns"
     _V_STRING = "0.0.1"
-    d_id = _insert_dataset_entry(datareg, _NAME, _V_STRING)
+
+    e_id = _insert_execution_entry(
+        datareg, "test_query_between_columns", "test"
+    )
+
+    d_id = _insert_dataset_entry(datareg, _NAME, _V_STRING, execution_id=e_id)
 
     a_id = _insert_alias_entry(
         datareg.Registrar, "alias:test_query_between_columns", d_id
-    )
-
-    e_id = _insert_execution_entry(
-        datareg, "test_query_between_columns", "test", input_datasets=[d_id]
     )
 
     for i in range(3):
@@ -101,13 +94,11 @@ def test_query_between_columns(dummy_file):
         results = datareg.Query.find_datasets(
             property_names=["dataset.name", "dataset.version_string"],
             filters=f,
-            return_format="cursorresult",
         )
 
-        for i, r in enumerate(results):
-            assert i < 1
-            assert getattr(r, "dataset.name") == _NAME
-            assert getattr(r, "dataset.version_string") == _V_STRING
+        assert len(results["dataset.name"]) == 1
+        assert results["dataset.name"][0] == _NAME
+        assert results["dataset.version_string"][0] == _V_STRING
 
 @pytest.mark.skipif(
     datareg.db_connection._dialect == "sqlite", reason="wildcards break for sqlite"

@@ -2,7 +2,7 @@ from dataregistry import DataRegistry
 from dataregistry.schema import DEFAULT_SCHEMA_WORKING
 
 from database_test_utils import *
-
+import pytest
 
 def test_register_dataset_alias(dummy_file):
     """Register a dataset and make a dataset alias entry for it"""
@@ -35,13 +35,11 @@ def test_register_dataset_alias(dummy_file):
             "dataset_alias.dataset_id",
         ],
         [f],
-        return_format="cursorresult",
     )
 
-    for i, r in enumerate(results):
-        assert i < 1
-        assert getattr(r, "dataset.dataset_id") == d_id
-        assert getattr(r, "dataset_alias.dataset_id") == d_id
+    assert len(results["dataset_alias.dataset_id"]) == 1
+    assert results["dataset.dataset_id"][0] == d_id
+    assert results["dataset_alias.dataset_id"][0] == d_id
 
     # Try to reuse alias without supersede.  Should fail
     a2_id = _insert_alias_entry(datareg.Registrar, "nice_dataset_name", d2_id)

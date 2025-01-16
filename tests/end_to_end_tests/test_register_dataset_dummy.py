@@ -34,7 +34,7 @@ def test_register_dataset_defaults(dummy_file):
 
     # Query
     f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
-    results = datareg.Query.find_datasets(None, [f])
+    results = datareg.Query.find_datasets(None, [f], strip_table_names=True)
 
     # First make sure we find a result
     assert len(results) > 0
@@ -109,7 +109,7 @@ def test_register_dataset_manual(dummy_file):
 
     # Query
     f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
-    results = datareg.Query.find_datasets(None, [f])
+    results = datareg.Query.find_datasets(None, [f], strip_table_names=True)
 
     # First make sure we find a result
     assert len(results) > 0
@@ -340,7 +340,6 @@ def test_register_dataset_with_modified_default_execution(dummy_file):
 @pytest.mark.parametrize(
     "return_format_str,expected_type",
     [
-        ("cursorresult", sqlalchemy.engine.cursor.CursorResult),
         ("dataframe", pd.DataFrame),
         ("property_dict", dict),
     ],

@@ -1,13 +1,14 @@
 from sqlalchemy import engine_from_config
 from sqlalchemy.engine import make_url
 from sqlalchemy import MetaData
-from sqlalchemy import column,  insert, select
+from sqlalchemy import column, insert, select
 import yaml
 import os
 from datetime import datetime
 from dataregistry import __version__
 from dataregistry.exceptions import DataRegistryException
 from dataregistry.schema import DEFAULT_SCHEMA_WORKING
+from functools import cached_property
 
 """
 Low-level utility routines and classes for accessing the registry
@@ -16,7 +17,6 @@ Low-level utility routines and classes for accessing the registry
 __all__ = [
     "DbConnection",
     "add_table_row",
-    "TableMetadata",
 ]
 
 
@@ -79,7 +79,7 @@ def add_table_row(conn, table_meta, values, commit=True):
     ----------
     conn : SQLAlchemy Engine object
         Connection to the database
-    table_meta : TableMetadata object
+    table_meta : SqlAlchemy Metadata object
         Table we are inserting data into
     values : dict
         Properties to be entered
@@ -101,9 +101,43 @@ def add_table_row(conn, table_meta, values, commit=True):
 
 
 class DbConnection:
-    def __init__(self, config_file=None, schema=None, verbose=False):
+    def __init__(
+        self,
+        config_file=None,
+        schema=None,
+        verbose=False,
+        production_mode=False,
+        creation_mode=False,
+    ):
         """
-        Simple class to act as container for connection
+        Simple class to act as container for connection.
+
+        The DESC dataregistry internals always expect a working/production
+        schema pairing (except in the case of sqlite where there is only a
+        single "database" and no concept of schemas). Here the `schema` passed
+        is the working schema name, the production schema associated with that
+        working schema is automatially deduced via the `provenance` table. Both
+        the working and production schemas are connected to and reflected here.
+
+        The `schema` passed to this function should always be the working
+        schema, the only exception is during schema creation, see note below.
+
+        Special cases
+        -------------
+        production_mode :
+            Both the working and production schemas are always connected to via
+            the `DbConnection` object. During queries, both schemas are
+            searched by default. However during entry creation, or
+            modification, `production_mode` sets which schema will be used for
+            those instances. By default, when `production_mode=False`, the
+            working schema is used to create/modify entries. If
+            `production_mode=True`, the production schema is used.
+        creation_mode :
+            During schema creation, the working/production schema pairs are yet
+            to be created. This flag must be changed to `True` during schema
+            creation to skip querying the provenance table for information. In
+            this mode the passed `schema` can either be the working or
+            production schema name.
 
         Parameters
         ----------
@@ -111,9 +145,14 @@ class DbConnection:
             Path to config file with low-level connection information.
             If None, default location is assumed
         schema : str, optional
-            Schema to connect to.  If None, default schema is assumed
+            Working schema to connect to.  If None, default working schema is
+            assumed
         verbose : bool, optional
             If True, produce additional output
+        production_mode : bool, optional
+            True to register/modify production schema entries
+        creation_mode : bool, optional
+            Must be true when creating the schemas
         """
 
         # Extract connection info from configuration file
@@ -123,10 +162,11 @@ class DbConnection:
         # Build the engine
         self._engine = engine_from_config(connection_parameters)
 
-        # Pull out the working schema version
+        # Pull out the database dialect
         driver = make_url(connection_parameters["sqlalchemy.url"]).drivername
         self._dialect = driver.split("+")[0]
 
+        # Define working schema
         if self._dialect == "sqlite":
             self._schema = None
         else:
@@ -134,6 +174,15 @@ class DbConnection:
                 self._schema = DEFAULT_SCHEMA_WORKING
             else:
                 self._schema = schema
+
+        # Dict to store schema/table information (filled in `_reflect()`)
+        self.metadata = {}
+
+        # Are we working in production mode for this instance?
+        self._production_mode = production_mode
+
+        # Are we in schema creation mode?
+        self._creation_mode = creation_mode
 
     @property
     def engine(self):
@@ -147,96 +196,184 @@ class DbConnection:
     def schema(self):
         return self._schema
 
+    @property
+    def production_schema(self):
+        # Database hasn't been reflected yet
+        if len(self.metadata) == 0:
+            self._reflect()
 
-class TableMetadata:
-    def __init__(self, db_connection, get_db_version=True):
+        return self._prod_schema
+
+    @property
+    def active_schema(self):
+        if self._production_mode:
+            return self._prod_schema
+        else:
+            return self._schema
+
+    @property
+    def production_mode(self):
+        return self._production_mode
+
+    @property
+    def creation_mode(self):
+        return self._creation_mode
+
+    def _reflect(self):
         """
-        Keep and dispense table metadata
+        Reflect the working and production schemas to get the tables within the
+        database.
+
+        When the connection is *not* in `creation_mode` (which is the default),
+        the production schema is automatically derived from the working schema
+        through the provenance table. The tables and versions of each schema
+        are extracted and stored in the `self.metadata` dict.
+        """
+
+        def _get_db_info(prov_table, get_associated_production=False):
+            """
+            Get provenance information (version and associated production
+            schema) from provenance table.
+
+            Parameters
+            ----------
+            prov_table : SqlAlchemy metadata
+            get_associated_production : bool, optional
+
+            Returns
+            -------
+            schema_version : str
+            associated_production schema : str
+                If get_associated_production=True
+            """
+
+            # Columns to query
+            cols = ["db_version_major", "db_version_minor", "db_version_patch"]
+            if get_associated_production:
+                cols.append("associated_production")
+
+            # Execute query
+            stmt = select(*[column(c) for c in cols]).select_from(prov_table)
+            stmt = stmt.order_by(prov_table.c.provenance_id.desc())
+            with self.engine.connect() as conn:
+                results = conn.execute(stmt)
+                r = results.fetchone()
+            if r is None:
+                raise DataRegistryException(
+                    "During reflection no provenance information was found"
+                )
+
+            if get_associated_production:
+                return f"{r[0]}.{r[1]}.{r[2]}", r[3]
+            else:
+                return f"{r[0]}.{r[1]}.{r[2]}"
+
+        # Reflect the working schema to find database tables
+        metadata = MetaData(schema=self.schema)
+        metadata.reflect(self.engine, self.schema)
+
+        # Find the provenance table in the working schema
+        if self.dialect == "sqlite":
+            prov_name = "provenance"
+        else:
+            prov_name = ".".join([self.schema, "provenance"])
+
+        if prov_name not in metadata.tables:
+            raise DataRegistryException(
+                f"Incompatible database: no Provenance table {prov_name}, "
+                f"listed tables are {metadata.tables}"
+            )
+
+        # Don't go on to query the provenance table during schema creation
+        if self.creation_mode:
+            self.metadata["tables"] = metadata.tables
+            return
+
+        # From the procenance table get the associated production schema
+        prov_table = metadata.tables[prov_name]
+        self.metadata["schema_version"], self._prod_schema = _get_db_info(
+            prov_table, get_associated_production=True
+        )
+
+        # Add production schema tables to metadata
+        if self.dialect != "sqlite":
+            metadata.reflect(self.engine, self._prod_schema)
+            prov_name = ".".join([self._prod_schema, "provenance"])
+            prov_table = metadata.tables[prov_name]
+            self.metadata["prod_schema_version"] = _get_db_info(prov_table)
+        else:
+            self.metadata["prod_schema_version"] = None
+
+        # Store metadata
+        self.metadata["tables"] = metadata.tables
+
+    @cached_property
+    def duplicate_column_names(self):
+        """
+        Probe the database for tables which share column names. This is used
+        later for querying.
+
+        Returns
+        -------
+        duplicates : list
+            List of column names that are duplicated across tables
+        """
+
+        # Database hasn't been reflected yet
+        if len(self.metadata) == 0:
+            self._reflect()
+
+        # Find duplicate column names
+        duplicates = set()
+        all_columns = set()
+        for table in self.metadata["tables"]:
+            for column in self.metadata["tables"][table].c:
+                # Only need to focus on a single schema (due to duplicate layout)
+                if self.metadata["tables"][table].schema != self.active_schema:
+                    continue
+
+                if column.name in all_columns:
+                    duplicates.add(column.name)
+                all_columns.add(column.name)
+
+        return list(duplicates)
+
+    def get_table(self, tbl, schema=None):
+        """
+        Get metadata for a specific table in the database.
+
+        This looks for the table within the `self.metadata` dict. If the dict
+        is empty, i.e., this is is the first call in this instance, the
+        database is reflected first.
 
         Parameters
         ----------
-        db_connection : DbConnection object
-            Stores information about the DB connection
-        get_db_version : bool, optional
-            True to extract the DB version from the provenance table
+        tbl : str
+            Name of table we want metadata for
+        schema : bool, optional
+            Which schema to get the table from
+            If `None`, the `active_schema` is used
+
+        Returns
+        -------
+        - : SqlAlchemy Metadata object
         """
 
-        self._metadata = MetaData(schema=db_connection.schema)
-        self._engine = db_connection.engine
-        self._schema = db_connection.schema
+        # Database hasn't been reflected yet
+        if len(self.metadata) == 0:
+            self._reflect()
 
-        # Load all existing tables
-        self._metadata.reflect(self._engine, db_connection.schema)
+        # Which schema to get the table from
+        if schema is None:
+            schema = self.active_schema
 
-        # Fetch and save db versioning, assoc. production schema
-        # if present and requested
-        self._prod_schema = None
-        if db_connection.dialect == "sqlite":
-            prov_name = "provenance"
-        else:
-            prov_name = ".".join([self._schema, "provenance"])
-
-        if prov_name not in self._metadata.tables:
-            raise DataRegistryException(
-                f"Incompatible database: no Provenance table {prov_name}, "
-                f"listed tables are {self._metadata.tables}"
-                )
-
-        if get_db_version:
-            prov_table = self._metadata.tables[prov_name]
-            stmt = select(column("associated_production")).select_from(prov_table)
-            stmt = stmt.order_by(prov_table.c.provenance_id.desc())
-            with self._engine.connect() as conn:
-                results = conn.execute(stmt)
-                r = results.fetchone()
-            self._prod_schema = r[0]
-
-            cols = ["db_version_major", "db_version_minor", "db_version_patch"]
-
-            stmt = select(*[column(c) for c in cols])
-            stmt = stmt.select_from(prov_table)
-            stmt = stmt.order_by(prov_table.c.provenance_id.desc())
-            with self._engine.connect() as conn:
-                results = conn.execute(stmt)
-            r = results.fetchone()
-            self._db_major = r[0]
-            self._db_minor = r[1]
-            self._db_patch = r[2]
-        else:
-            self._db_major = None
-            self._db_minor = None
-            self._db_patch = None
-            self._prod_schema = None
-
-    @property
-    def is_production_schema(self):
-        if self._prod_schema == self._schema:
-            return True
-        else:
-            return False
-
-    @property
-    def db_version_major(self):
-        return self._db_major
-
-    @property
-    def db_version_minor(self):
-        return self._db_minor
-
-    @property
-    def db_version_patch(self):
-        return self._db_patch
-
-    def get(self, tbl):
+        # Find table
         if "." not in tbl:
-            if self._schema:
-                tbl = ".".join([self._schema, tbl])
-        if tbl not in self._metadata.tables.keys():
-            try:
-                self._metadata.reflect(self._engine, only=[tbl])
-            except Exception:
-                raise ValueError(f"No such table {tbl}")
-        return self._metadata.tables[tbl]
+            if schema:
+                tbl = ".".join([schema, tbl])
+        if tbl not in self.metadata["tables"].keys():
+            raise ValueError(f"No such table {tbl}")
+        return self.metadata["tables"][tbl]
 
 
 def _insert_provenance(
@@ -298,12 +435,12 @@ def _insert_provenance(
         values["comment"] = comment
     if associated_production is not None:  # None is normal for sqlite
         values["associated_production"] = associated_production
-    prov_table = TableMetadata(db_connection,
-                               get_db_version=False).get("provenance")
+    prov_table = db_connection.get_table("provenance")
     with db_connection.engine.connect() as conn:
         id = add_table_row(conn, prov_table, values)
 
         return id
+
 
 def _insert_keyword(
     db_connection,
@@ -340,7 +477,7 @@ def _insert_keyword(
     values["creation_date"] = datetime.now()
     values["active"] = True
 
-    keyword_table = TableMetadata(db_connection, get_db_version=False).get("keyword")
+    keyword_table = db_connection.get_table("keyword")
     with db_connection.engine.connect() as conn:
         id = add_table_row(conn, keyword_table, values)
 
