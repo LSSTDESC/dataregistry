@@ -144,6 +144,8 @@ class DbConnection:
             If True, produce additional output
         production_mode : bool, optional
             True to register/modify production schema entries
+        creation_mode : bool, optional
+            Must be true when creating the schemas
         """
 
         # Extract connection info from configuration file
