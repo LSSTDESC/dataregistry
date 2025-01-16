@@ -39,7 +39,7 @@ def modify_dataset(args):
         schema=args.schema,
         root_dir=args.root_dir,
         site=args.site,
-        production_mode=args.production_mode
+        production_mode=args.production_mode,
     )
 
     # Modify dataset.

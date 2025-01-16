@@ -75,7 +75,7 @@ class BaseTable:
         self.schema_yaml = load_schema()
 
     def _get_table_metadata(self, tbl):
-        #return self._table_metadata.get(tbl)
+        # return self._table_metadata.get(tbl)
         return self.db_connection.get_table(tbl)
 
     def delete(self, entry_id):

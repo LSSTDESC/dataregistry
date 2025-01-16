@@ -833,9 +833,7 @@ class DatasetTable(BaseTable):
         """
 
         # Find the dataset entry with this combination
-        previous = self._find_previous(
-            name, version_string, owner, owner_type
-        )
+        previous = self._find_previous(name, version_string, owner, owner_type)
 
         if len(previous) == 0:
             raise ValueError(

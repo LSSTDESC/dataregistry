@@ -129,9 +129,7 @@ def dregs_ls(args):
     )
 
     # Strip "dataset." from column names
-    new_col = {
-        x: x.split("dataset.")[1] for x in results.columns if "dataset." in x
-    }
+    new_col = {x: x.split("dataset.")[1] for x in results.columns if "dataset." in x}
     results.rename(columns=new_col, inplace=True)
 
     # Add compressed columns

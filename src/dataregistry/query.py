@@ -176,7 +176,11 @@ class Query:
         if column_names is None:
             column_names = []
             for table in self.db_connection.metadata["tables"]:
-                tname = table if self.db_connection.dialect == "sqlite" else table.split(".")[1]
+                tname = (
+                    table
+                    if self.db_connection.dialect == "sqlite"
+                    else table.split(".")[1]
+                )
                 if tname == "dataset":
                     column_names.extend(
                         [
@@ -184,7 +188,7 @@ class Query:
                             for x in self.db_connection.metadata["tables"][table].c
                         ]
                     )
-                    break # Dont duplicate with production schema
+                    break  # Dont duplicate with production schema
 
         tables_required = set()
         column_list = {}
@@ -220,9 +224,8 @@ class Query:
             # Loop over each column in the database and find matches
             for table in self.db_connection.metadata["tables"]:
                 for column in self.db_connection.metadata["tables"][table].c:
-
                     # Construct full name
-                    X = str(column.table) + "." + column.name # <table>.<column>
+                    X = str(column.table) + "." + column.name  # <table>.<column>
                     table_parts = X.split(".")
 
                     # Initialize list to store columns for a given schema
@@ -385,7 +388,7 @@ class Query:
             "DataFrame", or "proprety_dict". Note this is not case sensitive.
         strip_table_names : bool, optional
             True to remove the table name in the results columns
-            This only works if a single table is needed for the query 
+            This only works if a single table is needed for the query
 
         Returns
         -------
@@ -409,19 +412,18 @@ class Query:
         # Can only strip table names for queries against a single table
         if strip_table_names and len(tables_required) > 1:
             raise DataRegistryException(
-                    "Can only strip out table names "
-                    "for single table queries"
-                )
+                "Can only strip out table names " "for single table queries"
+            )
 
         # Construct query
-        for schema in column_list.keys(): # Loop over each schema
+        for schema in column_list.keys():  # Loop over each schema
             schema_str = "" if self.db_connection.dialect == "sqlite" else f"{schema}."
             columns = [f"{p.table.name}.{p.name}" for p in column_list[schema]]
 
             stmt = select(
                 *[p.label(f"{p.table.name}.{p.name}") for p in column_list[schema]]
             )
-            
+
             # Create joins
             if len(tables_required) > 1:
                 j = self.db_connection.metadata["tables"][f"{schema_str}dataset"]
@@ -441,16 +443,23 @@ class Query:
                         self.db_connection.metadata["tables"][
                             f"{schema_str}dataset_keyword"
                         ]
-                    ).join(self.db_connection.metadata["tables"][f"{schema_str}keyword"])
+                    ).join(
+                        self.db_connection.metadata["tables"][f"{schema_str}keyword"]
+                    )
 
                 # Special case for dependencies
                 if "dependency" in tables_required:
-                    dataset_table = self.db_connection.metadata["tables"][f"{schema_str}dataset"]
-                    dependency_table = self.db_connection.metadata["tables"][f"{schema_str}dependency"]
-                    
+                    dataset_table = self.db_connection.metadata["tables"][
+                        f"{schema_str}dataset"
+                    ]
+                    dependency_table = self.db_connection.metadata["tables"][
+                        f"{schema_str}dependency"
+                    ]
+
                     j = j.join(
                         dependency_table,
-                        dependency_table.c.input_id == dataset_table.c.dataset_id  # Explicit join condition
+                        dependency_table.c.input_id
+                        == dataset_table.c.dataset_id,  # Explicit join condition
                     )
 
                 stmt = stmt.select_from(j)
@@ -487,7 +496,7 @@ class Query:
 
         # Strip out table name from the headers
         if strip_table_names:
-            return_result.rename(columns=lambda x: x.split('.')[-1], inplace=True)
+            return_result.rename(columns=lambda x: x.split(".")[-1], inplace=True)
 
         if return_format.lower() == "property_dict":
             return return_result.to_dict("list")

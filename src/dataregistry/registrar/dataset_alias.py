@@ -14,9 +14,15 @@ class DatasetAliasTable(BaseTable):
         self.which_table = "dataset_alias"
         self.entry_id = "dataset_alias_id"
 
-    def register(self, aliasname, dataset_id, ref_alias_id=None,
-                 access_api=None, access_api_configuration=None,
-                 supersede=False):
+    def register(
+        self,
+        aliasname,
+        dataset_id,
+        ref_alias_id=None,
+        access_api=None,
+        access_api_configuration=None,
+        supersede=False,
+    ):
         """
         Create a new `dataset_alias` entry in the DESC data registry.
         It may refer to a dataset (default) or another alias
@@ -45,8 +51,10 @@ class DatasetAliasTable(BaseTable):
         """
 
         if not dataset_id and not ref_alias_id:
-            raise ValueError("""DatasetAliasTable.register: one of dataset_id,
-                                ref_alias_id must have a value""")
+            raise ValueError(
+                """DatasetAliasTable.register: one of dataset_id,
+                                ref_alias_id must have a value"""
+            )
 
         now = datetime.now()
         values = {"alias": aliasname}
@@ -70,11 +78,12 @@ class DatasetAliasTable(BaseTable):
         # If not supersede, check if alias name has already been used
         with self._engine.connect() as conn:
             if not supersede:
-                q = select(alias_table.c.alias).where(
-                    alias_table.c.alias == aliasname)
+                q = select(alias_table.c.alias).where(alias_table.c.alias == aliasname)
                 result = conn.execute(q)
                 if result.fetchone():
-                    print(f"Alias {aliasname} already exists. Specify 'supersede=True' to override")
+                    print(
+                        f"Alias {aliasname} already exists. Specify 'supersede=True' to override"
+                    )
                     return None
             prim_key = add_table_row(conn, alias_table, values)
 

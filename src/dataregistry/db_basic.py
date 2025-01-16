@@ -1,7 +1,7 @@
 from sqlalchemy import engine_from_config
 from sqlalchemy.engine import make_url
 from sqlalchemy import MetaData
-from sqlalchemy import column,  insert, select
+from sqlalchemy import column, insert, select
 import yaml
 import os
 from datetime import datetime
@@ -101,7 +101,14 @@ def add_table_row(conn, table_meta, values, commit=True):
 
 
 class DbConnection:
-    def __init__(self, config_file=None, schema=None, verbose=False, production_mode=False, creation_mode=False):
+    def __init__(
+        self,
+        config_file=None,
+        schema=None,
+        verbose=False,
+        production_mode=False,
+        creation_mode=False,
+    ):
         """
         Simple class to act as container for connection.
 
@@ -110,7 +117,7 @@ class DbConnection:
         single "database" and no concept of schemas). Here the `schema` passed
         is the working schema name, the production schema associated with that
         working schema is automatially deduced via the `provenance` table. Both
-        the working and production schemas are connected to and reflected here. 
+        the working and production schemas are connected to and reflected here.
 
         The `schema` passed to this function should always be the working
         schema, the only exception is during schema creation, see note below.
@@ -130,7 +137,7 @@ class DbConnection:
             to be created. This flag must be changed to `True` during schema
             creation to skip querying the provenance table for information. In
             this mode the passed `schema` can either be the working or
-            production schema name.  
+            production schema name.
 
         Parameters
         ----------
@@ -244,7 +251,7 @@ class DbConnection:
             cols = ["db_version_major", "db_version_minor", "db_version_patch"]
             if get_associated_production:
                 cols.append("associated_production")
-        
+
             # Execute query
             stmt = select(*[column(c) for c in cols]).select_from(prov_table)
             stmt = stmt.order_by(prov_table.c.provenance_id.desc())
@@ -253,7 +260,8 @@ class DbConnection:
                 r = results.fetchone()
             if r is None:
                 raise DataRegistryException(
-                    "During reflection no provenance information was found")
+                    "During reflection no provenance information was found"
+                )
 
             if get_associated_production:
                 return f"{r[0]}.{r[1]}.{r[2]}", r[3]
@@ -274,7 +282,7 @@ class DbConnection:
             raise DataRegistryException(
                 f"Incompatible database: no Provenance table {prov_name}, "
                 f"listed tables are {metadata.tables}"
-                )
+            )
 
         # Don't go on to query the provenance table during schema creation
         if self.creation_mode:
@@ -283,7 +291,9 @@ class DbConnection:
 
         # From the procenance table get the associated production schema
         prov_table = metadata.tables[prov_name]
-        self.metadata["schema_version"], self._prod_schema = _get_db_info(prov_table, get_associated_production=True)
+        self.metadata["schema_version"], self._prod_schema = _get_db_info(
+            prov_table, get_associated_production=True
+        )
 
         # Add production schema tables to metadata
         if self.dialect != "sqlite":
@@ -318,7 +328,6 @@ class DbConnection:
         all_columns = set()
         for table in self.metadata["tables"]:
             for column in self.metadata["tables"][table].c:
-
                 # Only need to focus on a single schema (due to duplicate layout)
                 if self.metadata["tables"][table].schema != self.active_schema:
                     continue
@@ -431,6 +440,7 @@ def _insert_provenance(
         id = add_table_row(conn, prov_table, values)
 
         return id
+
 
 def _insert_keyword(
     db_connection,
