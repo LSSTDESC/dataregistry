@@ -1,5 +1,5 @@
 from dataregistry import DataRegistry
-from dataregistry.schema import DEFAULT_SCHEMA_WORKING
+from dataregistry.schema import DEFAULT_NAMESPACE
 
 from database_test_utils import *
 import pytest
@@ -9,7 +9,7 @@ def test_register_dataset_alias(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
     # Add two dataset
     d_id = _insert_dataset_entry(

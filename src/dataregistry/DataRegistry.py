@@ -14,11 +14,12 @@ class DataRegistry:
         owner=None,
         owner_type=None,
         config_file=None,
-        schema=None,
         root_dir=None,
         verbose=False,
         site=None,
-        production_mode=False,
+        namespace=None,
+        schema=None,
+        namespace_default_schema="working",
     ):
         """
         Primary data registry wrapper class.
@@ -55,13 +56,27 @@ class DataRegistry:
             Can be used instead of `root_dir`. Some predefined "sites" are
             built in, such as "nersc", which will set the `root_dir` to the
             data registry's default data location at NERSC.
-        production_mode : bool, optional
-            True to register/modify production schema entries
+        namespace : str, optional
+            Namespace to connect to. If None, the default namespace will be
+            used.
+        schema : str, optional
+            Schema to connect to, to connect directly to a chosen schema,
+            bypassing the namespace (creation of schemas or testing purposes only).
+        namespace_default_schema : str, optional
+            Which schema ("working" or "production") within the namespace to
+            use as the default. Queries will always probe both schemas. The
+            default schema is what is used during dataregistry entry creation,
+            modification and deletion.
         """
+
+        # Namespace schema must be either "working" or "production"
+        if namespace_default_schema not in ["working", "production"]:
+            raise ValueError("namespace_default_schema must be either working or production")
 
         # Establish connection to database
         self.db_connection = DbConnection(
-            config_file, schema=schema, verbose=verbose, production_mode=production_mode
+            config_file=config_file, schema=schema, verbose=verbose, namespace=namespace,
+            namespace_default_schema=namespace_default_schema
         )
 
         # Work out the location of the root directory

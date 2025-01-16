@@ -1,7 +1,7 @@
 import os
 import sys
 import argparse
-from dataregistry.schema import DEFAULT_SCHEMA_WORKING
+from dataregistry.schema import DEFAULT_NAMESPACE
 from .register import register_dataset
 from .delete import delete_dataset
 from .query import dregs_ls
@@ -30,13 +30,17 @@ def _add_generic_arguments(parser_obj):
     )
     parser_obj.add_argument(
         "--schema",
-        default=f"{DEFAULT_SCHEMA_WORKING}",
-        help="Which working schema to connect to",
+        help="Which schema to connect to",
     )
     parser_obj.add_argument(
-        "--production_mode",
-        action="store_true",
-        help="Flag to write/modify production entries",
+        "--namespace",
+        default=DEFAULT_NAMESPACE,
+        help="Which namespace to connect to",
+    )
+    parser_obj.add_argument(
+        "--namespace_default_schema",
+        default="working",
+        help="Which schema to default to in the namespace (working is default)",
     )
 
 

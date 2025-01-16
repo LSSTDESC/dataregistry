@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 from dataregistry import __version__
 from dataregistry.exceptions import DataRegistryException
-from dataregistry.schema import DEFAULT_SCHEMA_WORKING
+from dataregistry.schema import DEFAULT_NAMESPACE
 from functools import cached_property
 
 """
@@ -103,11 +103,11 @@ def add_table_row(conn, table_meta, values, commit=True):
 class DbConnection:
     def __init__(
         self,
+        namespace=None,
         config_file=None,
         schema=None,
         verbose=False,
-        production_mode=False,
-        creation_mode=False,
+        namespace_default_schema="working",
     ):
         """
         Simple class to act as container for connection.
@@ -122,38 +122,43 @@ class DbConnection:
         The `schema` passed to this function should always be the working
         schema, the only exception is during schema creation, see note below.
 
-        Special cases
-        -------------
-        production_mode :
-            Both the working and production schemas are always connected to via
-            the `DbConnection` object. During queries, both schemas are
-            searched by default. However during entry creation, or
-            modification, `production_mode` sets which schema will be used for
-            those instances. By default, when `production_mode=False`, the
-            working schema is used to create/modify entries. If
-            `production_mode=True`, the production schema is used.
-        creation_mode :
-            During schema creation, the working/production schema pairs are yet
-            to be created. This flag must be changed to `True` during schema
-            creation to skip querying the provenance table for information. In
-            this mode the passed `schema` can either be the working or
-            production schema name.
+        Connection modes
+        ----------------
+        `namespace=` :
+            Connects to a "namespace", which is a pairing of a "working" and
+            "production" schema, referred to jointly as a namespace. During
+            queries, entries from both schemas are searched and their results
+            combined. When creating new entries in the dataregistry, or when
+            modifying or deleting previous entries, the
+            `namespace_default_schema` schema is used (which is the "working"
+            schema by default). 
+        `schema=` :
+            Connects to a single schema. Queries are limited to that individual
+            schema, and new entries/modifications can only go into this schema.
+            This connection mode is generally for schema creation, or testing.
 
         Parameters
         ----------
-        config : str, optional
-            Path to config file with low-level connection information.
-            If None, default location is assumed
+        namespace : str, optional
+            Namespace to connect to. If None, the default namespace will be
+            used.
+        config_file : str
+            Path to config file, if None, default location is assumed.
         schema : str, optional
-            Working schema to connect to.  If None, default working schema is
-            assumed
+            Schema to connect to, to connect directly to a chosen schema,
+            bypassing the namespace (creation of schemas or testing purposes only).
         verbose : bool, optional
             If True, produce additional output
-        production_mode : bool, optional
-            True to register/modify production schema entries
-        creation_mode : bool, optional
-            Must be true when creating the schemas
+        namespace_default_schema : str, optional
+            Which schema ("working" or "production") within the namespace to
+            use as the default. Queries will always probe both schemas. The
+            default schema is what is used during dataregistry entry creation,
+            modification and deletion.
         """
+
+        # Namespace schema must be either "working" or "production"
+        if namespace_default_schema not in ["working", "production"]:
+            raise ValueError("namespace_default_schema must be either working or production")
 
         # Extract connection info from configuration file
         with open(_get_dataregistry_config(config_file, verbose)) as f:
@@ -166,23 +171,31 @@ class DbConnection:
         driver = make_url(connection_parameters["sqlalchemy.url"]).drivername
         self._dialect = driver.split("+")[0]
 
-        # Define working schema
+        # Define working schema from the namespace, or manually
         if self._dialect == "sqlite":
             self._schema = None
+            self._namespace = None
         else:
             if schema is None:
-                self._schema = DEFAULT_SCHEMA_WORKING
+                if namespace is None:
+                    self._schema = DEFAULT_NAMESPACE + "_working"
+                    self._namespace = DEFAULT_NAMESPACE
+                else:
+                    self._schema = namespace + "_working"
+                    self._namespace = namespace
             else:
                 self._schema = schema
+                self._namespace = None
 
         # Dict to store schema/table information (filled in `_reflect()`)
         self.metadata = {}
 
         # Are we working in production mode for this instance?
-        self._production_mode = production_mode
+        self._namespace_default_schema = namespace_default_schema
 
-        # Are we in schema creation mode?
-        self._creation_mode = creation_mode
+    @property
+    def namespace(self):
+        return self._namespace
 
     @property
     def engine(self):
@@ -194,6 +207,7 @@ class DbConnection:
 
     @property
     def schema(self):
+        # When working within a namespace, this is the "working" schema
         return self._schema
 
     @property
@@ -202,32 +216,37 @@ class DbConnection:
         if len(self.metadata) == 0:
             self._reflect()
 
+        # When working within a namespace, this is the "production" schema
         return self._prod_schema
 
     @property
     def active_schema(self):
-        if self._production_mode:
-            return self._prod_schema
+        if self.namespace is None:
+            return self.schema
         else:
-            return self._schema
+            # Which schema when working within a namespace do we use for
+            # registration/modification
+            if self._namespace_default_schema == "production":
+                return self.production_schema
+            else:
+                return self.schema
 
     @property
-    def production_mode(self):
-        return self._production_mode
-
-    @property
-    def creation_mode(self):
-        return self._creation_mode
+    def active_schema_is_production(self):
+        """Is the active schema a production schema?"""
+        print(self.active_schema)
+        return "_production" in self.active_schema
 
     def _reflect(self):
         """
         Reflect the working and production schemas to get the tables within the
         database.
 
-        When the connection is *not* in `creation_mode` (which is the default),
-        the production schema is automatically derived from the working schema
-        through the provenance table. The tables and versions of each schema
-        are extracted and stored in the `self.metadata` dict.
+        When the connection is defined by a namespace (i.e., we haven't
+        specified a single schema to connect to), the production schema is
+        automatically derived from the working schema through the provenance
+        table. The tables and versions of each schema are extracted and stored
+        in the `self.metadata` dict.
         """
 
         def _get_db_info(prov_table, get_associated_production=False):
@@ -284,8 +303,8 @@ class DbConnection:
                 f"listed tables are {metadata.tables}"
             )
 
-        # Don't go on to query the provenance table during schema creation
-        if self.creation_mode:
+        # Don't go on to query the provenance table unless working within a namespace
+        if self.namespace is None:
             self.metadata["tables"] = metadata.tables
             return
 

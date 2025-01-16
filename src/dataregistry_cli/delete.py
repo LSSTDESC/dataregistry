@@ -19,8 +19,10 @@ def delete_dataset(args):
         Path to root_dir
     args.site : str
         Look up root_dir using a site
-    args.production_mode : bool
-        True to register/modify production entries
+    args.namespace_default_schema : str
+        Which schema to default to within the namespace
+    args.namespace : str
+        Which namespace to connect to
 
     args.dataset_id: int
         The dataset_id of the dataset we are deleting
@@ -32,7 +34,8 @@ def delete_dataset(args):
         schema=args.schema,
         root_dir=args.root_dir,
         site=args.site,
-        production_mode=args.production_mode,
+        namespace_default_schema=args.namespace_default_schema,
+        namespace=args.namespace
     )
 
     # Deleting directly using the dataset ID

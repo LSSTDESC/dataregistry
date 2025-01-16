@@ -652,9 +652,10 @@ class Query:
 
         Note this function only searches the "active" schema (unlike
         `find_datasets` which searches both the working and production schemas
-        jointly). This means when you are in `production_mode` you will search
-        the production schema, else (the default) you will search the working
-        schema.
+        jointly). The active schema has been defined during connection (either
+        via the `DataRegistry` or `DbConnection` object) via the
+        `namespace_default_schema` option (the "working" schema is the
+        default).
 
         Parameters
         ----------
