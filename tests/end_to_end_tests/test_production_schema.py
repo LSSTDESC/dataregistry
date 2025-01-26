@@ -62,15 +62,9 @@ def test_register_with_production_dependencies(dummy_file):
         [f],
     )
 
-    print(results)
-    #assert len(list(results)) == 2
-    #for i, r in enumerate(results):
-    #    if i == 0:
-    #        assert getattr(r, "dependency.input_id") == d_id
-    #        assert getattr(r, "dependency.input_production_id") is None
-    #    else:
-    #        assert getattr(r, "dependency.input_id") == None
-    #        assert getattr(r, "dependency.input_production_id") is d_id_prod
+    assert len(results["dependency.input_id"]) == 2
+    assert int(results["dependency.input_id"][0]) == d_id
+    assert int(results["dependency.input_production_id"][1]) is d_id_prod
 
 
 @pytest.mark.skipif(
