@@ -25,7 +25,7 @@ def test_register_with_production_dependencies(dummy_file):
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
     datareg_prod = DataRegistry(
         root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE,
-        namespace_default_schema="production"
+        entry_mode="production"
     )
 
     # Make a dataset in each schema
@@ -76,7 +76,7 @@ def test_production_schema_register(dummy_file):
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE,
-            namespace_default_schema="production")
+            entry_mode="production")
 
     d_id = _insert_dataset_entry(
         datareg,
@@ -111,7 +111,7 @@ def test_production_schema_bad_register(dummy_file):
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE,
-            namespace_default_schema="production")
+            entry_mode="production")
 
     # Try to register dataset without production owner type
     with pytest.raises(ValueError, match="can go in the production schema"):

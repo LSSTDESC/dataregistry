@@ -19,7 +19,8 @@ class DataRegistry:
         site=None,
         namespace=None,
         schema=None,
-        namespace_default_schema="working",
+        entry_mode="working",
+        query_mode="both",
     ):
         """
         Primary data registry wrapper class.
@@ -46,8 +47,6 @@ class DataRegistry:
             instance.
         config_file : str
             Path to config file, if None, default location is assumed.
-        schema : str
-            Schema to connect to, if None, default schema is assumed.
         root_dir : str
             Root directory for datasets, if None, default is assumed.
         verbose : bool
@@ -61,22 +60,24 @@ class DataRegistry:
             used.
         schema : str, optional
             Schema to connect to, to connect directly to a chosen schema,
-            bypassing the namespace (creation of schemas or testing purposes only).
-        namespace_default_schema : str, optional
+            bypassing the namespace.
+        entry_mode : str, optional
             Which schema ("working" or "production") within the namespace to
-            use as the default. Queries will always probe both schemas. The
-            default schema is what is used during dataregistry entry creation,
-            modification and deletion.
+            use as the default for writing/modifying/deleting entries during this instance. 
+        query_mode : str, optional
+            Which schemas to probe when querying. By default "both" are
+            searched, however this can be restricted to either the "working" or
+            "production" schemas only.
         """
 
         # Namespace schema must be either "working" or "production"
-        if namespace_default_schema not in ["working", "production"]:
-            raise ValueError("namespace_default_schema must be either working or production")
+        if entry_mode not in ["working", "production"]:
+            raise ValueError("entry_mode must be either working or production")
 
         # Establish connection to database
         self.db_connection = DbConnection(
             config_file=config_file, schema=schema, verbose=verbose, namespace=namespace,
-            namespace_default_schema=namespace_default_schema
+            entry_mode=entry_mode, query_mode=query_mode
         )
 
         # Work out the location of the root directory

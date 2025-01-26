@@ -29,7 +29,7 @@ def modify_dataset(args):
         The column in the dataset table we are modifying
     args.value : str
         The updated value
-    args.namespace_default_schema : str
+    args.entry_mode : str
         Which schema to default to in the namespace
     args.namespace : str
         Which namespace to connect to
@@ -41,7 +41,7 @@ def modify_dataset(args):
         schema=args.schema,
         root_dir=args.root_dir,
         site=args.site,
-        namespace_default_schema=args.namespace_default_schema,
+        entry_mode=args.entry_mode,
         namespace=args.namespace,
     )
 

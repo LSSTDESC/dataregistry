@@ -417,6 +417,13 @@ class Query:
 
         # Construct query
         for schema in column_list.keys():  # Loop over each schema
+
+            # Do we want to search this schema given current query_mode?
+            if self.db_connection._query_mode != "both":
+                if self.db_connection.dialect != "sqlite":
+                    if self.db_connection._query_mode != schema.split("_")[-1]:
+                        continue
+
             schema_str = "" if self.db_connection.dialect == "sqlite" else f"{schema}."
             columns = [f"{p.table.name}.{p.name}" for p in column_list[schema]]
 
@@ -492,7 +499,10 @@ class Query:
             results.append(pd.DataFrame(result))
 
         # Combine results across schemas
-        return_result = pd.concat(results, ignore_index=True)
+        if self.db_connection._query_mode != "both":
+            return_result = results[0]
+        else:
+            return_result = pd.concat(results, ignore_index=True)
 
         # Strip out table name from the headers
         if strip_table_names:
@@ -654,7 +664,7 @@ class Query:
         `find_datasets` which searches both the working and production schemas
         jointly). The active schema has been defined during connection (either
         via the `DataRegistry` or `DbConnection` object) via the
-        `namespace_default_schema` option (the "working" schema is the
+        `entry_mode` option (the "working" schema is the
         default).
 
         Parameters

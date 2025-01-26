@@ -107,7 +107,8 @@ class DbConnection:
         config_file=None,
         schema=None,
         verbose=False,
-        namespace_default_schema="working",
+        entry_mode="working",
+        query_mode="both",
     ):
         """
         Simple class to act as container for connection.
@@ -127,13 +128,15 @@ class DbConnection:
         `namespace=` :
             Connects to a "namespace", which is a pairing of a "working" and
             "production" schema, referred to jointly as a namespace. During
-            queries, entries from both schemas are searched and their results
-            combined. When creating new entries in the dataregistry, or when
-            modifying or deleting previous entries, the
-            `namespace_default_schema` schema is used (which is the "working"
-            schema by default). 
+            queries, by default entries from both schemas are searched and
+            their results combined (this behaviour can be changed using the
+            `query_mode` option). When creating new entries in the
+            dataregistry, or when modifying or deleting previous entries, the
+            `entry_mode` schema is used (which is the "working" schema by
+            default). 
         `schema=` :
-            Connects to a single schema. Queries are limited to that individual
+            Connects directly to the chosen schema (by full name, e.g.,
+            "<namespace>_working"). Queries are limited to that individual
             schema, and new entries/modifications can only go into this schema.
             This connection mode is generally for schema creation, or testing.
 
@@ -149,16 +152,25 @@ class DbConnection:
             bypassing the namespace (creation of schemas or testing purposes only).
         verbose : bool, optional
             If True, produce additional output
-        namespace_default_schema : str, optional
+        entry_mode : str, optional
             Which schema ("working" or "production") within the namespace to
-            use as the default. Queries will always probe both schemas. The
-            default schema is what is used during dataregistry entry creation,
-            modification and deletion.
+            write new (or modify/delete previous) entries to. This defines the
+            `active_schema` in the connection object.
+        query_mode : str, optional
+            When querying, both the working and production schemas within the
+            namespace are jointly searched and their results combined
+            (`query_mode`="both"). However setting `query_mode` to either
+            "working" or "production" will restrict queries to only the chosen
+            schema.
         """
 
         # Namespace schema must be either "working" or "production"
-        if namespace_default_schema not in ["working", "production"]:
-            raise ValueError("namespace_default_schema must be either working or production")
+        if entry_mode not in ["working", "production"]:
+            raise ValueError("`entry_mode` must be either working or production")
+
+        # Query mode can only be "both", "working" or "production"
+        if query_mode not in ["both", "working", "production"]:
+            raise ValueError("`query_mode` must be 'both', 'working' or 'production'")
 
         # Extract connection info from configuration file
         with open(_get_dataregistry_config(config_file, verbose)) as f:
@@ -190,8 +202,11 @@ class DbConnection:
         # Dict to store schema/table information (filled in `_reflect()`)
         self.metadata = {}
 
-        # Are we working in production mode for this instance?
-        self._namespace_default_schema = namespace_default_schema
+        # What schema do new entries go into?
+        self._entry_mode = entry_mode
+
+        # Which schemas are queried?
+        self._query_mode = query_mode
 
     @property
     def namespace(self):
@@ -226,7 +241,7 @@ class DbConnection:
         else:
             # Which schema when working within a namespace do we use for
             # registration/modification
-            if self._namespace_default_schema == "production":
+            if self._entry_mode == "production":
                 return self.production_schema
             else:
                 return self.schema

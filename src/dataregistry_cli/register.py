@@ -19,7 +19,7 @@ def register_dataset(args):
         Path to root_dir
     args.site : str
         Look up root_dir using a site
-    args.namespace_default_schema : str
+    args.entry_mode : str
         Which schema to default to in the namespace
     args.namespace : str
         Which namespace to connect to
@@ -38,7 +38,7 @@ def register_dataset(args):
         schema=args.schema,
         root_dir=args.root_dir,
         site=args.site,
-        namespace_default_schema=args.namespace_default_schema,
+        entry_mode=args.entry_mode,
         namespace=args.namespace
     )
 

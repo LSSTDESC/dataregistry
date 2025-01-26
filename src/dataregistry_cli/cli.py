@@ -38,7 +38,7 @@ def _add_generic_arguments(parser_obj):
         help="Which namespace to connect to",
     )
     parser_obj.add_argument(
-        "--namespace_default_schema",
+        "--entry_mode",
         default="working",
         help="Which schema to default to in the namespace (working is default)",
     )
