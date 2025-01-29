@@ -6,7 +6,7 @@ import pytest
 import sqlalchemy
 import yaml
 from dataregistry import DataRegistry
-from dataregistry.schema import DEFAULT_SCHEMA_WORKING
+from dataregistry.schema import DEFAULT_NAMESPACE
 from dataregistry.registrar.dataset_util import get_dataset_status, set_dataset_status
 from dataregistry.registrar.registrar_util import _form_dataset_path
 
@@ -23,7 +23,7 @@ def test_register_dataset_defaults(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
     # Add entry
     d_id = _insert_dataset_entry(
@@ -92,7 +92,7 @@ def test_register_dataset_manual(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
     # Add entry
     d_id = _insert_dataset_entry(
@@ -169,7 +169,7 @@ def test_dataset_bumping(dummy_file, v_type, ans):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
     # Add entry
     d_id = _insert_dataset_entry(
@@ -203,7 +203,7 @@ def test_dataset_owner_types(dummy_file, owner_type):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
     # Add entry
     d_id = _insert_dataset_entry(
@@ -236,7 +236,7 @@ def test_register_dataset_with_global_owner_set(dummy_file):
     tmp_src_dir, tmp_root_dir = dummy_file
     datareg = DataRegistry(
         root_dir=str(tmp_root_dir),
-        schema=DEFAULT_SCHEMA_WORKING,
+        namespace=DEFAULT_NAMESPACE,
         owner="DESC group",
         owner_type="group",
     )
@@ -277,7 +277,7 @@ def test_register_dataset_with_modified_default_execution(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
     d_id_1 = _insert_dataset_entry(
         datareg,
@@ -349,7 +349,7 @@ def test_dataset_query_return_format(dummy_file, return_format_str, expected_typ
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
     _NAME = f"DESC:datasets:query_return_test_{return_format_str}"
 
@@ -375,7 +375,7 @@ def test_query_all(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
     # Register a dataset
     d_id_1 = _insert_dataset_entry(
@@ -398,7 +398,7 @@ def test_dataset_bad_name_string(dummy_file, name):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
     # Register a dataset
     with pytest.raises(ValueError, match="Cannot have character"):

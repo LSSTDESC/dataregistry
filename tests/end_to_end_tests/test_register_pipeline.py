@@ -4,7 +4,7 @@ import sys
 import pytest
 import yaml
 from dataregistry import DataRegistry
-from dataregistry.schema import DEFAULT_SCHEMA_WORKING
+from dataregistry.schema import DEFAULT_NAMESPACE
 
 from database_test_utils import *
 
@@ -54,7 +54,7 @@ def test_pipeline_entry(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
     # Execution for stage 1
     ex_id_1 = _insert_execution_entry(

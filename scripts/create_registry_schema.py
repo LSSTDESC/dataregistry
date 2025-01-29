@@ -16,8 +16,7 @@ from dataregistry.db_basic import _insert_provenance, _insert_keyword
 from dataregistry.schema import (
     load_schema,
     load_preset_keywords,
-    DEFAULT_SCHEMA_WORKING,
-    DEFAULT_SCHEMA_PRODUCTION,
+    DEFAULT_NAMESPACE,
 )
 
 """
@@ -224,7 +223,7 @@ def _FixDependencyColumns(columns, has_production, production):
 
     # Update production schema name
     else:
-        if production != DEFAULT_SCHEMA_PRODUCTION:
+        if production != f"{DEFAULT_NAMESPACE}_production":
             old_col = columns["input_production_id"]
             fkey = ForeignKey(f"{production}.dataset.dataset_id")
             new_input_production_id = Column(old_col.name, old_col.type, fkey)
@@ -288,11 +287,11 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     "--schema",
     help="name of schema to contain tables. Will be created if it doesn't already exist",
-    default=f"{DEFAULT_SCHEMA_WORKING}",
+    default=f"{DEFAULT_NAMESPACE}_working",
 )
 parser.add_argument(
     "--production-schema",
-    default=f"{DEFAULT_SCHEMA_PRODUCTION}",
+    default=f"{DEFAULT_NAMESPACE}_production",
     help="name of schema containing production tables.",
 )
 parser.add_argument("--config", help="Path to the data registry config file")
@@ -326,7 +325,7 @@ keywords = load_preset_keywords()
 # Loop over each schema
 for schema in schema_list:
     # Connect to database to find out what the backend is
-    db_connection = DbConnection(args.config, schema, creation_mode=True)
+    db_connection = DbConnection(args.config, schema=schema)
     print(f"Database dialect is '{db_connection.dialect}'")
 
     if db_connection.dialect == "sqlite":

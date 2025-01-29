@@ -1,6 +1,6 @@
 import pytest
 from dataregistry import DataRegistry
-from dataregistry.schema import DEFAULT_SCHEMA_WORKING
+from dataregistry.schema import DEFAULT_NAMESPACE
 
 from database_test_utils import *
 
@@ -19,7 +19,7 @@ def test_modify_dataset(dummy_file, dataset_name, column, new_value):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
     # Add entry
     d_id = _insert_dataset_entry(
@@ -54,7 +54,7 @@ def test_modify_execution(dummy_file, execution_name, column, new_value):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
     # Add entry
     e_id = _insert_execution_entry(
@@ -80,7 +80,7 @@ def test_modify_not_allowed(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
     # Add entry
     d_id = _insert_dataset_entry(
