@@ -249,7 +249,6 @@ class DbConnection:
     @property
     def active_schema_is_production(self):
         """Is the active schema a production schema?"""
-        print(self.active_schema)
         return "_production" in self.active_schema
 
     def _reflect(self):
