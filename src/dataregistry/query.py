@@ -591,7 +591,8 @@ class Query:
         Find what an alias points to.  May be either a dataset or another
         alias (or nothing)
 
-        Note this assumes the alias is within the current "active_schema".
+        Note this searches the `alias_query_schema`. See the
+        `alias_query_schema()` function of this object for more details.
 
         Parameters
         ----------
@@ -609,7 +610,7 @@ class Query:
         if self.db_connection.dialect == "sqlite":
             tbl_name = f"dataset_alias"
         else:
-            tbl_name = f"{self.db_connection.active_schema}.dataset_alias"
+            tbl_name = f"{self.alias_query_schema}.dataset_alias"
         tbl = self.db_connection.metadata["tables"][tbl_name]
         if isinstance(alias, int):
             filter_column = "dataset_alias.dataset_alias_id"
@@ -621,7 +622,7 @@ class Query:
 
         stmt = select(tbl.c.dataset_id, tbl.c.ref_alias_id)
         stmt = stmt.select_from(tbl)
-        stmt = self._render_filter(f, stmt, self.db_connection.active_schema)
+        stmt = self._render_filter(f, stmt, self.alias_query_schema)
 
         with self._engine.connect() as conn:
             try:
@@ -650,6 +651,26 @@ class Query:
 
         return id
 
+    @property
+    def alias_query_schema(self):
+        """
+        What schema to search when querying aliases (relating to the
+        `resolve_alias()` and `find_aliases` functions. The schema will be the
+        `_query_mode` schema of the `DbConnection` object if `_query_mode !=
+        'both'`. As the query search functionality only works on the assumption
+        of a single schema, if `_query_mode='both'` we revert to the
+        `entry_mode` schema.
+
+        Returns
+        -------
+        - : str
+            The schema to use for alias queries
+        """
+        if self.db_connection._query_mode == "both":
+            return self.db_connection.entry_schema
+        else:
+            return self.db_connection._query_mode
+
     def find_aliases(
         self,
         property_names=None,
@@ -660,12 +681,10 @@ class Query:
         """
         Return requested columns from dataset_alias table, subject to filters
 
-        Note this function only searches the "active" schema (unlike
-        `find_datasets` which searches both the working and production schemas
-        jointly). The active schema has been defined during connection (either
-        via the `DataRegistry` or `DbConnection` object) via the
-        `entry_mode` option (the "working" schema is the
-        default).
+        This searches for aliases in a single schema, defined by the
+        `alias_query_schema` property of this object. The schema choice is
+        derived from `DbConnection` options, see `alias_query_schema()`
+        property function for more info. 
 
         Parameters
         ----------
@@ -692,7 +711,7 @@ class Query:
         if self.db_connection.dialect == "sqlite":
             tbl_name = f"dataset_alias"
         else:
-            tbl_name = f"{self.db_connection.active_schema}.dataset_alias"
+            tbl_name = f"{self.alias_query_schema}.dataset_alias"
         tbl = self.db_connection.metadata["tables"][tbl_name]
         if property_names is None:
             stmt = select("*").select_from(tbl)
@@ -714,7 +733,7 @@ class Query:
         # Append filters if acceptable
         if len(filters) > 0:
             for f in filters:
-                stmt = self._render_filter(f, stmt, self.db_connection.active_schema)
+                stmt = self._render_filter(f, stmt, self.alias_query_schema)
 
         # Report the constructed SQL query
         if verbose:

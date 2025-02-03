@@ -155,7 +155,7 @@ class DbConnection:
         entry_mode : str, optional
             Which schema ("working" or "production") within the namespace to
             write new (or modify/delete previous) entries to. This defines the
-            `active_schema` in the connection object.
+            `entry_schema` in the connection object.
         query_mode : str, optional
             When querying, both the working and production schemas within the
             namespace are jointly searched and their results combined
@@ -235,21 +235,27 @@ class DbConnection:
         return self._prod_schema
 
     @property
-    def active_schema(self):
+    def entry_schema(self):
+        """
+        Which schema (working or production) is being used for new entries,
+        modification, or deletions.
+        """
+        
+        # sqlite case
         if self.namespace is None:
             return self.schema
+
+        # Which is the entry schema
         else:
-            # Which schema when working within a namespace do we use for
-            # registration/modification
             if self._entry_mode == "production":
                 return self.production_schema
             else:
                 return self.schema
 
     @property
-    def active_schema_is_production(self):
-        """Is the active schema a production schema?"""
-        return "_production" in self.active_schema
+    def entry_schema_is_production(self):
+        """Is the entry schema a production schema?"""
+        return "_production" in self.entry_schema
 
     def _reflect(self):
         """
@@ -362,7 +368,7 @@ class DbConnection:
         for table in self.metadata["tables"]:
             for column in self.metadata["tables"][table].c:
                 # Only need to focus on a single schema (due to duplicate layout)
-                if self.metadata["tables"][table].schema != self.active_schema:
+                if self.metadata["tables"][table].schema != self.entry_schema:
                     continue
 
                 if column.name in all_columns:
@@ -385,7 +391,7 @@ class DbConnection:
             Name of table we want metadata for
         schema : bool, optional
             Which schema to get the table from
-            If `None`, the `active_schema` is used
+            If `None`, the `entry_schema` is used
 
         Returns
         -------
@@ -398,7 +404,7 @@ class DbConnection:
 
         # Which schema to get the table from
         if schema is None:
-            schema = self.active_schema
+            schema = self.entry_schema
 
         # Find table
         if "." not in tbl:
