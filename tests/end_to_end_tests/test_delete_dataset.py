@@ -105,7 +105,7 @@ def test_delete_dataset_entry(dummy_file, is_dummy, dataset_name, delete_by_id):
             results["dataset.owner_type"][0],
             results["dataset.owner"][0],
             results["dataset.relative_path"][0],
-            schema=datareg.db_connection.active_schema,
+            schema=datareg.db_connection.entry_schema,
             root_dir=str(tmp_root_dir),
         )
         if dataset_name == "real_dataset_to_delete":

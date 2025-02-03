@@ -41,7 +41,7 @@ def test_get_dataset_absolute_path(dummy_file):
     else:
         assert v == os.path.join(
             str(tmp_root_dir),
-            datareg.db_connection.active_schema,
+            datareg.db_connection.entry_schema,
             dset_ownertype,
             dset_owner,
             dset_relpath,
