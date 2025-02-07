@@ -73,4 +73,3 @@ def get_default_namespace():
 
 
 DEFAULT_NAMESPACE = get_default_namespace()
-

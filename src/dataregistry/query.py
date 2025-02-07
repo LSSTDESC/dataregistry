@@ -417,7 +417,6 @@ class Query:
 
         # Construct query
         for schema in column_list.keys():  # Loop over each schema
-
             # Do we want to search this schema given current query_mode?
             if self.db_connection._query_mode != "both":
                 if self.db_connection.dialect != "sqlite":
@@ -684,7 +683,7 @@ class Query:
         This searches for aliases in a single schema, defined by the
         `alias_query_schema` property of this object. The schema choice is
         derived from `DbConnection` options, see `alias_query_schema()`
-        property function for more info. 
+        property function for more info.
 
         Parameters
         ----------

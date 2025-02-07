@@ -35,7 +35,7 @@ def delete_dataset(args):
         root_dir=args.root_dir,
         site=args.site,
         entry_mode=args.entry_mode,
-        namespace=args.namespace
+        namespace=args.namespace,
     )
 
     # Deleting directly using the dataset ID

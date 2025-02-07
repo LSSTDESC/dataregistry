@@ -147,7 +147,7 @@ class DatasetTable(BaseTable):
                 not kwargs_dict["test_production"]
             ):
                 raise ValueError(
-                    "To write to production schema, active schema must be production"
+                    "To write to production schema, entry schema must be production"
                 )
 
             # The only owner allowed for production datasets is "production"

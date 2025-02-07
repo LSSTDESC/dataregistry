@@ -26,6 +26,6 @@ material by `viewing the notebooks on GitHub
 
 **Pipeline datasets**: `Link to notebook <https://github.com/LSSTDESC/dataregistry/blob/main/docs/source/tutorial_notebooks/pipelines.ipynb>`__
 
-**The prduction schema**: `Link to notebook <https://github.com/LSSTDESC/dataregistry/blob/main/docs/source/tutorial_notebooks/production_schema.ipynb>`__
+**The production schema**: `Link to notebook <https://github.com/LSSTDESC/dataregistry/blob/main/docs/source/tutorial_notebooks/production_schema.ipynb>`__
 
 

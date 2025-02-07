@@ -3,12 +3,13 @@
 When connection to the database, now a namespace is connected to, rather than a
 selected schema. The namespace is a combination of a working and production
 schema. On connection, both schemas are connected to and both schemas are
-reflected. This means that for all queries both schemas are queried by default
+reflected. By default, queries search both the working and production schemas
 and their results combined (this behaviour can be changed using `query_mode` to
 limit queries to a single schema).
 
-`register_mode` dictates if the active session will write/modify/delete entries
-in either the "working" or "production" schema.
+`register_mode` dictates which schema will be used ("working" or "production")
+for write, modify and delete operations on entries during the connection
+instance.
 
 ## Version 1.0.5
 

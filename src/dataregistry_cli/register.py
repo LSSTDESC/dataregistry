@@ -39,7 +39,7 @@ def register_dataset(args):
         root_dir=args.root_dir,
         site=args.site,
         entry_mode=args.entry_mode,
-        namespace=args.namespace
+        namespace=args.namespace,
     )
 
     # Register new dataset.

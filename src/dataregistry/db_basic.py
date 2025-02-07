@@ -133,7 +133,7 @@ class DbConnection:
             `query_mode` option). When creating new entries in the
             dataregistry, or when modifying or deleting previous entries, the
             `entry_mode` schema is used (which is the "working" schema by
-            default). 
+            default).
         `schema=` :
             Connects directly to the chosen schema (by full name, e.g.,
             "<namespace>_working"). Queries are limited to that individual
@@ -240,7 +240,7 @@ class DbConnection:
         Which schema (working or production) is being used for new entries,
         modification, or deletions.
         """
-        
+
         # sqlite case
         if self.namespace is None:
             return self.schema

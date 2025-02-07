@@ -63,11 +63,12 @@ class DataRegistry:
             bypassing the namespace.
         entry_mode : str, optional
             Which schema ("working" or "production") within the namespace to
-            use as the default for writing/modifying/deleting entries during this instance. 
+            use when writing/modifying/deleting entries.
         query_mode : str, optional
-            Which schemas to probe when querying. By default "both" are
-            searched, however this can be restricted to either the "working" or
-            "production" schemas only.
+            Which schema(s) ("working" or "production") to probe when querying.
+            By default query_mode="both", which searches both schemas together,
+            however this can be restricted to either "working" or "production"
+            to restrict searches to a single schema.
         """
 
         # Namespace schema must be either "working" or "production"
@@ -76,8 +77,12 @@ class DataRegistry:
 
         # Establish connection to database
         self.db_connection = DbConnection(
-            config_file=config_file, schema=schema, verbose=verbose, namespace=namespace,
-            entry_mode=entry_mode, query_mode=query_mode
+            config_file=config_file,
+            schema=schema,
+            verbose=verbose,
+            namespace=namespace,
+            entry_mode=entry_mode,
+            query_mode=query_mode,
         )
 
         # Work out the location of the root directory
