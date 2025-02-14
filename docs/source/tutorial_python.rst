@@ -28,4 +28,4 @@ material by `viewing the notebooks on GitHub
 
 **The production schema**: `Link to notebook <https://github.com/LSSTDESC/dataregistry/blob/main/docs/source/tutorial_notebooks/production_schema.ipynb>`__
 
-
+**Using GCRCatalogs with dataregistry**:  `Link to notebook <https://github.com/LSSTDESC/dataregistry/blob/main/docs/source/tutorial_notebooks/query_gcr_datasets.ipynb>`__
