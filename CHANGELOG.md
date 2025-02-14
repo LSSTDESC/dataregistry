@@ -1,15 +1,15 @@
 ## Version 1.1.0
 
-When connection to the database, both schemas are connected to and both schemas
-are reflected. This means that for all queries both schemas are queried by
-default and their results combined.
+When connection to the database, now a namespace is connected to, rather than a
+selected schema. The namespace is a combination of a working and production
+schema. On connection, both schemas are connected to and both schemas are
+reflected. By default, queries search both the working and production schemas
+and their results combined (this behaviour can be changed using `query_mode` to
+limit queries to a single schema).
 
-For registering and modifying there is still only a single "active" schema per
-`DataRegistry()` (i.e., `DbConnection()`) instance. If the database was
-connected to with `production_mode=False` (the default), registered datasets
-will go into the working schema. If `production_mode=True` registered datasets
-will go into the production schema. The same logic is true for modifying
-registry entries.
+`register_mode` dictates which schema will be used ("working" or "production")
+for write, modify and delete operations on entries during the connection
+instance.
 
 ## Version 1.0.5
 

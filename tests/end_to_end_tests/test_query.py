@@ -5,7 +5,7 @@ import sqlalchemy
 from sqlalchemy import inspect
 
 from dataregistry import DataRegistry
-from dataregistry.schema import DEFAULT_SCHEMA_WORKING
+from dataregistry.schema import DEFAULT_NAMESPACE
 from database_test_utils import *
 
 # Establish connection to database (default schema)
@@ -36,7 +36,7 @@ def test_query_all(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
     # Add entry
     d_id = _insert_dataset_entry(
@@ -61,7 +61,7 @@ def test_query_between_columns(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
     # Add entry
     _NAME = "DESC:datasets:test_query_between_columns"
@@ -117,7 +117,7 @@ def test_query_name(dummy_file, op, qstr, ans, tag):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
     # Add entry
     for tmp_tag in ["first", "second", "third"]:

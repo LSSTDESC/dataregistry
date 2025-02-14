@@ -14,11 +14,13 @@ class DataRegistry:
         owner=None,
         owner_type=None,
         config_file=None,
-        schema=None,
         root_dir=None,
         verbose=False,
         site=None,
-        production_mode=False,
+        namespace=None,
+        schema=None,
+        entry_mode="working",
+        query_mode="both",
     ):
         """
         Primary data registry wrapper class.
@@ -45,8 +47,6 @@ class DataRegistry:
             instance.
         config_file : str
             Path to config file, if None, default location is assumed.
-        schema : str
-            Schema to connect to, if None, default schema is assumed.
         root_dir : str
             Root directory for datasets, if None, default is assumed.
         verbose : bool
@@ -55,13 +55,34 @@ class DataRegistry:
             Can be used instead of `root_dir`. Some predefined "sites" are
             built in, such as "nersc", which will set the `root_dir` to the
             data registry's default data location at NERSC.
-        production_mode : bool, optional
-            True to register/modify production schema entries
+        namespace : str, optional
+            Namespace to connect to. If None, the default namespace will be
+            used.
+        schema : str, optional
+            Schema to connect to, to connect directly to a chosen schema,
+            bypassing the namespace.
+        entry_mode : str, optional
+            Which schema ("working" or "production") within the namespace to
+            use when writing/modifying/deleting entries.
+        query_mode : str, optional
+            Which schema(s) ("working" or "production") to probe when querying.
+            By default query_mode="both", which searches both schemas together,
+            however this can be restricted to either "working" or "production"
+            to restrict searches to a single schema.
         """
+
+        # Namespace schema must be either "working" or "production"
+        if entry_mode not in ["working", "production"]:
+            raise ValueError("entry_mode must be either working or production")
 
         # Establish connection to database
         self.db_connection = DbConnection(
-            config_file, schema=schema, verbose=verbose, production_mode=production_mode
+            config_file=config_file,
+            schema=schema,
+            verbose=verbose,
+            namespace=namespace,
+            entry_mode=entry_mode,
+            query_mode=query_mode,
         )
 
         # Work out the location of the root directory

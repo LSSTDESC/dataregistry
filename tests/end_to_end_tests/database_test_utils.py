@@ -1,7 +1,6 @@
 import os
 
 import pytest
-from dataregistry.schema import DEFAULT_SCHEMA_WORKING
 
 __all__ = [
     "dummy_file",
@@ -11,6 +10,7 @@ __all__ = [
     "_replace_dataset_entry",
 ]
 
+DEFAULT_SCHEMA_WORKING = "lsst_desc_working"
 
 @pytest.fixture
 def dummy_file(tmp_path):

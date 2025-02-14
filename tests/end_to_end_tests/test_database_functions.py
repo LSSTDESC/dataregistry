@@ -1,13 +1,21 @@
 import os
 
 import pytest
-from dataregistry import DataRegistry
-from dataregistry.schema import DEFAULT_SCHEMA_WORKING
+from dataregistry import DataRegistry, DbConnection
+from dataregistry.schema import DEFAULT_NAMESPACE
 
 from database_test_utils import *
 
 
-def test_get_dataset_absolute_path(dummy_file):
+# This is just to see what backend we are using
+# Remember no production schema when using sqlite backend
+db_connection = DbConnection(config_file=None, namespace=DEFAULT_NAMESPACE)
+
+@pytest.mark.skipif(
+    db_connection.dialect == "sqlite", reason="no production with sqlite"
+)
+@pytest.mark.parametrize("schema", ["production", "working"])
+def test_get_dataset_absolute_path(dummy_file, schema):
     """
     Test the generation of the full absolute path of a dataset using the
     `Query.get_dataset_absolute_path()` function
@@ -15,11 +23,12 @@ def test_get_dataset_absolute_path(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE,
+            entry_mode=schema, query_mode=schema)
 
-    dset_name = "DESC:datasets:get_dataset_absolute_path_test"
-    dset_ownertype = "group"
-    dset_owner = "group1"
+    dset_name = f"DESC:datasets:get_dataset_absolute_path_test_{schema}"
+    dset_ownertype = "group" if schema == "working" else "production"
+    dset_owner = "group1" if schema == "working" else "production"
     dset_relpath = "my/path"
 
     # Make a basic entry
@@ -41,7 +50,7 @@ def test_get_dataset_absolute_path(dummy_file):
     else:
         assert v == os.path.join(
             str(tmp_root_dir),
-            DEFAULT_SCHEMA_WORKING,
+            schema,
             dset_ownertype,
             dset_owner,
             dset_relpath,
@@ -58,7 +67,7 @@ def test_find_entry(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
     # Make a dataset
     d_id = _insert_dataset_entry(datareg, "test_find_entry:dataset", "0.0.1")
@@ -94,7 +103,7 @@ def test_get_modifiable_columns(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
     mod_list = datareg.Registrar.dataset.get_modifiable_columns()
     assert "description" in mod_list
@@ -108,7 +117,7 @@ def test_get_keywords(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), schema=DEFAULT_SCHEMA_WORKING)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
     keywords = datareg.Registrar.dataset.get_keywords()
 
