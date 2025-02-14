@@ -6,8 +6,8 @@ from dataregistry.schema import DEFAULT_NAMESPACE
 
 from database_test_utils import *
 
-
-def test_get_dataset_absolute_path(dummy_file):
+@pytest.mark.parametrize("schema", ["production", "working"])
+def test_get_dataset_absolute_path(dummy_file, schema):
     """
     Test the generation of the full absolute path of a dataset using the
     `Query.get_dataset_absolute_path()` function
@@ -15,11 +15,12 @@ def test_get_dataset_absolute_path(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE,
+            entry_mode=schema, query_mode=schema)
 
-    dset_name = "DESC:datasets:get_dataset_absolute_path_test"
-    dset_ownertype = "group"
-    dset_owner = "group1"
+    dset_name = f"DESC:datasets:get_dataset_absolute_path_test_{schema}"
+    dset_ownertype = "group" if schema == "working" else "production"
+    dset_owner = "group1" if schema == "working" else "production"
     dset_relpath = "my/path"
 
     # Make a basic entry
@@ -41,7 +42,7 @@ def test_get_dataset_absolute_path(dummy_file):
     else:
         assert v == os.path.join(
             str(tmp_root_dir),
-            datareg.db_connection.entry_schema,
+            schema,
             dset_ownertype,
             dset_owner,
             dset_relpath,

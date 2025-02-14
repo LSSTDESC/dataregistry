@@ -5,6 +5,7 @@ import pandas as pd
 from dataregistry.registrar.registrar_util import _form_dataset_path
 from dataregistry.exceptions import DataRegistryNYI, DataRegistryException
 from functools import reduce
+import numpy as np
 
 try:
     import sqlalchemy.dialects.postgresql as pgtypes
@@ -544,27 +545,42 @@ class Query:
 
     def get_dataset_absolute_path(self, dataset_id, schema=None):
         """
-        Return full absolute path of specified dataset
+        Return full absolute path of specified dataset.
+
+        If `query_mode="both"`, there may be two paths for the same `dataset_id`.
+        Either set `query_mode` to a single schema or pass "working" or "production"
+        to specify the schema.
 
         Parameters
         ----------
         dataset_id : int
             Identifies dataset
-        schema : str
-            Defaults to current schema, but may also be "production"
+        schema : str, optional
+            Which schema to search, defaults to `query_mode` if None.
 
         Returns
         -------
-        abs_path : str
+        str or None
+            Absolute path of the dataset if found, otherwise None.
         """
 
-        if not schema:
-            schema = self._schema
+        # Handle ambiguous `query_mode`
+        if self.db_connection._query_mode == "both" and schema is None:
+            print(
+                "Query mode is set to 'both', which may lead to ambiguous results. "
+                "Specify a schema by setting `query_mode` to 'working' or 'production', "
+                "or pass the schema explicitly to this function."
+            )
+            return None
 
-        # Fetch absolute path, owner type and owner for the dataset
-        if schema != self._schema:
-            raise DataRegistryNYI("schema != default is not yet supported")
+        # Validate schema
+        if schema is not None and schema not in {"working", "production"}:
+            raise ValueError("Schema must be either 'working' or 'production'.")
 
+        # Default schema to query_mode if not provided
+        schema = schema or self.db_connection._query_mode
+
+        # Query the database
         results = self.find_datasets(
             property_names=[
                 "dataset.owner_type",
@@ -573,17 +589,39 @@ class Query:
             ],
             filters=[("dataset.dataset_id", "==", dataset_id)],
         )
-        if len(results["dataset.owner_type"]) == 1:
-            return _form_dataset_path(
-                results["dataset.owner_type"][0],
-                results["dataset.owner"][0],
-                results["dataset.relative_path"][0],
-                schema=schema,
-                root_dir=self._root_dir,
-            )
-        else:
-            print(f"No dataset with dataset_id={dataset_id}")
+
+        # Handle case where no results are found
+        if not results["dataset.owner_type"]:
+            print(f"No dataset found with dataset_id={dataset_id}")
             return None
+
+        # Filter results if there are multiple entries (query_mode="both")
+        if len(results["dataset.owner_type"]) == 2:
+            filtered_indices = [
+                i
+                for i, owner_type in enumerate(results["dataset.owner_type"])
+                if (schema == "production" and owner_type == "production")
+                or (schema == "working" and owner_type != "production")
+            ]
+
+            if not filtered_indices:
+                print(
+                    f"No dataset found with dataset_id={dataset_id} in schema '{schema}'"
+                )
+                return None
+
+            index = filtered_indices[0]
+        else:
+            index = 0
+
+        # Construct and return the absolute path
+        return _form_dataset_path(
+            results["dataset.owner_type"][index],
+            results["dataset.owner"][index],
+            results["dataset.relative_path"][index],
+            schema=schema,
+            root_dir=self._root_dir,
+        )
 
     def resolve_alias(self, alias):
         """
@@ -617,6 +655,7 @@ class Query:
             filter_column = "dataset_alias.alias"
         else:
             raise ValueError("Argument 'alias' must be int or str")
+
         f = Filter(filter_column, "==", alias)
 
         stmt = select(tbl.c.dataset_id, tbl.c.ref_alias_id)
