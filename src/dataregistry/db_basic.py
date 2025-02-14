@@ -255,7 +255,10 @@ class DbConnection:
     @property
     def entry_schema_is_production(self):
         """Is the entry schema a production schema?"""
-        return "_production" in self.entry_schema
+        if self.dialect == "sqlite":
+            return False
+        else:
+            return "_production" in self.entry_schema
 
     def _reflect(self):
         """

@@ -1,11 +1,19 @@
 import os
 
 import pytest
-from dataregistry import DataRegistry
+from dataregistry import DataRegistry, DbConnection
 from dataregistry.schema import DEFAULT_NAMESPACE
 
 from database_test_utils import *
 
+
+# This is just to see what backend we are using
+# Remember no production schema when using sqlite backend
+db_connection = DbConnection(config_file=None, namespace=DEFAULT_NAMESPACE)
+
+@pytest.mark.skipif(
+    db_connection.dialect == "sqlite", reason="no production with sqlite"
+)
 @pytest.mark.parametrize("schema", ["production", "working"])
 def test_get_dataset_absolute_path(dummy_file, schema):
     """
