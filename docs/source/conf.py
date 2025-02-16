@@ -6,7 +6,8 @@ extensions = [
     "sphinx.ext.autodoc",
     'sphinx.ext.napoleon',
     'sphinxcontrib.autoprogram',
-    'sphinxcontrib.datatemplates'
+    'sphinxcontrib.datatemplates',
+    "myst_parser"
 ]
 
 project = 'DESC data management'

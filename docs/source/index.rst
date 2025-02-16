@@ -42,6 +42,7 @@ them.
    tutorial_setup
    tutorial_python
    tutorial_cli
+   cli_cheat_sheet
 
 .. toctree::
    :maxdepth: 2
