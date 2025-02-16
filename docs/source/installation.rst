@@ -14,8 +14,14 @@ The ``dataregistry`` package is readily available as part of the
 <https://confluence.slac.stanford.edu/display/LSSTDESC/Getting+Started+with+Anaconda+Python+at+NERSC>`__
 for details about the *Conda* environments available at NERSC). Therefore
 before getting started, make sure to activate the ``desc-python-bleed``
-environment from the command line, or, when working at the NERSC JupyterHub,
-select the ``desc-python-bleed`` kernel. 
+environment from the command line, via
+
+.. code-block:: bash
+
+   python /global/common/software/lsst/common/miniconda/start-kernel-cli.py desc-python-bleed
+
+or, when working at the NERSC JupyterHub, select the ``desc-python-bleed``
+kernel. 
 
 If you wish to install the ``dataregistry`` package yourself, see the
 instructions :ref:`here <local-installation>`. 
