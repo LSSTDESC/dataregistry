@@ -12,7 +12,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install .
-          pip install sphinx sphinx_rtd_theme sphinx_toolbox sphinxcontrib-autoprogram sphinxcontrib.datatemplates
+          pip install sphinx sphinx_rtd_theme sphinx_toolbox sphinxcontrib-autoprogram sphinxcontrib.datatemplates myst_parser
       - name: Sphinx build
         run: |
           sphinx-build docs/source _build
