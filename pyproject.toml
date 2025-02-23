@@ -34,7 +34,7 @@ requires-python = ">=3.9,<3.13" # Supported versions (in CI)
 version = {attr = "dataregistry._version.__version__"}
 
 [project.optional-dependencies]
-docs = ["sphinx_rtd_theme"]
+docs = ["sphinx_rtd_theme", "myst_parser"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

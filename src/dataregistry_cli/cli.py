@@ -75,7 +75,10 @@ def get_parser():
     # List your entries in the database
     arg_ls = subparsers.add_parser("ls", help="List your entries in the data registry")
 
-    arg_ls.add_argument("--owner", help="List datasets for a given owner")
+    arg_ls.add_argument("--owner",
+            help=("List datasets for a given owner. By default owner is $USER. "
+                "Selecting '--owner none' will return results from all owners.")
+    )
     arg_ls.add_argument(
         "--owner_type",
         help="List datasets for a given owner type",
