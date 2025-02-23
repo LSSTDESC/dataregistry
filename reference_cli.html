@@ -1,0 +1,797 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The dregs CLI &mdash; DESC data management  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/custom.css?v=d7e3758a" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Database schema" href="reference_schema.html" />
+    <link rel="prev" title="The dataregistry package" href="reference_python.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: white" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            DESC data management
+              <img src="_static/DREGS_logo_v2.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Overview:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#using-the-dataregistry-at-nersc">Using the <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> at NERSC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#access-accounts">Access accounts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#authenticating-with-the-database">Authenticating with the database</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_setup.html">Getting set up</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_setup.html#working-with-the-data-registry-tutorial-notebooks-interactively">Working with the data registry tutorial notebooks interactively</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_python.html">The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_python.html#getting-started-with-the-data-registry">1) Getting started with the data registry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_python.html#advanced-tutorials">2) Advanced tutorials</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_cli.html">The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> CLI</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_cli.html#registering-a-dataset">Registering a dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_cli.html#updating-a-dataset">Updating a dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_cli.html#querying-the-data-registry">Querying the data registry</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cli_cheat_sheet.html">Data Registry CLI Cheat Sheet</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#main-commands">Main Commands</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#querying-from-the-command-line">🟦 Querying from the Command Line 🟦</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#registering-a-dataset">🟩 Registering a Dataset 🟩</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#modifying-a-dataset">🟨 Modifying a Dataset 🟨</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#deleting-a-dataset">🟥 Deleting a Dataset 🟥</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="reference_python.html">The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_python.html#the-dataregistry-class">The DataRegistry class</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">The <code class="docutils literal notranslate"><span class="pre">dregs</span></code> CLI</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#dregs">dregs</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference_schema.html">Database schema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-execution-table">The execution table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-provenance-table">The provenance table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-execution-alias-table">The execution_alias table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-dataset-table">The dataset table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-dependency-table">The dependency table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-dataset-alias-table">The dataset_alias table</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer notes:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="dev_notes_spin.html">SPIN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev_notes_database.html">Database structure</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dev_notes_database.html#the-database-schemas">The database schemas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev_notes_database.html#first-time-creation-of-database-schemas">First time creation of database schemas</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="installation_locally.html">Local installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#creating-a-conda-environment">Creating a Conda environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#creating-a-python-venv">Creating a Python venv</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#installing-the-dataregistry-package">Installing the <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#install-from-source">Install from source</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contact:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="contact.html">Contact</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: white" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">DESC data management</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">The <code class="docutils literal notranslate"><span class="pre">dregs</span></code> CLI</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/reference_cli.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="the-dregs-cli">
+<span id="dregs-cli"></span><h1>The <code class="docutils literal notranslate"><span class="pre">dregs</span></code> CLI<a class="headerlink" href="#the-dregs-cli" title="Link to this heading"></a></h1>
+<p>The DESC data registry also comes with a Command Line Interface (CLI) tool,
+<code class="docutils literal notranslate"><span class="pre">dregs</span></code>,  which can perform some simple actions.</p>
+<p>See the <a class="reference internal" href="tutorial_cli.html#tutorials-cli"><span class="std std-ref">tutorials section</span></a> for a demonstration of its usage.</p>
+<section id="dregs">
+<h2>dregs<a class="headerlink" href="#dregs" title="Link to this heading"></a></h2>
+<p>The data registry CLI interface</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">usage: dregs [-h] {show,ls,modify,register,delete} ...</span>
+</pre></div>
+</div>
+<section id="options">
+<h3>options<a class="headerlink" href="#options" title="Link to this heading"></a></h3>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-h">
+<span id="cmdoption-dregs-help"></span><span class="sig-name descname"><span class="pre">-h</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--help</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dregs-h" title="Link to this definition"></a></dt>
+<dd><p>show this help message and exit</p>
+</dd></dl>
+
+</section>
+<section id="dregs-delete">
+<h3>dregs delete<a class="headerlink" href="#dregs-delete" title="Link to this heading"></a></h3>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">usage: dregs delete [-h] {dataset_by_id,dataset} ...</span>
+</pre></div>
+</div>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-delete-h">
+<span id="cmdoption-dregs-delete-help"></span><span class="sig-name descname"><span class="pre">-h</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--help</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dregs-delete-h" title="Link to this definition"></a></dt>
+<dd><p>show this help message and exit</p>
+</dd></dl>
+
+</section>
+<section id="dregs-delete-dataset">
+<h3>dregs delete dataset<a class="headerlink" href="#dregs-delete-dataset" title="Link to this heading"></a></h3>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">usage: dregs delete dataset [-h] [--config_file CONFIG_FILE]</span>
+<span class="go">                            [--root_dir ROOT_DIR] [--site SITE]</span>
+<span class="go">                            [--schema SCHEMA] [--namespace NAMESPACE]</span>
+<span class="go">                            [--entry_mode ENTRY_MODE]</span>
+<span class="go">                            name version_string owner owner_type</span>
+</pre></div>
+</div>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-delete-dataset-arg-name">
+<span class="sig-name descname"><span class="pre">name</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dregs-delete-dataset-arg-name" title="Link to this definition"></a></dt>
+<dd><p>The dataset name for the dataset you wish to delete</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-delete-dataset-arg-version_string">
+<span class="sig-name descname"><span class="pre">version_string</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dregs-delete-dataset-arg-version_string" title="Link to this definition"></a></dt>
+<dd><p>The dataset version_string for the dataset you wish to delete</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-delete-dataset-arg-owner">
+<span class="sig-name descname"><span class="pre">owner</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dregs-delete-dataset-arg-owner" title="Link to this definition"></a></dt>
+<dd><p>The dataset owner for the dataset you wish to delete</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-delete-dataset-arg-owner_type">
+<span class="sig-name descname"><span class="pre">owner_type</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dregs-delete-dataset-arg-owner_type" title="Link to this definition"></a></dt>
+<dd><p>The dataset owner_type for the dataset you wish to delete</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-delete-dataset-h">
+<span id="cmdoption-dregs-delete-dataset-help"></span><span class="sig-name descname"><span class="pre">-h</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--help</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dregs-delete-dataset-h" title="Link to this definition"></a></dt>
+<dd><p>show this help message and exit</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-delete-dataset-config_file">
+<span class="sig-name descname"><span class="pre">--config_file</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;config_file&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-delete-dataset-config_file" title="Link to this definition"></a></dt>
+<dd><p>Location of data registry config file</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-delete-dataset-root_dir">
+<span class="sig-name descname"><span class="pre">--root_dir</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;root_dir&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-delete-dataset-root_dir" title="Link to this definition"></a></dt>
+<dd><p>Location of the root_dir</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-delete-dataset-site">
+<span class="sig-name descname"><span class="pre">--site</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;site&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-delete-dataset-site" title="Link to this definition"></a></dt>
+<dd><p>Get the root_dir through a pre-defined ‘site’</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-delete-dataset-schema">
+<span class="sig-name descname"><span class="pre">--schema</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;schema&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-delete-dataset-schema" title="Link to this definition"></a></dt>
+<dd><p>Which schema to connect to</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-delete-dataset-namespace">
+<span class="sig-name descname"><span class="pre">--namespace</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;namespace&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-delete-dataset-namespace" title="Link to this definition"></a></dt>
+<dd><p>Which namespace to connect to</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-delete-dataset-entry_mode">
+<span class="sig-name descname"><span class="pre">--entry_mode</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;entry_mode&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-delete-dataset-entry_mode" title="Link to this definition"></a></dt>
+<dd><p>Which schema to default to in the namespace (working is default)</p>
+</dd></dl>
+
+</section>
+<section id="dregs-delete-dataset-by-id">
+<h3>dregs delete dataset_by_id<a class="headerlink" href="#dregs-delete-dataset-by-id" title="Link to this heading"></a></h3>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">usage: dregs delete dataset_by_id [-h] [--config_file CONFIG_FILE]</span>
+<span class="go">                                  [--root_dir ROOT_DIR] [--site SITE]</span>
+<span class="go">                                  [--schema SCHEMA] [--namespace NAMESPACE]</span>
+<span class="go">                                  [--entry_mode ENTRY_MODE]</span>
+<span class="go">                                  dataset_id</span>
+</pre></div>
+</div>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-delete-dataset_by_id-arg-dataset_id">
+<span class="sig-name descname"><span class="pre">dataset_id</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dregs-delete-dataset_by_id-arg-dataset_id" title="Link to this definition"></a></dt>
+<dd><p>The dataset_id you wish to delete</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-delete-dataset_by_id-h">
+<span id="cmdoption-dregs-delete-dataset_by_id-help"></span><span class="sig-name descname"><span class="pre">-h</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--help</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dregs-delete-dataset_by_id-h" title="Link to this definition"></a></dt>
+<dd><p>show this help message and exit</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-delete-dataset_by_id-config_file">
+<span class="sig-name descname"><span class="pre">--config_file</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;config_file&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-delete-dataset_by_id-config_file" title="Link to this definition"></a></dt>
+<dd><p>Location of data registry config file</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-delete-dataset_by_id-root_dir">
+<span class="sig-name descname"><span class="pre">--root_dir</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;root_dir&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-delete-dataset_by_id-root_dir" title="Link to this definition"></a></dt>
+<dd><p>Location of the root_dir</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-delete-dataset_by_id-site">
+<span class="sig-name descname"><span class="pre">--site</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;site&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-delete-dataset_by_id-site" title="Link to this definition"></a></dt>
+<dd><p>Get the root_dir through a pre-defined ‘site’</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-delete-dataset_by_id-schema">
+<span class="sig-name descname"><span class="pre">--schema</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;schema&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-delete-dataset_by_id-schema" title="Link to this definition"></a></dt>
+<dd><p>Which schema to connect to</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-delete-dataset_by_id-namespace">
+<span class="sig-name descname"><span class="pre">--namespace</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;namespace&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-delete-dataset_by_id-namespace" title="Link to this definition"></a></dt>
+<dd><p>Which namespace to connect to</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-delete-dataset_by_id-entry_mode">
+<span class="sig-name descname"><span class="pre">--entry_mode</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;entry_mode&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-delete-dataset_by_id-entry_mode" title="Link to this definition"></a></dt>
+<dd><p>Which schema to default to in the namespace (working is default)</p>
+</dd></dl>
+
+</section>
+<section id="dregs-ls">
+<h3>dregs ls<a class="headerlink" href="#dregs-ls" title="Link to this heading"></a></h3>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">usage: dregs ls [-h] [--owner OWNER]</span>
+<span class="go">                [--owner_type {user,group,production,project}] [--name NAME]</span>
+<span class="go">                [--return_cols RETURN_COLS [RETURN_COLS ...]]</span>
+<span class="go">                [--max_rows MAX_ROWS] [--max_chars MAX_CHARS]</span>
+<span class="go">                [--keyword KEYWORD] [--config_file CONFIG_FILE]</span>
+<span class="go">                [--root_dir ROOT_DIR] [--site SITE] [--schema SCHEMA]</span>
+<span class="go">                [--namespace NAMESPACE] [--entry_mode ENTRY_MODE]</span>
+</pre></div>
+</div>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-ls-h">
+<span id="cmdoption-dregs-ls-help"></span><span class="sig-name descname"><span class="pre">-h</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--help</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dregs-ls-h" title="Link to this definition"></a></dt>
+<dd><p>show this help message and exit</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-ls-owner">
+<span class="sig-name descname"><span class="pre">--owner</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;owner&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-ls-owner" title="Link to this definition"></a></dt>
+<dd><p>List datasets for a given owner. By default owner is $USER. Selecting ‘–owner none’ will return results from all owners.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-ls-owner_type">
+<span class="sig-name descname"><span class="pre">--owner_type</span></span><span class="sig-prename descclassname"> <span class="pre">{user,group,production,project}</span></span><a class="headerlink" href="#cmdoption-dregs-ls-owner_type" title="Link to this definition"></a></dt>
+<dd><p>List datasets for a given owner type</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-ls-name">
+<span class="sig-name descname"><span class="pre">--name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;name&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-ls-name" title="Link to this definition"></a></dt>
+<dd><p>Only return datasets with a given name (wildcard support)</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-ls-return_cols">
+<span class="sig-name descname"><span class="pre">--return_cols</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;return_cols&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-ls-return_cols" title="Link to this definition"></a></dt>
+<dd><p>List of columns to return in the query</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-ls-max_rows">
+<span class="sig-name descname"><span class="pre">--max_rows</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;max_rows&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-ls-max_rows" title="Link to this definition"></a></dt>
+<dd><p>Maximum number of rows to print (default 500)</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-ls-max_chars">
+<span class="sig-name descname"><span class="pre">--max_chars</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;max_chars&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-ls-max_chars" title="Link to this definition"></a></dt>
+<dd><p>Maximum number of characters to print in a column (default 40)</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-ls-keyword">
+<span class="sig-name descname"><span class="pre">--keyword</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;keyword&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-ls-keyword" title="Link to this definition"></a></dt>
+<dd><p>Keyword to filter by</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-ls-config_file">
+<span class="sig-name descname"><span class="pre">--config_file</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;config_file&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-ls-config_file" title="Link to this definition"></a></dt>
+<dd><p>Location of data registry config file</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-ls-root_dir">
+<span class="sig-name descname"><span class="pre">--root_dir</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;root_dir&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-ls-root_dir" title="Link to this definition"></a></dt>
+<dd><p>Location of the root_dir</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-ls-site">
+<span class="sig-name descname"><span class="pre">--site</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;site&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-ls-site" title="Link to this definition"></a></dt>
+<dd><p>Get the root_dir through a pre-defined ‘site’</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-ls-schema">
+<span class="sig-name descname"><span class="pre">--schema</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;schema&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-ls-schema" title="Link to this definition"></a></dt>
+<dd><p>Which schema to connect to</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-ls-namespace">
+<span class="sig-name descname"><span class="pre">--namespace</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;namespace&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-ls-namespace" title="Link to this definition"></a></dt>
+<dd><p>Which namespace to connect to</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-ls-entry_mode">
+<span class="sig-name descname"><span class="pre">--entry_mode</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;entry_mode&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-ls-entry_mode" title="Link to this definition"></a></dt>
+<dd><p>Which schema to default to in the namespace (working is default)</p>
+</dd></dl>
+
+</section>
+<section id="dregs-modify">
+<h3>dregs modify<a class="headerlink" href="#dregs-modify" title="Link to this heading"></a></h3>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">usage: dregs modify [-h] {dataset} ...</span>
+</pre></div>
+</div>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-modify-h">
+<span id="cmdoption-dregs-modify-help"></span><span class="sig-name descname"><span class="pre">-h</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--help</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dregs-modify-h" title="Link to this definition"></a></dt>
+<dd><p>show this help message and exit</p>
+</dd></dl>
+
+</section>
+<section id="dregs-modify-dataset">
+<h3>dregs modify dataset<a class="headerlink" href="#dregs-modify-dataset" title="Link to this heading"></a></h3>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">usage: dregs modify dataset [-h] [--config_file CONFIG_FILE]</span>
+<span class="go">                            [--root_dir ROOT_DIR] [--site SITE]</span>
+<span class="go">                            [--schema SCHEMA] [--namespace NAMESPACE]</span>
+<span class="go">                            [--entry_mode ENTRY_MODE]</span>
+<span class="go">                            dataset_id column new_value</span>
+</pre></div>
+</div>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-modify-dataset-arg-dataset_id">
+<span class="sig-name descname"><span class="pre">dataset_id</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dregs-modify-dataset-arg-dataset_id" title="Link to this definition"></a></dt>
+<dd><p><cite>dataset_id</cite> of dataset to modify</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-modify-dataset-arg-column">
+<span class="sig-name descname"><span class="pre">column</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dregs-modify-dataset-arg-column" title="Link to this definition"></a></dt>
+<dd><p>Column in the dataset table to modify</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-modify-dataset-arg-new_value">
+<span class="sig-name descname"><span class="pre">new_value</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dregs-modify-dataset-arg-new_value" title="Link to this definition"></a></dt>
+<dd><p>Updated value</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-modify-dataset-h">
+<span id="cmdoption-dregs-modify-dataset-help"></span><span class="sig-name descname"><span class="pre">-h</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--help</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dregs-modify-dataset-h" title="Link to this definition"></a></dt>
+<dd><p>show this help message and exit</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-modify-dataset-config_file">
+<span class="sig-name descname"><span class="pre">--config_file</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;config_file&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-modify-dataset-config_file" title="Link to this definition"></a></dt>
+<dd><p>Location of data registry config file</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-modify-dataset-root_dir">
+<span class="sig-name descname"><span class="pre">--root_dir</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;root_dir&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-modify-dataset-root_dir" title="Link to this definition"></a></dt>
+<dd><p>Location of the root_dir</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-modify-dataset-site">
+<span class="sig-name descname"><span class="pre">--site</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;site&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-modify-dataset-site" title="Link to this definition"></a></dt>
+<dd><p>Get the root_dir through a pre-defined ‘site’</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-modify-dataset-schema">
+<span class="sig-name descname"><span class="pre">--schema</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;schema&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-modify-dataset-schema" title="Link to this definition"></a></dt>
+<dd><p>Which schema to connect to</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-modify-dataset-namespace">
+<span class="sig-name descname"><span class="pre">--namespace</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;namespace&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-modify-dataset-namespace" title="Link to this definition"></a></dt>
+<dd><p>Which namespace to connect to</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-modify-dataset-entry_mode">
+<span class="sig-name descname"><span class="pre">--entry_mode</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;entry_mode&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-modify-dataset-entry_mode" title="Link to this definition"></a></dt>
+<dd><p>Which schema to default to in the namespace (working is default)</p>
+</dd></dl>
+
+</section>
+<section id="dregs-register">
+<h3>dregs register<a class="headerlink" href="#dregs-register" title="Link to this heading"></a></h3>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">usage: dregs register [-h] {dataset} ...</span>
+</pre></div>
+</div>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-h">
+<span id="cmdoption-dregs-register-help"></span><span class="sig-name descname"><span class="pre">-h</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--help</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dregs-register-h" title="Link to this definition"></a></dt>
+<dd><p>show this help message and exit</p>
+</dd></dl>
+
+</section>
+<section id="dregs-register-dataset">
+<h3>dregs register dataset<a class="headerlink" href="#dregs-register-dataset" title="Link to this heading"></a></h3>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">usage: dregs register dataset [-h] [--relative_path RELATIVE_PATH]</span>
+<span class="go">                              [--creation_date CREATION_DATE]</span>
+<span class="go">                              [--access_api ACCESS_API] [--owner OWNER]</span>
+<span class="go">                              [--owner_type {user,group,project,production}]</span>
+<span class="go">                              [--description DESCRIPTION]</span>
+<span class="go">                              [--execution_id EXECUTION_ID]</span>
+<span class="go">                              [--is_overwritable]</span>
+<span class="go">                              [--location_type {dataregistry,external,meta_only,dummy}]</span>
+<span class="go">                              [--url URL] [--contact_email CONTACT_EMAIL]</span>
+<span class="go">                              [--old_location OLD_LOCATION]</span>
+<span class="go">                              [--execution_name EXECUTION_NAME]</span>
+<span class="go">                              [--execution_description EXECUTION_DESCRIPTION]</span>
+<span class="go">                              [--execution_start EXECUTION_START]</span>
+<span class="go">                              [--execution_site EXECUTION_SITE]</span>
+<span class="go">                              [--execution_configuration EXECUTION_CONFIGURATION]</span>
+<span class="go">                              [--input_datasets INPUT_DATASETS [INPUT_DATASETS ...]]</span>
+<span class="go">                              [--keywords KEYWORDS [KEYWORDS ...]]</span>
+<span class="go">                              [--config_file CONFIG_FILE]</span>
+<span class="go">                              [--root_dir ROOT_DIR] [--site SITE]</span>
+<span class="go">                              [--schema SCHEMA] [--namespace NAMESPACE]</span>
+<span class="go">                              [--entry_mode ENTRY_MODE]</span>
+<span class="go">                              name version</span>
+</pre></div>
+</div>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-dataset-arg-name">
+<span class="sig-name descname"><span class="pre">name</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dregs-register-dataset-arg-name" title="Link to this definition"></a></dt>
+<dd><p>Any convenient, evocative name for the human. Note the combination of name and version must be unique.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-dataset-arg-version">
+<span class="sig-name descname"><span class="pre">version</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dregs-register-dataset-arg-version" title="Link to this definition"></a></dt>
+<dd><p>Semantic version string of the format MAJOR.MINOR.PATCH or a specialflag “patch”, “minor” or “major”. When a special flag is used itautomatically bumps the relative version for you (see examples for moredetails).</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-dataset-h">
+<span id="cmdoption-dregs-register-dataset-help"></span><span class="sig-name descname"><span class="pre">-h</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--help</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dregs-register-dataset-h" title="Link to this definition"></a></dt>
+<dd><p>show this help message and exit</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-dataset-relative_path">
+<span class="sig-name descname"><span class="pre">--relative_path</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;relative_path&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-register-dataset-relative_path" title="Link to this definition"></a></dt>
+<dd><p>Relative path storing the data, relative to <cite>&lt;root_dir&gt;</cite>. If None, generated from the <cite>name</cite> and <cite>version_string</cite></p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-dataset-creation_date">
+<span class="sig-name descname"><span class="pre">--creation_date</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;creation_date&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-register-dataset-creation_date" title="Link to this definition"></a></dt>
+<dd><p>Dataset creation date</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-dataset-access_api">
+<span class="sig-name descname"><span class="pre">--access_api</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;access_api&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-register-dataset-access_api" title="Link to this definition"></a></dt>
+<dd><p>Describes the software that can read the dataset (e.g., ‘GCRCatalogs’, ‘skyCatalogs’)</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-dataset-owner">
+<span class="sig-name descname"><span class="pre">--owner</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;owner&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-register-dataset-owner" title="Link to this definition"></a></dt>
+<dd><p>Owner of the dataset (defaults to $USER)</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-dataset-owner_type">
+<span class="sig-name descname"><span class="pre">--owner_type</span></span><span class="sig-prename descclassname"> <span class="pre">{user,group,project,production}</span></span><a class="headerlink" href="#cmdoption-dregs-register-dataset-owner_type" title="Link to this definition"></a></dt>
+<dd><p>Datasets owner type, can be ‘user’, ‘group’, ‘project’ or ‘production’. (default=user)</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-dataset-description">
+<span class="sig-name descname"><span class="pre">--description</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;description&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-register-dataset-description" title="Link to this definition"></a></dt>
+<dd><p>User provided human-readable description of the dataset</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-dataset-execution_id">
+<span class="sig-name descname"><span class="pre">--execution_id</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;execution_id&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-register-dataset-execution_id" title="Link to this definition"></a></dt>
+<dd><p>Execution this dataset is linked to</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-dataset-is_overwritable">
+<span class="sig-name descname"><span class="pre">--is_overwritable</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dregs-register-dataset-is_overwritable" title="Link to this definition"></a></dt>
+<dd><p>True means this dataset can be overwritten in the future</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-dataset-location_type">
+<span class="sig-name descname"><span class="pre">--location_type</span></span><span class="sig-prename descclassname"> <span class="pre">{dataregistry,external,meta_only,dummy}</span></span><a class="headerlink" href="#cmdoption-dregs-register-dataset-location_type" title="Link to this definition"></a></dt>
+<dd><p>What is the physical location of the data? ‘dataregistry’ means the data is located within the <cite>&lt;root_dir&gt;</cite> and managed by the <cite>dataregistry</cite>. External means the data is not managed by the dataregistry, either because it is off-site or because it is stored outside &lt;root_dir&gt; therefore there is only a database entry (in this case a <cite>url</cite> or <cite>contact_email</cite> must be provided during registration). ‘meta_only’ is for a legitimate entry involving no actual data, but possibly referring to other entries which do directly reference managed data, as may happen for some GCRCatalogs entries,  and ‘dummy’ is a dataset for internal testing purposes only. The data registry will only attempt to manage data created with this field set to ‘dataregistry’. (default=dataregistry)</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-dataset-url">
+<span class="sig-name descname"><span class="pre">--url</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;url&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-register-dataset-url" title="Link to this definition"></a></dt>
+<dd><p>URL that points to the data (used in the case of external datasets, i.e., <cite>location_type=’external’</cite>).</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-dataset-contact_email">
+<span class="sig-name descname"><span class="pre">--contact_email</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;contact_email&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-register-dataset-contact_email" title="Link to this definition"></a></dt>
+<dd><p>Contact information for someone regarding the dataset.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-dataset-old_location">
+<span class="sig-name descname"><span class="pre">--old_location</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;old_location&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-register-dataset-old_location" title="Link to this definition"></a></dt>
+<dd><p>Absolute location of dataset to copy.   
+If None dataset should alreadybe at correct relative_path.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-dataset-execution_name">
+<span class="sig-name descname"><span class="pre">--execution_name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;execution_name&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-register-dataset-execution_name" title="Link to this definition"></a></dt>
+<dd><p>Typically pipeline name or program name</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-dataset-execution_description">
+<span class="sig-name descname"><span class="pre">--execution_description</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;execution_description&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-register-dataset-execution_description" title="Link to this definition"></a></dt>
+<dd><p>Human readible description of execution</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-dataset-execution_start">
+<span class="sig-name descname"><span class="pre">--execution_start</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;execution_start&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-register-dataset-execution_start" title="Link to this definition"></a></dt>
+<dd><p>Date the execution started</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-dataset-execution_site">
+<span class="sig-name descname"><span class="pre">--execution_site</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;execution_site&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-register-dataset-execution_site" title="Link to this definition"></a></dt>
+<dd><p>Where was the execution performed?</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-dataset-execution_configuration">
+<span class="sig-name descname"><span class="pre">--execution_configuration</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;execution_configuration&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-register-dataset-execution_configuration" title="Link to this definition"></a></dt>
+<dd><p>Path to text file used to configure the execution</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-dataset-input_datasets">
+<span class="sig-name descname"><span class="pre">--input_datasets</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;input_datasets&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-register-dataset-input_datasets" title="Link to this definition"></a></dt>
+<dd><p>List of dataset ids that were the input to this execution</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-dataset-keywords">
+<span class="sig-name descname"><span class="pre">--keywords</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;keywords&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-register-dataset-keywords" title="Link to this definition"></a></dt>
+<dd><p>List of (predefined) keywords to tag dataset with</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-dataset-config_file">
+<span class="sig-name descname"><span class="pre">--config_file</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;config_file&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-register-dataset-config_file" title="Link to this definition"></a></dt>
+<dd><p>Location of data registry config file</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-dataset-root_dir">
+<span class="sig-name descname"><span class="pre">--root_dir</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;root_dir&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-register-dataset-root_dir" title="Link to this definition"></a></dt>
+<dd><p>Location of the root_dir</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-dataset-site">
+<span class="sig-name descname"><span class="pre">--site</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;site&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-register-dataset-site" title="Link to this definition"></a></dt>
+<dd><p>Get the root_dir through a pre-defined ‘site’</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-dataset-schema">
+<span class="sig-name descname"><span class="pre">--schema</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;schema&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-register-dataset-schema" title="Link to this definition"></a></dt>
+<dd><p>Which schema to connect to</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-dataset-namespace">
+<span class="sig-name descname"><span class="pre">--namespace</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;namespace&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-register-dataset-namespace" title="Link to this definition"></a></dt>
+<dd><p>Which namespace to connect to</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-register-dataset-entry_mode">
+<span class="sig-name descname"><span class="pre">--entry_mode</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;entry_mode&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-register-dataset-entry_mode" title="Link to this definition"></a></dt>
+<dd><p>Which schema to default to in the namespace (working is default)</p>
+</dd></dl>
+
+</section>
+<section id="dregs-show">
+<h3>dregs show<a class="headerlink" href="#dregs-show" title="Link to this heading"></a></h3>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">usage: dregs show [-h] {keywords} ...</span>
+</pre></div>
+</div>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-show-h">
+<span id="cmdoption-dregs-show-help"></span><span class="sig-name descname"><span class="pre">-h</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--help</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dregs-show-h" title="Link to this definition"></a></dt>
+<dd><p>show this help message and exit</p>
+</dd></dl>
+
+</section>
+<section id="dregs-show-keywords">
+<h3>dregs show keywords<a class="headerlink" href="#dregs-show-keywords" title="Link to this heading"></a></h3>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">usage: dregs show keywords [-h] [--config_file CONFIG_FILE]</span>
+<span class="go">                           [--root_dir ROOT_DIR] [--site SITE]</span>
+<span class="go">                           [--schema SCHEMA] [--namespace NAMESPACE]</span>
+<span class="go">                           [--entry_mode ENTRY_MODE]</span>
+</pre></div>
+</div>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-show-keywords-h">
+<span id="cmdoption-dregs-show-keywords-help"></span><span class="sig-name descname"><span class="pre">-h</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--help</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-dregs-show-keywords-h" title="Link to this definition"></a></dt>
+<dd><p>show this help message and exit</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-show-keywords-config_file">
+<span class="sig-name descname"><span class="pre">--config_file</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;config_file&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-show-keywords-config_file" title="Link to this definition"></a></dt>
+<dd><p>Location of data registry config file</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-show-keywords-root_dir">
+<span class="sig-name descname"><span class="pre">--root_dir</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;root_dir&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-show-keywords-root_dir" title="Link to this definition"></a></dt>
+<dd><p>Location of the root_dir</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-show-keywords-site">
+<span class="sig-name descname"><span class="pre">--site</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;site&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-show-keywords-site" title="Link to this definition"></a></dt>
+<dd><p>Get the root_dir through a pre-defined ‘site’</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-show-keywords-schema">
+<span class="sig-name descname"><span class="pre">--schema</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;schema&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-show-keywords-schema" title="Link to this definition"></a></dt>
+<dd><p>Which schema to connect to</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-show-keywords-namespace">
+<span class="sig-name descname"><span class="pre">--namespace</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;namespace&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-show-keywords-namespace" title="Link to this definition"></a></dt>
+<dd><p>Which namespace to connect to</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-dregs-show-keywords-entry_mode">
+<span class="sig-name descname"><span class="pre">--entry_mode</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;entry_mode&gt;</span></span><a class="headerlink" href="#cmdoption-dregs-show-keywords-entry_mode" title="Link to this definition"></a></dt>
+<dd><p>Which schema to default to in the namespace (working is default)</p>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="reference_python.html" class="btn btn-neutral float-left" title="The dataregistry package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="reference_schema.html" class="btn btn-neutral float-right" title="Database schema" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, DESC.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

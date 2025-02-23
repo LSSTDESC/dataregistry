@@ -1,0 +1,513 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The dataregistry package &mdash; DESC data management  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/custom.css?v=d7e3758a" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="The dregs CLI" href="reference_cli.html" />
+    <link rel="prev" title="Data Registry CLI Cheat Sheet" href="cli_cheat_sheet.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: white" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            DESC data management
+              <img src="_static/DREGS_logo_v2.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Overview:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#using-the-dataregistry-at-nersc">Using the <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> at NERSC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#access-accounts">Access accounts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#authenticating-with-the-database">Authenticating with the database</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_setup.html">Getting set up</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_setup.html#working-with-the-data-registry-tutorial-notebooks-interactively">Working with the data registry tutorial notebooks interactively</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_python.html">The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_python.html#getting-started-with-the-data-registry">1) Getting started with the data registry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_python.html#advanced-tutorials">2) Advanced tutorials</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_cli.html">The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> CLI</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_cli.html#registering-a-dataset">Registering a dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_cli.html#updating-a-dataset">Updating a dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_cli.html#querying-the-data-registry">Querying the data registry</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cli_cheat_sheet.html">Data Registry CLI Cheat Sheet</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#main-commands">Main Commands</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#querying-from-the-command-line">🟦 Querying from the Command Line 🟦</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#registering-a-dataset">🟩 Registering a Dataset 🟩</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#modifying-a-dataset">🟨 Modifying a Dataset 🟨</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#deleting-a-dataset">🟥 Deleting a Dataset 🟥</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#the-dataregistry-class">The DataRegistry class</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference_cli.html">The <code class="docutils literal notranslate"><span class="pre">dregs</span></code> CLI</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_cli.html#dregs">dregs</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference_schema.html">Database schema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-execution-table">The execution table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-provenance-table">The provenance table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-execution-alias-table">The execution_alias table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-dataset-table">The dataset table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-dependency-table">The dependency table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-dataset-alias-table">The dataset_alias table</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer notes:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="dev_notes_spin.html">SPIN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev_notes_database.html">Database structure</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dev_notes_database.html#the-database-schemas">The database schemas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev_notes_database.html#first-time-creation-of-database-schemas">First time creation of database schemas</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="installation_locally.html">Local installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#creating-a-conda-environment">Creating a Conda environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#creating-a-python-venv">Creating a Python venv</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#installing-the-dataregistry-package">Installing the <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#install-from-source">Install from source</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contact:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="contact.html">Contact</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: white" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">DESC data management</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/reference_python.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="the-dataregistry-package">
+<h1>The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package<a class="headerlink" href="#the-dataregistry-package" title="Link to this heading"></a></h1>
+<p>Reference documentation for the core objects within the <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code>
+package.  Demonstrations of their usage can be found in the <a class="reference internal" href="tutorial_python.html#tutorials-python"><span class="std std-ref">tutorials section</span></a>.</p>
+<section id="the-dataregistry-class">
+<span id="dataregistry-class"></span><h2>The DataRegistry class<a class="headerlink" href="#the-dataregistry-class" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">DataRegistry</span></code> class is the primary front end to the <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package.
+This should be the only object users have to import to their code.</p>
+<p>It connects the user to the database, and serves as a wrapper to both the
+<code class="docutils literal notranslate"><span class="pre">Registrar</span></code> and <code class="docutils literal notranslate"><span class="pre">Query</span></code> classes.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="dataregistry.DataRegistry">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">dataregistry.</span></span><span class="sig-name descname"><span class="pre">DataRegistry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">owner</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">owner_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">namespace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entry_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'working'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'both'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dataregistry.DataRegistry" title="Link to this definition"></a></dt>
+<dd><p>Primary data registry wrapper class.</p>
+<p>The DataRegistry class links to both the Registrar class, to
+register/modify/delete datasets, and the Query class, to query existing
+datasets.</p>
+<dl class="simple">
+<dt>Links to the database is done automatically using the:</dt><dd><ul class="simple">
+<li><p>the users config file (if None defaults are used)</p></li>
+<li><p>the passed schema (if None the default schema is used)</p></li>
+</ul>
+</dd>
+</dl>
+<p>The <cite>root_dir</cite> is the location the data is copied to. This can be
+manually passed, or alternately a predefined <cite>site</cite> can be chosen. If
+nether are chosen, the NERSC site will be selected as the default.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>owner</strong> (<em>str</em>) – To set the default owner for all registered datasets in this
+instance.</p></li>
+<li><p><strong>owner_type</strong> (<em>str</em>) – To set the default owner_type for all registered datasets in this
+instance.</p></li>
+<li><p><strong>config_file</strong> (<em>str</em>) – Path to config file, if None, default location is assumed.</p></li>
+<li><p><strong>root_dir</strong> (<em>str</em>) – Root directory for datasets, if None, default is assumed.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – True for more output.</p></li>
+<li><p><strong>site</strong> (<em>str</em>) – Can be used instead of <cite>root_dir</cite>. Some predefined “sites” are
+built in, such as “nersc”, which will set the <cite>root_dir</cite> to the
+data registry’s default data location at NERSC.</p></li>
+<li><p><strong>namespace</strong> (<em>str</em><em>, </em><em>optional</em>) – Namespace to connect to. If None, the default namespace will be
+used.</p></li>
+<li><p><strong>schema</strong> (<em>str</em><em>, </em><em>optional</em>) – Schema to connect to, to connect directly to a chosen schema,
+bypassing the namespace.</p></li>
+<li><p><strong>entry_mode</strong> (<em>str</em><em>, </em><em>optional</em>) – Which schema (“working” or “production”) within the namespace to
+use when writing/modifying/deleting entries.</p></li>
+<li><p><strong>query_mode</strong> (<em>str</em><em>, </em><em>optional</em>) – Which schema(s) (“working” or “production”) to probe when querying.
+By default query_mode=”both”, which searches both schemas together,
+however this can be restricted to either “working” or “production”
+to restrict searches to a single schema.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="dataregistry.DataRegistry.Registrar.get_owner_types">
+<span class="sig-prename descclassname"><span class="pre">Registrar.</span></span><span class="sig-name descname"><span class="pre">get_owner_types</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#dataregistry.DataRegistry.Registrar.get_owner_types" title="Link to this definition"></a></dt>
+<dd><p>Returns a list of allowed <cite>owner_types</cite> that can be registered within the
+data registry.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>-</strong> – Set of owner_types</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>set</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dataregistry.DataRegistry.Query.find_datasets">
+<span class="sig-prename descclassname"><span class="pre">Query.</span></span><span class="sig-name descname"><span class="pre">find_datasets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">property_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'property_dict'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strip_table_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dataregistry.DataRegistry.Query.find_datasets" title="Link to this definition"></a></dt>
+<dd><p>Get specified properties for datasets satisfying all filters. Both
+schemas (i.e., the working and production schema) are searched, with
+the results combined.</p>
+<p>If property_names is None, return all properties from the dataset table
+(only). Otherwise, return the property_names columns for each
+discovered dataset (which can be from multiple tables via a join).</p>
+<p>Filters should be a list of dataregistry Filter objects, which are
+logic constraints on column values.</p>
+<p>These choices get translated into an SQL query.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>property_names</strong> (<em>list</em><em>, </em><em>optional</em>) – List of database columns to return (SELECT clause)</p></li>
+<li><p><strong>filters</strong> (<em>list</em><em>, </em><em>optional</em>) – List of filters (WHERE clauses) to apply</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – True for more output relating to the query</p></li>
+<li><p><strong>return_format</strong> (<em>str</em><em>, </em><em>optional</em>) – The format the query result is returned in.  Options are
+“DataFrame”, or “proprety_dict”. Note this is not case sensitive.</p></li>
+<li><p><strong>strip_table_names</strong> (<em>bool</em><em>, </em><em>optional</em>) – True to remove the table name in the results columns
+This only works if a single table is needed for the query</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>result</strong> – Requested property values</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict, or DataFrame (depending on <cite>return_format</cite>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dataregistry.registrar.dataset.DatasetTable.register">
+<span class="sig-prename descclassname"><span class="pre">DatasetTable.</span></span><span class="sig-name descname"><span class="pre">register</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">creation_date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">execution_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">access_api</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">access_api_configuration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_overwritable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_location</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">owner</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">owner_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">execution_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">execution_description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">execution_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">execution_site</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">execution_configuration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_datasets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_production_datasets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_config_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keywords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'dataregistry'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contact_email</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_production</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relative_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dataregistry.registrar.dataset.DatasetTable.register" title="Link to this definition"></a></dt>
+<dd><p>Create a new dataset entry in the DESC data registry.</p>
+<p>Any args marked with ‘**’ share their name with the associated column
+in the registry schema. Descriptions of what these columns are can be
+found in <cite>schema.yaml</cite> or the documentation.</p>
+<p>First, the dataset entry is created in the database. If success, the
+data is then copied (if <cite>old_location</cite> was provided). Only if both
+steps are successful will there be “valid” status entry in the
+registry.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name**</strong> (<em>str</em>)</p></li>
+<li><p><strong>version**</strong> (<em>str</em>)</p></li>
+<li><p><strong>creation_date**</strong> (<em>datetime</em><em>, </em><em>optional</em>)</p></li>
+<li><p><strong>description**</strong> (<em>str</em><em>, </em><em>optional</em>)</p></li>
+<li><p><strong>execution_id**</strong> (<em>int</em><em>, </em><em>optional</em>)</p></li>
+<li><p><strong>access_api**</strong> (<em>str</em><em>, </em><em>optional</em>)</p></li>
+<li><p><strong>is_overwritable**</strong> (<em>bool</em><em>, </em><em>optional</em>)</p></li>
+<li><p><strong>old_location</strong> (<em>str</em><em>, </em><em>optional</em>) – <p>Absolute location of dataset to copy into the data registry.</p>
+<p>If None, dataset should already be at correct relative_path within
+the data registry.</p>
+</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – Provide some additional output information</p></li>
+<li><p><strong>owner**</strong> (<em>str</em><em>, </em><em>optional</em>)</p></li>
+<li><p><strong>owner_type**</strong> (<em>str</em><em>, </em><em>optional</em>)</p></li>
+<li><p><strong>execution_name**</strong> (<em>str</em><em>, </em><em>optional</em>)</p></li>
+<li><p><strong>execution_description**</strong> (<em>str</em><em>, </em><em>optional</em>)</p></li>
+<li><p><strong>execution_start**</strong> (<em>datetime</em><em>, </em><em>optional</em>)</p></li>
+<li><p><strong>execution_site**</strong> (<em>str</em><em>, </em><em>optional</em>)</p></li>
+<li><p><strong>execution_configuration**</strong> (<em>str</em><em>, </em><em>optional</em>)</p></li>
+<li><p><strong>input_datasets</strong> (<em>list</em><em>, </em><em>optional</em>) – List of dataset ids that were the input to this execution</p></li>
+<li><p><strong>input_production_datasets</strong> (<em>list</em><em>, </em><em>optional</em>) – List of production dataset ids that were the input to this execution</p></li>
+<li><p><strong>max_config_length</strong> (<em>int</em><em>, </em><em>optional</em>) – Maxiumum number of lines to read from a configuration file</p></li>
+<li><p><strong>keywords</strong> (<em>list</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – List of keywords to tag dataset with.
+Each keyword must be registered already in the keywords table.</p></li>
+<li><p><strong>location_type**</strong> (<em>str</em><em>, </em><em>optional</em>) – If <cite>location_type=”external”</cite>, either <cite>url</cite> or <cite>contact_email</cite> must
+be supplied</p></li>
+<li><p><strong>url**</strong> (<em>str</em><em>, </em><em>optional</em>) – For <cite>location_type=”external”</cite> only</p></li>
+<li><p><strong>contact_email**</strong> (<em>str</em><em>, </em><em>optional</em>)</p></li>
+<li><p><strong>test_production</strong> (<em>boolean</em><em>, </em><em>default False.  Set to True for testing</em>) – code for production owner_type</p></li>
+<li><p><strong>relative_path**</strong> (<em>str</em><em>, </em><em>optional</em>)</p></li>
+<li><p><strong>kwargs_dict</strong> (<em>dict</em>) – Stores all the keyword arguments passed to this function (and
+defaults). Automatically generated by the decorator, do not pass
+manually.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>prim_key</strong> (<em>int</em>) – The dataset ID of the new row relating to this entry (else None)</p></li>
+<li><p><strong>execution_id</strong> (<em>int</em>) – The execution ID associated with the dataset</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dataregistry.registrar.dataset.DatasetTable.replace">
+<span class="sig-prename descclassname"><span class="pre">DatasetTable.</span></span><span class="sig-name descname"><span class="pre">replace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">creation_date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">execution_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">access_api</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">access_api_configuration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_overwritable</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_location</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">owner</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">owner_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">execution_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">execution_description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">execution_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">execution_site</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">execution_configuration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_datasets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_production_datasets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_config_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keywords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">location_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'dataregistry'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contact_email</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_production</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dataregistry.registrar.dataset.DatasetTable.replace" title="Link to this definition"></a></dt>
+<dd><p>Replace a dataset in the registry.</p>
+<p>This is so a user can keep the same
+name/version/ower/owner_type combination as a previous
+dataset. Note the original dataset must have <cite>is_overwritable=True</cite> to
+allow the replace to work.</p>
+<dl class="simple">
+<dt>The process is as follows:</dt><dd><ul class="simple">
+<li><p>The original dataset is deleted, and the entry in the database
+tagged accordingly</p></li>
+<li><p>A new entry is made with the same name/version combination as
+before, and the data goes into the same relative_path as before.
+All other properties are what the user specifies in the replace
+function</p></li>
+<li><p>The old dataset gets pointed to the new dataset saying it is the
+most up to date iteration</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>prim_key</strong> (<em>int</em>) – The dataset ID of the new row relating to this entry (else None)</p></li>
+<li><p><strong>execution_id</strong> (<em>int</em>) – The execution ID associated with the dataset</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dataregistry.registrar.dataset.DatasetTable.modify">
+<span class="sig-prename descclassname"><span class="pre">DatasetTable.</span></span><span class="sig-name descname"><span class="pre">modify</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entry_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modify_fields</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dataregistry.registrar.dataset.DatasetTable.modify" title="Link to this definition"></a></dt>
+<dd><p>Modify an entry in the DESC data registry.</p>
+<p>Only certain columns are allowed to be modified after registration,
+this is defined in the schema yaml file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>entry_id</strong> (<em>int</em>) – The dataset/execution/etc ID we wish to delete from the database</p></li>
+<li><p><strong>modify_fields</strong> (<em>dict</em>) – Dict where key is the column to modify (must be allowed to modify)
+and value is the desired new value for the entry</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dataregistry.registrar.dataset.DatasetTable.delete">
+<span class="sig-prename descclassname"><span class="pre">DatasetTable.</span></span><span class="sig-name descname"><span class="pre">delete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version_string</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">owner</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">owner_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confirm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dataregistry.registrar.dataset.DatasetTable.delete" title="Link to this definition"></a></dt>
+<dd><p>Delete an dataset entry from the DESC data registry.</p>
+<p>This will also remove the raw data from the root dir, but the dataset
+entry remains in the registry (now with an updated <cite>status</cite> field).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name/version_string/owner/owner_type</strong> (<em>str</em>) – Identifiers for dataset we want to delete from the registry</p></li>
+<li><p><strong>confirm</strong> (<em>bool</em>) – Will ask for a confirmation</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dataregistry.registrar.dataset.DatasetTable.add_keywords">
+<span class="sig-prename descclassname"><span class="pre">DatasetTable.</span></span><span class="sig-name descname"><span class="pre">add_keywords</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keywords</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dataregistry.registrar.dataset.DatasetTable.add_keywords" title="Link to this definition"></a></dt>
+<dd><p>Add/append keywords to an already existing dataset.</p>
+<p>First check the keywords are valid, then append. If the dataset already
+has one or more of the passed keywords attributed to it, the keyword(s)
+will not be duplicated.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset_id</strong> (<em>int</em>)</p></li>
+<li><p><strong>keywords</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dataregistry.registrar.dataset.DatasetTable.get_modifiable_columns">
+<span class="sig-prename descclassname"><span class="pre">DatasetTable.</span></span><span class="sig-name descname"><span class="pre">get_modifiable_columns</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#dataregistry.registrar.dataset.DatasetTable.get_modifiable_columns" title="Link to this definition"></a></dt>
+<dd><p>Return a list of all columns in this table that are “modifiable”.</p>
+<p>As defined in the schema yaml file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mod_list</strong></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dataregistry.registrar.dataset.DatasetTable.get_keywords">
+<span class="sig-prename descclassname"><span class="pre">DatasetTable.</span></span><span class="sig-name descname"><span class="pre">get_keywords</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#dataregistry.registrar.dataset.DatasetTable.get_keywords" title="Link to this definition"></a></dt>
+<dd><p>Returns the list of system keywords that are allowed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>keywords</strong></p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dataregistry.registrar.execution.ExecutionTable.register">
+<span class="sig-prename descclassname"><span class="pre">ExecutionTable.</span></span><span class="sig-name descname"><span class="pre">register</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">execution_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">configuration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_datasets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_production_datasets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_config_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dataregistry.registrar.execution.ExecutionTable.register" title="Link to this definition"></a></dt>
+<dd><p>Create a new execution entry in the DESC data registry.</p>
+<p>Any args marked with ‘**’ share their name with the associated column
+in the registry schema. Descriptions of what these columns are can be
+found in <cite>schema.yaml</cite> or the documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name**</strong> (<em>str</em>)</p></li>
+<li><p><strong>description**</strong> (<em>str</em><em>, </em><em>optional</em>)</p></li>
+<li><p><strong>execution_start**</strong> (<em>datetime</em><em>, </em><em>optional</em>)</p></li>
+<li><p><strong>site**</strong> (<em>str</em><em>, </em><em>optional</em>)</p></li>
+<li><p><strong>configuration**</strong> (<em>str</em><em>, </em><em>optional</em>)</p></li>
+<li><p><strong>input_datasets**</strong> (<em>list</em><em>, </em><em>optional</em>)</p></li>
+<li><p><strong>input_production_datasets**</strong> (<em>list</em><em>, </em><em>optional</em>)</p></li>
+<li><p><strong>max_config_length</strong> (<em>int</em><em>, </em><em>optional</em>) – Maxiumum number of lines to read from a configuration file</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>my_id</strong> – The execution ID of the new row relating to this entry</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dataregistry.registrar.dataset_alias.DatasetAliasTable.register">
+<span class="sig-prename descclassname"><span class="pre">DatasetAliasTable.</span></span><span class="sig-name descname"><span class="pre">register</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">aliasname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_alias_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">access_api</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">access_api_configuration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supersede</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dataregistry.registrar.dataset_alias.DatasetAliasTable.register" title="Link to this definition"></a></dt>
+<dd><p>Create a new <cite>dataset_alias</cite> entry in the DESC data registry.
+It may refer to a dataset (default) or another alias</p>
+<p>Any args marked with ‘**’ share their name with the associated column
+in the registry schema. Descriptions of what these columns are can be
+found in <cite>schema.yaml</cite> or the documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>aliasname</strong> (<em>str  alias name</em>)</p></li>
+<li><p><strong>dataset_id**</strong> (<em>int  not None if alias refers to dataset</em>)</p></li>
+<li><p><strong>ref_alias_id**</strong> (<em>int  not None if alias refers to</em>) – another alias</p></li>
+<li><p><strong>access_api**</strong> (<em>str  api</em><em>, </em><em>if any</em><em>, </em><em>which can read the</em>) – dataset</p></li>
+<li><p><strong>access_api_configuration**</strong> (<em>str  extra information for access_api</em>)</p></li>
+<li><p><strong>supersede</strong> (<em>bool if True</em><em>, </em><em>create a new entry with</em>) – this alias name even if old ones
+exist</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>prim_key</strong> – The dataset_alias ID of the new row relating to this entry</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="cli_cheat_sheet.html" class="btn btn-neutral float-left" title="Data Registry CLI Cheat Sheet" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="reference_cli.html" class="btn btn-neutral float-right" title="The dregs CLI" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, DESC.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

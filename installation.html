@@ -1,0 +1,245 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Installation &mdash; DESC data management  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/custom.css?v=d7e3758a" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Getting set up" href="tutorial_setup.html" />
+    <link rel="prev" title="Welcome to the DESC data management’s software documentation" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: white" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            DESC data management
+              <img src="_static/DREGS_logo_v2.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Overview:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#using-the-dataregistry-at-nersc">Using the <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> at NERSC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#access-accounts">Access accounts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#authenticating-with-the-database">Authenticating with the database</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_setup.html">Getting set up</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_setup.html#working-with-the-data-registry-tutorial-notebooks-interactively">Working with the data registry tutorial notebooks interactively</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_python.html">The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_python.html#getting-started-with-the-data-registry">1) Getting started with the data registry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_python.html#advanced-tutorials">2) Advanced tutorials</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_cli.html">The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> CLI</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_cli.html#registering-a-dataset">Registering a dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_cli.html#updating-a-dataset">Updating a dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_cli.html#querying-the-data-registry">Querying the data registry</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cli_cheat_sheet.html">Data Registry CLI Cheat Sheet</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#main-commands">Main Commands</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#querying-from-the-command-line">🟦 Querying from the Command Line 🟦</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#registering-a-dataset">🟩 Registering a Dataset 🟩</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#modifying-a-dataset">🟨 Modifying a Dataset 🟨</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#deleting-a-dataset">🟥 Deleting a Dataset 🟥</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="reference_python.html">The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_python.html#the-dataregistry-class">The DataRegistry class</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference_cli.html">The <code class="docutils literal notranslate"><span class="pre">dregs</span></code> CLI</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_cli.html#dregs">dregs</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference_schema.html">Database schema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-execution-table">The execution table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-provenance-table">The provenance table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-execution-alias-table">The execution_alias table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-dataset-table">The dataset table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-dependency-table">The dependency table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-dataset-alias-table">The dataset_alias table</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer notes:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="dev_notes_spin.html">SPIN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev_notes_database.html">Database structure</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dev_notes_database.html#the-database-schemas">The database schemas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev_notes_database.html#first-time-creation-of-database-schemas">First time creation of database schemas</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="installation_locally.html">Local installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#creating-a-conda-environment">Creating a Conda environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#creating-a-python-venv">Creating a Python venv</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#installing-the-dataregistry-package">Installing the <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#install-from-source">Install from source</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contact:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="contact.html">Contact</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: white" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">DESC data management</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Installation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/installation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="installation">
+<span id="id1"></span><h1>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h1>
+<p>Currently the DESC <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> database is only accessible through NERSC
+(i.e., PerlMutter).</p>
+<section id="using-the-dataregistry-at-nersc">
+<h2>Using the <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> at NERSC<a class="headerlink" href="#using-the-dataregistry-at-nersc" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package is readily available as part of the
+<code class="docutils literal notranslate"><span class="pre">desc-python-bleed</span></code> environment (see <a class="reference external" href="https://confluence.slac.stanford.edu/display/LSSTDESC/Getting+Started+with+Anaconda+Python+at+NERSC">here</a>
+for details about the <em>Conda</em> environments available at NERSC). Therefore
+before getting started, make sure to activate the <code class="docutils literal notranslate"><span class="pre">desc-python-bleed</span></code>
+environment from the command line, via</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>/global/common/software/lsst/common/miniconda/start-kernel-cli.py<span class="w"> </span>desc-python-bleed
+</pre></div>
+</div>
+<p>or, when working at the NERSC JupyterHub, select the <code class="docutils literal notranslate"><span class="pre">desc-python-bleed</span></code>
+kernel.</p>
+<p>If you wish to install the <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package yourself, see the
+instructions <a class="reference internal" href="installation_locally.html#id1"><span class="std std-ref">here</span></a>.</p>
+</section>
+<section id="access-accounts">
+<h2>Access accounts<a class="headerlink" href="#access-accounts" title="Link to this heading"></a></h2>
+<p>Authentication to the DESC <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> database works through two primary
+group accounts, <code class="docutils literal notranslate"><span class="pre">reg_reader</span></code> and <code class="docutils literal notranslate"><span class="pre">reg_writer</span></code>. These accounts have
+different privileges depending on the database schema you are connected to.
+Both <code class="docutils literal notranslate"><span class="pre">reg_reader</span></code> and <code class="docutils literal notranslate"><span class="pre">reg_writer</span></code> have query (read) access to the primary
+working schema (<code class="docutils literal notranslate"><span class="pre">lsst_desc_working</span></code>), but only <code class="docutils literal notranslate"><span class="pre">reg_writer</span></code> has write
+access to register new entries in the database.</p>
+<p>Both <code class="docutils literal notranslate"><span class="pre">reg_reader</span></code> and <code class="docutils literal notranslate"><span class="pre">reg_writer</span></code> accounts have read and write access to
+the tutorial schemas (used for the tutorial notebooks, i.e., the
+<code class="docutils literal notranslate"><span class="pre">tutorial_working</span></code> and <code class="docutils literal notranslate"><span class="pre">tutorial_production</span></code> schemas).</p>
+<p>Neither <code class="docutils literal notranslate"><span class="pre">reg_reader</span></code> or <code class="docutils literal notranslate"><span class="pre">reg_writer</span></code> can write to the main production
+schema (<code class="docutils literal notranslate"><span class="pre">lsst_desc_production</span></code>), however they both have read access. If you
+need to register production entries, please consult one of the data registry
+admins.</p>
+<p>Depending on which account you have access to, you will need to perform a
+one-time-setup to authenticate, detailed below.</p>
+</section>
+<section id="authenticating-with-the-database">
+<span id="one-time-setup"></span><h2>Authenticating with the database<a class="headerlink" href="#authenticating-with-the-database" title="Link to this heading"></a></h2>
+<p>A one-time setup is required in order to authenticate with the DESC data
+registry database. This is done via a YAML configuration file which stores the
+connection information to the database, and a <code class="docutils literal notranslate"><span class="pre">.pgpass</span></code> file, which stores
+user credentials.</p>
+<p>First, make a <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> configuration file. We recommend a file named
+<code class="docutils literal notranslate"><span class="pre">~/.config_reg_access</span></code> stored in your <code class="docutils literal notranslate"><span class="pre">$HOME</span></code> directory, containing the
+entry</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">sqlalchemy.url </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">postgresql://&lt;username&gt;@dataregistry-release-test-loadbalancer.mcalpine-test.development.svc.spin.nersc.org:5432/desc_data_registry</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">&lt;username&gt;</span></code> should either be <code class="docutils literal notranslate"><span class="pre">reg_writer</span></code> or <code class="docutils literal notranslate"><span class="pre">reg_reader</span></code>,
+depending on what account you have access to.</p>
+<p>Then (if you don’t have one already), create a file named <code class="docutils literal notranslate"><span class="pre">~/.pgpass</span></code> in your
+<code class="docutils literal notranslate"><span class="pre">$HOME</span></code> directory, and append the entry</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># data registry db</span>
+dataregistry-release-test-loadbalancer.mcalpine-test.development.svc.spin.nersc.org:5432:desc_data_registry:&lt;username&gt;:&lt;password&gt;
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">&lt;password&gt;</span></code> is provided on demand by the DESC data registry admins. As
+a final step, the <code class="docutils literal notranslate"><span class="pre">.pgpass</span></code> file must only be readable by you, which you can
+ensure by doing</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>chmod<span class="w"> </span><span class="m">600</span><span class="w"> </span>~/.pgpass
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to the DESC data management’s software documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="tutorial_setup.html" class="btn btn-neutral float-right" title="Getting set up" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, DESC.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

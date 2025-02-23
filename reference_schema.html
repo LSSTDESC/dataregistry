@@ -1,0 +1,560 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Database schema &mdash; DESC data management  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/custom.css?v=d7e3758a" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="SPIN" href="dev_notes_spin.html" />
+    <link rel="prev" title="The dregs CLI" href="reference_cli.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: white" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            DESC data management
+              <img src="_static/DREGS_logo_v2.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Overview:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#using-the-dataregistry-at-nersc">Using the <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> at NERSC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#access-accounts">Access accounts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#authenticating-with-the-database">Authenticating with the database</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_setup.html">Getting set up</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_setup.html#working-with-the-data-registry-tutorial-notebooks-interactively">Working with the data registry tutorial notebooks interactively</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_python.html">The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_python.html#getting-started-with-the-data-registry">1) Getting started with the data registry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_python.html#advanced-tutorials">2) Advanced tutorials</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_cli.html">The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> CLI</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_cli.html#registering-a-dataset">Registering a dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_cli.html#updating-a-dataset">Updating a dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_cli.html#querying-the-data-registry">Querying the data registry</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cli_cheat_sheet.html">Data Registry CLI Cheat Sheet</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#main-commands">Main Commands</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#querying-from-the-command-line">🟦 Querying from the Command Line 🟦</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#registering-a-dataset">🟩 Registering a Dataset 🟩</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#modifying-a-dataset">🟨 Modifying a Dataset 🟨</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#deleting-a-dataset">🟥 Deleting a Dataset 🟥</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="reference_python.html">The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_python.html#the-dataregistry-class">The DataRegistry class</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference_cli.html">The <code class="docutils literal notranslate"><span class="pre">dregs</span></code> CLI</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_cli.html#dregs">dregs</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Database schema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#the-execution-table">The execution table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-provenance-table">The provenance table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-execution-alias-table">The execution_alias table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-dataset-table">The dataset table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-dependency-table">The dependency table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-dataset-alias-table">The dataset_alias table</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer notes:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="dev_notes_spin.html">SPIN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev_notes_database.html">Database structure</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dev_notes_database.html#the-database-schemas">The database schemas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev_notes_database.html#first-time-creation-of-database-schemas">First time creation of database schemas</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="installation_locally.html">Local installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#creating-a-conda-environment">Creating a Conda environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#creating-a-python-venv">Creating a Python venv</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#installing-the-dataregistry-package">Installing the <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#install-from-source">Install from source</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contact:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="contact.html">Contact</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: white" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">DESC data management</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Database schema</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/reference_schema.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="database-schema">
+<h1>Database schema<a class="headerlink" href="#database-schema" title="Link to this heading"></a></h1>
+<p>A description of the data registry schema layout. Note that each schema in the
+database (e.g., the default and production schemas) follows the same structure.</p>
+<img alt="Image missing" src="_images/schema_plot.png" />
+<section id="the-execution-table">
+<h2>The execution table<a class="headerlink" href="#the-execution-table" title="Link to this heading"></a></h2>
+<table class="tight-table docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>row</p></th>
+<th class="head"><p>description</p></th>
+<th class="head"><p>type</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>execution_id</p></td>
+<td><p>Unique identifier for execution</p></td>
+<td><p>Integer</p></td>
+</tr>
+<tr class="row-odd"><td><p>description</p></td>
+<td><p>Short description of execution</p></td>
+<td><p>String</p></td>
+</tr>
+<tr class="row-even"><td><p>register_date</p></td>
+<td><p>When was the execution registered in the database</p></td>
+<td><p>DateTime</p></td>
+</tr>
+<tr class="row-odd"><td><p>execution_start</p></td>
+<td><p>When was the execution performed at <cite>site</cite></p></td>
+<td><p>DateTime</p></td>
+</tr>
+<tr class="row-even"><td><p>name</p></td>
+<td><p>Identifies the code executed (e.g., could be pipeline name)</p></td>
+<td><p>String</p></td>
+</tr>
+<tr class="row-odd"><td><p>site</p></td>
+<td><p>Site where the code was run (e.g., NERSC)</p></td>
+<td><p>String</p></td>
+</tr>
+<tr class="row-even"><td><p>configuration</p></td>
+<td><p>Path to execution configuration file (txt, YAML, TOML, etc). Ingested as raw text</p></td>
+<td><p>String</p></td>
+</tr>
+<tr class="row-odd"><td><p>creator_uid</p></td>
+<td><p>UID of person who registered the entry</p></td>
+<td><p>StringShort</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="the-provenance-table">
+<h2>The provenance table<a class="headerlink" href="#the-provenance-table" title="Link to this heading"></a></h2>
+<table class="tight-table docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>row</p></th>
+<th class="head"><p>description</p></th>
+<th class="head"><p>type</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>provenance_id</p></td>
+<td><p>Unique identifier for this provenance entry</p></td>
+<td><p>Integer</p></td>
+</tr>
+<tr class="row-odd"><td><p>code_version_major</p></td>
+<td><p>Major version of code when this schema was created</p></td>
+<td><p>Integer</p></td>
+</tr>
+<tr class="row-even"><td><p>code_version_minor</p></td>
+<td><p>Minor version of code when this schema was created</p></td>
+<td><p>Integer</p></td>
+</tr>
+<tr class="row-odd"><td><p>code_version_patch</p></td>
+<td><p>Patch version of code when this schema was created</p></td>
+<td><p>Integer</p></td>
+</tr>
+<tr class="row-even"><td><p>creator_uid</p></td>
+<td><p>UID of person who registered the entry</p></td>
+<td><p>StringShort</p></td>
+</tr>
+<tr class="row-odd"><td><p>db_version_major</p></td>
+<td><p>Major version of schema</p></td>
+<td><p>Integer</p></td>
+</tr>
+<tr class="row-even"><td><p>db_version_minor</p></td>
+<td><p>Minor version of schema</p></td>
+<td><p>Integer</p></td>
+</tr>
+<tr class="row-odd"><td><p>db_version_patch</p></td>
+<td><p>Patch version of schema</p></td>
+<td><p>Integer</p></td>
+</tr>
+<tr class="row-even"><td><p>git_hash</p></td>
+<td><p>Git hash at time of schema creation</p></td>
+<td><p>String</p></td>
+</tr>
+<tr class="row-odd"><td><p>repo_is_clean</p></td>
+<td><p>Was git repo clean at schema creation?</p></td>
+<td><p>Boolean</p></td>
+</tr>
+<tr class="row-even"><td><p>update_method</p></td>
+<td><p>What type of schema update does this entry relate to (‘CREATE’,’MODIFY’,’MIGRATE’)</p></td>
+<td><p>String</p></td>
+</tr>
+<tr class="row-odd"><td><p>schema_enabled_date</p></td>
+<td><p>Date schema was created/updated</p></td>
+<td><p>DateTime</p></td>
+</tr>
+<tr class="row-even"><td><p>comment</p></td>
+<td><p>Comment relating to new provenance entry</p></td>
+<td><p>StringLong</p></td>
+</tr>
+<tr class="row-odd"><td><p>associated_production</p></td>
+<td><p>Name of production schema associated with this schema</p></td>
+<td><p>String</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="the-execution-alias-table">
+<h2>The execution_alias table<a class="headerlink" href="#the-execution-alias-table" title="Link to this heading"></a></h2>
+<table class="tight-table docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>row</p></th>
+<th class="head"><p>description</p></th>
+<th class="head"><p>type</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>execution_alias_id</p></td>
+<td><p>Unique identifier for execution alias</p></td>
+<td><p>Integer</p></td>
+</tr>
+<tr class="row-odd"><td><p>supersede_date</p></td>
+<td><p>If a new entry has been added to the table with the same alias name (but different <cite>dataset_id</cite>), the old entry will be superseded. <cite>supersede_date</cite> in the old entry tracks when this happened. If the entry has not been superseded, <cite>supersede_date</cite> will be None</p></td>
+<td><p>DateTime</p></td>
+</tr>
+<tr class="row-even"><td><p>creator_uid</p></td>
+<td><p>UID of person who registered the entry</p></td>
+<td><p>StringShort</p></td>
+</tr>
+<tr class="row-odd"><td><p>register_date</p></td>
+<td><p>Date the execution alias was registered</p></td>
+<td><p>DateTime</p></td>
+</tr>
+<tr class="row-even"><td><p>alias</p></td>
+<td><p>User given execution alias name</p></td>
+<td><p>String</p></td>
+</tr>
+<tr class="row-odd"><td><p>execution_id</p></td>
+<td><p>Execution this alias is linked to</p></td>
+<td><p>Integer</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="the-dataset-table">
+<h2>The dataset table<a class="headerlink" href="#the-dataset-table" title="Link to this heading"></a></h2>
+<table class="tight-table docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>row</p></th>
+<th class="head"><p>description</p></th>
+<th class="head"><p>type</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>dataset_id</p></td>
+<td><p>Unique identifier for this dataset</p></td>
+<td><p>Integer</p></td>
+</tr>
+<tr class="row-odd"><td><p>name</p></td>
+<td><p>Any convenient, evocative name for the human. Note the combination of name and version must be unique.</p></td>
+<td><p>String</p></td>
+</tr>
+<tr class="row-even"><td><p>relative_path</p></td>
+<td><p>Relative path storing the data, relative to <cite>&lt;root_dir&gt;</cite>. If None, generated from the <cite>name</cite> and <cite>version_string</cite></p></td>
+<td><p>String</p></td>
+</tr>
+<tr class="row-odd"><td><p>version_major</p></td>
+<td><p>Major version in semantic string (i.e., X.x.x)</p></td>
+<td><p>Integer</p></td>
+</tr>
+<tr class="row-even"><td><p>version_minor</p></td>
+<td><p>Minor version in semantic string (i.e., x.X.x)</p></td>
+<td><p>Integer</p></td>
+</tr>
+<tr class="row-odd"><td><p>version_patch</p></td>
+<td><p>Patch version in semantic string (i.e., x.x.X)</p></td>
+<td><p>Integer</p></td>
+</tr>
+<tr class="row-even"><td><p>version_string</p></td>
+<td><p>Version string</p></td>
+<td><p>String</p></td>
+</tr>
+<tr class="row-odd"><td><p>creation_date</p></td>
+<td><p>Dataset creation date</p></td>
+<td><p>DateTime</p></td>
+</tr>
+<tr class="row-even"><td><p>register_date</p></td>
+<td><p>Date the dataset was registered</p></td>
+<td><p>DateTime</p></td>
+</tr>
+<tr class="row-odd"><td><p>creator_uid</p></td>
+<td><p>UID of person who registered the entry</p></td>
+<td><p>StringShort</p></td>
+</tr>
+<tr class="row-even"><td><p>access_api</p></td>
+<td><p>Describes the software that can read the dataset (e.g., ‘GCRCatalogs’, ‘skyCatalogs’)</p></td>
+<td><p>StringShort</p></td>
+</tr>
+<tr class="row-odd"><td><p>access_api_configuration</p></td>
+<td><p>Additional (text) info which may be needed by access_api</p></td>
+<td><p>String</p></td>
+</tr>
+<tr class="row-even"><td><p>owner</p></td>
+<td><p>Owner of the dataset (defaults to $USER)</p></td>
+<td><p>String</p></td>
+</tr>
+<tr class="row-odd"><td><p>owner_type</p></td>
+<td><p>Datasets owner type, can be ‘user’, ‘group’, ‘project’ or ‘production’.</p></td>
+<td><p>String</p></td>
+</tr>
+<tr class="row-even"><td><p>data_org</p></td>
+<td><p>Dataset organisation (‘file’ or ‘directory’)</p></td>
+<td><p>String</p></td>
+</tr>
+<tr class="row-odd"><td><p>nfiles</p></td>
+<td><p>How many files are in the dataset</p></td>
+<td><p>Integer</p></td>
+</tr>
+<tr class="row-even"><td><p>total_disk_space</p></td>
+<td><p>Total disk spaced used by the dataset</p></td>
+<td><p>Float</p></td>
+</tr>
+<tr class="row-odd"><td><p>register_root_dir</p></td>
+<td><p>The <cite>root_dir</cite> the dataset was originally ingested into</p></td>
+<td><p>String</p></td>
+</tr>
+<tr class="row-even"><td><p>description</p></td>
+<td><p>User provided human-readable description of the dataset</p></td>
+<td><p>String</p></td>
+</tr>
+<tr class="row-odd"><td><p>execution_id</p></td>
+<td><p>Execution this dataset is linked to</p></td>
+<td><p>Integer</p></td>
+</tr>
+<tr class="row-even"><td><p>is_overwritable</p></td>
+<td><p>True means this dataset can be overwritten in the future</p></td>
+<td><p>Boolean</p></td>
+</tr>
+<tr class="row-odd"><td><p>status</p></td>
+<td><p>What is the status of the dataset? This is a bitmask description of multiple states. Bit number 0=valid (1 if dataset is valid, 0 if copy data failed during creation), 1=deleted (1 if dataset is deleted and no longer on disk, 0 if data is still on disk, database entry is always kept) 3=archived (1 if data has been archived), 3=replaced (1 if the dataset has been overwritten/replaced). For example ‘0b0011` would be valid=1, deleted=1, archived=0 and replaced=0.</p></td>
+<td><p>Integer</p></td>
+</tr>
+<tr class="row-even"><td><p>archive_date</p></td>
+<td><p>Dataset archive date</p></td>
+<td><p>DateTime</p></td>
+</tr>
+<tr class="row-odd"><td><p>archive_path</p></td>
+<td><p>Path the dataset was archived to</p></td>
+<td><p>String</p></td>
+</tr>
+<tr class="row-even"><td><p>delete_date</p></td>
+<td><p>Date the dataset was deleted</p></td>
+<td><p>DateTime</p></td>
+</tr>
+<tr class="row-odd"><td><p>delete_uid</p></td>
+<td><p>User ID of person who deleted the dataset</p></td>
+<td><p>String</p></td>
+</tr>
+<tr class="row-even"><td><p>move_date</p></td>
+<td><p>Date the dataset was last moved</p></td>
+<td><p>DateTime</p></td>
+</tr>
+<tr class="row-odd"><td><p>location_type</p></td>
+<td><p>What is the physical location of the data? ‘dataregistry’ means the data is located within the <cite>&lt;root_dir&gt;</cite> and managed by the <cite>dataregistry</cite>. External means the data is not managed by the dataregistry, either because it is off-site or because it is stored outside &lt;root_dir&gt; therefore there is only a database entry (in this case a <cite>url</cite> or <cite>contact_email</cite> must be provided during registration). ‘meta_only’ is for a legitimate entry involving no actual data, but possibly referring to other entries which do directly reference managed data, as may happen for some GCRCatalogs entries,  and ‘dummy’ is a dataset for internal testing purposes only. The data registry will only attempt to manage data created with this field set to ‘dataregistry’.</p></td>
+<td><p>String</p></td>
+</tr>
+<tr class="row-even"><td><p>url</p></td>
+<td><p>URL that points to the data (used in the case of external datasets, i.e., <cite>location_type=’external’</cite>).</p></td>
+<td><p>String</p></td>
+</tr>
+<tr class="row-odd"><td><p>contact_email</p></td>
+<td><p>Contact information for someone regarding the dataset.</p></td>
+<td><p>String</p></td>
+</tr>
+<tr class="row-even"><td><p>replace_id</p></td>
+<td><p>Dataset ID of the new entry that replaced this dataset</p></td>
+<td><p>Integer</p></td>
+</tr>
+<tr class="row-odd"><td><p>replace_iteration</p></td>
+<td><p>How many times has this datset been overwritten?</p></td>
+<td><p>Integer</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="the-dependency-table">
+<h2>The dependency table<a class="headerlink" href="#the-dependency-table" title="Link to this heading"></a></h2>
+<table class="tight-table docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>row</p></th>
+<th class="head"><p>description</p></th>
+<th class="head"><p>type</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>dependency_id</p></td>
+<td><p>Unique identifier for dependency</p></td>
+<td><p>Integer</p></td>
+</tr>
+<tr class="row-odd"><td><p>register_date</p></td>
+<td><p>Date the dependency was registered</p></td>
+<td><p>DateTime</p></td>
+</tr>
+<tr class="row-even"><td><p>input_id</p></td>
+<td><p>Dataset this dependency is linked to (for every dependency, this, or <cite>input_production_id</cite>, must be non-null)</p></td>
+<td><p>Integer</p></td>
+</tr>
+<tr class="row-odd"><td><p>input_production_id</p></td>
+<td><p>Production dataset this dependency is linked to (for every dependency, this, or <cite>input_id</cite>, must be non-null)</p></td>
+<td><p>Integer</p></td>
+</tr>
+<tr class="row-even"><td><p>execution_id</p></td>
+<td><p>Execution this dependency is linked to</p></td>
+<td><p>Integer</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="the-dataset-alias-table">
+<h2>The dataset_alias table<a class="headerlink" href="#the-dataset-alias-table" title="Link to this heading"></a></h2>
+<table class="tight-table docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>row</p></th>
+<th class="head"><p>description</p></th>
+<th class="head"><p>type</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>dataset_alias_id</p></td>
+<td><p>Unique identifier for dataset alias</p></td>
+<td><p>Integer</p></td>
+</tr>
+<tr class="row-odd"><td><p>supersede_date</p></td>
+<td><p>If a new entry has been added to the table with the same alias name (but different <cite>dataset_id`or `alias_id</cite>), the old entry will be superseded. <cite>supersede_date</cite> in the old entry tracks when this happened. If the entry has not been superseded, <cite>supersede_date</cite> will be None</p></td>
+<td><p>DateTime</p></td>
+</tr>
+<tr class="row-even"><td><p>creator_uid</p></td>
+<td><p>UID of person who registered the entry</p></td>
+<td><p>StringShort</p></td>
+</tr>
+<tr class="row-odd"><td><p>register_date</p></td>
+<td><p>Date the dataset alias was registered</p></td>
+<td><p>DateTime</p></td>
+</tr>
+<tr class="row-even"><td><p>alias</p></td>
+<td><p>User-given dataset alias name</p></td>
+<td><p>String</p></td>
+</tr>
+<tr class="row-odd"><td><p>dataset_id</p></td>
+<td><p>Dataset this alias is linked to</p></td>
+<td><p>Integer</p></td>
+</tr>
+<tr class="row-even"><td><p>ref_alias_id</p></td>
+<td><p>Alias this alias is linked to</p></td>
+<td><p>Integer</p></td>
+</tr>
+<tr class="row-odd"><td><p>access_api</p></td>
+<td><p>Describes the software that can read the dataset (e.g., ‘gcr-catalogs’, ‘skyCatalogs’)</p></td>
+<td><p>StringShort</p></td>
+</tr>
+<tr class="row-even"><td><p>access_api_configuration</p></td>
+<td><p>Additional (text) info which may be needed by access_api</p></td>
+<td><p>String</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="reference_cli.html" class="btn btn-neutral float-left" title="The dregs CLI" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="dev_notes_spin.html" class="btn btn-neutral float-right" title="SPIN" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, DESC.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

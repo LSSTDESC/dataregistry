@@ -1,0 +1,927 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Index &mdash; DESC data management  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/custom.css?v=d7e3758a" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="#" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: white" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            DESC data management
+              <img src="_static/DREGS_logo_v2.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Overview:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#using-the-dataregistry-at-nersc">Using the <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> at NERSC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#access-accounts">Access accounts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#authenticating-with-the-database">Authenticating with the database</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_setup.html">Getting set up</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_setup.html#working-with-the-data-registry-tutorial-notebooks-interactively">Working with the data registry tutorial notebooks interactively</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_python.html">The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_python.html#getting-started-with-the-data-registry">1) Getting started with the data registry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_python.html#advanced-tutorials">2) Advanced tutorials</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_cli.html">The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> CLI</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_cli.html#registering-a-dataset">Registering a dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_cli.html#updating-a-dataset">Updating a dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_cli.html#querying-the-data-registry">Querying the data registry</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cli_cheat_sheet.html">Data Registry CLI Cheat Sheet</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#main-commands">Main Commands</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#querying-from-the-command-line">🟦 Querying from the Command Line 🟦</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#registering-a-dataset">🟩 Registering a Dataset 🟩</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#modifying-a-dataset">🟨 Modifying a Dataset 🟨</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#deleting-a-dataset">🟥 Deleting a Dataset 🟥</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="reference_python.html">The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_python.html#the-dataregistry-class">The DataRegistry class</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference_cli.html">The <code class="docutils literal notranslate"><span class="pre">dregs</span></code> CLI</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_cli.html#dregs">dregs</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference_schema.html">Database schema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-execution-table">The execution table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-provenance-table">The provenance table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-execution-alias-table">The execution_alias table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-dataset-table">The dataset table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-dependency-table">The dependency table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-dataset-alias-table">The dataset_alias table</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer notes:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="dev_notes_spin.html">SPIN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev_notes_database.html">Database structure</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dev_notes_database.html#the-database-schemas">The database schemas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev_notes_database.html#first-time-creation-of-database-schemas">First time creation of database schemas</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="installation_locally.html">Local installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#creating-a-conda-environment">Creating a Conda environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#creating-a-python-venv">Creating a Python venv</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#installing-the-dataregistry-package">Installing the <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#install-from-source">Install from source</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contact:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="contact.html">Contact</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: white" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">DESC data management</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Index</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+
+<h1 id="index">Index</h1>
+
+<div class="genindex-jumpbox">
+ <a href="#Symbols"><strong>Symbols</strong></a>
+ | <a href="#A"><strong>A</strong></a>
+ | <a href="#C"><strong>C</strong></a>
+ | <a href="#D"><strong>D</strong></a>
+ | <a href="#F"><strong>F</strong></a>
+ | <a href="#G"><strong>G</strong></a>
+ | <a href="#M"><strong>M</strong></a>
+ | <a href="#N"><strong>N</strong></a>
+ | <a href="#O"><strong>O</strong></a>
+ | <a href="#R"><strong>R</strong></a>
+ | <a href="#V"><strong>V</strong></a>
+ 
+</div>
+<h2 id="Symbols">Symbols</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    --access_api
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-access_api">dregs-register-dataset command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --config_file
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset-config_file">dregs-delete-dataset command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset_by_id-config_file">dregs-delete-dataset_by_id command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-config_file">dregs-ls command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-modify-dataset-config_file">dregs-modify-dataset command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-config_file">dregs-register-dataset command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-show-keywords-config_file">dregs-show-keywords command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --contact_email
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-contact_email">dregs-register-dataset command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --creation_date
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-creation_date">dregs-register-dataset command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --description
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-description">dregs-register-dataset command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --entry_mode
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset-entry_mode">dregs-delete-dataset command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset_by_id-entry_mode">dregs-delete-dataset_by_id command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-entry_mode">dregs-ls command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-modify-dataset-entry_mode">dregs-modify-dataset command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-entry_mode">dregs-register-dataset command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-show-keywords-entry_mode">dregs-show-keywords command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --execution_configuration
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-execution_configuration">dregs-register-dataset command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --execution_description
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-execution_description">dregs-register-dataset command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --execution_id
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-execution_id">dregs-register-dataset command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --execution_name
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-execution_name">dregs-register-dataset command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --execution_site
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-execution_site">dregs-register-dataset command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --execution_start
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-execution_start">dregs-register-dataset command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --help
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-h">dregs command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-h">dregs-delete command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset-h">dregs-delete-dataset command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset_by_id-h">dregs-delete-dataset_by_id command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-h">dregs-ls command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-modify-h">dregs-modify command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-modify-dataset-h">dregs-modify-dataset command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-h">dregs-register command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-h">dregs-register-dataset command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-show-h">dregs-show command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-show-keywords-h">dregs-show-keywords command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --input_datasets
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-input_datasets">dregs-register-dataset command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --is_overwritable
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-is_overwritable">dregs-register-dataset command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --keyword
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-keyword">dregs-ls command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --keywords
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-keywords">dregs-register-dataset command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --location_type
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-location_type">dregs-register-dataset command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --max_chars
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-max_chars">dregs-ls command line option</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    --max_rows
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-max_rows">dregs-ls command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --name
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-name">dregs-ls command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --namespace
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset-namespace">dregs-delete-dataset command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset_by_id-namespace">dregs-delete-dataset_by_id command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-namespace">dregs-ls command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-modify-dataset-namespace">dregs-modify-dataset command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-namespace">dregs-register-dataset command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-show-keywords-namespace">dregs-show-keywords command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --old_location
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-old_location">dregs-register-dataset command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --owner
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-owner">dregs-ls command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-owner">dregs-register-dataset command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --owner_type
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-owner_type">dregs-ls command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-owner_type">dregs-register-dataset command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --relative_path
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-relative_path">dregs-register-dataset command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --return_cols
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-return_cols">dregs-ls command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --root_dir
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset-root_dir">dregs-delete-dataset command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset_by_id-root_dir">dregs-delete-dataset_by_id command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-root_dir">dregs-ls command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-modify-dataset-root_dir">dregs-modify-dataset command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-root_dir">dregs-register-dataset command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-show-keywords-root_dir">dregs-show-keywords command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --schema
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset-schema">dregs-delete-dataset command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset_by_id-schema">dregs-delete-dataset_by_id command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-schema">dregs-ls command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-modify-dataset-schema">dregs-modify-dataset command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-schema">dregs-register-dataset command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-show-keywords-schema">dregs-show-keywords command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --site
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset-site">dregs-delete-dataset command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset_by_id-site">dregs-delete-dataset_by_id command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-site">dregs-ls command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-modify-dataset-site">dregs-modify-dataset command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-site">dregs-register-dataset command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-show-keywords-site">dregs-show-keywords command line option</a>
+</li>
+      </ul></li>
+      <li>
+    --url
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-url">dregs-register-dataset command line option</a>
+</li>
+      </ul></li>
+      <li>
+    -h
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-h">dregs command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-h">dregs-delete command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset-h">dregs-delete-dataset command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset_by_id-h">dregs-delete-dataset_by_id command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-h">dregs-ls command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-modify-h">dregs-modify command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-modify-dataset-h">dregs-modify-dataset command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-h">dregs-register command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-h">dregs-register-dataset command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-show-h">dregs-show command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-show-keywords-h">dregs-show-keywords command line option</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="A">A</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference_python.html#dataregistry.registrar.dataset.DatasetTable.add_keywords">add_keywords() (dataregistry.registrar.dataset.DatasetTable method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="C">C</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    column
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-modify-dataset-arg-column">dregs-modify-dataset command line option</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="D">D</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference_python.html#dataregistry.DataRegistry">DataRegistry (class in dataregistry)</a>
+</li>
+      <li>
+    dataset_id
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset_by_id-arg-dataset_id">dregs-delete-dataset_by_id command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-modify-dataset-arg-dataset_id">dregs-modify-dataset command line option</a>
+</li>
+      </ul></li>
+      <li><a href="reference_python.html#dataregistry.registrar.dataset.DatasetTable.delete">delete() (dataregistry.registrar.dataset.DatasetTable method)</a>
+</li>
+      <li>
+    dregs command line option
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-h">--help</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-h">-h</a>
+</li>
+      </ul></li>
+      <li>
+    dregs-delete command line option
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-h">--help</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-h">-h</a>
+</li>
+      </ul></li>
+      <li>
+    dregs-delete-dataset command line option
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset-config_file">--config_file</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset-entry_mode">--entry_mode</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset-h">--help</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset-namespace">--namespace</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset-root_dir">--root_dir</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset-schema">--schema</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset-site">--site</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset-h">-h</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset-arg-name">name</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset-arg-owner">owner</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset-arg-owner_type">owner_type</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset-arg-version_string">version_string</a>
+</li>
+      </ul></li>
+      <li>
+    dregs-delete-dataset_by_id command line option
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset_by_id-config_file">--config_file</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset_by_id-entry_mode">--entry_mode</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset_by_id-h">--help</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset_by_id-namespace">--namespace</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset_by_id-root_dir">--root_dir</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset_by_id-schema">--schema</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset_by_id-site">--site</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset_by_id-h">-h</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset_by_id-arg-dataset_id">dataset_id</a>
+</li>
+      </ul></li>
+      <li>
+    dregs-ls command line option
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-config_file">--config_file</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-entry_mode">--entry_mode</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-h">--help</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-keyword">--keyword</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-max_chars">--max_chars</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-max_rows">--max_rows</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-name">--name</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-namespace">--namespace</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-owner">--owner</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-owner_type">--owner_type</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-return_cols">--return_cols</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-root_dir">--root_dir</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-schema">--schema</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-site">--site</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-ls-h">-h</a>
+</li>
+      </ul></li>
+      <li>
+    dregs-modify command line option
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-modify-h">--help</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-modify-h">-h</a>
+</li>
+      </ul></li>
+      <li>
+    dregs-modify-dataset command line option
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-modify-dataset-config_file">--config_file</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-modify-dataset-entry_mode">--entry_mode</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-modify-dataset-h">--help</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-modify-dataset-namespace">--namespace</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-modify-dataset-root_dir">--root_dir</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-modify-dataset-schema">--schema</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-modify-dataset-site">--site</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-modify-dataset-h">-h</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-modify-dataset-arg-column">column</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-modify-dataset-arg-dataset_id">dataset_id</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-modify-dataset-arg-new_value">new_value</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    dregs-register command line option
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-h">--help</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-h">-h</a>
+</li>
+      </ul></li>
+      <li>
+    dregs-register-dataset command line option
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-access_api">--access_api</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-config_file">--config_file</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-contact_email">--contact_email</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-creation_date">--creation_date</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-description">--description</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-entry_mode">--entry_mode</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-execution_configuration">--execution_configuration</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-execution_description">--execution_description</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-execution_id">--execution_id</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-execution_name">--execution_name</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-execution_site">--execution_site</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-execution_start">--execution_start</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-h">--help</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-input_datasets">--input_datasets</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-is_overwritable">--is_overwritable</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-keywords">--keywords</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-location_type">--location_type</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-namespace">--namespace</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-old_location">--old_location</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-owner">--owner</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-owner_type">--owner_type</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-relative_path">--relative_path</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-root_dir">--root_dir</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-schema">--schema</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-site">--site</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-url">--url</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-h">-h</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-arg-name">name</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-arg-version">version</a>
+</li>
+      </ul></li>
+      <li>
+    dregs-show command line option
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-show-h">--help</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-show-h">-h</a>
+</li>
+      </ul></li>
+      <li>
+    dregs-show-keywords command line option
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-show-keywords-config_file">--config_file</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-show-keywords-entry_mode">--entry_mode</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-show-keywords-h">--help</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-show-keywords-namespace">--namespace</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-show-keywords-root_dir">--root_dir</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-show-keywords-schema">--schema</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-show-keywords-site">--site</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-show-keywords-h">-h</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="F">F</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference_python.html#dataregistry.DataRegistry.Query.find_datasets">find_datasets() (dataregistry.DataRegistry.Query method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="G">G</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference_python.html#dataregistry.registrar.dataset.DatasetTable.get_keywords">get_keywords() (dataregistry.registrar.dataset.DatasetTable method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference_python.html#dataregistry.registrar.dataset.DatasetTable.get_modifiable_columns">get_modifiable_columns() (dataregistry.registrar.dataset.DatasetTable method)</a>
+</li>
+      <li><a href="reference_python.html#dataregistry.DataRegistry.Registrar.get_owner_types">get_owner_types() (dataregistry.DataRegistry.Registrar method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="M">M</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference_python.html#dataregistry.registrar.dataset.DatasetTable.modify">modify() (dataregistry.registrar.dataset.DatasetTable method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="N">N</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    name
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset-arg-name">dregs-delete-dataset command line option</a>
+</li>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-arg-name">dregs-register-dataset command line option</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    new_value
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-modify-dataset-arg-new_value">dregs-modify-dataset command line option</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="O">O</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    owner
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset-arg-owner">dregs-delete-dataset command line option</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    owner_type
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset-arg-owner_type">dregs-delete-dataset command line option</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="R">R</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference_python.html#dataregistry.registrar.dataset.DatasetTable.register">register() (dataregistry.registrar.dataset.DatasetTable method)</a>
+
+      <ul>
+        <li><a href="reference_python.html#dataregistry.registrar.dataset_alias.DatasetAliasTable.register">(dataregistry.registrar.dataset_alias.DatasetAliasTable method)</a>
+</li>
+        <li><a href="reference_python.html#dataregistry.registrar.execution.ExecutionTable.register">(dataregistry.registrar.execution.ExecutionTable method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference_python.html#dataregistry.registrar.dataset.DatasetTable.replace">replace() (dataregistry.registrar.dataset.DatasetTable method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="V">V</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    version
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-register-dataset-arg-version">dregs-register-dataset command line option</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    version_string
+
+      <ul>
+        <li><a href="reference_cli.html#cmdoption-dregs-delete-dataset-arg-version_string">dregs-delete-dataset command line option</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, DESC.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

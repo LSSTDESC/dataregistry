@@ -1,0 +1,231 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Database structure &mdash; DESC data management  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/custom.css?v=d7e3758a" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Local installation" href="installation_locally.html" />
+    <link rel="prev" title="SPIN" href="dev_notes_spin.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: white" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            DESC data management
+              <img src="_static/DREGS_logo_v2.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Overview:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#using-the-dataregistry-at-nersc">Using the <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> at NERSC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#access-accounts">Access accounts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#authenticating-with-the-database">Authenticating with the database</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_setup.html">Getting set up</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_setup.html#working-with-the-data-registry-tutorial-notebooks-interactively">Working with the data registry tutorial notebooks interactively</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_python.html">The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_python.html#getting-started-with-the-data-registry">1) Getting started with the data registry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_python.html#advanced-tutorials">2) Advanced tutorials</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_cli.html">The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> CLI</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_cli.html#registering-a-dataset">Registering a dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_cli.html#updating-a-dataset">Updating a dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_cli.html#querying-the-data-registry">Querying the data registry</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cli_cheat_sheet.html">Data Registry CLI Cheat Sheet</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#main-commands">Main Commands</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#querying-from-the-command-line">🟦 Querying from the Command Line 🟦</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#registering-a-dataset">🟩 Registering a Dataset 🟩</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#modifying-a-dataset">🟨 Modifying a Dataset 🟨</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#deleting-a-dataset">🟥 Deleting a Dataset 🟥</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="reference_python.html">The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_python.html#the-dataregistry-class">The DataRegistry class</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference_cli.html">The <code class="docutils literal notranslate"><span class="pre">dregs</span></code> CLI</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_cli.html#dregs">dregs</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference_schema.html">Database schema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-execution-table">The execution table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-provenance-table">The provenance table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-execution-alias-table">The execution_alias table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-dataset-table">The dataset table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-dependency-table">The dependency table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-dataset-alias-table">The dataset_alias table</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer notes:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="dev_notes_spin.html">SPIN</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Database structure</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#the-database-schemas">The database schemas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#first-time-creation-of-database-schemas">First time creation of database schemas</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="installation_locally.html">Local installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#creating-a-conda-environment">Creating a Conda environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#creating-a-python-venv">Creating a Python venv</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#installing-the-dataregistry-package">Installing the <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#install-from-source">Install from source</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contact:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="contact.html">Contact</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: white" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">DESC data management</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Database structure</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/dev_notes_database.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="database-structure">
+<h1>Database structure<a class="headerlink" href="#database-structure" title="Link to this heading"></a></h1>
+<section id="the-database-schemas">
+<h2>The database schemas<a class="headerlink" href="#the-database-schemas" title="Link to this heading"></a></h2>
+<p>There are two primary database schemas which the majority of users will work with:</p>
+<ul class="simple">
+<li><p>The “default” schema, which the a hard-coded variable <code class="docutils literal notranslate"><span class="pre">DEFAULT_SCHEMA_WORKING</span></code> in
+the <code class="docutils literal notranslate"><span class="pre">src/dataregistry/db_basic.py</span></code> file. It can be imported by <code class="docutils literal notranslate"><span class="pre">from</span>
+<span class="pre">dataregistry.db_basic</span> <span class="pre">import</span> <span class="pre">DEFAULT_SCHEMA_WORKING</span></code></p></li>
+<li><p>The production schema. This is where production datasets go, and has only
+read access for the general user. By default this schema is named
+“production”, however during schema creation (see below) you can specify the
+name of the production schema (though this should only be changed for testing
+purposes).</p></li>
+</ul>
+<p>Users can specify their own schemas during the initialization of the
+<code class="docutils literal notranslate"><span class="pre">DataRegistry</span></code> object (by default <code class="docutils literal notranslate"><span class="pre">DEFAULT_SCHEMA_WORKING</span></code> is connected to). If
+they wish to connect to the production schema its name will have to be manually
+entered (see production schema tutorial). If the user wishes to connect to a
+custom schema they will have to manually enter its name, however they will have
+to have created their own schema for it to work.</p>
+<p>When using <em>SQLite</em> as the backend (useful for testing), the concepts of
+schemas do not exist.</p>
+</section>
+<section id="first-time-creation-of-database-schemas">
+<h2>First time creation of database schemas<a class="headerlink" href="#first-time-creation-of-database-schemas" title="Link to this heading"></a></h2>
+<p>In the top level <code class="docutils literal notranslate"><span class="pre">scripts</span></code> directory there is a <code class="docutils literal notranslate"><span class="pre">create_registry_schema.py</span></code>
+script to do the initial schema creation. Before using the data registry, both
+for <em>Postgres</em> and <em>SQLite</em> backends, this script must have been run.</p>
+<p>First, make sure your <code class="docutils literal notranslate"><span class="pre">~/.config_reg_access</span></code> and <code class="docutils literal notranslate"><span class="pre">~/.pgpass</span></code> are correctly
+setup (see “Getting set up” for more information on these configuration files).
+When creating schemas at NERSC, make sure the SPIN instance of the <em>Postgres</em>
+database is running.</p>
+<p>The script must be run twice, first for the production schema, then for the
+general schema (or run in a single call when using the <code class="docutils literal notranslate"><span class="pre">--create_both</span></code>
+argument).  There are three arguments that can be specified (all optional):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--config</span></code> : Location of the data registry configuration file
+(<code class="docutils literal notranslate"><span class="pre">~/.config_reg_access</span></code> by default)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--schema</span></code> : The name of the schema (default is <code class="docutils literal notranslate"><span class="pre">DEFAULT_SCHEMA_WORKING</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--production-schema</span></code>: The name of the production schema (default
+“production”)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--create_both</span></code> : Create both the production schema and working schema in
+one call (the production schema will be made first, then the working schema)</p></li>
+</ul>
+<p>The typical initlalization would be:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>create_registry_schema.py<span class="w"> </span>--create_both
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="dev_notes_spin.html" class="btn btn-neutral float-left" title="SPIN" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="installation_locally.html" class="btn btn-neutral float-right" title="Local installation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, DESC.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

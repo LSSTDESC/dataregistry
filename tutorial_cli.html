@@ -1,0 +1,282 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The dataregistry CLI &mdash; DESC data management  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/css/custom.css?v=d7e3758a" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Data Registry CLI Cheat Sheet" href="cli_cheat_sheet.html" />
+    <link rel="prev" title="The dataregistry package" href="tutorial_python.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: white" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            DESC data management
+              <img src="_static/DREGS_logo_v2.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Overview:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#using-the-dataregistry-at-nersc">Using the <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> at NERSC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#access-accounts">Access accounts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#authenticating-with-the-database">Authenticating with the database</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="tutorial_setup.html">Getting set up</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_setup.html#working-with-the-data-registry-tutorial-notebooks-interactively">Working with the data registry tutorial notebooks interactively</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_python.html">The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_python.html#getting-started-with-the-data-registry">1) Getting started with the data registry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_python.html#advanced-tutorials">2) Advanced tutorials</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> CLI</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#registering-a-dataset">Registering a dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#updating-a-dataset">Updating a dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#querying-the-data-registry">Querying the data registry</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cli_cheat_sheet.html">Data Registry CLI Cheat Sheet</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#main-commands">Main Commands</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#querying-from-the-command-line">🟦 Querying from the Command Line 🟦</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#registering-a-dataset">🟩 Registering a Dataset 🟩</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#modifying-a-dataset">🟨 Modifying a Dataset 🟨</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#deleting-a-dataset">🟥 Deleting a Dataset 🟥</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="reference_python.html">The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_python.html#the-dataregistry-class">The DataRegistry class</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference_cli.html">The <code class="docutils literal notranslate"><span class="pre">dregs</span></code> CLI</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_cli.html#dregs">dregs</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference_schema.html">Database schema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-execution-table">The execution table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-provenance-table">The provenance table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-execution-alias-table">The execution_alias table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-dataset-table">The dataset table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-dependency-table">The dependency table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-dataset-alias-table">The dataset_alias table</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer notes:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="dev_notes_spin.html">SPIN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev_notes_database.html">Database structure</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dev_notes_database.html#the-database-schemas">The database schemas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev_notes_database.html#first-time-creation-of-database-schemas">First time creation of database schemas</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="installation_locally.html">Local installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#creating-a-conda-environment">Creating a Conda environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#creating-a-python-venv">Creating a Python venv</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#installing-the-dataregistry-package">Installing the <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#install-from-source">Install from source</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contact:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="contact.html">Contact</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: white" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">DESC data management</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> CLI</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/tutorial_cli.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="the-dataregistry-cli">
+<span id="tutorials-cli"></span><h1>The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> CLI<a class="headerlink" href="#the-dataregistry-cli" title="Link to this heading"></a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> Command Line Interface (CLI) is a convenient way to
+perform some basic tasks with the data registry directly from the command line.</p>
+<p>First, make sure the <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package is installed (see <a class="reference internal" href="installation.html#installation"><span class="std std-ref">here</span></a> for details), after which the <code class="docutils literal notranslate"><span class="pre">dregs</span></code> command will be available.
+To check, type</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dregs<span class="w"> </span>--help
+</pre></div>
+</div>
+<p>to display the list of available commands for <code class="docutils literal notranslate"><span class="pre">dregs</span></code>.</p>
+<p>The full reference documentation for the <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> CLI command options
+can be found <a class="reference internal" href="reference_cli.html#dregs-cli"><span class="std std-ref">here</span></a>, below we cover some example use cases.</p>
+<section id="registering-a-dataset">
+<h2>Registering a dataset<a class="headerlink" href="#registering-a-dataset" title="Link to this heading"></a></h2>
+<p>Registering a dataset using the CLI is essentially identical to using the
+<code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package from within Python (it is simply calling the
+<code class="docutils literal notranslate"><span class="pre">Registrar.register_dataset()</span></code> function with arguments from the command
+line).  Therefore reviewing the <a class="reference external" href="https://github.com/LSSTDESC/dataregistry/blob/main/docs/source/tutorial_notebooks/getting_started.ipynb">first tutorial notebook</a>
+is the best place to get familiar with the registration process and for
+descriptions of the associated dataset metadata.</p>
+<p>Typing</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dregs<span class="w"> </span>register<span class="w"> </span>dataset<span class="w"> </span>--help
+</pre></div>
+</div>
+<p>will list all the metadata properties that can be associated with a dataset
+during registration. As when registering datasets using the <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code>
+package, the dataset <code class="docutils literal notranslate"><span class="pre">name</span></code> and <code class="docutils literal notranslate"><span class="pre">version</span></code> properties are mandatory, which
+will always be the first two parameters passed to the <code class="docutils literal notranslate"><span class="pre">dregs</span> <span class="pre">register</span>
+<span class="pre">dataset</span></code> command respectively.</p>
+<p>For example, say I have produced some data from my latest DESC publication that
+I want to archive/distribute via the data registry. My data are located in the
+directory <code class="docutils literal notranslate"><span class="pre">/some/place/at/nersc/my_paper_dataset/</span></code>, and I want to tag it as a
+project dataset owned by the <cite>DESC Generic Working Group</cite>. To do this I
+would run the CLI as follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dregs<span class="w"> </span>register<span class="w"> </span>dataset<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>my_paper_dataset<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span><span class="m">1</span>.0.0<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--old-location<span class="w"> </span>/some/place/at/nersc/my_paper_dataset/<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--owner_type<span class="w"> </span>project<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--owner<span class="w"> </span><span class="s2">&quot;DESC Generic Working Group&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--description<span class="w"> </span><span class="s2">&quot;Data from my_paper_dataset&quot;</span>
+</pre></div>
+</div>
+<p>This will recursively copy the <code class="docutils literal notranslate"><span class="pre">/some/place/at/nersc/my_paper_dataset/</span></code>
+directory into the data registry shared space with the
+<code class="docutils literal notranslate"><span class="pre">name='my_paper_dataset'</span></code> (other non-specified properties will keep their
+default values).</p>
+</section>
+<section id="updating-a-dataset">
+<h2>Updating a dataset<a class="headerlink" href="#updating-a-dataset" title="Link to this heading"></a></h2>
+<p>Now say a few months later a bug has been discovered in the
+<code class="docutils literal notranslate"><span class="pre">my_paper_dataset</span></code> data and the entry needs to be updated. As we did not
+deliberately specify that <code class="docutils literal notranslate"><span class="pre">my_paper_dataset</span></code> could be overwritten during the
+initial registration, we need to create a new version of the dataset.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dregs<span class="w"> </span>register<span class="w"> </span>dataset<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>my_paper_dataset<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>patch<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--old-location<span class="w"> </span>/some/place/at/nersc/my_paper_dataset_updated/<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--owner_type<span class="w"> </span>project<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--owner<span class="w"> </span><span class="s2">&quot;DESC Generic Working Group&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--description<span class="w"> </span><span class="s2">&quot;Data from my_paper_dataset describing bugfix&quot;</span><span class="w"> </span><span class="se">\</span>
+</pre></div>
+</div>
+<p>Here we associate it with the previous dataset through <code class="docutils literal notranslate"><span class="pre">name=</span>
+<span class="pre">my_paper_dataset</span></code> (and making sure we keep the same <cite>owner</cite> and <cite>owner_type</cite>),
+and tell the data registry to automatically bump the patch version to <code class="docutils literal notranslate"><span class="pre">1.0.1</span></code>
+by specifying “patch” as the version string (you could however have entered
+“1.0.1” here if you prefer).</p>
+</section>
+<section id="querying-the-data-registry">
+<h2>Querying the data registry<a class="headerlink" href="#querying-the-data-registry" title="Link to this heading"></a></h2>
+<p>We can also do some simple querying via the CLI to see what datasets we, or
+others, have in the data registry.</p>
+<p>We can do this using the <code class="docutils literal notranslate"><span class="pre">dregs</span> <span class="pre">ls</span></code> command (type <code class="docutils literal notranslate"><span class="pre">dregs</span> <span class="pre">ls</span> <span class="pre">--help</span></code> for more
+info).</p>
+<p>By default, typing</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dregs<span class="w"> </span>ls
+</pre></div>
+</div>
+<p>will list all the datasets registered by “you” (i.e., where <code class="docutils literal notranslate"><span class="pre">owner</span> <span class="pre">==</span>
+<span class="pre">$USER</span></code>). To be more precise, you can specify the <code class="docutils literal notranslate"><span class="pre">owner</span></code> and/or
+<code class="docutils literal notranslate"><span class="pre">owner_type</span></code> you want to list the datasets for.</p>
+<p>For example, to see all the datasets from the DESC Generic Working Group we would do</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dregs<span class="w"> </span>ls<span class="w"> </span>--owner<span class="w"> </span><span class="s2">&quot;DESC Generic Working Group&quot;</span>
+</pre></div>
+</div>
+<p>To list entries from all owners do <code class="docutils literal notranslate"><span class="pre">--owner</span> <span class="pre">none</span></code>.</p>
+<p>You can search against the <code class="docutils literal notranslate"><span class="pre">dataset.name</span></code> column, with wildcard support,
+where <code class="docutils literal notranslate"><span class="pre">*</span></code> is the wildcard character, e.g.,</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dregs<span class="w"> </span>ls<span class="w"> </span>--name<span class="w"> </span>dataset:dc2:*
+</pre></div>
+</div>
+<p>will search for all datasets whose name starts with the pattern “dataset:dc2:”
+(note the <code class="docutils literal notranslate"><span class="pre">--name</span></code> queries here are case insensitive).</p>
+<p>To select what columns are printed in the result use the <code class="docutils literal notranslate"><span class="pre">--return_cols</span></code> option, e.g.,</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dregs<span class="w"> </span>ls<span class="w"> </span>--return_cols<span class="w"> </span>dataset_id<span class="w"> </span>name<span class="w"> </span>description<span class="w"> </span>status
+</pre></div>
+</div>
+<p>Using <code class="docutils literal notranslate"><span class="pre">dregs</span> <span class="pre">ls</span></code> is a quick an easy way to remind yourself what names you
+gave to previous datasets, and what relative paths they reside at.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="tutorial_python.html" class="btn btn-neutral float-left" title="The dataregistry package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="cli_cheat_sheet.html" class="btn btn-neutral float-right" title="Data Registry CLI Cheat Sheet" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, DESC.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
