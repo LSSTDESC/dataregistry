@@ -341,7 +341,6 @@ tables:
       relative_path:
         type: "String"
         description: "Relative path storing the data, relative to `<root_dir>`. If None, generated from the `name` and `version_string`"
-        nullable: False
         cli_optional: True
       version_major:
         type: "Integer"
