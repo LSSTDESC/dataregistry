@@ -18,6 +18,12 @@ from dataregistry.schema import (
     load_preset_keywords,
     DEFAULT_NAMESPACE,
 )
+from dataregistry.schema_version import (
+    _DB_VERSION_MAJOR,
+    _DB_VERSION_MINOR,
+    _DB_VERSION_PATCH,
+    _DB_VERSION_COMMENT
+)
 
 """
 A script to create a schema.
@@ -263,18 +269,6 @@ def _BuildTable(schema, table_name, has_production, production):
 
     Model = type(class_name, (Base,), {**columns, **meta})
     return Model
-
-
-# ----------------
-# Database version
-# ----------------
-
-# The following should be adjusted whenever there is a change to the structure
-# of the database tables.
-_DB_VERSION_MAJOR = 3
-_DB_VERSION_MINOR = 4
-_DB_VERSION_PATCH = 0
-_DB_VERSION_COMMENT = "Remove `is_overwritten`, `replace_date` and `replace_uid` columns, the information is in `status`"
 
 # ----------------------------
 # Parse command line arguments
