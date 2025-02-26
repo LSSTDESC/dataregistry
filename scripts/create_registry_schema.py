@@ -18,7 +18,7 @@ from dataregistry.schema import (
     load_preset_keywords,
     DEFAULT_NAMESPACE,
 )
-from dataregistry.schema_version import (
+from dataregistry.schema.schema_version import (
     _DB_VERSION_MAJOR,
     _DB_VERSION_MINOR,
     _DB_VERSION_PATCH,
