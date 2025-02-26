@@ -270,6 +270,7 @@ def _BuildTable(schema, table_name, has_production, production):
     Model = type(class_name, (Base,), {**columns, **meta})
     return Model
 
+
 # ----------------------------
 # Parse command line arguments
 # ----------------------------
@@ -323,7 +324,7 @@ for schema in schema_list:
     print(f"Database dialect is '{db_connection.dialect}'")
 
     if db_connection.dialect == "sqlite":
-        print(f"Creating sqlite database...")
+        print("Creating sqlite database...")
         schema = None
     elif schema == prod_schema:
         print(f"Creating production schema {prod_schema}...")
@@ -388,7 +389,7 @@ for schema in schema_list:
                     ):
                         privs = "SELECT"
                     else:
-                        privs = f"SELECT, INSERT, UPDATE"
+                        privs = "SELECT, INSERT, UPDATE"
                     select_prv = (
                         f"GRANT {privs} ON ALL TABLES IN SCHEMA {schema} to {acct}"
                     )
