@@ -49,10 +49,13 @@ Test and apply for real
 ***********************
 
 If the update involves changes to the schema you'll need a script to implement
-them and also add an entry to the ``provenance`` table.
+them and also add an entry to the ``provenance`` table. You'll also need
+to update the database version as stored in
+`dataregistry/src/dataregistry/schema/schema_version.py`.
 If the update involves changes to entries stored in the database, you'll need
 a script for that as well (or if more convenient use a single script for both).
-See an example (somewhere).
+See examples in the dataregistry GitHub repo under
+`dataregistry/scripts/schema_migration/`.
 
 Run your script(s) in alt_db, fix any issues, then run in the
 ``desc_data_registry``. Once you're satisfied everything is ok,
