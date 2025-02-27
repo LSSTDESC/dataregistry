@@ -71,10 +71,6 @@ class DataRegistry:
             to restrict searches to a single schema.
         """
 
-        # Namespace schema must be either "working" or "production"
-        if entry_mode not in ["working", "production"]:
-            raise ValueError("entry_mode must be either working or production")
-
         # Establish connection to database
         self.db_connection = DbConnection(
             config_file=config_file,
