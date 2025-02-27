@@ -18,6 +18,12 @@ from dataregistry.schema import (
     load_preset_keywords,
     DEFAULT_NAMESPACE,
 )
+from dataregistry.schema.schema_version import (
+    _DB_VERSION_MAJOR,
+    _DB_VERSION_MINOR,
+    _DB_VERSION_PATCH,
+    _DB_VERSION_COMMENT
+)
 
 """
 A script to create a schema.
@@ -265,17 +271,6 @@ def _BuildTable(schema, table_name, has_production, production):
     return Model
 
 
-# ----------------
-# Database version
-# ----------------
-
-# The following should be adjusted whenever there is a change to the structure
-# of the database tables.
-_DB_VERSION_MAJOR = 3
-_DB_VERSION_MINOR = 3
-_DB_VERSION_PATCH = 0
-_DB_VERSION_COMMENT = "Remove `is_overwritten`, `replace_date` and `replace_uid` columns, the information is in `status`"
-
 # ----------------------------
 # Parse command line arguments
 # ----------------------------
@@ -289,6 +284,11 @@ parser.add_argument(
     help="name of schema to contain tables. Will be created if it doesn't already exist",
     default=f"{DEFAULT_NAMESPACE}_working",
 )
+parser.add_argument(
+    "--sqlite",
+    help="signifies database flavor is sqlite. If specified, schema option is ignored",
+    action="store_true"
+    )
 parser.add_argument(
     "--production-schema",
     default=f"{DEFAULT_NAMESPACE}_production",
@@ -313,10 +313,13 @@ args = parser.parse_args()
 # ------------------
 
 # What schemas are we creating?
-if args.create_both:
+if args.sqlite:
+    schema_list = [None]
+elif args.create_both:
     schema_list = [args.production_schema, args.schema]
 else:
     schema_list = [args.schema]
+
 prod_schema = args.production_schema
 
 # Load the preset keywords
@@ -324,19 +327,28 @@ keywords = load_preset_keywords()
 
 # Loop over each schema
 for schema in schema_list:
-    # Connect to database to find out what the backend is
-    db_connection = DbConnection(args.config, schema=schema)
-    print(f"Database dialect is '{db_connection.dialect}'")
-
-    if db_connection.dialect == "sqlite":
-        print(f"Creating sqlite database...")
-        schema = None
+    if args.sqlite:
+        print("Creating sqlite database...")
+        entry_mode="working"
     elif schema == prod_schema:
         print(f"Creating production schema {prod_schema}...")
+        entry_mode="production"
     else:
         print(
             f"Creating schema '{schema}', linking to production schema '{prod_schema}'..."
         )
+        entry_mode = "working"
+    query_mode = entry_mode
+
+    # Connect to database to find out what the backend is
+    db_connection = DbConnection(
+        config_file=args.config,
+        schema=schema,
+        entry_mode=entry_mode,
+        query_mode=query_mode)
+    print(f"Database dialect is '{db_connection.dialect}'")
+    if args.sqlite != (db_connection.dialect == "sqlite"):
+        raise ValueError("config and sqlite argument disagree")
 
     # Make sure the linked production schema exists / is allowed
     if db_connection.dialect == "sqlite":
@@ -356,9 +368,9 @@ for schema in schema_list:
             except Exception:
                 raise RuntimeError("production schema does not exist or is ill-formed")
             if (
-                result["db_version_major"][0]
-                != _DB_VERSION_MAJOR | int(result["db_version_minor"][0])
-                > _DB_VERSION_MINOR
+                (result["db_version_major"][0]
+                != _DB_VERSION_MAJOR) or (int(result["db_version_minor"][0])
+                > _DB_VERSION_MINOR)
             ):
                 raise RuntimeError("production schema version incompatible")
 
@@ -394,7 +406,7 @@ for schema in schema_list:
                     ):
                         privs = "SELECT"
                     else:
-                        privs = f"SELECT, INSERT, UPDATE"
+                        privs = "SELECT, INSERT, UPDATE"
                     select_prv = (
                         f"GRANT {privs} ON ALL TABLES IN SCHEMA {schema} to {acct}"
                     )

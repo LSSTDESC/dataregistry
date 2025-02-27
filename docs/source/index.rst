@@ -25,7 +25,7 @@ Getting started
 
 This documentation is to help you get set up using the ``dataregistry`` Python
 package; covering installation, how to register datasets, and how to query for
-them. 
+them.
 
 .. toctree::
    :maxdepth: 2
@@ -61,6 +61,7 @@ them.
    dev_notes_spin
    dev_notes_database
    installation_locally
+   database_upgrades
 
 .. toctree::
    :maxdepth: 2
