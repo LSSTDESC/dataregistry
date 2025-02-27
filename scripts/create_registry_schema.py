@@ -351,9 +351,9 @@ for schema in schema_list:
             except Exception:
                 raise RuntimeError("production schema does not exist or is ill-formed")
             if (
-                result["db_version_major"][0]
-                != _DB_VERSION_MAJOR | int(result["db_version_minor"][0])
-                > _DB_VERSION_MINOR
+                (result["db_version_major"][0]
+                != _DB_VERSION_MAJOR) or (int(result["db_version_minor"][0])
+                > _DB_VERSION_MINOR)
             ):
                 raise RuntimeError("production schema version incompatible")
 
