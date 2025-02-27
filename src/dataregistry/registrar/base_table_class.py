@@ -199,27 +199,3 @@ class BaseTable:
                 mod_list.append(att)
 
         return mod_list
-
-    def get_keywords(self):
-        """
-        Returns the list of system keywords that are allowed.
-
-        Returns
-        -------
-        keywords : list[str]
-        """
-
-        keywords = []
-
-        # Query for all keywords
-        keyword_table = self._get_table_metadata("keyword")
-        stmt = select(keyword_table.c.keyword)
-
-        with self._engine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        for r in result:
-            keywords.append(r.keyword)
-
-        return keywords

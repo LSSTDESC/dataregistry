@@ -90,6 +90,8 @@ def dregs_ls(args):
         schema=args.schema,
         root_dir=args.root_dir,
         site=args.site,
+        namespace=args.namespace,
+        query_mode=args.query_mode
     )
 
     # By default, search for "our" dataset
@@ -115,9 +117,10 @@ def dregs_ls(args):
     mystr = (
         f"Schema = {datareg.db_connection.schema} "
         f"({datareg.db_connection.metadata['schema_version']})\n"
-        f"Production schema: {datareg.db_connection.production_schema} "
-        f"({datareg.db_connection.metadata['prod_schema_version']})"
     )
+    if 'prod_schema_version' in datareg.db_connection.metadata.keys():
+        mystr += f"Production schema: {datareg.db_connection.production_schema} "
+        mystr += f"({datareg.db_connection.metadata['prod_schema_version']})"
     print(f"\n{mystr}")
     print("-" * len(mystr))
 
@@ -132,17 +135,9 @@ def dregs_ls(args):
     new_col = {x: x.split("dataset.")[1] for x in results.columns if "dataset." in x}
     results.rename(columns=new_col, inplace=True)
 
-    # Add compressed columns
-    if "owner" in results.keys():
-        results["type/owner"] = results["owner_type"] + "/" + results["owner"]
-        del results["owner"]
-        del results["owner_type"]
-
+    # Fix date formatting
     if "register_date" in results.keys():
         results["register_date"] = results["register_date"].dt.date
-
-    if "keyword.keyword" in results.keys():
-        del results["keyword.keyword"]
 
     # Print
     with pd.option_context(

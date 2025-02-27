@@ -354,6 +354,19 @@ class Query:
 
         return list(tables_required)
 
+    def get_keyword_list(self):
+        """Get list of keywords from the keywords table"""
+        
+        if self.db_connection._query_mode == "both":
+            print("Keywords are unique to the working and production "
+                  "schemas. Select a `query_mode` during `DataRegistry()` "
+                  "creation before calling this function to select if you want "
+                  "to list keywords from the working or production schema")
+            return None
+
+        results = self.find_datasets(property_names=["keyword.keyword"])
+        return results["keyword.keyword"]
+
     def find_datasets(
         self,
         property_names=None,

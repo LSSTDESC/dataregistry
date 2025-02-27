@@ -117,9 +117,10 @@ def test_get_keywords(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE,
+            query_mode="working")
 
-    keywords = datareg.Registrar.dataset.get_keywords()
+    keywords = datareg.Query.get_keyword_list()
 
     assert "simulation" in keywords
     assert "observation" in keywords
