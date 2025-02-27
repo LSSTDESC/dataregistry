@@ -453,7 +453,11 @@ class DatasetTable(BaseTable):
         self._compute_version_string(name, version, kwargs_dict)
 
         # If `relative_path` not passed, automatically generate it
-        if kwargs_dict["relative_path"] is None:
+        # But for location types "external" and "meta_only" it should
+        # be None
+        if kwargs_dict["location_type"] in ["external", "meta_only"]:
+            kwargs_dict["relative_path"] = None
+        elif kwargs_dict["relative_path"] is None:
             kwargs_dict["relative_path"] = _relpath_from_name(
                 name, kwargs_dict["version_string"], kwargs_dict["old_location"]
             )

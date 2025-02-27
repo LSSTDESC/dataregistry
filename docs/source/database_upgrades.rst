@@ -1,10 +1,9 @@
-.. _maintenance
 
-Maintenance
-===========
+Database Upgrades
+=================
 
-Procedure for Database Upgrades
--------------------------------
+.. _database_upgrades
+
 
 Creating an alternate database
 ******************************
