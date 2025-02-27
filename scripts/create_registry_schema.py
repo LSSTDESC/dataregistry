@@ -285,6 +285,11 @@ parser.add_argument(
     default=f"{DEFAULT_NAMESPACE}_working",
 )
 parser.add_argument(
+    "--sqlite",
+    help="signifies database flavor is sqlite. If specified, schema option is ignored",
+    action="store_true"
+    )
+parser.add_argument(
     "--production-schema",
     default=f"{DEFAULT_NAMESPACE}_production",
     help="name of schema containing production tables.",
@@ -308,30 +313,43 @@ args = parser.parse_args()
 # ------------------
 
 # What schemas are we creating?
-if args.create_both:
+if args.sqlite:
+    schema_list = [None]
+    prod_schema = None
+elif args.create_both:
     schema_list = [args.production_schema, args.schema]
+    prod_schema = args.production_schema
 else:
     schema_list = [args.schema]
-prod_schema = args.production_schema
+    prod_schema = args.production_schema
 
 # Load the preset keywords
 keywords = load_preset_keywords()
 
 # Loop over each schema
 for schema in schema_list:
-    # Connect to database to find out what the backend is
-    db_connection = DbConnection(args.config, schema=schema)
-    print(f"Database dialect is '{db_connection.dialect}'")
-
-    if db_connection.dialect == "sqlite":
+    if args.sqlite:
         print("Creating sqlite database...")
-        schema = None
+        entry_mode="working"
     elif schema == prod_schema:
         print(f"Creating production schema {prod_schema}...")
+        entry_mode="production"
     else:
         print(
             f"Creating schema '{schema}', linking to production schema '{prod_schema}'..."
         )
+        entry_mode = "working"
+    query_mode = entry_mode
+
+    # Connect to database to find out what the backend is
+    db_connection = DbConnection(
+        config_file=args.config,
+        schema=schema,
+        entry_mode=entry_mode,
+        query_mode=query_mode)
+    print(f"Database dialect is '{db_connection.dialect}'")
+    if args.sqlite != (db_connection.dialect == "sqlite"):
+        raise ValueError("config and sqlite argument disagree")
 
     # Make sure the linked production schema exists / is allowed
     if db_connection.dialect == "sqlite":
@@ -351,9 +369,9 @@ for schema in schema_list:
             except Exception:
                 raise RuntimeError("production schema does not exist or is ill-formed")
             if (
-                result["db_version_major"][0]
-                != _DB_VERSION_MAJOR | int(result["db_version_minor"][0])
-                > _DB_VERSION_MINOR
+                (result["db_version_major"][0]
+                != _DB_VERSION_MAJOR) or (int(result["db_version_minor"][0])
+                > _DB_VERSION_MINOR)
             ):
                 raise RuntimeError("production schema version incompatible")
 
