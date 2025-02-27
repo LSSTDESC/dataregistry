@@ -315,13 +315,12 @@ args = parser.parse_args()
 # What schemas are we creating?
 if args.sqlite:
     schema_list = [None]
-    prod_schema = None
 elif args.create_both:
     schema_list = [args.production_schema, args.schema]
-    prod_schema = args.production_schema
 else:
     schema_list = [args.schema]
-    prod_schema = args.production_schema
+
+prod_schema = args.production_schema
 
 # Load the preset keywords
 keywords = load_preset_keywords()
