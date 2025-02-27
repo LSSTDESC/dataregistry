@@ -90,6 +90,7 @@ def dregs_ls(args):
         schema=args.schema,
         root_dir=args.root_dir,
         site=args.site,
+        query_mode=args.query_mode
     )
 
     # By default, search for "our" dataset

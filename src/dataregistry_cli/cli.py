@@ -10,7 +10,7 @@ from .modify import modify_dataset
 from dataregistry.schema import load_schema
 
 
-def _add_generic_arguments(parser_obj):
+def _add_generic_arguments(parser_obj, add_entry=True, add_query=False):
     """
     Most commands have the schema, root_dir, etc. as options. This function
     does that for us.
@@ -19,6 +19,10 @@ def _add_generic_arguments(parser_obj):
     ----------
     parser_obj : argparse.ArgumentParser
         Argument parser we are adding the options to
+    add_entry : bool
+        True to add entry_mode as an option
+    add_query : bool
+        True to add query_mode as an option
     """
 
     parser_obj.add_argument(
@@ -45,20 +49,22 @@ def _add_generic_arguments(parser_obj):
         help="""Namespace to connect to. If None, the default namespace will be
             used.""",
     )
-    parser_obj.add_argument(
-        "--entry_mode",
-        default="working",
-        help="""Which schema ('working' or 'production') within the namespace 
-        to use when writing/modifying/deleting entries.""",
-    )
-    parser_obj.add_argument(
-        "--query_mode",
-        default="both",
-        help="""Which schema(s) ("working" or "production") to probe when querying.
-            By default query_mode="both", which searches both schemas together,
-            however this can be restricted to either "working" or "production"
-            to restrict searches to a single schema."""
-    )
+    if add_entry:
+        parser_obj.add_argument(
+            "--entry_mode",
+            default="working",
+            help="""Which schema ('working' or 'production') within the namespace 
+            to use when writing/modifying/deleting entries.""",
+        )
+    if add_query:
+        parser_obj.add_argument(
+            "--query_mode",
+            default="both",
+            help="""Which schema(s) ("working" or "production") to probe when querying.
+                By default query_mode="both", which searches both schemas together,
+                however this can be restricted to either "working" or "production"
+                to restrict searches to a single schema."""
+        )
 
 
 def get_parser():
@@ -83,7 +89,7 @@ def get_parser():
     arg_show_keywords = arg_show_sub.add_parser(
         "keywords", help="Show list of pre-defined keywords"
     )
-    _add_generic_arguments(arg_show_keywords)
+    _add_generic_arguments(arg_show_keywords, add_entry=False, add_query=False)
 
     # ----------
     # Query (ls)
@@ -125,7 +131,7 @@ def get_parser():
         default=40,
     )
     arg_ls.add_argument("--keyword", type=str, help="Keyword to filter by")
-    _add_generic_arguments(arg_ls)
+    _add_generic_arguments(arg_ls, add_entry=False, add_query=True)
 
     # ------
     # Modify
