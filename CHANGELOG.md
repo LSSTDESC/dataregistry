@@ -1,3 +1,12 @@
+## Version 1.1.1
+
+- Move `get_keyword_list()` function to the `Query()` class.
+- Fix `dregs ls` for corner case scenarios
+- Fix `dregs show` to work with `query_mode` format
+- Added `skip_provenance_reflect` to the `DbConnection()` object, which stops
+  the provenance table being queried during database connection. This is
+  desgined for schema creation only.
+
 ## Version 1.1.0
 
 When connection to the database, now a namespace is connected to, rather than a

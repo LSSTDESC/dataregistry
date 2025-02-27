@@ -90,6 +90,7 @@ def dregs_ls(args):
         schema=args.schema,
         root_dir=args.root_dir,
         site=args.site,
+        namespace=args.namespace,
         query_mode=args.query_mode
     )
 
@@ -134,17 +135,9 @@ def dregs_ls(args):
     new_col = {x: x.split("dataset.")[1] for x in results.columns if "dataset." in x}
     results.rename(columns=new_col, inplace=True)
 
-    # Add compressed columns
-    if "owner" in results.keys():
-        results["type/owner"] = results["owner_type"] + "/" + results["owner"]
-        del results["owner"]
-        del results["owner_type"]
-
+    # Fix date formatting
     if "register_date" in results.keys():
         results["register_date"] = results["register_date"].dt.date
-
-    if "keyword.keyword" in results.keys():
-        del results["keyword.keyword"]
 
     # Print
     with pd.option_context(

@@ -89,7 +89,7 @@ def get_parser():
     arg_show_keywords = arg_show_sub.add_parser(
         "keywords", help="Show list of pre-defined keywords"
     )
-    _add_generic_arguments(arg_show_keywords, add_entry=False, add_query=False)
+    _add_generic_arguments(arg_show_keywords, add_entry=False, add_query=True)
 
     # ----------
     # Query (ls)

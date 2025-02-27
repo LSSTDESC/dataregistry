@@ -109,6 +109,7 @@ class DbConnection:
         verbose=False,
         entry_mode="working",
         query_mode="both",
+        skip_provenance_reflect=False,
     ):
         """
         Simple class to act as container for connection.
@@ -162,7 +163,29 @@ class DbConnection:
             (`query_mode`="both"). However setting `query_mode` to either
             "working" or "production" will restrict queries to only the chosen
             schema.
+        skip_provenance_reflect : bool
+            During database reflection the provenance table is queried to get
+            the schema versions and associated production schema. This can be
+            skipped setting this to True, which is needed during schema
+            creation (as there is no provenance yet at that point). This cannot
+            work when passing a `namespace`, you can only flag
+            `skip_provenance_reflect` when `schema` is passed.
         """
+
+        # Make sure manually passed schema name is valid formatting
+        # If `schema` is passed, it also sets the entry and query modes
+        if schema is not None:
+            schema_type = schema.split("_")[-1]
+            if schema_type not in ["working", "production"]:
+                raise ValueError(f"Invalid schema name {schema}, {schema_type} not valid type")
+            query_mode, entry_mode = schema_type, schema_type
+            namespace = None
+
+        # Check `skip_provenance_reflect` is allowed
+        if skip_provenance_reflect and schema is None:
+            raise DataRegistryException(
+                "`skip_provenance_reflect` can only be flagged when passing a `schema`"
+            )
 
         # Namespace schema must be either "working" or "production"
         if entry_mode not in ["working", "production"]:
@@ -201,6 +224,7 @@ class DbConnection:
 
         # Dict to store schema/table information (filled in `_reflect()`)
         self.metadata = {}
+        self._skip_provenance_reflect = skip_provenance_reflect
 
         # What schema do new entries go into?
         self._entry_mode = entry_mode
@@ -308,7 +332,7 @@ class DbConnection:
             if get_associated_production:
                 return f"{r[0]}.{r[1]}.{r[2]}", r[3]
             else:
-                return f"{r[0]}.{r[1]}.{r[2]}"
+                return f"{r[0]}.{r[1]}.{r[2]}", None
 
         # Reflect the working schema to find database tables
         metadata = MetaData(schema=self.schema)
@@ -328,9 +352,12 @@ class DbConnection:
 
         # From the procenance table get the associated production schema
         prov_table = metadata.tables[prov_name]
-        self.metadata["schema_version"], self._prod_schema = _get_db_info(
-            prov_table, get_associated_production=True
-        )
+        if self._skip_provenance_reflect:
+            self.metadata["schema_version"], self._prod_schema = None, None
+        else:
+            self.metadata["schema_version"], self._prod_schema = _get_db_info(
+                prov_table, get_associated_production=(True if self.namespace else False) 
+            )
 
         # Don't go on to query the provenance table unless working within a namespace
         if self.namespace is None:
@@ -342,7 +369,7 @@ class DbConnection:
             metadata.reflect(self.engine, self._prod_schema)
             prov_name = ".".join([self._prod_schema, "provenance"])
             prov_table = metadata.tables[prov_name]
-            self.metadata["prod_schema_version"] = _get_db_info(prov_table)
+            self.metadata["prod_schema_version"], _ = _get_db_info(prov_table)
         else:
             self.metadata["prod_schema_version"] = None
 
