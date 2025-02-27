@@ -116,9 +116,10 @@ def dregs_ls(args):
     mystr = (
         f"Schema = {datareg.db_connection.schema} "
         f"({datareg.db_connection.metadata['schema_version']})\n"
-        f"Production schema: {datareg.db_connection.production_schema} "
-        f"({datareg.db_connection.metadata['prod_schema_version']})"
     )
+    if 'prod_schema_version' in datareg.db_connection.metadata.keys():
+        mystr += f"Production schema: {datareg.db_connection.production_schema} "
+        mystr += f"({datareg.db_connection.metadata['prod_schema_version']})"
     print(f"\n{mystr}")
     print("-" * len(mystr))
 

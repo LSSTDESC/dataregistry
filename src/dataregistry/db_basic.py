@@ -326,16 +326,16 @@ class DbConnection:
                 f"listed tables are {metadata.tables}"
             )
 
-        # Don't go on to query the provenance table unless working within a namespace
-        if self.namespace is None:
-            self.metadata["tables"] = metadata.tables
-            return
-
         # From the procenance table get the associated production schema
         prov_table = metadata.tables[prov_name]
         self.metadata["schema_version"], self._prod_schema = _get_db_info(
             prov_table, get_associated_production=True
         )
+
+        # Don't go on to query the provenance table unless working within a namespace
+        if self.namespace is None:
+            self.metadata["tables"] = metadata.tables
+            return
 
         # Add production schema tables to metadata
         if self.dialect != "sqlite":
