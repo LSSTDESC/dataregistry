@@ -170,20 +170,6 @@ class DbConnection:
             directly pass the schema name which you are creating.
         """
 
-        # Check `cretion_mode` is allowed
-        if creation_mode and schema is None:
-            raise DataRegistryException(
-                "`creation_mode` can only be flagged when passing a `schema`"
-            )
-
-        # Namespace schema must be either "working" or "production"
-        if entry_mode not in ["working", "production"]:
-            raise ValueError("`entry_mode` must be either working or production")
-
-        # Query mode can only be "both", "working" or "production"
-        if query_mode not in ["both", "working", "production"]:
-            raise ValueError("`query_mode` must be 'both', 'working' or 'production'")
-
         # Extract connection info from configuration file
         with open(_get_dataregistry_config(config_file, verbose)) as f:
             connection_parameters = yaml.safe_load(f)
@@ -208,6 +194,7 @@ class DbConnection:
         if self._dialect == "sqlite":
             self._schema = None
             self._namespace = None
+            entry_mode, query_mode = "working", "working"
         else:
             if schema is None:
                 if namespace is None:
@@ -219,6 +206,20 @@ class DbConnection:
             else:
                 self._schema = schema
                 self._namespace = None
+
+        # Check `cretion_mode` is allowed
+        if creation_mode and schema is None:
+            raise DataRegistryException(
+                "`creation_mode` can only be flagged when passing a `schema`"
+            )
+
+        # Namespace schema must be either "working" or "production"
+        if entry_mode not in ["working", "production"]:
+            raise ValueError("`entry_mode` must be either working or production")
+
+        # Query mode can only be "both", "working" or "production"
+        if query_mode not in ["both", "working", "production"]:
+            raise ValueError("`query_mode` must be 'both', 'working' or 'production'")
 
         # Dict to store schema/table information (filled in `_reflect()`)
         self.metadata = {}
