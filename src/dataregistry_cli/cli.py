@@ -10,7 +10,7 @@ from .modify import modify_dataset
 from dataregistry.schema import load_schema
 
 
-def _add_generic_arguments(parser_obj, add_entry=True, add_query=False):
+def _add_generic_arguments(parser_obj, add_entry_mode=True, add_query_mode=False):
     """
     Most commands have the schema, root_dir, etc. as options. This function
     does that for us.
@@ -19,9 +19,9 @@ def _add_generic_arguments(parser_obj, add_entry=True, add_query=False):
     ----------
     parser_obj : argparse.ArgumentParser
         Argument parser we are adding the options to
-    add_entry : bool
+    add_entry_mode : bool
         True to add entry_mode as an option
-    add_query : bool
+    add_query_mode : bool
         True to add query_mode as an option
     """
 
@@ -49,14 +49,14 @@ def _add_generic_arguments(parser_obj, add_entry=True, add_query=False):
         help="""Namespace to connect to. If None, the default namespace will be
             used.""",
     )
-    if add_entry:
+    if add_entry_mode:
         parser_obj.add_argument(
             "--entry_mode",
             default="working",
             help="""Which schema ('working' or 'production') within the namespace 
             to use when writing/modifying/deleting entries.""",
         )
-    if add_query:
+    if add_query_mode:
         parser_obj.add_argument(
             "--query_mode",
             default="both",
@@ -89,7 +89,7 @@ def get_parser():
     arg_show_keywords = arg_show_sub.add_parser(
         "keywords", help="Show list of pre-defined keywords"
     )
-    _add_generic_arguments(arg_show_keywords, add_entry=False, add_query=True)
+    _add_generic_arguments(arg_show_keywords, add_entry_mode=False, add_query_mode=True)
 
     # ----------
     # Query (ls)
@@ -131,7 +131,7 @@ def get_parser():
         default=40,
     )
     arg_ls.add_argument("--keyword", type=str, help="Keyword to filter by")
-    _add_generic_arguments(arg_ls, add_entry=False, add_query=True)
+    _add_generic_arguments(arg_ls, add_entry_mode=False, add_query_mode=True)
 
     # ------
     # Modify

@@ -109,7 +109,7 @@ class DbConnection:
         verbose=False,
         entry_mode="working",
         query_mode="both",
-        skip_provenance_reflect=False,
+        creation_mode=False,
     ):
         """
         Simple class to act as container for connection.
@@ -163,28 +163,17 @@ class DbConnection:
             (`query_mode`="both"). However setting `query_mode` to either
             "working" or "production" will restrict queries to only the chosen
             schema.
-        skip_provenance_reflect : bool
-            During database reflection the provenance table is queried to get
-            the schema versions and associated production schema. This can be
-            skipped setting this to True, which is needed during schema
-            creation (as there is no provenance yet at that point). This cannot
-            work when passing a `namespace`, you can only flag
-            `skip_provenance_reflect` when `schema` is passed.
+        creation_mode : bool
+            During schema creation the database cannot be "reflected" (as it
+            does not exist yet). This flag prevents reflecting a current
+            database.  When in creation mode, do not pass a namespace, instead
+            directly pass the schema name which you are creating.
         """
 
-        # Make sure manually passed schema name is valid formatting
-        # If `schema` is passed, it also sets the entry and query modes
-        if schema is not None:
-            schema_type = schema.split("_")[-1]
-            if schema_type not in ["working", "production"]:
-                raise ValueError(f"Invalid schema name {schema}, {schema_type} not valid type")
-            query_mode, entry_mode = schema_type, schema_type
-            namespace = None
-
-        # Check `skip_provenance_reflect` is allowed
-        if skip_provenance_reflect and schema is None:
+        # Check `cretion_mode` is allowed
+        if creation_mode and schema is None:
             raise DataRegistryException(
-                "`skip_provenance_reflect` can only be flagged when passing a `schema`"
+                "`creation_mode` can only be flagged when passing a `schema`"
             )
 
         # Namespace schema must be either "working" or "production"
@@ -206,6 +195,15 @@ class DbConnection:
         driver = make_url(connection_parameters["sqlalchemy.url"]).drivername
         self._dialect = driver.split("+")[0]
 
+        # Make sure manually passed schema name is valid formatting
+        # If `schema` is passed, it also sets the entry and query modes
+        if schema is not None:
+            schema_type = schema.split("_")[-1]
+            if schema_type not in ["working", "production"]:
+                raise ValueError(f"Invalid schema name {schema}, {schema_type} not valid type")
+            query_mode, entry_mode = schema_type, schema_type
+            namespace = None
+
         # Define working schema from the namespace, or manually
         if self._dialect == "sqlite":
             self._schema = None
@@ -224,7 +222,7 @@ class DbConnection:
 
         # Dict to store schema/table information (filled in `_reflect()`)
         self.metadata = {}
-        self._skip_provenance_reflect = skip_provenance_reflect
+        self._creation_mode = creation_mode
 
         # What schema do new entries go into?
         self._entry_mode = entry_mode
@@ -350,9 +348,9 @@ class DbConnection:
                 f"listed tables are {metadata.tables}"
             )
 
-        # From the procenance table get the associated production schema
+        # From the provenance table get the associated production schema
         prov_table = metadata.tables[prov_name]
-        if self._skip_provenance_reflect:
+        if self._creation_mode:
             self.metadata["schema_version"], self._prod_schema = None, None
         else:
             self.metadata["schema_version"], self._prod_schema = _get_db_info(
