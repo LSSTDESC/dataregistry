@@ -194,7 +194,7 @@ class DbConnection:
         if self._dialect == "sqlite":
             self._schema = None
             self._namespace = None
-            entry_mode, query_mode = "working", "working"
+            entry_mode, query_mode = "working", "both"
         else:
             if schema is None:
                 if namespace is None:
