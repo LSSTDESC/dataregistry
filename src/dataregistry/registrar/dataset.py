@@ -160,8 +160,10 @@ class DatasetTable(BaseTable):
                         "Only owner_type='production' can go in the production schema"
                     )
 
-        # Validate the keywords (make sure they are registered)
+        # Keywords
         if len(kwargs_dict["keywords"]) > 0:
+
+            # Validate the keywords (make sure they are registered)
             kwargs_dict["keyword_ids"] = self._validate_keywords(
                 kwargs_dict["keywords"]
             )
@@ -955,7 +957,7 @@ class DatasetTable(BaseTable):
         keyword_table = self._get_table_metadata("keyword")
 
         stmt = select(keyword_table.c.keyword_id).where(
-            keyword_table.c.keyword.in_(keywords)
+            keyword_table.c.keyword.in_([x.lower() for x in keywords])
         )
 
         with self._engine.connect() as conn:
@@ -989,10 +991,6 @@ class DatasetTable(BaseTable):
         # Make sure things are valid
         if not isinstance(keywords, list):
             raise ValueError("Passed keywords object must be a list")
-
-        for k in keywords:
-            if not isinstance(k, str):
-                raise ValueError(f"Keyword {k} is not a valid string")
 
         if len(keywords) == 0:
             return
