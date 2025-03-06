@@ -10,7 +10,7 @@ from .modify import modify_dataset
 from dataregistry.schema import load_schema
 
 
-def _add_generic_arguments(parser_obj):
+def _add_generic_arguments(parser_obj, add_entry_mode=True, add_query_mode=False):
     """
     Most commands have the schema, root_dir, etc. as options. This function
     does that for us.
@@ -19,29 +19,52 @@ def _add_generic_arguments(parser_obj):
     ----------
     parser_obj : argparse.ArgumentParser
         Argument parser we are adding the options to
+    add_entry_mode : bool
+        True to add entry_mode as an option
+    add_query_mode : bool
+        True to add query_mode as an option
     """
 
     parser_obj.add_argument(
-        "--config_file", help="Location of data registry config file", type=str
+        "--config_file",
+        help="Path to config file, if None, default location is assumed.",
+        type=str
     )
-    parser_obj.add_argument("--root_dir", help="Location of the root_dir", type=str)
+    parser_obj.add_argument("--root_dir", type=str,
+            help="""Root directory for datasets, if None, default is assumed.""")
     parser_obj.add_argument(
-        "--site", help="Get the root_dir through a pre-defined 'site'", type=str
+        "--site", type=str,
+        help="""Can be used instead of `root_dir`. Some predefined "sites" are
+            built in, such as "nersc", which will set the `root_dir` to the
+            data registry's default data location at NERSC."""
     )
     parser_obj.add_argument(
         "--schema",
-        help="Which schema to connect to",
+        help="""Schema to connect to, to connect directly to a chosen schema,
+            bypassing the namespace.""",
     )
     parser_obj.add_argument(
         "--namespace",
         default=DEFAULT_NAMESPACE,
-        help="Which namespace to connect to",
+        help="""Namespace to connect to. If None, the default namespace will be
+            used.""",
     )
-    parser_obj.add_argument(
-        "--entry_mode",
-        default="working",
-        help="Which schema to default to in the namespace (working is default)",
-    )
+    if add_entry_mode:
+        parser_obj.add_argument(
+            "--entry_mode",
+            default="working",
+            help="""Which schema ('working' or 'production') within the namespace 
+            to use when writing/modifying/deleting entries.""",
+        )
+    if add_query_mode:
+        parser_obj.add_argument(
+            "--query_mode",
+            default="both",
+            help="""Which schema(s) ("working" or "production") to probe when querying.
+                By default query_mode="both", which searches both schemas together,
+                however this can be restricted to either "working" or "production"
+                to restrict searches to a single schema."""
+        )
 
 
 def get_parser():
@@ -66,7 +89,7 @@ def get_parser():
     arg_show_keywords = arg_show_sub.add_parser(
         "keywords", help="Show list of pre-defined keywords"
     )
-    _add_generic_arguments(arg_show_keywords)
+    _add_generic_arguments(arg_show_keywords, add_entry_mode=False, add_query_mode=True)
 
     # ----------
     # Query (ls)
@@ -76,8 +99,8 @@ def get_parser():
     arg_ls = subparsers.add_parser("ls", help="List your entries in the data registry")
 
     arg_ls.add_argument("--owner",
-            help=("List datasets for a given owner. By default owner is $USER. "
-                "Selecting '--owner none' will return results from all owners.")
+            help="""List datasets for a given owner (default is $USER).
+                Selecting '--owner none' will return results from all owners."""
     )
     arg_ls.add_argument(
         "--owner_type",
@@ -85,11 +108,13 @@ def get_parser():
         choices=["user", "group", "production", "project"],
     )
     arg_ls.add_argument(
-        "--name", help="Only return datasets with a given name (wildcard support)"
+        "--name",
+        help=""""Only return datasets with a given name. This can be used
+        with wildcard support, for example `--name DESC:*`"""
     )
     arg_ls.add_argument(
         "--return_cols",
-        help="List of columns to return in the query",
+        help="List of columns from dataset table to return in the query",
         nargs="+",
         type=str,
     )
@@ -106,7 +131,7 @@ def get_parser():
         default=40,
     )
     arg_ls.add_argument("--keyword", type=str, help="Keyword to filter by")
-    _add_generic_arguments(arg_ls)
+    _add_generic_arguments(arg_ls, add_entry_mode=False, add_query_mode=True)
 
     # ------
     # Modify
@@ -233,28 +258,22 @@ def get_parser():
     # Entries unique to registering the dataset when using the CLI
     arg_register_dataset.add_argument(
         "name",
-        help=(
-            "Any convenient, evocative name for the human. Note the "
-            "combination of name and version must be unique."
-        ),
+        help="""Any convenient, evocative name for the human. Note the
+        combination of name and version must be unique.""",
         type=str,
     )
     arg_register_dataset.add_argument(
         "version",
-        help=(
-            "Semantic version string of the format MAJOR.MINOR.PATCH or a special"
-            "flag “patch”, “minor” or “major”. When a special flag is used it"
-            "automatically bumps the relative version for you (see examples for more"
-            "details)."
-        ),
+        help="""Semantic version string of the format MAJOR.MINOR.PATCH or a
+        special flag “patch”, “minor” or “major”. When a special flag is used
+        it automatically bumps the relative version for you (see examples for
+        more details).""",
         type=str,
     )
     arg_register_dataset.add_argument(
         "--old_location",
-        help=(
-            "Absolute location of dataset to copy.\nIf None dataset should already"
-            "be at correct relative_path."
-        ),
+        help="""Absolute location of dataset to copy. If None dataset should
+        already be at correct relative_path.""",
         type=str,
     )
     arg_register_dataset.add_argument(
