@@ -142,5 +142,9 @@ def test_insert_keywords(dummy_file, mykeyword):
     _insert_keyword(datareg.db_connection, mykeyword, True)
 
     # Second time should fail, keywords are unique
-    with pytest.raises(IntegrityError, match="duplicate key value"):
-        _insert_keyword(datareg.db_connection, mykeyword, True)
+    if datareg.db_connection._dialect == "sqlite":
+        with pytest.raises(IntegrityError, match="UNIQUE constraint failed"):
+            _insert_keyword(datareg.db_connection, mykeyword, True)
+    else:
+        with pytest.raises(IntegrityError, match="duplicate key value"):
+            _insert_keyword(datareg.db_connection, mykeyword, True)
