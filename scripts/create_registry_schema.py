@@ -321,7 +321,6 @@ elif args.create_both:
 else:
     schema_list = [args.schema]
 
->>>>>>> 3af7aa1 (one last fix for sqlite)
 prod_schema = args.production_schema
 
 # Load the preset keywords
