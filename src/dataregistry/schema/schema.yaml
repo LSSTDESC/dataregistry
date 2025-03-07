@@ -285,7 +285,7 @@ tables:
       access_api_configuration:
         type: "String"
         description: "Additional (text) info which may be needed by access_api"
-
+        modifiable: True
   dependency:
 
     column_definitions:
@@ -375,9 +375,11 @@ tables:
         type: "StringShort"
         description: "Describes the software that can read the dataset (e.g., 'GCRCatalogs', 'skyCatalogs')"
         cli_optional: True
+        modifiable: True
       access_api_configuration:
         type: "String"
         description: "Additional (text) info which may be needed by access_api"
+        modifiable: True
       owner:
         type: "String"
         description: "Owner of the dataset (defaults to $USER)"
@@ -451,10 +453,12 @@ tables:
         type: "String"
         description: "URL that points to the data (used in the case of external datasets, i.e., `location_type='external'`)."
         cli_optional: True
+        modifiable: True
       contact_email:
         type: "String"
         description: "Contact information for someone regarding the dataset."
         cli_optional: True
+        modifiable: True
       replace_id:
         type: "Integer"
         description: "Dataset ID of the new entry that replaced this dataset"
