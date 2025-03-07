@@ -43,12 +43,15 @@ def test_register_dataset_with_bad_keywords(dummy_file):
             keywords=["bad_keyword"],
         )
 
-
-def test_register_dataset_with_keywords(dummy_file):
+@pytest.mark.parametrize("mykeyword", ["simulation", "SiMuLaTiOn"])
+def test_register_dataset_with_keywords(dummy_file, mykeyword):
     """
     Register some basic datasets with keywords.
 
     Then query the registry on a keyword and make sure we get our datasets back.
+
+    Keywords should also be case insensitive, i.e., all keywords are stored in
+    the database as lowercase. Test this also.
     """
 
     # Establish connection to database
@@ -58,20 +61,20 @@ def test_register_dataset_with_keywords(dummy_file):
     # Register two datasets with keywords
     d_id = _insert_dataset_entry(
         datareg,
-        "DESC:datasets:my_first_dataset_with_keywords",
+        f"DESC:datasets:my_first_dataset_with_keyword_{mykeyword}",
         "0.0.1",
-        keywords=["simulation", "observation"],
+        keywords=[mykeyword, "observation"],
     )
 
     d_id2 = _insert_dataset_entry(
         datareg,
-        "DESC:datasets:my_second_dataset_with_keywords",
+        f"DESC:datasets:my_second_dataset_with_keyword_{mykeyword}",
         "0.0.1",
-        keywords=["simulation"],
+        keywords=[mykeyword],
     )
 
     # Query on the "simulation" keyword
-    f = datareg.Query.gen_filter("keyword.keyword", "==", "simulation")
+    f = datareg.Query.gen_filter("keyword.keyword", "==", mykeyword.lower())
     results = datareg.Query.find_datasets(
         ["dataset.dataset_id", "keyword.keyword"],
         [f],
@@ -82,7 +85,7 @@ def test_register_dataset_with_keywords(dummy_file):
     for tmp_id in [d_id, d_id2]:
         assert tmp_id in results["dataset.dataset_id"]
     for tmp_k in results["keyword.keyword"]:
-        assert tmp_k == "simulation"
+        assert tmp_k == mykeyword.lower()
 
 
 def test_modify_dataset_with_keywords(dummy_file):

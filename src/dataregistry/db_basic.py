@@ -518,12 +518,14 @@ def _insert_keyword(
     """
     Write a row to a keyword table.
 
+    Keywords are always ingested as lower case.
+
     Parameters
     ----------
     db_connection : DbConnection class
         Conenction to the database
     keyword : str
-        Keyword to add
+        Keyword to add (added in lower case form regardless of input)
     system : bool
         True if this is a preset system keyword (False for user custom keyword)
     creator_uid : int, optional
@@ -534,8 +536,12 @@ def _insert_keyword(
         Id of new row in keyword table
     """
 
+    if not isinstance(keyword, str):
+        print(f"Only string keywords can be inserted")
+        return
+
     values = dict()
-    values["keyword"] = keyword
+    values["keyword"] = keyword.lower()
     values["system"] = system
     if creator_uid is None:
         values["creator_uid"] = os.getenv("USER")

@@ -3,9 +3,10 @@ import os
 import pytest
 from dataregistry import DataRegistry, DbConnection
 from dataregistry.schema import DEFAULT_NAMESPACE
+from dataregistry.db_basic import _insert_keyword
 
 from database_test_utils import *
-
+from sqlalchemy.exc import IntegrityError
 
 # This is just to see what backend we are using
 # Remember no production schema when using sqlite backend
@@ -124,3 +125,26 @@ def test_get_keywords(dummy_file):
 
     assert "simulation" in keywords
     assert "observation" in keywords
+
+@pytest.mark.parametrize("mykeyword", ["KeYwOrD", "anotherkeyword"])
+def test_insert_keywords(dummy_file, mykeyword):
+    """
+    Test inserting a keyword with `_insert_keyword`
+
+
+    Make sure case sensitivity is ignored (keywords are always entered as lower case
+    """
+    
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+
+    _insert_keyword(datareg.db_connection, mykeyword, True)
+
+    # Second time should fail, keywords are unique
+    if datareg.db_connection._dialect == "sqlite":
+        with pytest.raises(IntegrityError, match="UNIQUE constraint failed"):
+            _insert_keyword(datareg.db_connection, mykeyword, True)
+    else:
+        with pytest.raises(IntegrityError, match="duplicate key value"):
+            _insert_keyword(datareg.db_connection, mykeyword, True)
