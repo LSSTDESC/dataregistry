@@ -169,7 +169,7 @@ class Query:
 
                 # Pull out information
                 if self.db_connection.dialect == "sqlite":
-                    schema = ""
+                    _schema = ""
                 else:
                     _schema = str(c.table).split(".")[0]
                 _table = str(c.table.name)
