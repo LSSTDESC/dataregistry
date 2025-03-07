@@ -219,7 +219,7 @@ jobs:
       # Create schema
       - name: Create data registry default schema
         run: |
-          python scripts/create_registry_schema.py --config $DATAREG_CONFIG --sqlite
+          python scripts/create_registry_schema.py --config $DATAREG_CONFIG
 
       # Run CI tests
       - name: Run CI tests
