@@ -308,10 +308,20 @@ args = parser.parse_args()
 # ------------------
 
 # What schemas are we creating?
+<<<<<<< HEAD
 if args.create_both:
     schema_list = [args.production_schema, args.schema]
 else:
     schema_list = [args.schema]
+=======
+if args.sqlite:
+    schema_list = [None]
+elif args.create_both:
+    schema_list = [args.production_schema, args.schema]
+else:
+    schema_list = [args.schema]
+
+>>>>>>> 3af7aa1 (one last fix for sqlite)
 prod_schema = args.production_schema
 
 # Load the preset keywords
