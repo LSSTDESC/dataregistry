@@ -300,7 +300,6 @@ class DatasetTable(BaseTable):
                 kwargs_dict["old_location"],
                 kwargs_dict["owner"],
                 kwargs_dict["owner_type"],
-                kwargs_dict["verbose"],
             )
         else:
             dataset_organization = kwargs_dict["location_type"]
@@ -355,7 +354,6 @@ class DatasetTable(BaseTable):
         access_api_configuration=None,
         is_overwritable=False,
         old_location=None,
-        verbose=False,
         owner=None,
         owner_type=None,
         execution_name=None,
@@ -400,8 +398,6 @@ class DatasetTable(BaseTable):
 
             If None, dataset should already be at correct relative_path within
             the data registry.
-        verbose : bool, optional
-            Provide some additional output information
         owner** : str, optional
         owner_type** : str, optional
         execution_name** : str, optional
@@ -537,7 +533,6 @@ class DatasetTable(BaseTable):
         access_api_configuration=None,
         is_overwritable=False,
         old_location=None,
-        verbose=False,
         owner=None,
         owner_type=None,
         execution_name=None,
@@ -657,7 +652,7 @@ class DatasetTable(BaseTable):
 
         return prim_key, kwargs_dict["execution_id"]
 
-    def _handle_data(self, relative_path, old_location, owner, owner_type, verbose):
+    def _handle_data(self, relative_path, old_location, owner, owner_type):
         """
         Find characteristics of dataset (i.e., is it a file or directory, how
         many files and total disk space of the dataset).
@@ -676,8 +671,6 @@ class DatasetTable(BaseTable):
             Owner of the dataset
         owner_type : str
             Owner type of the dataset
-        verbose : bool
-            True for extra output
 
         Returns
         -------
@@ -723,9 +716,8 @@ class DatasetTable(BaseTable):
         else:
             raise FileNotFoundError(f"Dataset {loc} not found")
 
-        if verbose:
-            tic = time.time()
-            print("Collecting metadata...", end="")
+        tic = time.time()
+        self.db_connection.logger.debug("Collecting metadata")
 
         ds_creation_date = datetime.fromtimestamp(os.path.getctime(loc))
 
@@ -734,20 +726,16 @@ class DatasetTable(BaseTable):
         else:
             num_files = 1
             total_size = os.path.getsize(loc)
-        if verbose:
-            print(f"took {time.time()-tic:.2f}s")
+        self.db_connection.logger.debug(f"  - took {time.time()-tic:.2f}s")
 
         # Copy data into data registry
         if old_location:
-            if verbose:
-                tic = time.time()
-                print(
-                    f"Copying {num_files} files ({total_size/1024/1024:.2f} Mb)...",
-                    end="",
-                )
+            tic = time.time()
+            self.db_connection.logger.debug(
+                f"Copying {num_files} files ({total_size/1024/1024:.2f} Mb)...",
+            )
             _copy_data(dataset_organization, old_location, dest)
-            if verbose:
-                print(f"took {time.time()-tic:.2f}")
+            self.db_connection.logger.debug(f"  - took {time.time()-tic:.2f}s")
 
         return dataset_organization, num_files, total_size, ds_creation_date
 
