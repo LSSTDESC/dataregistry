@@ -282,6 +282,7 @@ tables:
         type: "StringShort"
         description: "Describes the software that can read the dataset (e.g., 'gcr-catalogs', 'skyCatalogs')"
         cli_optional: True
+        modifiable: True
       access_api_configuration:
         type: "String"
         description: "Additional (text) info which may be needed by access_api"
