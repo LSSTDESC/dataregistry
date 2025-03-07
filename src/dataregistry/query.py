@@ -371,7 +371,6 @@ class Query:
         self,
         property_names=None,
         filters=[],
-        verbose=False,
         return_format="property_dict",
         strip_table_names=False,
     ):
@@ -395,8 +394,6 @@ class Query:
             List of database columns to return (SELECT clause)
         filters : list, optional
             List of filters (WHERE clauses) to apply
-        verbose : bool, optional
-            True for more output relating to the query
         return_format : str, optional
             The format the query result is returned in.  Options are
             "DataFrame", or "proprety_dict". Note this is not case sensitive.
@@ -496,8 +493,7 @@ class Query:
                     stmt = self._render_filter(f, stmt, schema)
 
             # Report the constructed SQL query
-            if verbose:
-                print(f"Executing query: {stmt}")
+            self.db_connection.logger.debug(f"Executing query: {stmt}")
 
             # Execute the query
             with self._engine.connect() as conn:
@@ -726,7 +722,6 @@ class Query:
         self,
         property_names=None,
         filters=[],
-        verbose=False,
         return_format="property_dict",
     ):
         """
@@ -743,8 +738,6 @@ class Query:
             List of database columns to return (SELECT clause)
         filters : list(Filter), optional
             List of filters (WHERE clauses) to apply
-        verbose : bool, optional
-            True for more output relating to the query
         return_format : str, optional
             The format the query result is returned in.  Options are
             "CursorResult" (SQLAlchemy default format), "DataFrame", or
@@ -787,8 +780,7 @@ class Query:
                 stmt = self._render_filter(f, stmt, self.alias_query_schema)
 
         # Report the constructed SQL query
-        if verbose:
-            print(f"Executing query: {stmt}")
+        self.db_connection.logger.debug(f"Executing query: {stmt}")
 
         # Execute the query
         with self._engine.connect() as conn:

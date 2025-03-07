@@ -3,6 +3,7 @@ from dataregistry.query import Query
 from dataregistry.registrar import Registrar
 import yaml
 import os
+import logging
 
 _HERE = os.path.dirname(__file__)
 _SITE_CONFIG_PATH = os.path.join(_HERE, "site_config", "site_rootdir.yaml")
@@ -15,7 +16,7 @@ class DataRegistry:
         owner_type=None,
         config_file=None,
         root_dir=None,
-        verbose=False,
+        logging_level=logging.INFO,
         site=None,
         namespace=None,
         schema=None,
@@ -49,8 +50,8 @@ class DataRegistry:
             Path to config file, if None, default location is assumed.
         root_dir : str
             Root directory for datasets, if None, default is assumed.
-        verbose : bool
-            True for more output.
+        logging_level : int, optional
+            Level for the logger output (default is logging.INFO)
         site : str
             Can be used instead of `root_dir`. Some predefined "sites" are
             built in, such as "nersc", which will set the `root_dir` to the
@@ -75,7 +76,7 @@ class DataRegistry:
         self.db_connection = DbConnection(
             config_file=config_file,
             schema=schema,
-            verbose=verbose,
+            logging_level=logging_level,
             namespace=namespace,
             entry_mode=entry_mode,
             query_mode=query_mode,
