@@ -4,6 +4,7 @@ from sqlalchemy import MetaData
 from sqlalchemy import column, insert, select
 import yaml
 import os
+import logging
 from datetime import datetime
 from dataregistry import __version__
 from dataregistry.exceptions import DataRegistryException
@@ -20,7 +21,7 @@ __all__ = [
 ]
 
 
-def _get_dataregistry_config(config_file=None, verbose=False):
+def _get_dataregistry_config(logger, config_file=None):
     """
     Locate the data registry configuration file.
 
@@ -33,10 +34,9 @@ def _get_dataregistry_config(config_file=None, verbose=False):
 
     Parameters
     ----------
+    logger : logging object
     config_file : str, optional
         Manually set the location of the config file
-    verbose : bool, optional
-        True for more output
 
     Returns
     -------
@@ -48,23 +48,22 @@ def _get_dataregistry_config(config_file=None, verbose=False):
 
     # Case where the user has manually specified the location
     if config_file is not None:
-        if verbose:
-            print(f"Using manually passed config file ({config_file})")
+        logger.debug(f"Using manually passed config file ({config_file})")
         return config_file
 
     # Case where the env variable is set
     elif os.getenv("DATAREG_CONFIG"):
-        if verbose:
-            print(
-                "Using DATAREG_CONFIG env var for config file",
-                f"({os.getenv('DATAREG_CONFIG')})",
+        logger.debug(
+            (
+                f"Using DATAREG_CONFIG env var for config file "
+                f"({os.getenv('DATAREG_CONFIG')})"
             )
+        )
         return os.getenv("DATAREG_CONFIG")
 
     # Finally check default location in $HOME
     elif os.path.isfile(_default_loc):
-        if verbose:
-            print("Using default location for config file", f"({_default_loc})")
+        logger.debug(f"Using default location for config file ({_default_loc})")
         return _default_loc
     else:
         raise ValueError("Unable to located data registry config file")
@@ -106,7 +105,7 @@ class DbConnection:
         namespace=None,
         config_file=None,
         schema=None,
-        verbose=False,
+        logging_level=logging.INFO,
         entry_mode="working",
         query_mode="both",
         creation_mode=False,
@@ -151,8 +150,8 @@ class DbConnection:
         schema : str, optional
             Schema to connect to, to connect directly to a chosen schema,
             bypassing the namespace (creation of schemas or testing purposes only).
-        verbose : bool, optional
-            If True, produce additional output
+        logging_level : int, optional
+            Level for the logger output (default is logging.INFO)
         entry_mode : str, optional
             Which schema ("working" or "production") within the namespace to
             write new (or modify/delete previous) entries to. This defines the
@@ -170,8 +169,11 @@ class DbConnection:
             directly pass the schema name which you are creating.
         """
 
+        # Set up logger
+        self._setup_logger(logging_level)
+
         # Extract connection info from configuration file
-        with open(_get_dataregistry_config(config_file, verbose)) as f:
+        with open(_get_dataregistry_config(self.logger, config_file)) as f:
             connection_parameters = yaml.safe_load(f)
 
         # Build the engine
@@ -230,6 +232,12 @@ class DbConnection:
         # Which schemas are queried?
         self._query_mode = query_mode
 
+        # Report connection
+        self.logger.debug(f"database type is {self._dialect}")
+        self.logger.debug(f"Connected to namespace:{namespace} schema:{schema}")
+        self.logger.debug(f"creation_mode:{creation_mode}")
+        self.logger.debug(f"entry_mode:{entry_mode} query_mode:{entry_mode}")
+
     @property
     def namespace(self):
         return self._namespace
@@ -282,6 +290,24 @@ class DbConnection:
         else:
             return "_production" in self.entry_schema
 
+    def _setup_logger(self, logging_level):
+        """
+        Set up the reporting logger
+
+        Parameters
+        ----------
+        logging_level : int
+        """
+
+        # Configure the logging system
+        logging.basicConfig(
+            level=logging_level,  # Set the threshold for which messages are processed
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        )
+        
+        # Create a logger object
+        self.logger = logging.getLogger(__name__)
+
     def _reflect(self):
         """
         Reflect the working and production schemas to get the tables within the
@@ -293,6 +319,8 @@ class DbConnection:
         table. The tables and versions of each schema are extracted and stored
         in the `self.metadata` dict.
         """
+
+        self.logger.debug("Reflecting database")
 
         def _get_db_info(prov_table, get_associated_production=False):
             """
@@ -319,6 +347,7 @@ class DbConnection:
             # Execute query
             stmt = select(*[column(c) for c in cols]).select_from(prov_table)
             stmt = stmt.order_by(prov_table.c.provenance_id.desc())
+            self.logger.debug(f"Executing {stmt}")
             with self.engine.connect() as conn:
                 results = conn.execute(stmt)
                 r = results.fetchone()
@@ -373,6 +402,12 @@ class DbConnection:
 
         # Store metadata
         self.metadata["tables"] = metadata.tables
+
+        # Report metadata
+        for att, v in self.metadata.items():
+            if att == "tables":
+                continue
+            self.logger.debug(f"Table metadata: {att} - {v}")
 
     @cached_property
     def duplicate_column_names(self):
@@ -503,6 +538,13 @@ def _insert_provenance(
     if associated_production is not None:  # None is normal for sqlite
         values["associated_production"] = associated_production
     prov_table = db_connection.get_table("provenance")
+
+    # Report values
+    db_connection.logger.debug("Inserting new provenance information")
+    for att, v in values.items():
+        db_connection.logger.debug(f"  - {att}: {v}")
+
+    # Add values
     with db_connection.engine.connect() as conn:
         id = add_table_row(conn, prov_table, values)
 
@@ -537,7 +579,7 @@ def _insert_keyword(
     """
 
     if not isinstance(keyword, str):
-        print(f"Only string keywords can be inserted")
+        db_connection.logger.warning(f"Only string keywords can be inserted")
         return
 
     values = dict()
@@ -550,6 +592,12 @@ def _insert_keyword(
     values["creation_date"] = datetime.now()
     values["active"] = True
 
+    # Report new keyword
+    db_connection.logger.debug("Inserting new keyword")
+    for att, v in values.items():
+        db_connection.logger.debug(f"  - {att}: {v}")
+
+    # Add keyword
     keyword_table = db_connection.get_table("keyword")
     with db_connection.engine.connect() as conn:
         id = add_table_row(conn, keyword_table, values)

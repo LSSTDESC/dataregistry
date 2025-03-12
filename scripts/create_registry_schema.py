@@ -18,6 +18,7 @@ from dataregistry.schema import (
     load_preset_keywords,
     DEFAULT_NAMESPACE,
 )
+import logging
 
 """
 A script to create a schema.
@@ -325,8 +326,8 @@ keywords = load_preset_keywords()
 # Loop over each schema
 for schema in schema_list:
     # Connect to database to find out what the backend is
-    db_connection = DbConnection(args.config, schema=schema, creation_mode=True)
-    print(f"Database dialect is '{db_connection.dialect}'")
+    db_connection = DbConnection(args.config, schema=schema, creation_mode=True,
+            logging_level=logging.DEBUG)
 
     if db_connection.dialect == "sqlite":
         print(f"Creating sqlite database...")

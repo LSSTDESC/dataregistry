@@ -81,7 +81,7 @@ class DatasetAliasTable(BaseTable):
                 q = select(alias_table.c.alias).where(alias_table.c.alias == aliasname)
                 result = conn.execute(q)
                 if result.fetchone():
-                    print(
+                    self.db_connection.logger.warning(
                         f"Alias {aliasname} already exists. Specify 'supersede=True' to override"
                     )
                     return None
