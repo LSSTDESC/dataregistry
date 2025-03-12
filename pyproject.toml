@@ -29,7 +29,7 @@ dependencies = [
     'pyyaml',
     'pandas'
 ]
-requires-python = ">=3.9,<3.14" # Supported versions (in CI)
+requires-python = ">=3.9" # Supported versions in CI are 3.9 -> 3.13
 
 [tool.setuptools.dynamic]
 version = {attr = "dataregistry._version.__version__"}
