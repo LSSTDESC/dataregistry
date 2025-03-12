@@ -31,7 +31,7 @@ def test_connection(config_file, set_env_var):
         if os.environ.get("DATAREG_CONFIG"):
             os.environ.pop("DATAREG_CONFIG")
 
-    conn = DbConnection(config_file=config_file, verbose=True)
+    conn = DbConnection(config_file=config_file)
     assert conn.engine is not None
     assert conn.dialect is not None
     if conn.dialect != "sqlite":

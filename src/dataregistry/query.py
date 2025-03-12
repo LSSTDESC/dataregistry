@@ -358,7 +358,8 @@ class Query:
         """Get list of keywords from the keywords table"""
         
         if self.db_connection._query_mode == "both":
-            print("Keywords are unique to the working and production "
+            self.db_connection.logger.warning(
+                  "Keywords are unique to the working and production "
                   "schemas. Select a `query_mode` during `DataRegistry()` "
                   "creation before calling this function to select if you want "
                   "to list keywords from the working or production schema")
@@ -371,7 +372,6 @@ class Query:
         self,
         property_names=None,
         filters=[],
-        verbose=False,
         return_format="property_dict",
         strip_table_names=False,
     ):
@@ -395,8 +395,6 @@ class Query:
             List of database columns to return (SELECT clause)
         filters : list, optional
             List of filters (WHERE clauses) to apply
-        verbose : bool, optional
-            True for more output relating to the query
         return_format : str, optional
             The format the query result is returned in.  Options are
             "DataFrame", or "proprety_dict". Note this is not case sensitive.
@@ -496,16 +494,15 @@ class Query:
                     stmt = self._render_filter(f, stmt, schema)
 
             # Report the constructed SQL query
-            if verbose:
-                print(f"Executing query: {stmt}")
+            self.db_connection.logger.debug(f"Executing query: {stmt}")
 
             # Execute the query
             with self._engine.connect() as conn:
                 try:
                     result = conn.execute(stmt)
                 except DBAPIError as e:
-                    print("Original error:")
-                    print(e.StatementError.orig)
+                    self.db_connection.logger.error("Original error:")
+                    self.db_connection.logger.error(e.StatementError.orig)
                     return None
 
             # Store result
@@ -579,7 +576,7 @@ class Query:
 
         # Handle ambiguous `query_mode`
         if self.db_connection._query_mode == "both" and schema is None:
-            print(
+            self.db_connection.logger.warning(
                 "Query mode is set to 'both', which may lead to ambiguous results. "
                 "Specify a schema by setting `query_mode` to 'working' or 'production', "
                 "or pass the schema explicitly to this function."
@@ -605,7 +602,7 @@ class Query:
 
         # Handle case where no results are found
         if not results["dataset.owner_type"]:
-            print(f"No dataset found with dataset_id={dataset_id}")
+            self.db_connection.logger.warning(f"No dataset found with dataset_id={dataset_id}")
             return None
 
         # Filter results if there are multiple entries (query_mode="both")
@@ -618,7 +615,7 @@ class Query:
             ]
 
             if not filtered_indices:
-                print(
+                self.db_connection.logger.warning(
                     f"No dataset found with dataset_id={dataset_id} in schema '{schema}'"
                 )
                 return None
@@ -679,8 +676,8 @@ class Query:
             try:
                 result = conn.execute(stmt)
             except DBAPIError as e:
-                print("Original error:")
-                print(e.StatementError.orig)
+                self.db_connection.logger.error("Original error:")
+                self.db_connection.logger.error(e.StatementError.orig)
                 return None
 
         row = result.fetchone()
@@ -726,7 +723,6 @@ class Query:
         self,
         property_names=None,
         filters=[],
-        verbose=False,
         return_format="property_dict",
     ):
         """
@@ -743,8 +739,6 @@ class Query:
             List of database columns to return (SELECT clause)
         filters : list(Filter), optional
             List of filters (WHERE clauses) to apply
-        verbose : bool, optional
-            True for more output relating to the query
         return_format : str, optional
             The format the query result is returned in.  Options are
             "CursorResult" (SQLAlchemy default format), "DataFrame", or
@@ -787,16 +781,15 @@ class Query:
                 stmt = self._render_filter(f, stmt, self.alias_query_schema)
 
         # Report the constructed SQL query
-        if verbose:
-            print(f"Executing query: {stmt}")
+        self.db_connection.logger.debug(f"Executing query: {stmt}")
 
         # Execute the query
         with self._engine.connect() as conn:
             try:
                 result = conn.execute(stmt)
             except DBAPIError as e:
-                print("Original error:")
-                print(e.StatementError.orig)
+                self.db_connection.logger.error("Original error:")
+                self.db_connection.logger.error(e.StatementError.orig)
                 return None
 
         # Make sure we are working with the correct return format.
