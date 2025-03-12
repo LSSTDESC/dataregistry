@@ -1,3 +1,11 @@
+## Version 1.2.x
+
+- Add Python 3.13 to CI and change Python version restriction to just a lower
+  bound (>=3.9).
+- Added logging. There is now a `logger` object in the `DbConnection` class
+  that can be called for logging. For example
+  `DbConnection.logger.debug("text")`.  This replaces the `verbose` flag.
+
 ## Version 1.1.1
 
 - Move `get_keyword_list()` function to the `Query()` class.
