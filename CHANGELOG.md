@@ -1,3 +1,11 @@
+## Version 1.2.0
+
+- Make `dataset.relative_path` nullable
+- Adjust code to set `dataset.relative_path` to null for datasets of
+  location type `exteranl` and `meta_only`
+- Add documentation for in-place database upgrades
+- Add script for making db upgrade
+
 ## Version 1.1.1
 
 - Move `get_keyword_list()` function to the `Query()` class.
@@ -111,7 +119,7 @@ list the proper join would not be made. This has been corrected.
 ## Version 0.5.3
 
 - Update the `schema.yaml` file to include unique constraints and table
-  indexes.  
+  indexes.
 - Update the unique constraints for the dataset table to be `owner`,
   `owner_type`, `name`, `version`, `version_suffix`.
 

@@ -18,6 +18,12 @@ from dataregistry.schema import (
     load_preset_keywords,
     DEFAULT_NAMESPACE,
 )
+from dataregistry.schema.schema_version import (
+    _DB_VERSION_MAJOR,
+    _DB_VERSION_MINOR,
+    _DB_VERSION_PATCH,
+    _DB_VERSION_COMMENT
+)
 import logging
 
 """
@@ -266,17 +272,6 @@ def _BuildTable(schema, table_name, has_production, production):
     return Model
 
 
-# ----------------
-# Database version
-# ----------------
-
-# The following should be adjusted whenever there is a change to the structure
-# of the database tables.
-_DB_VERSION_MAJOR = 3
-_DB_VERSION_MINOR = 3
-_DB_VERSION_PATCH = 0
-_DB_VERSION_COMMENT = "Remove `is_overwritten`, `replace_date` and `replace_uid` columns, the information is in `status`"
-
 # ----------------------------
 # Parse command line arguments
 # ----------------------------
@@ -330,7 +325,7 @@ for schema in schema_list:
             logging_level=logging.DEBUG)
 
     if db_connection.dialect == "sqlite":
-        print(f"Creating sqlite database...")
+        print("Creating sqlite database...")
         schema = None
     elif schema == prod_schema:
         print(f"Creating production schema {prod_schema}...")
@@ -357,9 +352,9 @@ for schema in schema_list:
             except Exception:
                 raise RuntimeError("production schema does not exist or is ill-formed")
             if (
-                result["db_version_major"][0]
-                != _DB_VERSION_MAJOR | int(result["db_version_minor"][0])
-                > _DB_VERSION_MINOR
+                (result["db_version_major"][0]
+                != _DB_VERSION_MAJOR) or (int(result["db_version_minor"][0])
+                > _DB_VERSION_MINOR)
             ):
                 raise RuntimeError("production schema version incompatible")
 
@@ -395,7 +390,7 @@ for schema in schema_list:
                     ):
                         privs = "SELECT"
                     else:
-                        privs = f"SELECT, INSERT, UPDATE"
+                        privs = "SELECT, INSERT, UPDATE"
                     select_prv = (
                         f"GRANT {privs} ON ALL TABLES IN SCHEMA {schema} to {acct}"
                     )
