@@ -579,7 +579,7 @@ def _insert_keyword(
     """
 
     if not isinstance(keyword, str):
-        print(f"Only string keywords can be inserted")
+        db_connection.logger.warning(f"Only string keywords can be inserted")
         return
 
     values = dict()

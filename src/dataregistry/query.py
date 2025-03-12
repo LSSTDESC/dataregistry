@@ -358,7 +358,8 @@ class Query:
         """Get list of keywords from the keywords table"""
         
         if self.db_connection._query_mode == "both":
-            print("Keywords are unique to the working and production "
+            self.db_connection.logger.warning(
+                  "Keywords are unique to the working and production "
                   "schemas. Select a `query_mode` during `DataRegistry()` "
                   "creation before calling this function to select if you want "
                   "to list keywords from the working or production schema")
@@ -500,8 +501,8 @@ class Query:
                 try:
                     result = conn.execute(stmt)
                 except DBAPIError as e:
-                    print("Original error:")
-                    print(e.StatementError.orig)
+                    self.db_connection.logger.error("Original error:")
+                    self.db_connection.logger.error(e.StatementError.orig)
                     return None
 
             # Store result
@@ -575,7 +576,7 @@ class Query:
 
         # Handle ambiguous `query_mode`
         if self.db_connection._query_mode == "both" and schema is None:
-            print(
+            self.db_connection.logger.warning(
                 "Query mode is set to 'both', which may lead to ambiguous results. "
                 "Specify a schema by setting `query_mode` to 'working' or 'production', "
                 "or pass the schema explicitly to this function."
@@ -601,7 +602,7 @@ class Query:
 
         # Handle case where no results are found
         if not results["dataset.owner_type"]:
-            print(f"No dataset found with dataset_id={dataset_id}")
+            self.db_connection.logger.warning(f"No dataset found with dataset_id={dataset_id}")
             return None
 
         # Filter results if there are multiple entries (query_mode="both")
@@ -614,7 +615,7 @@ class Query:
             ]
 
             if not filtered_indices:
-                print(
+                self.db_connection.logger.warning(
                     f"No dataset found with dataset_id={dataset_id} in schema '{schema}'"
                 )
                 return None
@@ -675,8 +676,8 @@ class Query:
             try:
                 result = conn.execute(stmt)
             except DBAPIError as e:
-                print("Original error:")
-                print(e.StatementError.orig)
+                self.db_connection.logger.error("Original error:")
+                self.db_connection.logger.error(e.StatementError.orig)
                 return None
 
         row = result.fetchone()
@@ -787,8 +788,8 @@ class Query:
             try:
                 result = conn.execute(stmt)
             except DBAPIError as e:
-                print("Original error:")
-                print(e.StatementError.orig)
+                self.db_connection.logger.error("Original error:")
+                self.db_connection.logger.error(e.StatementError.orig)
                 return None
 
         # Make sure we are working with the correct return format.

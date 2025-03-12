@@ -901,7 +901,7 @@ class DatasetTable(BaseTable):
                 schema=self._schema,
                 root_dir=self._root_dir,
             )
-            print(f"Deleting data {data_path}")
+            self.db_connection.logger.info(f"Deleting data {data_path}")
             if os.path.isfile(data_path):
                 os.remove(data_path)
             elif os.path.isdir(data_path):
@@ -913,7 +913,7 @@ class DatasetTable(BaseTable):
                     UserWarning,
                 )
 
-        print(f"Deleted {dataset_id} from data registry")
+        self.db_connection.logger.info(f"Deleted {dataset_id} from data registry")
 
     def _validate_keywords(self, keywords):
         """

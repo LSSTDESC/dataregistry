@@ -328,7 +328,6 @@ for schema in schema_list:
     # Connect to database to find out what the backend is
     db_connection = DbConnection(args.config, schema=schema, creation_mode=True,
             logging_level=logging.DEBUG)
-    print(f"Database dialect is '{db_connection.dialect}'")
 
     if db_connection.dialect == "sqlite":
         print(f"Creating sqlite database...")
