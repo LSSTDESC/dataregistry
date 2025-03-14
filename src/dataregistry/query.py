@@ -132,23 +132,27 @@ class Query:
 
         return table_list
 
-    def get_all_columns(self, table=None, include_table=True, include_schema=False):
+    def get_all_columns(self, table="dataset", include_table=True, include_schema=False):
         """
         Return all columns of the db in <table_name>.<column_name> format.
 
-        You can limit to the columns of one table by passing the `table`
-        parameter. By default the `<table_name>` is included, but this can be
-        removed setting `include_table=False`.
+        By default results are limited to the dataset table, can be changed via
+        the `table` parameter (`table=None` returns all tables). By default the
+        `<table_name>` is included, but this can be removed setting
+        `include_table=False`.
 
         If `include_schema=True` return all columns of the db in
         <schema>.<table_name>.<column_name> format. Note this will essentially
         duplicate the output, as the working and production schemas have the
-        same layout.
+        same layout. Note this makes no difference for sqlite dialects (as
+        there are no schemas). Also, if the `DbConnection` was made directly
+        via a schema, not a namespace, only the connected schemas tables will
+        be returned.
 
         Parameters
         ----------
         table : str, optional
-            Limit results to a given table
+            Limit results to a given table, default is dataset table
         include_table : bool, optional
             If true, include `<table>.`  in the return string
         include_schema : bool, optional
