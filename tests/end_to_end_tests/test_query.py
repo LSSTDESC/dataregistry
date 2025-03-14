@@ -138,3 +138,29 @@ def test_query_name(dummy_file, op, qstr, ans, tag):
         assert len(results) > 0
         for c, v in results.items():
             assert len(v) == ans
+
+def test_aggregate_datasets_count(dummy_file):
+    """Test counting the number of datasets."""
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+    
+    # Insert datasets
+    for i in range(3):
+        _insert_dataset_entry(datareg, f"test_aggregate_datasets_count_{i}", "1.0.0")
+    
+    # Count datasets
+    count = datareg.Query.aggregate_datasets("dataset_id", agg_func="count")
+    assert count >= 3  # Ensure at least 3 were counted
+
+def test_aggregate_datasets_sum(dummy_file):
+    """Test summing the nfiles column."""
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+    
+    # Insert datasets with different nfiles values
+    for i in range(3):
+        _insert_dataset_entry(datareg, f"test_aggregate_datasets_sum_{i}", "1.0.0")
+    
+    # Sum nfiles
+    sum_value = datareg.Query.aggregate_datasets("dataset_id", agg_func="sum")
+    assert sum_value >= 3
