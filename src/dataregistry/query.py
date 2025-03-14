@@ -1,3 +1,4 @@
+from sqlalchemy import func
 from collections import namedtuple
 from sqlalchemy import select
 import sqlalchemy.sql.sqltypes as sqltypes
@@ -261,6 +262,74 @@ class Query:
                 )
 
         return list(tables_required), column_list, is_orderable_list
+
+    def aggregate_datasets(self, column_name, agg_func="count", filters=[]):
+        """
+        Perform an aggregation (count or sum) on a specified column in the
+        dataset table.
+    
+        Parameters
+        ----------
+        column_name : str
+            The column to perform the aggregation on.
+        agg_func : str, optional
+            The aggregation function to use: "count" (default) or "sum".
+        filters : list, optional
+            List of filters (WHERE clauses) to apply.
+    
+        Returns
+        -------
+        result : int or float
+            The aggregated value.
+        """
+        if agg_func not in {"count", "sum"}:
+            raise ValueError("agg_func must be either 'count' or 'sum'")
+    
+        results = []
+        query_mode = self.db_connection._query_mode
+    
+        for table_key in self.db_connection.metadata["tables"]:
+            # Extract schema and table name
+            parts = table_key.split(".")
+            if len(parts) == 2:
+                schema, table = parts
+            else:
+                schema, table = None, parts[0]  # SQLite case (no schema)
+    
+            # Skip non-dataset tables
+            if table != "dataset":
+                continue
+    
+            # Determine if this schema should be queried
+            if query_mode != "both" and schema and query_mode != schema.split("_")[-1]:
+                continue
+    
+            dataset_table = self.db_connection.metadata["tables"].get(table_key)
+            if dataset_table is None:
+                continue
+    
+            # Ensure the column exists before referencing it
+            if column_name not in dataset_table.c:
+                raise ValueError(f"Column '{column_name}' does not exist in dataset table")
+    
+            if agg_func == "count":
+                aggregation = func.count()
+            else:
+                aggregation = func.sum(dataset_table.c[column_name])
+            
+            stmt = select(aggregation).select_from(dataset_table)
+            
+            if filters:
+                for f in filters:
+                    stmt = self._render_filter(f, stmt, schema)
+            
+            with self._engine.connect() as conn:
+                result = conn.execute(stmt).scalar()
+            
+            if result is not None:
+                results.append(result)
+        
+        return sum(results) if agg_func == "sum" else sum(results)
 
     def _render_filter(self, f, stmt, schema):
         """
