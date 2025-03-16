@@ -364,6 +364,7 @@ tables:
         type: "DateTime"
         description: "Dataset creation date"
         cli_optional: True
+        modifiable: True
       register_date:
         type: "DateTime"
         description: "Date the dataset was registered"
