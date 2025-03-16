@@ -1,4 +1,4 @@
-from sqlalchemy import func
+from sqlalchemy import func, Integer, Float, Numeric
 from collections import namedtuple
 from sqlalchemy import select
 import sqlalchemy.sql.sqltypes as sqltypes
@@ -263,31 +263,48 @@ class Query:
 
         return list(tables_required), column_list, is_orderable_list
 
-    def aggregate_datasets(self, column_name, agg_func="count", filters=[]):
+    def aggregate_datasets(self, column_name=None, agg_func="count", filters=[], table_name="dataset"):
         """
-        Perform an aggregation (count or sum) on a specified column in the
-        dataset table.
-    
+        Perform an aggregation (count, sum, min, max, or avg) on a specified
+        column in the specified table.
+        
         Parameters
         ----------
-        column_name : str
-            The column to perform the aggregation on.
+        column_name : str or None, optional
+            The column to perform the aggregation on. Can be None for "count"
+            aggregation.
         agg_func : str, optional
-            The aggregation function to use: "count" (default) or "sum".
+            The aggregation function to use: "count" (default), "sum", "min",
+            "max", or "avg".
         filters : list, optional
             List of filters (WHERE clauses) to apply.
-    
+        table_name : str, optional
+            Table to query. Default is "dataset". For "count" aggregations, can
+            also be "dataset_alias", "keyword", or "dataset_keyword".
+            
         Returns
         -------
         result : int or float
             The aggregated value.
         """
-        if agg_func not in {"count", "sum"}:
-            raise ValueError("agg_func must be either 'count' or 'sum'")
-    
+        allowed_agg_funcs = {"count", "sum", "min", "max", "avg"}
+        allowed_tables = {"dataset", "dataset_alias", "keyword", "dataset_keyword"}
+        
+        if agg_func not in allowed_agg_funcs:
+            raise ValueError(f"agg_func must be one of {', '.join(allowed_agg_funcs)}")
+        
+        if table_name not in allowed_tables:
+            raise ValueError(f"table_name must be one of {', '.join(allowed_tables)}")
+            
+        if agg_func != "count" and table_name != "dataset":
+            raise ValueError(f"Can only use agg_func '{agg_func}' on 'dataset' table")
+        
+        if column_name is None and agg_func != "count":
+            raise ValueError("column_name cannot be None for non-count aggregations")
+        
         results = []
         query_mode = self.db_connection._query_mode
-    
+        
         for table_key in self.db_connection.metadata["tables"]:
             # Extract schema and table name
             parts = table_key.split(".")
@@ -295,29 +312,48 @@ class Query:
                 schema, table = parts
             else:
                 schema, table = None, parts[0]  # SQLite case (no schema)
-    
-            # Skip non-dataset tables
-            if table != "dataset":
+            
+            # Skip tables that don't match the requested table
+            if table != table_name:
                 continue
-    
+            
             # Determine if this schema should be queried
             if query_mode != "both" and schema and query_mode != schema.split("_")[-1]:
                 continue
-    
-            dataset_table = self.db_connection.metadata["tables"].get(table_key)
-            if dataset_table is None:
+            
+            db_table = self.db_connection.metadata["tables"].get(table_key)
+            if db_table is None:
                 continue
-    
-            # Ensure the column exists before referencing it
-            if column_name not in dataset_table.c:
-                raise ValueError(f"Column '{column_name}' does not exist in dataset table")
-    
-            if agg_func == "count":
+            
+            # Handle 'count' aggregation with None column
+            if agg_func == "count" and column_name is None:
                 aggregation = func.count()
             else:
-                aggregation = func.sum(dataset_table.c[column_name])
+                # Check if the column exists
+                if column_name not in db_table.c:
+                    raise ValueError(f"Column '{column_name}' does not exist in {table_name} table")
+                
+                # For non-count aggregations, verify column type is numeric
+                if agg_func != "count":
+                    col_type = db_table.c[column_name].type
+                    is_numeric = isinstance(col_type, (Integer, Float, Numeric)) or hasattr(col_type, '_type_affinity') and col_type._type_affinity in (Integer, Float, Numeric)
+                    
+                    if not is_numeric:
+                        raise ValueError(f"Column '{column_name}' must be numeric for '{agg_func}' aggregation")
+                
+                # Set up the appropriate aggregation function
+                if agg_func == "count":
+                    aggregation = func.count(db_table.c[column_name])
+                elif agg_func == "sum":
+                    aggregation = func.sum(db_table.c[column_name])
+                elif agg_func == "min":
+                    aggregation = func.min(db_table.c[column_name])
+                elif agg_func == "max":
+                    aggregation = func.max(db_table.c[column_name])
+                elif agg_func == "avg":
+                    aggregation = func.avg(db_table.c[column_name])
             
-            stmt = select(aggregation).select_from(dataset_table)
+            stmt = select(aggregation).select_from(db_table)
             
             if filters:
                 for f in filters:
@@ -329,7 +365,53 @@ class Query:
             if result is not None:
                 results.append(result)
         
-        return sum(results) if agg_func == "sum" else sum(results)
+        # For most aggregations, we sum across tables
+        if agg_func in ("count", "sum"):
+            return sum(results) if results else 0
+        # For min/max, we need to find the min/max across all tables
+        elif agg_func == "min":
+            return min(results) if results else None
+        elif agg_func == "max":
+            return max(results) if results else None
+        # For avg, we compute a weighted average across all tables
+        elif agg_func == "avg" and results:
+            # We need to get count for each table to compute weighted avg
+            counts = []
+            for table_key in self.db_connection.metadata["tables"]:
+                parts = table_key.split(".")
+                if len(parts) == 2:
+                    schema, table = parts
+                else:
+                    schema, table = None, parts[0]
+                
+                if table != table_name:
+                    continue
+                
+                if query_mode != "both" and schema and query_mode != schema.split("_")[-1]:
+                    continue
+                
+                db_table = self.db_connection.metadata["tables"].get(table_key)
+                if db_table is None:
+                    continue
+                
+                stmt = select(func.count()).select_from(db_table)
+                
+                if filters:
+                    for f in filters:
+                        stmt = self._render_filter(f, stmt, schema)
+                
+                with self._engine.connect() as conn:
+                    count = conn.execute(stmt).scalar() or 0
+                
+                counts.append(count)
+            
+            total_count = sum(counts)
+            if total_count > 0:
+                weighted_avg = sum(avg * count for avg, count in zip(results, counts)) / total_count
+                return weighted_avg
+            return None
+        
+        return None
 
     def _render_filter(self, f, stmt, schema):
         """
