@@ -91,7 +91,8 @@ def test_production_entry(dummy_file):
         assert len(results["dataset.name"]) == 1, "Bad result from query dcli3"
         assert results["dataset.version_string"][0] == "0.1.2"
 
-def test_delete_dataset_by_id(dummy_file,monkeypatch):
+
+def test_delete_dataset_by_id(dummy_file, monkeypatch):
     """Make a simple entry, then delete it"""
 
     # Establish connection to database
@@ -112,7 +113,7 @@ def test_delete_dataset_by_id(dummy_file,monkeypatch):
     # Delete the dataset
     cmd = f"delete dataset_by_id {d_id}"
     cmd += f" --namespace {DEFAULT_NAMESPACE} --root_dir {str(tmp_root_dir)}"
-    monkeypatch.setattr('builtins.input', lambda _: "y")
+    monkeypatch.setattr("builtins.input", lambda _: "y")
     cli.main(shlex.split(cmd))
 
     # Check
@@ -127,14 +128,14 @@ def test_delete_dataset_by_id(dummy_file,monkeypatch):
         ],
         [f],
     )
-    
+
     assert len(results["dataset.dataset_id"]) == 1
     assert get_dataset_status(results["dataset.status"][0], "deleted")
     assert results["dataset.delete_date"][0] is not None
     assert results["dataset.delete_uid"][0] is not None
 
 
-def test_delete_dataset_by_name(dummy_file,monkeypatch):
+def test_delete_dataset_by_name(dummy_file, monkeypatch):
     """Make a simple entry, then delete it"""
 
     # Establish connection to database
@@ -149,7 +150,7 @@ def test_delete_dataset_by_name(dummy_file,monkeypatch):
     cmd = f"register dataset {DNAME} {DVERSION} --location_type dummy"
     cmd += f" --namespace {DEFAULT_NAMESPACE} --root_dir {str(tmp_root_dir)}"
     cmd += f" --owner {DOWNER} --owner_type {DOWNER_TYPE}"
-    monkeypatch.setattr('builtins.input', lambda _: "y")
+    monkeypatch.setattr("builtins.input", lambda _: "y")
     cli.main(shlex.split(cmd))
 
     # Find the dataset id
@@ -181,6 +182,7 @@ def test_delete_dataset_by_name(dummy_file,monkeypatch):
     assert get_dataset_status(results["dataset.status"][0], "deleted")
     assert results["dataset.delete_date"][0] is not None
     assert results["dataset.delete_uid"][0] is not None
+
 
 def test_dataset_entry_with_keywords(dummy_file):
     """Make a dataset with some keywords tagged"""
@@ -248,3 +250,59 @@ def test_modify_dataset(dummy_file):
 
     assert len(results["dataset.dataset_id"]) == 1
     assert results["dataset.description"][0] == "Updated CLI desc"
+
+
+def test_modify_dataset_creation_date(dummy_file):
+    """Make a simple entry, then modify its creation_date"""
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+
+    # Register a dataset
+    cmd = "register dataset my_cli_dataset_date_modify 0.0.1 --location_type dummy"
+    cmd += f" --namespace {DEFAULT_NAMESPACE} --root_dir {str(tmp_root_dir)}"
+    cli.main(shlex.split(cmd))
+
+    # Find the dataset id
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+    f = datareg.Query.gen_filter("dataset.name", "==", "my_cli_dataset_date_modify")
+    results = datareg.Query.find_datasets(["dataset.dataset_id"], [f])
+    assert len(results["dataset.dataset_id"]) == 1, "Bad result from query"
+    d_id = results["dataset.dataset_id"][0]
+
+    # Define a new date string in ISO format
+    new_date = "2023-05-15T10:30:00"
+
+    # Modify dataset creation_date
+    cmd = f"modify dataset {d_id} creation_date '{new_date}'"
+    cmd += f" --namespace {DEFAULT_NAMESPACE} --root_dir {str(tmp_root_dir)}"
+    cli.main(shlex.split(cmd))
+
+    # Check the modification
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+    f = datareg.Query.gen_filter("dataset.name", "==", "my_cli_dataset_date_modify")
+    results = datareg.Query.find_datasets(
+        [
+            "dataset.dataset_id",
+            "dataset.creation_date",
+        ],
+        [f],
+    )
+
+    assert len(results["dataset.dataset_id"]) == 1
+
+    # Get the creation_date from results
+    result_date = results["dataset.creation_date"][0]
+
+    # Check if it's a datetime/timestamp object with attributes
+    if hasattr(result_date, "year"):
+        assert result_date.year == 2023
+        assert result_date.month == 5
+        assert result_date.day == 15
+        assert result_date.hour == 10
+        assert result_date.minute == 30
+    else:
+        # If it's returned as a string, check for the date components
+        result_str = str(result_date)
+        assert "2023" in result_str
+        assert "05" in result_str or "5" in result_str
+        assert "15" in result_str
