@@ -138,3 +138,42 @@ def test_query_name(dummy_file, op, qstr, ans, tag):
         assert len(results) > 0
         for c, v in results.items():
             assert len(v) == ans
+
+@pytest.mark.parametrize(
+    "table,include_table,include_schema",
+    [
+        (None, True, False),
+        (None, False, True),
+        (None, False, False),
+        (None, True, True),
+        ("dataset", True, False),
+        ("execution", False, False),
+    ]
+)
+def test_query_get_all_columns(dummy_file,table,include_table,include_schema):
+    """Test the `get_all_columns()` function in `query.py`"""
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+
+    cols = datareg.Query.get_all_columns(table=table, include_table=include_table, include_schema=include_schema)
+
+    assert len(cols) > 0
+
+    if table is not None:
+        for att in cols:
+            if include_table:
+                assert table in att
+
+def test_query_get_all_tables(dummy_file):
+    """Test the `get_all_tables()` function in `query.py`"""
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+
+    tables = datareg.Query.get_all_tables()
+
+    assert len(tables) > 0
+

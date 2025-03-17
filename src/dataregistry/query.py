@@ -115,17 +115,46 @@ class Query:
         self._schema = db_connection.schema
         self._root_dir = root_dir
 
-    def get_all_columns(self, include_schema=False):
+    def get_all_tables(self):
+        """
+        Return all tables of the database.
+
+        Returns
+        -------
+        table_list : set
+        """
+
+        table_list = set()
+
+        # Loop over each table
+        for tbl in self.db_connection.metadata["tables"]:
+            table_list.add(self.db_connection.metadata["tables"][tbl].name)
+
+        return table_list
+
+    def get_all_columns(self, table="dataset", include_table=True, include_schema=False):
         """
         Return all columns of the db in <table_name>.<column_name> format.
+
+        By default results are limited to the dataset table, can be changed via
+        the `table` parameter (`table=None` returns all tables). By default the
+        `<table_name>` is included, but this can be removed setting
+        `include_table=False`.
 
         If `include_schema=True` return all columns of the db in
         <schema>.<table_name>.<column_name> format. Note this will essentially
         duplicate the output, as the working and production schemas have the
-        same layout.
+        same layout. Note this makes no difference for sqlite dialects (as
+        there are no schemas). Also, if the `DbConnection` was made directly
+        via a schema, not a namespace, only the connected schemas tables will
+        be returned.
 
         Parameters
         ----------
+        table : str, optional
+            Limit results to a given table, default is dataset table
+        include_table : bool, optional
+            If true, include `<table>.`  in the return string
         include_schema : bool, optional
             If True, also return the schema name in the column name
 
@@ -137,13 +166,32 @@ class Query:
         column_list = set()
 
         # Loop over each table
-        for table in self.db_connection.metadata["tables"]:
+        for tbl in self.db_connection.metadata["tables"]:
+
             # Loop over each column
-            for c in self.db_connection.metadata["tables"][table].c:
-                if include_schema:
-                    column_list.add(".".join((str(c.table), str(c.name))))
+            for c in self.db_connection.metadata["tables"][tbl].c:
+
+                # Pull out information
+                if self.db_connection.dialect == "sqlite":
+                    _schema = ""
                 else:
-                    column_list.add(".".join((str(c.table.name), str(c.name))))
+                    _schema = str(c.table).split(".")[0]
+                _table = str(c.table.name)
+                _column = c.name
+
+                # Are we considering this table?
+                if table is not None and _table != table:
+                    continue
+
+                # Build string
+                mystr = []
+                if include_schema:
+                    mystr.append(_schema)
+                if include_table:
+                    mystr.append(_table)
+                mystr.append(_column)
+
+                column_list.add(".".join(mystr))
 
         return column_list
 
