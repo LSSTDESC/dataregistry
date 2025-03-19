@@ -1,7 +1,7 @@
 import os
-
+from dateutil import parser
 from dataregistry.schema import load_schema
-from sqlalchemy import select, update
+from sqlalchemy import select, update, DateTime
 from datetime import datetime
 
 from .registrar_util import (
@@ -93,10 +93,9 @@ class BaseTable:
     def modify(self, entry_id, modify_fields):
         """
         Modify an entry in the DESC data registry.
-
         Only certain columns are allowed to be modified after registration,
         this is defined in the schema yaml file.
-
+        
         Parameters
         ----------
         entry_id : int
@@ -105,15 +104,17 @@ class BaseTable:
             Dict where key is the column to modify (must be allowed to modify)
             and value is the desired new value for the entry
         """
-
         assert (
             type(modify_fields) == dict
         ), f"modify_fields is expected as a dict, {'column': new_values}"
-
+        
         # First make sure the given entry is in the registry
         my_table = self._get_table_metadata(self.which_table)
         previous_entry = self.find_entry(entry_id, raise_if_not_found=True)
-
+        
+        # Create a copy of modify_fields to avoid modifying the input dictionary
+        processed_fields = modify_fields.copy()
+        
         # Loop over each column to be modified
         for key, v in modify_fields.items():
             # Make sure the column is in the schema
@@ -124,23 +125,31 @@ class BaseTable:
                 ].keys()
             ):
                 raise ValueError(f"The column {key} does not exist in the schema")
-
+            
             # Make sure the column is modifiable
             if not self.schema_yaml["tables"][self.which_table]["column_definitions"][
                 key
             ]["modifiable"]:
                 raise ValueError(f"The column {key} is not modifiable")
-
+            
+            # Handle datetime conversion if needed
+            column_type = my_table.c[key].type
+            if isinstance(column_type, DateTime) and isinstance(v, str):
+                try:
+                    # Use dateutil parser to handle various date formats
+                    processed_fields[key] = parser.parse(v)
+                except ValueError:
+                    raise ValueError(f"Could not convert string '{v}' to datetime for column {key}")
+        
         with self._engine.connect() as conn:
-            # Update the metadata
-            if len(modify_fields.keys()) > 0:
+            # Update the metadata with processed fields
+            if len(processed_fields.keys()) > 0:
                 update_stmt = (
                     update(my_table)
                     .where(getattr(my_table.c, self.entry_id) == entry_id)
-                    .values(modify_fields)
+                    .values(processed_fields)
                 )
                 conn.execute(update_stmt)
-
             conn.commit()
 
     def find_entry(self, entry_id, raise_if_not_found=False):
