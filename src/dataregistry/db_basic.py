@@ -290,6 +290,37 @@ class DbConnection:
         else:
             return "_production" in self.entry_schema
 
+    def get_schema_list(self, which_schema):
+        """
+        Return a list of schema names the DbConnection is linked to. 
+
+        If `which_schema == "both"` it returns both the working and production
+        schema names, else only the desired `which_schema`. For sqlite, there
+        is only ever the working schema.
+
+        Parameters
+        ----------
+        which_schema : str
+            Either "working", "both", "production"
+
+        Returns
+        -------
+        - list[str]
+            List of desired schemas in full name format, e.g,
+            [<namespace>_working]
+        """
+
+        if which_schema not in {"both", "working", "production"}:
+            raise ValueError(f"{which_schema} is a bad `which_schema`")
+
+        if self._dialect == "sqlite":
+            return [self.schema]
+        else:
+            if which_schema == "both":
+                return [self.schema, self.production_schema]
+            else:
+                return [getattr(self, which_schema)]
+
     def _setup_logger(self, logging_level):
         """
         Set up the reporting logger

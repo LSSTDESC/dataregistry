@@ -116,6 +116,9 @@ class Query:
         self._schema = db_connection.schema
         self._root_dir = root_dir
 
+        # Helper dict for aggregate functions
+        self.agg_funcs = {x: getattr(func, x) for x in ["count", "sum", "min", "max", "avg"]}
+
     def get_all_columns(self, include_schema=False):
         """
         Return all columns of the db in <table_name>.<column_name> format.
@@ -304,30 +307,23 @@ class Query:
         
         results = []
         query_mode = self.db_connection._query_mode
-        
-        for table_key in self.db_connection.metadata["tables"]:
-            # Extract schema and table name
-            parts = table_key.split(".")
-            if len(parts) == 2:
-                schema, table = parts
-            else:
-                schema, table = None, parts[0]  # SQLite case (no schema)
-            
-            # Skip tables that don't match the requested table
-            if table != table_name:
-                continue
-            
-            # Determine if this schema should be queried
-            if query_mode != "both" and schema and query_mode != schema.split("_")[-1]:
-                continue
+       
+        # Work out what table(s) we are searching across schema(s)
+        schemas = self.db_connection.get_schema_list(query_mode)
+
+        if self.db_connection.dialect == "sqlite":
+            tables_to_search = [table_name]
+        else:
+            tables_to_search = [f"{s}.{table_name}" for s in schemas]
+
+        # Loop over each table and query
+        for table_key, schema in zip(tables_to_search, schemas):
             
             db_table = self.db_connection.metadata["tables"].get(table_key)
-            if db_table is None:
-                continue
             
             # Handle 'count' aggregation with None column
             if agg_func == "count" and column_name is None:
-                aggregation = func.count()
+                aggregation = self.agg_funcs["count"]()
             else:
                 # Check if the column exists
                 if column_name not in db_table.c:
@@ -342,16 +338,7 @@ class Query:
                         raise ValueError(f"Column '{column_name}' must be numeric for '{agg_func}' aggregation")
                 
                 # Set up the appropriate aggregation function
-                if agg_func == "count":
-                    aggregation = func.count(db_table.c[column_name])
-                elif agg_func == "sum":
-                    aggregation = func.sum(db_table.c[column_name])
-                elif agg_func == "min":
-                    aggregation = func.min(db_table.c[column_name])
-                elif agg_func == "max":
-                    aggregation = func.max(db_table.c[column_name])
-                elif agg_func == "avg":
-                    aggregation = func.avg(db_table.c[column_name])
+                aggregation = self.agg_funcs[agg_func](db_table.c[column_name])
             
             stmt = select(aggregation).select_from(db_table)
             
@@ -377,24 +364,11 @@ class Query:
         elif agg_func == "avg" and results:
             # We need to get count for each table to compute weighted avg
             counts = []
-            for table_key in self.db_connection.metadata["tables"]:
-                parts = table_key.split(".")
-                if len(parts) == 2:
-                    schema, table = parts
-                else:
-                    schema, table = None, parts[0]
-                
-                if table != table_name:
-                    continue
-                
-                if query_mode != "both" and schema and query_mode != schema.split("_")[-1]:
-                    continue
+            for table_key, schema in zip(tables_to_search, schemas):
                 
                 db_table = self.db_connection.metadata["tables"].get(table_key)
-                if db_table is None:
-                    continue
                 
-                stmt = select(func.count()).select_from(db_table)
+                stmt = select(self.agg_funcs["count"]()).select_from(db_table)
                 
                 if filters:
                     for f in filters:
