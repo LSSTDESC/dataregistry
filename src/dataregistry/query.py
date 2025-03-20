@@ -318,7 +318,10 @@ class Query:
         """
         Perform an aggregation (count, sum, min, max, or avg) on a specified
         column in the specified table.
-        
+       
+        If `query_mode="both"` then the column from both the production and
+        working schemas will be jointly aggregated into a single result.
+
         Parameters
         ----------
         column_name : str or None, optional
@@ -338,7 +341,7 @@ class Query:
         result : int or float
             The aggregated value.
         """
-        allowed_agg_funcs = {"count", "sum", "min", "max", "avg"}
+        allowed_agg_funcs = self.agg_funcs.keys()
         allowed_tables = {"dataset", "dataset_alias", "keyword", "dataset_keyword"}
         
         if agg_func not in allowed_agg_funcs:
@@ -400,39 +403,20 @@ class Query:
             if result is not None:
                 results.append(result)
         
-        # For most aggregations, we sum across tables
+        # Return the results
+        # Will either be the aggregate result of the `column_name` values from
+        # the desired `table_name` in a single schema, or the combined
+        # aggregate result across the working and production schemas if
+        # `query_mode="both"`.
         if agg_func in ("count", "sum"):
             return sum(results) if results else 0
-        # For min/max, we need to find the min/max across all tables
         elif agg_func == "min":
             return min(results) if results else None
         elif agg_func == "max":
             return max(results) if results else None
-        # For avg, we compute a weighted average across all tables
         elif agg_func == "avg" and results:
-            # We need to get count for each table to compute weighted avg
-            counts = []
-            for table_key, schema in zip(tables_to_search, schemas):
-                
-                db_table = self.db_connection.metadata["tables"].get(table_key)
-                
-                stmt = select(self.agg_funcs["count"]()).select_from(db_table)
-                
-                if filters:
-                    for f in filters:
-                        stmt = self._render_filter(f, stmt, schema)
-                
-                with self._engine.connect() as conn:
-                    count = conn.execute(stmt).scalar() or 0
-                
-                counts.append(count)
-            
-            total_count = sum(counts)
-            if total_count > 0:
-                weighted_avg = sum(avg * count for avg, count in zip(results, counts)) / total_count
-                return weighted_avg
-            return None
-        
+            return np.mean(results) if results else None
+
         return None
 
     def _render_filter(self, f, stmt, schema):
