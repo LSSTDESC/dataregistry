@@ -314,6 +314,72 @@ class Query:
 
         return list(tables_required), column_list, is_orderable_list
 
+    def _perform_aggregate_query(self, tables_to_search, schemas, column_name, agg_func, filters):
+        """
+        Perform an aggregate query, a helper function for the
+        `aggregate_datasets` method.
+
+        Parameters
+        ----------
+        tables_to_search : list[str]
+            The table(s) to search (working, production or both)
+        schemas : list[str]
+            The list of schemas (working and/or production depending on
+            query_mode)
+        column_name : str
+            The column whoes values we are aggregating
+        agg_func : str
+            The aggregation function
+        filters : list
+            List of dataregistry filters to apply
+
+        Returns
+        -------
+        results : list
+            A list of length 1 or 2 depending on query mode.
+            The aggregate result from each schema
+        """
+
+        results = []
+
+        # Loop over each table and query
+        for table_key, schema in zip(tables_to_search, schemas):
+            
+            db_table = self.db_connection.metadata["tables"].get(table_key)
+            
+            # Handle 'count' aggregation with None column
+            if agg_func == "count" and column_name is None:
+                aggregation = self.agg_funcs["count"]()
+            else:
+                # Check if the column exists
+                if column_name not in db_table.c:
+                    raise ValueError(f"Column '{column_name}' does not exist in {table_key} table")
+                
+                # For non-count aggregations, verify column type is numeric
+                if agg_func != "count":
+                    col_type = db_table.c[column_name].type
+                    is_numeric = isinstance(col_type, (Integer, Float, Numeric)) or hasattr(col_type, '_type_affinity') and col_type._type_affinity in (Integer, Float, Numeric)
+                    
+                    if not is_numeric:
+                        raise ValueError(f"Column '{column_name}' must be numeric for '{agg_func}' aggregation")
+                
+                # Set up the appropriate aggregation function
+                aggregation = self.agg_funcs[agg_func](db_table.c[column_name])
+            
+            stmt = select(aggregation).select_from(db_table)
+            
+            if filters:
+                for f in filters:
+                    stmt = self._render_filter(f, stmt, schema)
+            
+            with self._engine.connect() as conn:
+                result = conn.execute(stmt).scalar()
+            
+            if result is not None:
+                results.append(result)
+
+            return results
+
     def aggregate_datasets(self, column_name=None, agg_func="count", filters=[], table_name="dataset"):
         """
         Perform an aggregation (count, sum, min, max, or avg) on a specified
@@ -356,7 +422,6 @@ class Query:
         if column_name is None and agg_func != "count":
             raise ValueError("column_name cannot be None for non-count aggregations")
         
-        results = []
         query_mode = self.db_connection._query_mode
        
         # Work out what table(s) we are searching across schema(s)
@@ -367,42 +432,20 @@ class Query:
         else:
             tables_to_search = [f"{s}.{table_name}" for s in schemas]
 
-        # Loop over each table and query
-        for table_key, schema in zip(tables_to_search, schemas):
-            
-            db_table = self.db_connection.metadata["tables"].get(table_key)
-            
-            # Handle 'count' aggregation with None column
-            if agg_func == "count" and column_name is None:
-                aggregation = self.agg_funcs["count"]()
-            else:
-                # Check if the column exists
-                if column_name not in db_table.c:
-                    raise ValueError(f"Column '{column_name}' does not exist in {table_name} table")
-                
-                # For non-count aggregations, verify column type is numeric
-                if agg_func != "count":
-                    col_type = db_table.c[column_name].type
-                    is_numeric = isinstance(col_type, (Integer, Float, Numeric)) or hasattr(col_type, '_type_affinity') and col_type._type_affinity in (Integer, Float, Numeric)
-                    
-                    if not is_numeric:
-                        raise ValueError(f"Column '{column_name}' must be numeric for '{agg_func}' aggregation")
-                
-                # Set up the appropriate aggregation function
-                aggregation = self.agg_funcs[agg_func](db_table.c[column_name])
-            
-            stmt = select(aggregation).select_from(db_table)
-            
-            if filters:
-                for f in filters:
-                    stmt = self._render_filter(f, stmt, schema)
-            
-            with self._engine.connect() as conn:
-                result = conn.execute(stmt).scalar()
-            
-            if result is not None:
-                results.append(result)
-        
+        # Special case for compute the average between the two schemas
+        if agg_func == "avg" and len(tables_to_search) > 1:
+            means = self._perform_aggregate_query(tables_to_search, schemas, column_name, agg_func, filters)
+            counts = self._perform_aggregate_query(tables_to_search, schemas, column_name, "count", filters)
+            total_sum = sum(count * mean for count, mean in zip(counts, means))
+            total_count = sum(counts)
+            if total_count == 0:
+                return None
+
+            return total_sum / total_count
+
+        # Compute aggregate values
+        results = self._perform_aggregate_query(tables_to_search, schemas, column_name, agg_func, filters)
+
         # Return the results
         # Will either be the aggregate result of the `column_name` values from
         # the desired `table_name` in a single schema, or the combined
@@ -415,7 +458,7 @@ class Query:
         elif agg_func == "max":
             return max(results) if results else None
         elif agg_func == "avg" and results:
-            return np.mean(results) if results else None
+            return results[0]
 
         return None
 
