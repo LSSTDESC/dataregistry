@@ -318,8 +318,10 @@ class DbConnection:
         else:
             if which_schema == "both":
                 return [self.schema, self.production_schema]
+            elif which_schema == "working":
+                return [self.schema]
             else:
-                return [getattr(self, which_schema)]
+                return [self.production_schema]
 
     def _setup_logger(self, logging_level):
         """
