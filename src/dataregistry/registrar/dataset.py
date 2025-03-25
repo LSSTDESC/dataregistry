@@ -167,7 +167,6 @@ class DatasetTable(BaseTable):
 
         # Keywords
         if len(kwargs_dict["keywords"]) > 0:
-
             # Validate the keywords (make sure they are registered)
             kwargs_dict["keyword_ids"] = self._validate_keywords(
                 kwargs_dict["keywords"]
