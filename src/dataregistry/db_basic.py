@@ -188,7 +188,9 @@ class DbConnection:
         if schema is not None:
             schema_type = schema.split("_")[-1]
             if schema_type not in ["working", "production"]:
-                raise ValueError(f"Invalid schema name {schema}, {schema_type} not valid type")
+                raise ValueError(
+                    f"Invalid schema name {schema}, {schema_type} not valid type"
+                )
             query_mode, entry_mode = schema_type, schema_type
             namespace = None
 
@@ -292,7 +294,7 @@ class DbConnection:
 
     def get_schema_list(self, which_schema):
         """
-        Return a list of schema names the DbConnection is linked to. 
+        Return a list of schema names the DbConnection is linked to.
 
         If `which_schema == "both"` it returns both the working and production
         schema names, else only the desired `which_schema`. For sqlite, there
@@ -318,8 +320,10 @@ class DbConnection:
         else:
             if which_schema == "both":
                 return [self.schema, self.production_schema]
+            elif which_schema == "working":
+                return [self.schema]
             else:
-                return [getattr(self, which_schema)]
+                return [self.production_schema]
 
     def _setup_logger(self, logging_level):
         """
@@ -333,9 +337,9 @@ class DbConnection:
         # Configure the logging system
         logging.basicConfig(
             level=logging_level,  # Set the threshold for which messages are processed
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         )
-        
+
         # Create a logger object
         self.logger = logging.getLogger(__name__)
 
@@ -414,7 +418,8 @@ class DbConnection:
             self.metadata["schema_version"], self._prod_schema = None, None
         else:
             self.metadata["schema_version"], self._prod_schema = _get_db_info(
-                prov_table, get_associated_production=(True if self.namespace else False) 
+                prov_table,
+                get_associated_production=(True if self.namespace else False),
             )
 
         # Don't go on to query the provenance table unless working within a namespace
