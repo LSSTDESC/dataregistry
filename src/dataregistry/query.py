@@ -378,7 +378,7 @@ class Query:
             if result is not None:
                 results.append(result)
 
-            return results
+        return results
 
     def aggregate_datasets(self, column_name=None, agg_func="count", filters=[], table_name="dataset"):
         """
