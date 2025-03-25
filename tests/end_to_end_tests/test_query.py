@@ -67,9 +67,7 @@ def test_query_between_columns(dummy_file):
     _NAME = "DESC:datasets:test_query_between_columns"
     _V_STRING = "0.0.1"
 
-    e_id = _insert_execution_entry(
-        datareg, "test_query_between_columns", "test"
-    )
+    e_id = _insert_execution_entry(datareg, "test_query_between_columns", "test")
 
     d_id = _insert_dataset_entry(datareg, _NAME, _V_STRING, execution_id=e_id)
 
@@ -99,6 +97,7 @@ def test_query_between_columns(dummy_file):
         assert len(results["dataset.name"]) == 1
         assert results["dataset.name"][0] == _NAME
         assert results["dataset.version_string"][0] == _V_STRING
+
 
 @pytest.mark.skipif(
     datareg.db_connection._dialect == "sqlite", reason="wildcards break for sqlite"
@@ -139,6 +138,165 @@ def test_query_name(dummy_file, op, qstr, ans, tag):
         for c, v in results.items():
             assert len(v) == ans
 
+def test_aggregate_datasets_count(dummy_file):
+    """Test counting the number of datasets."""
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+
+    # Insert datasets
+    for i in range(3):
+        _insert_dataset_entry(datareg, f"test_aggregate_datasets_count_{i}", "1.0.0")
+
+    # Count datasets
+    count = datareg.Query.aggregate_datasets("dataset_id", agg_func="count")
+    assert count >= 3  # Ensure at least 3 were counted
+
+
+def test_aggregate_datasets_count_with_none_column(dummy_file):
+    """Test counting datasets with None column."""
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+
+    # Insert datasets
+    for i in range(3):
+        _insert_dataset_entry(datareg, f"test_count_none_col_{i}", "1.0.0")
+
+    # Count datasets with None column
+    count = datareg.Query.aggregate_datasets(column_name=None, agg_func="count")
+    assert count >= 3
+
+
+def test_aggregate_datasets_sum(dummy_file):
+    """Test summing the column values."""
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+
+    # Insert datasets
+    for i in range(3):
+        _insert_dataset_entry(datareg, f"test_aggregate_datasets_sum_{i}", "1.0.0")
+
+    sum_value = datareg.Query.aggregate_datasets("dataset_id", agg_func="sum")
+    assert sum_value >= 3
+
+
+def test_aggregate_datasets_min(dummy_file):
+    """Test finding the minimum value in a column."""
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+
+    # Insert datasets
+    for i in range(3):
+        dataset_id = f"test_aggregate_datasets_min_{i}"
+        _insert_dataset_entry(datareg, dataset_id, "1.0.0")
+
+    min_value = datareg.Query.aggregate_datasets("dataset_id", agg_func="min")
+    assert min_value >= 0
+
+
+def test_aggregate_datasets_max(dummy_file):
+    """Test finding the maximum value in a column."""
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+
+    # Insert datasets
+    for i in range(3):
+        dataset_id = f"test_aggregate_datasets_max_{i}"
+        _insert_dataset_entry(datareg, dataset_id, "1.0.0")
+
+    max_value = datareg.Query.aggregate_datasets("dataset_id", agg_func="max")
+    assert max_value >= 3
+
+
+def test_aggregate_datasets_avg(dummy_file):
+    """Test finding the average value in a column."""
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+
+    # Insert datasets
+    for i in range(3):
+        dataset_id = f"test_aggregate_datasets_avg_{i}"
+        _insert_dataset_entry(datareg, dataset_id, "1.0.0")
+
+    avg_value = datareg.Query.aggregate_datasets("dataset_id", agg_func="avg")
+    assert avg_value > 0
+
+
+def test_aggregate_datasets_with_non_dataset_table(dummy_file):
+    """Test counting records in non-dataset tables."""
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+
+    # Insert dataset
+    d_id = _insert_dataset_entry(
+        datareg,
+        "test_aggregate_datasets_with_non_dataset_table",
+        "0.0.1",
+    )
+
+    a_id = _insert_alias_entry(
+        datareg.Registrar, "test_aggregate_datasets_with_non_dataset_table_alias", d_id
+    )
+
+    count = datareg.Query.aggregate_datasets(
+        column_name=None,
+        agg_func="count",
+        table_name="dataset_alias",
+    )
+    assert count >= 1
+
+
+def test_aggregate_datasets_with_filters(dummy_file):
+    """Test aggregation with filters applied."""
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+
+    # Insert datasets with different versions
+    for i in range(3):
+        _insert_dataset_entry(
+            datareg, f"test_aggregate_datasets_with_filters_{i}", "12.123.111"
+        )
+
+    # Count with version filter
+    f = datareg.Query.gen_filter("dataset.version_string", "==", "12.123.111")
+    count = datareg.Query.aggregate_datasets(
+        column_name=None, agg_func="count", filters=[f]
+    )
+    assert count == 3
+
+
+def test_aggregate_datasets_errors(dummy_file):
+    """Test error cases for the aggregation function."""
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+
+    # Test invalid aggregation function
+    with pytest.raises(ValueError, match="agg_func must be one of"):
+        datareg.Query.aggregate_datasets("dataset_id", agg_func="invalid")
+
+    # Test invalid table name
+    with pytest.raises(ValueError, match="table_name must be one of"):
+        datareg.Query.aggregate_datasets("dataset_id", table_name="invalid")
+
+    # Test non-count aggregation on non-dataset table
+    with pytest.raises(ValueError, match="Can only use agg_func"):
+        datareg.Query.aggregate_datasets(
+            "id", agg_func="sum", table_name="dataset_alias"
+        )
+
+    # Test None column with non-count aggregation
+    with pytest.raises(ValueError, match="column_name cannot be None"):
+        datareg.Query.aggregate_datasets(None, agg_func="sum")
+
+    # Test non-existent column
+    with pytest.raises(ValueError, match="Column.*does not exist"):
+        datareg.Query.aggregate_datasets("non_existent_column", agg_func="count")
+
+    # Test non-numeric column with numeric aggregation
+    # This requires knowing a non-numeric column in your schema
+    # Assuming dataset_id is non-numeric:
+    with pytest.raises(ValueError, match="must be numeric"):
+        datareg.Query.aggregate_datasets("description", agg_func="sum")
+
 @pytest.mark.parametrize(
     "table,include_table,include_schema",
     [
@@ -176,4 +334,3 @@ def test_query_get_all_tables(dummy_file):
     tables = datareg.Query.get_all_tables()
 
     assert len(tables) > 0
-
