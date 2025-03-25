@@ -1,3 +1,20 @@
+## Version 1.2.1
+- Add Python 3.13 to CI and change Python version restriction to just a lower
+  bound (>=3.9).
+- Added logging. There is now a `logger` object in the `DbConnection` class
+  that can be called for logging. For example
+  `DbConnection.logger.debug("text")`.  This replaces the `verbose` flag.
+- Users can now make aggregate queries via e.g.,
+  `datareg.Query.aggregate_datasets("dataset_id", agg_func="avg")`. Aggregate
+  function can be "count", "avg", "sum", "min" or "max". The usual query
+  filters can still be applied. By default it is the `dataset` table the is
+  queried, however setting `table_name=` can change this to "dataset_alias",
+  "keyword", or "dataset_keyword".
+- Expanded the list of columns that are modifiable.
+- There is now a `get_all_tables()` and `get_all_columns()` function in the
+  `Query` object. These can be reffined to return on the columns of a given
+  table (default is `dataset`), or columns from all tables.
+
 ## Version 1.2.0
 
 - Make `dataset.relative_path` nullable
