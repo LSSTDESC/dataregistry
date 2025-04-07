@@ -285,6 +285,26 @@ class DbConnection:
                 return self.schema
 
     @property
+    def query_schema(self):
+        """
+        Which schema (working or production or both) is being used for queries
+        Returns a list
+        """
+
+        # sqlite case
+        if self.namespace is None:
+            return [self.schema]
+
+        # Which is the entry schema
+        else:
+            if self._query_mode == "production":
+                return [self.production_schema]
+            elif self._query_mode == "working":
+                return [self.schema]
+            else:          # both
+                return [self.production_schema, self.schema]
+
+    @property
     def entry_schema_is_production(self):
         """Is the entry schema a production schema?"""
         if self.dialect == "sqlite":
