@@ -4,7 +4,7 @@ from dataregistry.schema import DEFAULT_NAMESPACE
 from database_test_utils import *
 import pytest
 
-@pytest.mark.parameterize(
+@pytest.mark.parametrize(
     "query_mode",
     [
         ("both"),
