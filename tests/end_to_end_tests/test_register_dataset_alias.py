@@ -4,12 +4,18 @@ from dataregistry.schema import DEFAULT_NAMESPACE
 from database_test_utils import *
 import pytest
 
-def test_register_dataset_alias(dummy_file):
+@pytest.mark.parameterize(
+    "query_mode",
+    [
+        ("both"),
+        ("production")
+    ]
+def test_register_dataset_alias(dummy_file, query_mode):
     """Register a dataset and make a dataset alias entry for it"""
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE, query_mode=query_mode)
 
     # Add two dataset
     d_id = _insert_dataset_entry(
