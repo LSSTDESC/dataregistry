@@ -21,13 +21,13 @@ def test_register_dataset_alias(dummy_file, query_mode):
     # Add two dataset
     d_id = _insert_dataset_entry(
         datareg,
-        "alias_test_entry",
+        f"alias_test_entry_{query_mode}",
         "0.0.1",
     )
 
     d2_id = _insert_dataset_entry(
         datareg,
-        "alias_test_entry_2",
+        f"alias_test_entry_2_{query_mode}",
         "0.0.2",
     )
 
