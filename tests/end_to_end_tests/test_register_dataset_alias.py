@@ -32,10 +32,16 @@ def test_register_dataset_alias(dummy_file, query_mode):
     )
 
     # Add alias
-    a_id = _insert_alias_entry(datareg.Registrar, "nice_dataset_name", d_id)
+    a_id = _insert_alias_entry(
+        datareg.Registrar,
+        f"nice_dataset_name_{query_mode}",
+        d_id)
 
     # Query
-    f = datareg.Query.gen_filter("dataset_alias.alias", "==", "nice_dataset_name")
+    f = datareg.Query.gen_filter(
+        "dataset_alias.alias",
+        "==",
+        f"nice_dataset_name_{query_mode}")
     results = datareg.Query.find_datasets(
         [
             "dataset.dataset_id",
