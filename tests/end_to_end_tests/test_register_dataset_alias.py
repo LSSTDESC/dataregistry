@@ -10,6 +10,7 @@ import pytest
         ("both"),
         ("production")
     ]
+)
 def test_register_dataset_alias(dummy_file, query_mode):
     """Register a dataset and make a dataset alias entry for it"""
 
