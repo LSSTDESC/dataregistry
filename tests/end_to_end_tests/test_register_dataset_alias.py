@@ -8,7 +8,7 @@ import pytest
     "query_mode",
     [
         ("both"),
-        ("production")
+        ("working")
     ]
 )
 def test_register_dataset_alias(dummy_file, query_mode):
@@ -32,16 +32,19 @@ def test_register_dataset_alias(dummy_file, query_mode):
     )
 
     # Add alias
+    alias_name = f"nice_dataset_name_{query_mode}"
     a_id = _insert_alias_entry(
         datareg.Registrar,
-        f"nice_dataset_name_{query_mode}",
+        alias_name,
+        # f"nice_dataset_name_{query_mode}",
         d_id)
 
     # Query
     f = datareg.Query.gen_filter(
         "dataset_alias.alias",
         "==",
-        f"nice_dataset_name_{query_mode}")
+        #f"nice_dataset_name_{query_mode}")
+        alias_name)
     results = datareg.Query.find_datasets(
         [
             "dataset.dataset_id",
