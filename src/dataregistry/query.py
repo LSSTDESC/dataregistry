@@ -939,7 +939,7 @@ class Query:
         if self.db_connection._query_mode == "both":
             return self.db_connection.entry_schema
         else:
-            return self.db_connection._query_mode
+            return self.db_connection.query_schema[0]
 
     def find_aliases(
         self,

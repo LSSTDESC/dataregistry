@@ -4,31 +4,45 @@ from dataregistry.schema import DEFAULT_NAMESPACE
 from database_test_utils import *
 import pytest
 
-def test_register_dataset_alias(dummy_file):
+@pytest.mark.parametrize(
+    "query_mode",
+    [
+        ("both"),
+        ("working")
+    ]
+)
+def test_register_dataset_alias(dummy_file, query_mode):
     """Register a dataset and make a dataset alias entry for it"""
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE, query_mode=query_mode)
 
     # Add two dataset
     d_id = _insert_dataset_entry(
         datareg,
-        "alias_test_entry",
+        f"alias_test_entry_{query_mode}",
         "0.0.1",
     )
 
     d2_id = _insert_dataset_entry(
         datareg,
-        "alias_test_entry_2",
+        f"alias_test_entry_2_{query_mode}",
         "0.0.2",
     )
 
     # Add alias
-    a_id = _insert_alias_entry(datareg.Registrar, "nice_dataset_name", d_id)
+    alias_name = f"nice_dataset_name_{query_mode}"
+    a_id = _insert_alias_entry(
+        datareg.Registrar,
+        alias_name,
+        d_id)
 
     # Query
-    f = datareg.Query.gen_filter("dataset_alias.alias", "==", "nice_dataset_name")
+    f = datareg.Query.gen_filter(
+        "dataset_alias.alias",
+        "==",
+        alias_name)
     results = datareg.Query.find_datasets(
         [
             "dataset.dataset_id",
@@ -42,12 +56,18 @@ def test_register_dataset_alias(dummy_file):
     assert results["dataset_alias.dataset_id"][0] == d_id
 
     # Try to reuse alias without supersede.  Should fail
-    a2_id = _insert_alias_entry(datareg.Registrar, "nice_dataset_name", d2_id)
+    a2_id = _insert_alias_entry(
+        datareg.Registrar,
+        f"nice_dataset_name_{query_mode}",
+        d2_id)
     assert a2_id is None
 
     # Try again with supersede
     a2_id = _insert_alias_entry(
-        datareg.Registrar, "nice_dataset_name", d2_id, supersede=True
+        datareg.Registrar,
+        f"nice_dataset_name_{query_mode}",
+        d2_id,
+        supersede=True
     )
     assert a2_id is not None
 
@@ -59,12 +79,16 @@ def test_register_dataset_alias(dummy_file):
     assert results["dataset_alias.supersede_date"][0] is not None
 
     # Add an alias to the alias
-    aa_id = _insert_alias_entry(datareg.Registrar, "alias_to_alias", None, a2_id)
-    id, ref_type = datareg.Query.resolve_alias("alias_to_alias")
+    aa_id = _insert_alias_entry(
+        datareg.Registrar,
+        f"alias_to_alias_{query_mode}",
+        None,
+        a2_id)
+    id, ref_type = datareg.Query.resolve_alias(f"alias_to_alias_{query_mode}")
     assert id == a2_id
     assert ref_type == "alias"
 
     # Fully resolve
-    dataset_id = datareg.Query.resolve_alias_fully("alias_to_alias")
+    dataset_id = datareg.Query.resolve_alias_fully(f"alias_to_alias_{query_mode}")
     assert dataset_id == d2_id
     assert aa_id is not None
