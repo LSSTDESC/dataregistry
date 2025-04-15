@@ -1,3 +1,7 @@
+## Version 1.2.2
+- Bug fix affecting querying of aliases
+- Add test to check that alias querying works even when query_mode is not "both"
+
 ## Version 1.2.1
 - Add Python 3.13 to CI and change Python version restriction to just a lower
   bound (>=3.9).
