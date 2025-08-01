@@ -31,6 +31,8 @@ def test_get_dataset_absolute_path(dummy_file, schema):
     dset_ownertype = "group" if schema == "working" else "production"
     dset_owner = "group1" if schema == "working" else "production"
     dset_relpath = "my/path"
+    old_loc = os.path.join(tmp_src_dir, 'source', 'file1.txt')
+
 
     # Make a basic entry
     d_id_1 = _insert_dataset_entry(
@@ -40,6 +42,7 @@ def test_get_dataset_absolute_path(dummy_file, schema):
         owner_type=dset_ownertype,
         owner=dset_owner,
         relative_path=dset_relpath,
+        old_location=old_loc,
     )
 
     v = datareg.Query.get_dataset_absolute_path(d_id_1)
@@ -66,7 +69,6 @@ def test_find_entry(dummy_file):
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
-
     # Make a dataset
     d_id = _insert_dataset_entry(datareg, "test_find_entry:dataset", "0.0.1")
 
