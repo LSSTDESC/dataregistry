@@ -40,7 +40,6 @@ def test_get_dataset_absolute_path(dummy_file, schema):
         owner_type=dset_ownertype,
         owner=dset_owner,
         relative_path=dset_relpath,
-        # old_location=old_loc,
     )
 
     v = datareg.Query.get_dataset_absolute_path(d_id_1, schema=schema)
