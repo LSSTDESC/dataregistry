@@ -659,8 +659,9 @@ class Query:
                         if self.db_connection._query_mode != sch.split("_")[-1]:
                             continue
             else:
-                if not sch.endswith(schema):
-                    continue
+                if self.db_connection.dialect != "sqlite":
+                    if not sch.endswith(schema):
+                        continue
 
             schema_str = "" if self.db_connection.dialect == "sqlite" else f"{sch}."
             # columns = [f"{p.table.name}.{p.name}" for p in column_list[sch]]
