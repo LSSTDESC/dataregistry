@@ -37,7 +37,6 @@ except ModuleNotFoundError:
     LITE_TYPES = {}
 
 from sqlalchemy.exc import DBAPIError
-# from sqlalchemy.exc import DBAPIError, NoSuchColumnError
 
 __all__ = ["Query", "Filter"]
 
@@ -664,7 +663,6 @@ class Query:
                         continue
 
             schema_str = "" if self.db_connection.dialect == "sqlite" else f"{sch}."
-            # columns = [f"{p.table.name}.{p.name}" for p in column_list[sch]]
 
             stmt = select(
                 *[p.label(f"{p.table.name}.{p.name}") for p in column_list[sch]]
