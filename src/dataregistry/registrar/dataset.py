@@ -701,7 +701,6 @@ class DatasetTable(BaseTable):
             schema=self._schema,
             root_dir=self._root_dir,
         )
-        print(f"Destination for dataset: {dest}")
 
         # Is the data already on location, or coming from somewhere new?
         if old_location:
@@ -745,7 +744,6 @@ class DatasetTable(BaseTable):
                 f"Copying {num_files} files ({total_size/1024/1024:.2f} Mb)...",
             )
             _copy_data(dataset_organization, old_location, dest)
-            print(f"Copying from {old_location} to {dest}")
             self.db_connection.logger.debug(f"  - took {time.time()-tic:.2f}s")
 
         return dataset_organization, num_files, total_size, ds_creation_date

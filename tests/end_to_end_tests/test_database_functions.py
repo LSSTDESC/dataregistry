@@ -31,7 +31,7 @@ def test_get_dataset_absolute_path(dummy_file, schema):
     dset_ownertype = "group" if schema == "working" else "production"
     dset_owner = "group1" if schema == "working" else "production"
     dset_relpath = "my/path"
-    old_loc = os.path.join(tmp_src_dir, 'source', 'file1.txt')
+    old_loc = os.path.join(tmp_src_dir, 'file1.txt')
 
 
     # Make a basic entry
