@@ -5,9 +5,6 @@ import sqlalchemy.sql.sqltypes as sqltypes
 import pandas as pd
 from dataregistry.registrar.registrar_util import _form_dataset_path
 from dataregistry.exceptions import DataRegistryException
-# from dataregistry.exceptions import DataRegistryNYI, DataRegistryException
-# from functools import reduce
-# import numpy as np
 
 try:
     import sqlalchemy.dialects.postgresql as pgtypes
@@ -625,7 +622,8 @@ class Query:
             True to remove the table name in the results columns
             This only works if a single table is needed for the query
         schema : optional
-            May be "production", "working" or None.  Defaults to None
+            May be "production", "working" or None.  Defaults to None,
+            in which case query mode established at connection time is used.
 
         Returns
         -------
@@ -814,20 +812,6 @@ class Query:
             raise ValueError(
                 f"Unknown schema value {schema}. Schema must be either 'working' or 'production'.")
 
-        # if self.db_connection._query_mode == "both" and schema is None:
-        #     self.db_connection.logger.warning(
-        #         "Query mode is set to 'both', which may lead to ambiguous results. "
-        #         "Specify a schema by setting `query_mode` to 'working' or 'production', "
-        #         "or pass the schema explicitly to this function."
-        #     )
-        #     return None
-
-        # # Validate schema
-        # if schema is not None and schema not in {"working", "production"}:
-
-        # # Default schema to query_mode if not provided
-        # schema = schema or self.db_connection._query_mode
-
         # Query the database
         results = self.find_datasets(
             property_names=[
@@ -846,28 +830,6 @@ class Query:
             )
             return None
 
-        # Don't need this because ambiguous case has been eliminated
-        # # Filter results if there are multiple entries (query_mode="both")
-        # if len(results["dataset.owner_type"]) == 2:
-        #     filtered_indices = [
-        #         i
-        #         for i, owner_type in enumerate(results["dataset.owner_type"])
-        #         if (schema == "production" and owner_type == "production")
-        #         or (schema == "working" and owner_type != "production")
-        #     ]
-
-        #     if not filtered_indices:
-        #         self.db_connection.logger.warning(
-        #             f"No dataset found with dataset_id={dataset_id} in schema '{schema}'"
-        #         )
-        #         return None
-
-        #     index = filtered_indices[0]
-        # else:
-        #     index = 0
-
-        index = 0
-
         # Find actual schema name to pass to _form_dataset_path
         if not self.db_connection._namespace:
             schema_name = None
@@ -875,6 +837,7 @@ class Query:
             schema_name = self.db_connection._namespace + '_' + schema
 
         # Construct and return the absolute path
+        index = 0
         return _form_dataset_path(
             results["dataset.owner_type"][index],
             results["dataset.owner"][index],
