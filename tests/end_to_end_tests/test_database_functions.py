@@ -31,7 +31,7 @@ def test_get_dataset_absolute_path(dummy_file, schema):
     dset_ownertype = "group" if schema == "working" else "production"
     dset_owner = "group1" if schema == "working" else "production"
     dset_relpath = "my/path"
-    old_loc = os.path.join(tmp_src_dir, 'file1.txt')
+    # old_loc = os.path.join(tmp_src_dir, 'file1.txt')
 
 
     # Make a basic entry
@@ -42,7 +42,7 @@ def test_get_dataset_absolute_path(dummy_file, schema):
         owner_type=dset_ownertype,
         owner=dset_owner,
         relative_path=dset_relpath,
-        old_location=old_loc,
+        # old_location=old_loc,
     )
 
     v = datareg.Query.get_dataset_absolute_path(d_id_1, schema=schema)
@@ -51,6 +51,12 @@ def test_get_dataset_absolute_path(dummy_file, schema):
         assert v == os.path.join(
             str(tmp_root_dir), dset_ownertype, dset_owner, dset_relpath
         )
+    else:
+        schema_name = DataRegistry.db_connection._namespace + "_" + schema
+        assert v == os.path.join(
+            str(tmp_root_dir), schema_name, dset_ownertype, dset_owner,
+            dset_relpath
+            )
     # Cannot easily make a similar test for non-sqlite since schema type
     # ("production", "working") is not what's used to form the path; the
     # full schema name is.
