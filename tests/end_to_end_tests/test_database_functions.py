@@ -48,15 +48,12 @@ def test_get_dataset_absolute_path(dummy_file, schema):
         assert v == os.path.join(
             str(tmp_root_dir), dset_ownertype, dset_owner, dset_relpath
         )
-    else:
-        assert v == os.path.join(
-            str(tmp_root_dir),
-            schema,
-            dset_ownertype,
-            dset_owner,
-            dset_relpath,
-        )
+    # Cannot easily make a similar test for non-sqlite since schema type
+    # ("production", "working") is not what's used to form the path; the
+    # full schema name is.
 
+    # See if the file is actually there
+    assert os.path.exists(v)
 
 def test_find_entry(dummy_file):
     """
@@ -134,7 +131,7 @@ def test_insert_keywords(dummy_file, mykeyword):
 
     Make sure case sensitivity is ignored (keywords are always entered as lower case
     """
-    
+
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
