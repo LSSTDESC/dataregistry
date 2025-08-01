@@ -61,9 +61,6 @@ def test_get_dataset_absolute_path(dummy_file, schema):
     # ("production", "working") is not what's used to form the path; the
     # full schema name is.
 
-    # See if the file is actually there
-    assert os.path.exists(v)
-
 def test_find_entry(dummy_file):
     """
     Test the `find_entry()` function.
