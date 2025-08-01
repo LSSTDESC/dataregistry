@@ -40,7 +40,7 @@ def test_copy_data(dummy_file, data_org):
         d_id_2 = _insert_dataset_entry(
             datareg,
             f"DESC:datasets:copy_real_{data_org}",
-            "0.0.1",
+            "0.0.2",
             old_location=data_path,
             location_type="dataregistry",
             relative_path="my_path",

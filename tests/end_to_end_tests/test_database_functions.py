@@ -52,7 +52,7 @@ def test_get_dataset_absolute_path(dummy_file, schema):
             str(tmp_root_dir), dset_ownertype, dset_owner, dset_relpath
         )
     else:
-        schema_name = DataRegistry.db_connection._namespace + "_" + schema
+        schema_name = datareg.db_connection._namespace + "_" + schema
         assert v == os.path.join(
             str(tmp_root_dir), schema_name, dset_ownertype, dset_owner,
             dset_relpath
