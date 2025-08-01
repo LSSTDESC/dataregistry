@@ -45,7 +45,7 @@ def test_get_dataset_absolute_path(dummy_file, schema):
         old_location=old_loc,
     )
 
-    v = datareg.Query.get_dataset_absolute_path(d_id_1)
+    v = datareg.Query.get_dataset_absolute_path(d_id_1, schema=schema)
 
     if datareg.Query._dialect == "sqlite":
         assert v == os.path.join(
