@@ -4,9 +4,7 @@ from sqlalchemy import select
 import sqlalchemy.sql.sqltypes as sqltypes
 import pandas as pd
 from dataregistry.registrar.registrar_util import _form_dataset_path
-from dataregistry.exceptions import DataRegistryNYI, DataRegistryException
-from functools import reduce
-import numpy as np
+from dataregistry.exceptions import DataRegistryException
 
 try:
     import sqlalchemy.dialects.postgresql as pgtypes
@@ -38,7 +36,7 @@ try:
 except ModuleNotFoundError:
     LITE_TYPES = {}
 
-from sqlalchemy.exc import DBAPIError, NoSuchColumnError
+from sqlalchemy.exc import DBAPIError
 
 __all__ = ["Query", "Filter"]
 
@@ -594,6 +592,7 @@ class Query:
         filters=[],
         return_format="property_dict",
         strip_table_names=False,
+        schema=None,
     ):
         """
         Get specified properties for datasets satisfying all filters. Both
@@ -621,6 +620,9 @@ class Query:
         strip_table_names : bool, optional
             True to remove the table name in the results columns
             This only works if a single table is needed for the query
+        schema : optional
+            May be "production", "working" or None.  Defaults to None,
+            in which case query mode established at connection time is used.
 
         Returns
         -------
@@ -648,18 +650,22 @@ class Query:
             )
 
         # Construct query
-        for schema in column_list.keys():  # Loop over each schema
-            # Do we want to search this schema given current query_mode?
-            if self.db_connection._query_mode != "both":
+        for sch in column_list.keys():  # Loop over each schema
+            if not schema:
+                # Do we want to search this schema given current query_mode?
+                if self.db_connection._query_mode != "both":
+                    if self.db_connection.dialect != "sqlite":
+                        if self.db_connection._query_mode != sch.split("_")[-1]:
+                            continue
+            else:
                 if self.db_connection.dialect != "sqlite":
-                    if self.db_connection._query_mode != schema.split("_")[-1]:
+                    if not sch.endswith(schema):
                         continue
 
-            schema_str = "" if self.db_connection.dialect == "sqlite" else f"{schema}."
-            columns = [f"{p.table.name}.{p.name}" for p in column_list[schema]]
+            schema_str = "" if self.db_connection.dialect == "sqlite" else f"{sch}."
 
             stmt = select(
-                *[p.label(f"{p.table.name}.{p.name}") for p in column_list[schema]]
+                *[p.label(f"{p.table.name}.{p.name}") for p in column_list[sch]]
             )
 
             # Create joins
@@ -711,7 +717,7 @@ class Query:
             # Append filters if acceptable
             if len(filters) > 0:
                 for f in filters:
-                    stmt = self._render_filter(f, stmt, schema)
+                    stmt = self._render_filter(f, stmt, sch)
 
             # Report the constructed SQL query
             self.db_connection.logger.debug(f"Executing query: {stmt}")
@@ -729,7 +735,7 @@ class Query:
             results.append(pd.DataFrame(result))
 
         # Combine results across schemas
-        if self.db_connection._query_mode != "both":
+        if schema or self.db_connection._query_mode != "both":
             return_result = results[0]
         else:
             return_result = pd.concat(results, ignore_index=True)
@@ -775,18 +781,19 @@ class Query:
 
     def get_dataset_absolute_path(self, dataset_id, schema=None):
         """
-        Return full absolute path of specified dataset.
-
-        If `query_mode="both"`, there may be two paths for the same `dataset_id`.
-        Either set `query_mode` to a single schema or pass "working" or "production"
-        to specify the schema.
+        Return full absolute path of specified dataset in specified schema
+        Note as used here `schema` is not an actual schema name, but a
+        schema type (one of "production", "working" if specified at all)
 
         Parameters
         ----------
         dataset_id : int
             Identifies dataset
         schema : str, optional
-            Which schema to search, defaults to `query_mode` if None.
+            Which schema to search.  May be "working", "production" or None.
+            If None, it defaults to
+               `query_mode` is not "both"
+               "working" if `query_mode` is "both"
 
         Returns
         -------
@@ -795,20 +802,14 @@ class Query:
         """
 
         # Handle ambiguous `query_mode`
-        if self.db_connection._query_mode == "both" and schema is None:
-            self.db_connection.logger.warning(
-                "Query mode is set to 'both', which may lead to ambiguous results. "
-                "Specify a schema by setting `query_mode` to 'working' or 'production', "
-                "or pass the schema explicitly to this function."
-            )
-            return None
-
-        # Validate schema
-        if schema is not None and schema not in {"working", "production"}:
-            raise ValueError("Schema must be either 'working' or 'production'.")
-
-        # Default schema to query_mode if not provided
-        schema = schema or self.db_connection._query_mode
+        if not schema:
+            if self.db_connection._query_mode == "both":
+                schema = "working"
+            else:
+                schema = self.db_connection._query_mode
+        elif schema not in ("production", "working"):
+            raise ValueError(
+                f"Unknown schema value {schema}. Schema must be either 'working' or 'production'.")
 
         # Query the database
         results = self.find_datasets(
@@ -818,6 +819,7 @@ class Query:
                 "dataset.relative_path",
             ],
             filters=[("dataset.dataset_id", "==", dataset_id)],
+            schema=schema
         )
 
         # Handle case where no results are found
@@ -827,31 +829,19 @@ class Query:
             )
             return None
 
-        # Filter results if there are multiple entries (query_mode="both")
-        if len(results["dataset.owner_type"]) == 2:
-            filtered_indices = [
-                i
-                for i, owner_type in enumerate(results["dataset.owner_type"])
-                if (schema == "production" and owner_type == "production")
-                or (schema == "working" and owner_type != "production")
-            ]
-
-            if not filtered_indices:
-                self.db_connection.logger.warning(
-                    f"No dataset found with dataset_id={dataset_id} in schema '{schema}'"
-                )
-                return None
-
-            index = filtered_indices[0]
+        # Find actual schema name to pass to _form_dataset_path
+        if not self.db_connection._namespace:
+            schema_name = None
         else:
-            index = 0
+            schema_name = self.db_connection._namespace + '_' + schema
 
         # Construct and return the absolute path
+        index = 0
         return _form_dataset_path(
             results["dataset.owner_type"][index],
             results["dataset.owner"][index],
             results["dataset.relative_path"][index],
-            schema=schema,
+            schema=schema_name,
             root_dir=self._root_dir,
         )
 

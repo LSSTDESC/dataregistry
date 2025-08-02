@@ -42,21 +42,21 @@ def test_get_dataset_absolute_path(dummy_file, schema):
         relative_path=dset_relpath,
     )
 
-    v = datareg.Query.get_dataset_absolute_path(d_id_1)
+    v = datareg.Query.get_dataset_absolute_path(d_id_1, schema=schema)
 
     if datareg.Query._dialect == "sqlite":
         assert v == os.path.join(
             str(tmp_root_dir), dset_ownertype, dset_owner, dset_relpath
         )
     else:
+        schema_name = datareg.db_connection._namespace + "_" + schema
         assert v == os.path.join(
-            str(tmp_root_dir),
-            schema,
-            dset_ownertype,
-            dset_owner,
-            dset_relpath,
-        )
-
+            str(tmp_root_dir), schema_name, dset_ownertype, dset_owner,
+            dset_relpath
+            )
+    # Cannot easily make a similar test for non-sqlite since schema type
+    # ("production", "working") is not what's used to form the path; the
+    # full schema name is.
 
 def test_find_entry(dummy_file):
     """
@@ -69,7 +69,6 @@ def test_find_entry(dummy_file):
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
-
     # Make a dataset
     d_id = _insert_dataset_entry(datareg, "test_find_entry:dataset", "0.0.1")
 
@@ -134,7 +133,7 @@ def test_insert_keywords(dummy_file, mykeyword):
 
     Make sure case sensitivity is ignored (keywords are always entered as lower case
     """
-    
+
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)

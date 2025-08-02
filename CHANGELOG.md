@@ -1,3 +1,7 @@
+## Version 1.3.0
+- Bug fix for get_dataset_absolute_path and associated CI tests
+- Add optional `schema` argument to `find_datasets`
+
 ## Version 1.2.2
 - Bug fix affecting querying of aliases
 - Add test to check that alias querying works even when query_mode is not "both"

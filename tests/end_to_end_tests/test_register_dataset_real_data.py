@@ -13,7 +13,8 @@ from database_test_utils import *
 
 @pytest.mark.parametrize("data_org", ["file", "directory"])
 def test_copy_data(dummy_file, data_org):
-    """Test copying real data into the registry (from an `old_location`)"""
+    """Test copying real data into the registry (from an `old_location`)
+       Also test get_dataset_absolute_path"""
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
@@ -34,6 +35,17 @@ def test_copy_data(dummy_file, data_org):
         location_type="dataregistry",
     )
 
+    if data_org == "file":
+        # add another entry where relpath is specified
+        d_id_2 = _insert_dataset_entry(
+            datareg,
+            f"DESC:datasets:copy_real_{data_org}",
+            "0.0.2",
+            old_location=data_path,
+            location_type="dataregistry",
+            relative_path="my_path",
+    )
+
     # Query
     f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
     results = datareg.Query.find_datasets(
@@ -46,6 +58,14 @@ def test_copy_data(dummy_file, data_org):
     assert results["dataset.nfiles"][0] == 1
     assert results["dataset.total_disk_space"][0] > 0
 
+    if data_org == "file":
+        # See if it's there
+        abs_path = datareg.Query.get_dataset_absolute_path(d_id, schema="working")
+        assert os.path.exists(abs_path)
+
+        abs_path_2 = datareg.Query.get_dataset_absolute_path(d_id_2,
+                                                             schema="working")
+        assert os.path.exists(abs_path_2)
 
 @pytest.mark.parametrize(
     "data_org,data_path",
