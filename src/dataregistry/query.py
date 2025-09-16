@@ -1,8 +1,11 @@
-from sqlalchemy import func, Integer, Float, Numeric
+from typing import Any, Hashable
+from sqlalchemy import Column, Select, func, Integer, Float, Numeric
+from sqlalchemy.orm import Query as sqlQuery
 from collections import namedtuple
 from sqlalchemy import select
 import sqlalchemy.sql.sqltypes as sqltypes
 import pandas as pd
+from dataregistry.db_basic import DbConnection
 from dataregistry.registrar.registrar_util import _form_dataset_path
 from dataregistry.exceptions import DataRegistryException
 
@@ -20,7 +23,7 @@ try:
     }
 
 except ModuleNotFoundError:
-    PG_TYPES = {}
+    PG_TYPES = set()
 try:
     import sqlalchemy.dialects.sqlite as lite_types
 
@@ -34,7 +37,7 @@ try:
         lite_types.TIMESTAMP,
     }
 except ModuleNotFoundError:
-    LITE_TYPES = {}
+    LITE_TYPES = set()
 
 from sqlalchemy.exc import DBAPIError
 
@@ -51,7 +54,7 @@ value should be a constant (or expression?) of the same type as the property.
 """
 Filter = namedtuple("Filter", ["property_name", "bin_op", "value"])
 
-_colops = {
+_colops: dict[str, str] = {
     "==": "__eq__",
     "=": "__eq__",
     "!=": "__ne__",
@@ -84,7 +87,7 @@ ILIKE_ALLOWED = [
 ]
 
 
-def is_orderable_type(ctype):
+def is_orderable_type(ctype: Any) -> bool:
     return type(ctype) in ALL_ORDERABLE
 
 
@@ -93,7 +96,7 @@ class Query:
     Class implementing supported queries
     """
 
-    def __init__(self, db_connection, root_dir):
+    def __init__(self, db_connection: DbConnection, root_dir: str) -> None:
         """
         Create a new Query object. Note this call should be preceded
         by creation of a DbConnection object
@@ -119,7 +122,7 @@ class Query:
             x: getattr(func, x) for x in ["count", "sum", "min", "max", "avg"]
         }
 
-    def get_all_tables(self):
+    def get_all_tables(self) -> set[str]:
         """
         Return all tables of the database.
 
@@ -137,8 +140,9 @@ class Query:
         return table_list
 
     def get_all_columns(
-        self, table="dataset", include_table=True, include_schema=False
-    ):
+        self, table: str = "dataset",
+        include_table: bool = True, include_schema: bool = False
+    ) -> set[str]:
         """
         Return all columns of the db in <table_name>.<column_name> format.
 
@@ -199,7 +203,10 @@ class Query:
 
         return column_list
 
-    def _parse_selected_columns(self, column_names):
+    def _parse_selected_columns(
+            self,
+            column_names: list[str] | None = None
+    ) -> tuple[list[str], dict[str, list[Column]], dict[str, list[bool]]]:
         """
         What tables do we need for a given list of column names.
 
@@ -244,13 +251,13 @@ class Query:
                     break  # Dont duplicate with production schema
 
         tables_required = set()
-        column_list = {}
-        is_orderable_list = {}
+        column_list: dict[str, list[Column]] = {}
+        is_orderable_list: dict[str, list[bool]] = {}
 
         # Loop over each input column
         for col_name in column_names:
             # Stores matches for this input
-            tmp_column_list = {}
+            tmp_column_list: dict[str, list[Column]] = {}
 
             # Split column name into its parts
             input_parts = col_name.split(".")
@@ -278,8 +285,8 @@ class Query:
             for table in self.db_connection.metadata["tables"]:
                 for column in self.db_connection.metadata["tables"][table].c:
                     # Construct full name
-                    X = str(column.table) + "." + column.name  # <table>.<column>
-                    table_parts = X.split(".")
+                    x = str(column.table) + "." + column.name  # <table>.<column>
+                    table_parts = x.split(".")
 
                     # Initialize list to store columns for a given schema
                     if column.table.schema not in tmp_column_list.keys():
@@ -315,8 +322,13 @@ class Query:
         return list(tables_required), column_list, is_orderable_list
 
     def _perform_aggregate_query(
-        self, tables_to_search, schemas, column_name, agg_func, filters
-    ):
+        self,
+        tables_to_search: list[str],
+        schemas: list[str],
+        column_name: str,
+        agg_func: str,
+        filters: list[Filter]
+    ) -> list[int | float]:
         """
         Perform an aggregate query, a helper function for the
         `aggregate_datasets` method.
@@ -329,7 +341,7 @@ class Query:
             The list of schemas (working and/or production depending on
             query_mode)
         column_name : str
-            The column whoes values we are aggregating
+            The column whose values we are aggregating
         agg_func : str
             The aggregation function
         filters : list
@@ -369,13 +381,14 @@ class Query:
 
                     if not is_numeric:
                         raise ValueError(
-                            f"Column '{column_name}' must be numeric for '{agg_func}' aggregation"
+                            f"Column '{column_name}' must be"
+                            f"numeric for '{agg_func}' aggregation"
                         )
 
                 # Set up the appropriate aggregation function
                 aggregation = self.agg_funcs[agg_func](db_table.c[column_name])
 
-            stmt = select(aggregation).select_from(db_table)
+            stmt: Select | sqlQuery = select(aggregation).select_from(db_table)
 
             if filters:
                 for f in filters:
@@ -390,8 +403,12 @@ class Query:
         return results
 
     def aggregate_datasets(
-        self, column_name=None, agg_func="count", filters=[], table_name="dataset"
-    ):
+        self,
+        column_name: str,
+        agg_func: str = "count",
+        filters: list[Filter] = [],
+        table_name: str = "dataset"
+    ) -> int | float | None:
         """
         Perform an aggregation (count, sum, min, max, or avg) on a specified
         column in the specified table.
@@ -479,7 +496,12 @@ class Query:
 
         return None
 
-    def _render_filter(self, f, stmt, schema):
+    def _render_filter(
+            self,
+            f: Filter,
+            stmt: Select | sqlQuery,
+            schema: str
+            ) -> Select | sqlQuery:
         """
         Append SQL statement with an additional WHERE clause based on a
         dataregistry filter.
@@ -539,9 +561,14 @@ class Query:
 
         # General case using traditional boolean operator
         else:
+            assert the_op is not None  # Should never happen
             return stmt.where(column_ref[schema][0].__getattribute__(the_op)(value))
 
-    def _append_filter_tables(self, tables_required, filters):
+    def _append_filter_tables(
+            self,
+            tables_required: list[str] | set[str],
+            filters: list[Filter]
+            ) -> list[str]:
         """
         A list of tables required to join is initially built from the return
         columns in `property_names`. However there may be additional tables in
@@ -571,7 +598,7 @@ class Query:
 
         return list(tables_required)
 
-    def get_keyword_list(self):
+    def get_keyword_list(self) -> list[str] | None:
         """Get list of keywords from the keywords table"""
 
         if self.db_connection._query_mode == "both":
@@ -584,16 +611,18 @@ class Query:
             return None
 
         results = self.find_datasets(property_names=["keyword.keyword"])
+        assert results is not None  # Should never happen
+        assert type(results) is dict  # Should never happen
         return results["keyword.keyword"]
 
     def find_datasets(
         self,
-        property_names=None,
-        filters=[],
-        return_format="property_dict",
-        strip_table_names=False,
-        schema=None,
-    ):
+        property_names: list[str] | None = None,
+        filters: list[Filter] = [],
+        return_format: str = "property_dict",
+        strip_table_names: bool = False,
+        schema: str | None = None,
+    ) -> dict[Hashable, Any] | pd.DataFrame | None:
         """
         Get specified properties for datasets satisfying all filters. Both
         schemas (i.e., the working and production schema) are searched, with
@@ -634,7 +663,8 @@ class Query:
         _allowed_return_formats = ["dataframe", "property_dict"]
         if return_format.lower() not in _allowed_return_formats:
             raise ValueError(
-                f"{return_format} is a bad return format (valid={_allowed_return_formats})"
+                f"{return_format} is a bad return format "
+                f"(valid={_allowed_return_formats})"
             )
 
         results = []
@@ -664,7 +694,7 @@ class Query:
 
             schema_str = "" if self.db_connection.dialect == "sqlite" else f"{sch}."
 
-            stmt = select(
+            stmt: Select | sqlQuery = select(
                 *[p.label(f"{p.table.name}.{p.name}") for p in column_list[sch]]
             )
 
@@ -728,7 +758,7 @@ class Query:
                     result = conn.execute(stmt)
                 except DBAPIError as e:
                     self.db_connection.logger.error("Original error:")
-                    self.db_connection.logger.error(e.StatementError.orig)
+                    self.db_connection.logger.error(e.orig)
                     return None
 
             # Store result
@@ -749,7 +779,11 @@ class Query:
         else:
             return return_result
 
-    def gen_filter(self, property_name, bin_op, value):
+    def gen_filter(
+            self,
+            property_name: str,
+            bin_op: str,
+            value: Any) -> Filter:
         """
         Generate a binary filter for a data registry query.
 
@@ -779,7 +813,11 @@ class Query:
 
         return Filter(property_name, bin_op, value)
 
-    def get_dataset_absolute_path(self, dataset_id, schema=None):
+    def get_dataset_absolute_path(
+            self,
+            dataset_id: int,
+            schema: str | None = None
+    ) -> str | None:
         """
         Return full absolute path of specified dataset in specified schema
         Note as used here `schema` is not an actual schema name, but a
@@ -809,7 +847,8 @@ class Query:
                 schema = self.db_connection._query_mode
         elif schema not in ("production", "working"):
             raise ValueError(
-                f"Unknown schema value {schema}. Schema must be either 'working' or 'production'.")
+                f"Unknown schema value {schema}. "
+                f"Schema must be either 'working' or 'production'.")
 
         # Query the database
         results = self.find_datasets(
@@ -818,11 +857,13 @@ class Query:
                 "dataset.owner",
                 "dataset.relative_path",
             ],
-            filters=[("dataset.dataset_id", "==", dataset_id)],
+            filters=[Filter("dataset.dataset_id", "==", dataset_id)],
             schema=schema
         )
 
         # Handle case where no results are found
+        assert results is not None  # Should never happen
+        assert type(results) is dict  # Should never happen
         if not results["dataset.owner_type"]:
             self.db_connection.logger.warning(
                 f"No dataset found with dataset_id={dataset_id}"
@@ -845,7 +886,7 @@ class Query:
             root_dir=self._root_dir,
         )
 
-    def resolve_alias(self, alias):
+    def resolve_alias(self, alias: str | int | None) -> tuple[int | None, str | None]:
         """
         Find what an alias points to.  May be either a dataset or another
         alias (or nothing)
@@ -867,7 +908,7 @@ class Query:
         If no such alias is found, return None, None
         """
         if self.db_connection.dialect == "sqlite":
-            tbl_name = f"dataset_alias"
+            tbl_name = "dataset_alias"
         else:
             tbl_name = f"{self.alias_query_schema}.dataset_alias"
         tbl = self.db_connection.metadata["tables"][tbl_name]
@@ -880,7 +921,7 @@ class Query:
 
         f = Filter(filter_column, "==", alias)
 
-        stmt = select(tbl.c.dataset_id, tbl.c.ref_alias_id)
+        stmt: Select | sqlQuery = select(tbl.c.dataset_id, tbl.c.ref_alias_id)
         stmt = stmt.select_from(tbl)
         stmt = self._render_filter(f, stmt, self.alias_query_schema)
 
@@ -889,8 +930,8 @@ class Query:
                 result = conn.execute(stmt)
             except DBAPIError as e:
                 self.db_connection.logger.error("Original error:")
-                self.db_connection.logger.error(e.StatementError.orig)
-                return None
+                self.db_connection.logger.error(e.orig)
+                return None, None
 
         row = result.fetchone()
         if not row:
@@ -900,7 +941,7 @@ class Query:
         else:
             return row[1], "alias"
 
-    def resolve_alias_fully(self, alias):
+    def resolve_alias_fully(self, alias: str | int) -> int | None:
         """
         Given alias id or name, return id of dataset it ultimately
         references
@@ -912,7 +953,7 @@ class Query:
         return id
 
     @property
-    def alias_query_schema(self):
+    def alias_query_schema(self) -> str:
         """
         What schema to search when querying aliases (relating to the
         `resolve_alias()` and `find_aliases` functions. The schema will be the
@@ -933,10 +974,10 @@ class Query:
 
     def find_aliases(
         self,
-        property_names=None,
-        filters=[],
-        return_format="property_dict",
-    ):
+        property_names: list[str] | None = None,
+        filters: list[Filter] = [],
+        return_format: str = "property_dict",
+    ) -> dict[Hashable, Any] | pd.DataFrame | None:
         """
         Return requested columns from dataset_alias table, subject to filters
 
@@ -961,17 +1002,18 @@ class Query:
         _allowed_return_formats = ["cursorresult", "dataframe", "property_dict"]
         if return_format.lower() not in _allowed_return_formats:
             raise ValueError(
-                f"{return_format} is a bad return format (valid={_allowed_return_formats})"
+                f"{return_format} is a bad return format "
+                f"(valid={_allowed_return_formats})"
             )
 
         # This is always a query of a single table: dataset_alias
         if self.db_connection.dialect == "sqlite":
-            tbl_name = f"dataset_alias"
+            tbl_name = "dataset_alias"
         else:
             tbl_name = f"{self.alias_query_schema}.dataset_alias"
         tbl = self.db_connection.metadata["tables"][tbl_name]
         if property_names is None:
-            stmt = select("*").select_from(tbl)
+            stmt: Select | sqlQuery = select("*").select_from(tbl)
 
         else:
             cols = []
@@ -1001,7 +1043,7 @@ class Query:
                 result = conn.execute(stmt)
             except DBAPIError as e:
                 self.db_connection.logger.error("Original error:")
-                self.db_connection.logger.error(e.StatementError.orig)
+                self.db_connection.logger.error(e.orig)
                 return None
 
         # Make sure we are working with the correct return format.
