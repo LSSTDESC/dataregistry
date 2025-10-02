@@ -35,8 +35,6 @@ jobs:
       matrix:
         python-version: ["3.12"]
         include:
-          - python-version: "3.9"
-            if: github.event_name == 'pull_request'
           - python-version: "3.10"
             if: github.event_name == 'pull_request'
           - python-version: "3.11"
@@ -117,8 +115,6 @@ jobs:
       matrix:
         python-version: ["3.12"]
         include:
-          - python-version: "3.9"
-            if: github.event_name == 'pull_request'
           - python-version: "3.10"
             if: github.event_name == 'pull_request'
           - python-version: "3.11"
@@ -185,8 +181,6 @@ jobs:
       matrix:
         python-version: ["3.12"]
         include:
-          - python-version: "3.9"
-            if: github.event_name == 'pull_request'
           - python-version: "3.10"
             if: github.event_name == 'pull_request'
           - python-version: "3.11"
