@@ -87,6 +87,7 @@ tables:
         type: "Boolean"
         description: "True if this keyword is active and avaliable to use"
         nullable: False
+        modifiable: True
       creator_uid:
         type: "StringShort"
         description: "UID of keyword creator"

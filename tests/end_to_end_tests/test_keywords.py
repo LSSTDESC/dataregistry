@@ -134,3 +134,39 @@ def test_modify_dataset_with_keywords(dummy_file):
     assert len(results["dataset.dataset_id"]) == 2
     assert results["dataset.dataset_id"][0] == d_id
     assert results["keyword.keyword"][0] in ["simulation", "observation"]
+
+
+def test_add_custom_keyword(dummy_file):
+    """
+    Add a keyword to the keyword table.
+
+    Then query to make sure it was added.
+    """
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(
+        root_dir=str(tmp_root_dir),
+        namespace=DEFAULT_NAMESPACE)
+
+    # Add a keyword
+    datareg.Registrar.keywords.add_keyword("test_custom_keyword")
+
+
+@pytest.mark.parametrize("custom_keyword", [12, [], None])
+def test_add_bad_keyword(dummy_file, custom_keyword):
+    """
+    Add a bad keyword to the keyword table.
+
+    Then query to make sure it was added.
+    """
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(
+        root_dir=str(tmp_root_dir),
+        namespace=DEFAULT_NAMESPACE)
+
+    # Add a keyword
+    with pytest.raises(ValueError, match="not a valid keyword string"):
+        datareg.Registrar.keywords.add_keyword(custom_keyword)
