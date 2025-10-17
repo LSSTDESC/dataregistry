@@ -5,10 +5,13 @@ from datetime import datetime
 import shutil
 import warnings
 
-from dataregistry.db_basic import add_table_row
+from dataregistry.db_basic import DbConnection, add_table_row
 from dataregistry.exceptions import DataRegistryRootDirBadState
 from sqlalchemy import select, update
 from functools import wraps
+
+from dataregistry.registrar.execution import ExecutionTable
+from dataregistry.registrar.keyword import KeywordTable
 
 from .base_table_class import BaseTable
 from .registrar_util import (
@@ -27,10 +30,18 @@ _ILLEGAL_RELPATH_CHAR = ["$", "*", "&", "?", "\\", " "]
 
 
 class DatasetTable(BaseTable):
-    def __init__(self, db_connection, root_dir, owner, owner_type, execution_table):
+    def __init__(
+            self,
+            db_connection: DbConnection,
+            root_dir: str,
+            owner, owner_type: str,
+            execution_table: ExecutionTable,
+            keyword_table: KeywordTable
+    ) -> None:
         super().__init__(db_connection, root_dir, owner, owner_type)
 
         self.execution_table = execution_table
+        self.keyword_table = keyword_table
         self.which_table = "dataset"
         self.entry_id = "dataset_id"
 
@@ -168,7 +179,7 @@ class DatasetTable(BaseTable):
         # Keywords
         if len(kwargs_dict["keywords"]) > 0:
             # Validate the keywords (make sure they are registered)
-            kwargs_dict["keyword_ids"] = self._validate_keywords(
+            kwargs_dict["keyword_ids"] = self.keywords_table.validate_keywords(
                 kwargs_dict["keywords"]
             )
 
@@ -924,112 +935,28 @@ class DatasetTable(BaseTable):
 
         self.db_connection.logger.info(f"Deleted {dataset_id} from data registry")
 
-    def _validate_keywords(self, keywords):
+    def add_keywords(self, dataset_id, keyword):
         """
-        Validate a list of keywords.
-
-            - Ensure they are strings
-            - Ensure the chosen keywords are registered in the keywords table
-
-        If any keyword is invalid an exception is raised.
-
-        Parameters
-        ----------
-        keywords : list[str]
-
-        Returns
-        -------
-        keyword_ids : list[int]
-            The associated `keyword_id`s from the `keyword` table
-        """
-
-        keyword_ids = []
-
-        for k in keywords:
-            # Make sure keyword is a string
-            if not isinstance(k, str):
-                raise ValueError(f"{k} is not a valid keyword string")
-
-        # Make sure keywords are all in the keywords table
-        keyword_table = self._get_table_metadata("keyword")
-
-        stmt = select(keyword_table.c.keyword_id).where(
-            keyword_table.c.keyword.in_([x.lower() for x in keywords])
-        )
-
-        with self._engine.connect() as conn:
-            result = conn.execute(stmt)
-            conn.commit()
-
-        # Keyword found
-        for r in result:
-            keyword_ids.append(r.keyword_id)
-
-        # Keyword not found
-        if len(keyword_ids) != len(keywords):
-            raise ValueError("Not all keywords selected are registered")
-
-        return keyword_ids
-
-    def add_keywords(self, dataset_id, keywords):
-        """
-        Add/append keywords to an already existing dataset.
-
-        First check the keywords are valid, then append. If the dataset already
-        has one or more of the passed keywords attributed to it, the keyword(s)
-        will not be duplicated.
+        Add keyword tags to a dataset entry.
 
         Parameters
         ----------
         dataset_id : int
-        keywords : list[str]
+            Dataset to add keyword to
+        keyword : list[str]
+            Keyword to add to dataset
         """
+        self.keyword_table.add_dataset_keywords_relation(dataset_id, keyword)
 
-        # Make sure things are valid
-        if not isinstance(keywords, list):
-            raise ValueError("Passed keywords object must be a list")
-
-        if len(keywords) == 0:
-            return
-
-        # Validate keywords (make sure they are in the `keyword` table)
-        keyword_ids = self._validate_keywords(keywords)
-
-        # Link fo the dataset-keyword association table
-        dataset_keyword_table = self._get_table_metadata("dataset_keyword")
-
-        with self._engine.connect() as conn:
-            # Loop over each keyword in the list
-            for keyword_id in keyword_ids:
-                # Check if this dataset already has this keyword
-                stmt = (
-                    select(dataset_keyword_table)
-                    .where(dataset_keyword_table.c.dataset_id == dataset_id)
-                    .where(dataset_keyword_table.c.keyword_id == keyword_id)
-                )
-
-                result = conn.execute(stmt)
-                rows = result.fetchall()
-
-                # If we don't have the keyword, add it
-                if len(rows) == 0:
-                    add_table_row(
-                        conn,
-                        dataset_keyword_table,
-                        {"dataset_id": dataset_id, "keyword_id": keyword_id},
-                        commit=False,
-                    )
-
-            conn.commit()
-
-    def delete_keywords(self, dataset_id, keywords):
+    def delete_keywords(self, dataset_id, keyword):
         """
-        Remove keywords from a dataset.
+        Remove a keywords tag from a dataset entry.
 
         Parameters
         ----------
         dataset_id : int
-        keywords : list[str]
+            Dataset to remove keyword from
+        keyword : list[str]
+            Keyword to remove from dataset
         """
-
-        raise NotImplementedError()
+        self.keyword_table.remove_dataset_keywords_relation(dataset_id, keyword)
