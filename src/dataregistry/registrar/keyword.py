@@ -153,8 +153,7 @@ class KeywordTable(BaseTable):
     def add_keywords_to_dataset(
             self,
             dataset_id: int,
-            keywords: list[str],
-            commit: bool = True
+            keywords: list[str]
     ) -> None:
         """
         Add/append keywords to an already existing dataset.
@@ -203,8 +202,7 @@ class KeywordTable(BaseTable):
                         {"dataset_id": dataset_id, "keyword_id": keyword_id},
                         commit=False,
                     )
-            if commit:
-                conn.commit()
+            conn.commit()
 
     def remove_keywords_from_dataset(
             self,

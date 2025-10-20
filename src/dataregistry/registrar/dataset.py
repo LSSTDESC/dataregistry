@@ -339,13 +339,10 @@ class DatasetTable(BaseTable):
                 )
             )
             conn.execute(update_stmt)
-
-            self.keyword_table.add_keywords_to_dataset(
-                prim_key,
-                kwargs_dict["keywords"],
-                commit=False)
-
             conn.commit()
+        self.keyword_table.add_keywords_to_dataset(
+            prim_key,
+            kwargs_dict["keywords"])
 
         return prim_key
 
