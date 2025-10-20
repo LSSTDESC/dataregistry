@@ -5,13 +5,10 @@ from datetime import datetime
 import shutil
 import warnings
 
-from dataregistry.db_basic import DbConnection, add_table_row
+from dataregistry.db_basic import add_table_row
 from dataregistry.exceptions import DataRegistryRootDirBadState
 from sqlalchemy import select, update
 from functools import wraps
-
-from dataregistry.registrar.execution import ExecutionTable
-from dataregistry.registrar.keyword import KeywordTable
 
 from .base_table_class import BaseTable
 from .registrar_util import (
@@ -32,11 +29,12 @@ _ILLEGAL_RELPATH_CHAR = ["$", "*", "&", "?", "\\", " "]
 class DatasetTable(BaseTable):
     def __init__(
             self,
-            db_connection: DbConnection,
-            root_dir: str,
-            owner, owner_type: str,
-            execution_table: ExecutionTable,
-            keyword_table: KeywordTable
+            db_connection,
+            root_dir,
+            owner,
+            owner_type,
+            execution_table,
+            keyword_table
     ) -> None:
         super().__init__(db_connection, root_dir, owner, owner_type)
 
@@ -342,16 +340,10 @@ class DatasetTable(BaseTable):
             )
             conn.execute(update_stmt)
 
-            # Add any keyword tags
-            if len(kwargs_dict["keywords"]) > 0:
-                keyword_table = self._get_table_metadata("dataset_keyword")
-                for k_id in kwargs_dict["keyword_ids"]:
-                    add_table_row(
-                        conn,
-                        keyword_table,
-                        {"dataset_id": prim_key, "keyword_id": k_id},
-                        commit=False,
-                    )
+            self.keyword_table.add_keywords_to_dataset(
+                prim_key,
+                kwargs_dict["keywords"],
+                commit=False)
 
             conn.commit()
 
@@ -937,26 +929,26 @@ class DatasetTable(BaseTable):
 
     def add_keywords(self, dataset_id, keyword):
         """
-        Add keyword tags to a dataset entry.
+        Add keywords tags to a dataset entry.
 
         Parameters
         ----------
         dataset_id : int
-            Dataset to add keyword to
+            Dataset id to add keyword to
         keyword : list[str]
-            Keyword to add to dataset
+            Keywords to add to dataset
         """
-        self.keyword_table.add_dataset_keywords_relation(dataset_id, keyword)
+        self.keyword_table.add_keywords_to_dataset(dataset_id, keyword)
 
-    def delete_keywords(self, dataset_id, keyword):
+    def remove_keywords(self, dataset_id, keyword):
         """
-        Remove a keywords tag from a dataset entry.
+        Remove keywords tag from a dataset entry.
 
         Parameters
         ----------
         dataset_id : int
-            Dataset to remove keyword from
+            Dataset id to remove keyword from
         keyword : list[str]
-            Keyword to remove from dataset
+            Keywords to remove from dataset
         """
-        self.keyword_table.remove_dataset_keywords_relation(dataset_id, keyword)
+        self.keyword_table.remove_keywords_from_dataset(dataset_id, keyword)
