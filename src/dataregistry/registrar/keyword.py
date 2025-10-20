@@ -35,11 +35,12 @@ class KeywordTable(BaseTable):
         self.which_table = "keyword"
         self.entry_id = "keyword"
 
-    def add_keyword(
+    def create_keyword(
             self,
             keyword: str,
             user_type: Literal["user", "group", "project"] = "user",
-            system: bool = False):
+            system: bool = False,
+            commit: bool = True):
         """
         Add a keyword to the registry.
 
@@ -59,7 +60,27 @@ class KeywordTable(BaseTable):
         # Implementation for adding a keyword to the dataset in the database
         keywords_table = self._get_table_metadata("keyword")
         with self._engine.connect() as conn:
-            add_table_row(conn, keywords_table, kwargs_dict, commit=True)
+            add_table_row(conn, keywords_table, kwargs_dict, commit=commit)
+
+    def create_keywords(
+            self,
+            keywords: list[str],
+            user_type: Literal["user", "group", "project"] = "user",
+            system: bool = False):
+        """
+        Add multiple keywords to the registry.
+
+        Parameters
+        ----------
+        keywords : list[str]
+            The keywords to add.
+        """
+        for keyword in keywords:
+            if not isinstance(keyword, str):
+                raise ValueError(f"Keyword {keyword} is not a valid keyword string.")
+        self.create_keyword(keyword, user_type=user_type, system=system, commit=False)
+        with self._engine.connect() as conn:
+            conn.commit()
 
     def disable_keyword(self, keyword: str):
         """
@@ -87,7 +108,54 @@ class KeywordTable(BaseTable):
         """
         self._set_enable_keyword(keyword, enable=True)
 
-    def add_dataset_keywords_relation(self, dataset_id: int, keywords: list[str]) -> None:
+    def get_keywords_from_dataset(
+            self,
+            dataset_id: int
+    ) -> list[str]:
+        """
+        Get the list of keywords associated with a dataset.
+
+        Parameters
+        ----------
+        dataset_id : int
+
+        Returns
+        -------
+        keywords : list[str]
+        """
+
+        keywords = []
+
+        # Link to the dataset-keyword association table
+        dataset_keyword_table = self._get_table_metadata("dataset_keyword")
+        keyword_table = self._get_table_metadata("keyword")
+
+        stmt = (
+            select(keyword_table.c.keyword)
+            .select_from(
+                dataset_keyword_table.join(
+                    keyword_table,
+                    dataset_keyword_table.c.keyword_id == keyword_table.c.keyword_id,
+                )
+            )
+            .where(dataset_keyword_table.c.dataset_id == dataset_id)
+        )
+
+        with self._engine.connect() as conn:
+            result = conn.execute(stmt)
+            conn.commit()
+
+        for r in result:
+            keywords.append(r.keyword)
+
+        return keywords
+
+    def add_keywords_to_dataset(
+            self,
+            dataset_id: int,
+            keywords: list[str],
+            commit: bool = True
+    ) -> None:
         """
         Add/append keywords to an already existing dataset.
 
@@ -135,10 +203,10 @@ class KeywordTable(BaseTable):
                         {"dataset_id": dataset_id, "keyword_id": keyword_id},
                         commit=False,
                     )
+            if commit:
+                conn.commit()
 
-            conn.commit()
-
-    def delete_dataset_keywords_relation(
+    def remove_keywords_from_dataset(
             self,
             dataset_id: int,
             keywords: list[str]
