@@ -136,7 +136,7 @@ def test_modify_dataset_with_keywords(dummy_file):
     assert results["keyword.keyword"][0] in ["simulation", "observation"]
 
 
-def test_add_custom_keyword(dummy_file):
+def test_create_custom_keyword(dummy_file):
     """
     Add a keyword to the keyword table.
 
@@ -150,11 +150,10 @@ def test_add_custom_keyword(dummy_file):
         namespace=DEFAULT_NAMESPACE)
 
     # Add a keyword
-    datareg.Registrar.keywords.add_keyword("test_custom_keyword")
-
+    datareg.Registrar.keyword.create_keyword("test_custom_keyword2")
 
 @pytest.mark.parametrize("custom_keyword", [12, [], None])
-def test_add_bad_keyword(dummy_file, custom_keyword):
+def test_create_bad_keyword(dummy_file, custom_keyword):
     """
     Add a bad keyword to the keyword table.
 
@@ -169,4 +168,55 @@ def test_add_bad_keyword(dummy_file, custom_keyword):
 
     # Add a keyword
     with pytest.raises(ValueError, match="not a valid keyword string"):
-        datareg.Registrar.keywords.add_keyword(custom_keyword)
+        datareg.Registrar.keyword.create_keyword(custom_keyword)
+
+@pytest.fixture(scope="session")
+def create_dataset_entry_for_keyword():
+    """
+    Fixture to create a dataset entry with a keyword.
+    """
+
+    def _create_entry(datareg):
+        """
+        Create a dataset entry.
+        """
+        d_id = _insert_dataset_entry(datareg,
+                                     "DESC:datasets:my_dataset_for_adding_keywords",
+                                     "0.0.1")
+
+        return d_id
+    return _create_entry
+
+
+def test_add_keywords_to_dataset(dummy_file, create_dataset_entry_for_keyword):
+    """
+    Test adding keywords to an existing dataset.
+    """
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(
+        root_dir=str(tmp_root_dir),
+        namespace=DEFAULT_NAMESPACE)
+
+    # Register a dataset without keywords
+    d_id = create_dataset_entry_for_keyword(datareg)
+
+    # Add keywords to the dataset
+    datareg.Registrar.keyword.create_keyword("new_keyword1")
+    datareg.Registrar.keyword.create_keyword("new_keyword2")
+    datareg.Registrar.dataset.add_keywords(d_id, ["new_keyword1", "new_keyword2"])
+
+    # Query for the dataset and check keywords
+    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.Query.find_datasets(
+        ["dataset.dataset_id", "keyword.keyword"],
+        [f],
+    )
+
+    # Should now be two keywords
+    assert len(results["dataset.dataset_id"]) == 2
+    assert results["dataset.dataset_id"][0] == d_id
+    assert set(results["keyword.keyword"]) == {"new_keyword1", "new_keyword2"}
+    assert (datareg.Registrar.keyword.get_keywords_from_dataset(d_id) ==
+            ["new_keyword1", "new_keyword2"])
