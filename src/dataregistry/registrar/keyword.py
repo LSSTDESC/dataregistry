@@ -232,7 +232,7 @@ class KeywordTable(BaseTable):
             if owner != self._owner:
                 raise ValueError(f"Keyword {keyword} is owned by another user.")
         modify_fields = {"active": enable}
-        self.modify(keyword, modify_fields)
+        self._modify(keyword, modify_fields)
 
     def validate_keywords(self, keywords: list) -> list[int]:
         """

@@ -939,7 +939,7 @@ class DatasetTable(BaseTable):
 
     def remove_keywords(self, dataset_id, keyword):
         """
-        Remove keywords tag from a dataset entry.
+        Remove keywords from a dataset entry.
 
         Parameters
         ----------

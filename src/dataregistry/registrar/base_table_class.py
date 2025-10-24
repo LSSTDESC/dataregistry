@@ -109,11 +109,7 @@ class BaseTable:
         ), f"modify_fields is expected as a dict, {'column': new_values}"
 
         # First make sure the given entry is in the registry
-        my_table = self._get_table_metadata(self.which_table)
         previous_entry = self.find_entry(entry_id, raise_if_not_found=True)
-
-        # Create a copy of modify_fields to avoid modifying the input dictionary
-        processed_fields = modify_fields.copy()
 
         # Loop over each column to be modified
         for key, v in modify_fields.items():
@@ -131,7 +127,13 @@ class BaseTable:
                 key
             ]["modifiable"]:
                 raise ValueError(f"The column {key} is not modifiable")
+        self._modify(modify_fields, entry_id)
 
+    def _modify(self, modify_fields, entry_id):
+        my_table = self._get_table_metadata(self.which_table)
+        # Create a copy of modify_fields to avoid modifying the input dictionary
+        processed_fields = modify_fields.copy()
+        for key, v in modify_fields.items():
             # Handle datetime conversion if needed
             column_type = my_table.c[key].type
             if isinstance(column_type, DateTime) and isinstance(v, str):
@@ -142,7 +144,6 @@ class BaseTable:
                     raise ValueError(
                         f"Could not convert string '{v}' to datetime for column {key}"
                     )
-
         with self._engine.connect() as conn:
             # Update the metadata with processed fields
             if len(processed_fields.keys()) > 0:
