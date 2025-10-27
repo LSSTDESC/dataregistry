@@ -104,9 +104,8 @@ class BaseTable:
             Dict where key is the column to modify (must be allowed to modify)
             and value is the desired new value for the entry
         """
-        assert (
-            type(modify_fields) == dict
-        ), f"modify_fields is expected as a dict, {'column': new_values}"
+        if (type(modify_fields) is not dict):
+            raise ValueError(f"modify_fields is expected as a dict, {'column': new_values}")
 
         # First make sure the given entry is in the registry
         previous_entry = self.find_entry(entry_id, raise_if_not_found=True)
