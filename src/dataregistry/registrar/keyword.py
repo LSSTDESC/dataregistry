@@ -66,7 +66,8 @@ class KeywordTable(BaseTable):
             self,
             keywords: list[str],
             user_type: Literal["user", "group", "project"] = "user",
-            system: bool = False):
+            system: bool = False
+    ) -> None:
         """
         Add multiple keywords to the registry.
 
@@ -78,7 +79,7 @@ class KeywordTable(BaseTable):
         for keyword in keywords:
             if not isinstance(keyword, str):
                 raise ValueError(f"Keyword {keyword} is not a valid keyword string.")
-        self.create_keyword(keyword, user_type=user_type, system=system, commit=False)
+            self.create_keyword(keyword, user_type=user_type, system=system, commit=False)
         with self._engine.connect() as conn:
             conn.commit()
 
