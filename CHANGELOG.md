@@ -1,3 +1,7 @@
+## Version 1.4.0
+ - Add keyword class to manage keywords in the data registry.
+ - Moved all functionality related to keywords from dataset to new keyword class.
+  
 ## Version 1.3.0
 - Bug fix for get_dataset_absolute_path and associated CI tests
 - Add optional `schema` argument to `find_datasets`
