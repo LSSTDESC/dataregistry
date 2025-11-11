@@ -1,3 +1,4 @@
+from .keyword import KeywordTable
 from .base_table_class import _OWNER_TYPES
 from .dataset import DatasetTable
 from .dataset_alias import DatasetAliasTable
@@ -34,8 +35,9 @@ class Registrar:
         self.dataset_alias = DatasetAliasTable(
             db_connection, root_dir, owner, owner_type
         )
+        self.keyword = KeywordTable(db_connection, root_dir, owner, owner_type)
         self.dataset = DatasetTable(
-            db_connection, root_dir, owner, owner_type, self.execution
+            db_connection, root_dir, owner, owner_type, self.execution, self.keyword
         )
 
     def get_owner_types(self):
