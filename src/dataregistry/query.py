@@ -125,7 +125,7 @@ class Query:
 
         Returns
         -------
-        table_list : set
+        table_list : list
         """
 
         table_list = set()
@@ -134,7 +134,7 @@ class Query:
         for tbl in self.db_connection.metadata["tables"]:
             table_list.add(self.db_connection.metadata["tables"][tbl].name)
 
-        return table_list
+        return sorted(table_list)
 
     def get_all_columns(
         self, table="dataset", include_table=True, include_schema=False
@@ -166,7 +166,7 @@ class Query:
 
         Returns
         -------
-        column_list : set
+        column_list : list
         """
 
         column_list = set()
@@ -197,7 +197,7 @@ class Query:
 
                 column_list.add(".".join(mystr))
 
-        return column_list
+        return sorted(column_list)
 
     def _parse_selected_columns(self, column_names):
         """
