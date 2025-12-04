@@ -1,3 +1,10 @@
+## Version 1.4.1
+
+- Modify Query.get_all_tables and Query.get_all_columns to return sorted
+  lists rather than sets so that web app displays them sorted
+- Add alternate option names using hyphens rather than underscores in
+  the script create_registry_schema
+
 ## Version 1.4.0
  - Add keyword class to manage keywords in the data registry.
  - Moved all functionality related to keywords from dataset to new keyword class.

@@ -138,3 +138,4 @@ dmypy.json
 
 # local stuff which doesn't belong in the repo
 local/
+extra/
