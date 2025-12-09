@@ -302,6 +302,9 @@ parser.add_argument(
     action="store_true",
 )
 
+parser.add_argument("--no-keywords", action="store_true",
+                    help="Do not insert standard keywords. Use if db contents are to be restored from a backup")
+
 args = parser.parse_args()
 
 # ------------------
@@ -322,7 +325,7 @@ keywords = load_preset_keywords()
 for schema in schema_list:
     # Connect to database to find out what the backend is
     db_connection = DbConnection(args.config, schema=schema, creation_mode=True,
-            logging_level=logging.DEBUG)
+                                 logging_level=logging.DEBUG)
 
     if db_connection.dialect == "sqlite":
         print("Creating sqlite database...")
@@ -353,8 +356,8 @@ for schema in schema_list:
                 raise RuntimeError("production schema does not exist or is ill-formed")
             if (
                 (result["db_version_major"][0]
-                != _DB_VERSION_MAJOR) or (int(result["db_version_minor"][0])
-                > _DB_VERSION_MINOR)
+                 != _DB_VERSION_MAJOR) or (int(result["db_version_minor"][0])
+                                           > _DB_VERSION_MINOR)
             ):
                 raise RuntimeError("production schema version incompatible")
 
@@ -418,6 +421,7 @@ for schema in schema_list:
         associated_production=prod_schema,
     )
 
-    # Populate the preset system keywords for datasets
-    for att in keywords["dataset"]:
-        _insert_keyword(db_connection, att, True)
+    if not args.no_keywords:
+        # Populate the preset system keywords for datasets
+        for att in keywords["dataset"]:
+            _insert_keyword(db_connection, att, True)
