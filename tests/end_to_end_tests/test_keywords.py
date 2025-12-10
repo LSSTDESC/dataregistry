@@ -166,7 +166,7 @@ def test_create_bad_keyword(dummy_file, custom_keyword):
 
     # Add a keyword
     with pytest.raises(ValueError, match="not a valid keyword string"):
-        datareg.Registrar.keyword.create_keyword(custom_keyword)
+        datareg.Registrar.keyword.create_keywords([custom_keyword])
 
 
 @pytest.fixture(scope="session")
