@@ -140,7 +140,8 @@ def test_create_custom_keyword(dummy_file):
     tmp_src_dir, tmp_root_dir = dummy_file
     datareg = DataRegistry(
         root_dir=str(tmp_root_dir),
-        namespace=DEFAULT_NAMESPACE)
+        namespace=DEFAULT_NAMESPACE,
+        query_mode="working")
 
     # Add a keyword
     kwd = "test_custom_keyword2"
