@@ -261,7 +261,6 @@ class KeywordTable(BaseTable):
             conn.commit()
 
         # Keyword not found
-        # if len(keyword_ids) != len(keywords):
         if result.rowcount != len(keywords):
             raise ValueError("Not all keywords selected are registered")
 

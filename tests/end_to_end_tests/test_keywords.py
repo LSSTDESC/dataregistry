@@ -15,7 +15,8 @@ def test_register_dataset_with_bad_keywords(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir),
+                           namespace=DEFAULT_NAMESPACE)
 
     # Test case where keywords are not strings
     with pytest.raises(ValueError, match="not a valid keyword string"):
@@ -49,7 +50,8 @@ def test_register_dataset_with_keywords(dummy_file, mykeyword):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir),
+                           namespace=DEFAULT_NAMESPACE)
 
     # Register two datasets with keywords
     d_id = _insert_dataset_entry(
@@ -140,14 +142,13 @@ def test_create_custom_keyword(dummy_file):
     tmp_src_dir, tmp_root_dir = dummy_file
     datareg = DataRegistry(
         root_dir=str(tmp_root_dir),
-        namespace=DEFAULT_NAMESPACE,
-        query_mode="working")
+        namespace=DEFAULT_NAMESPACE)
 
     # Add a keyword
     kwd = "test_custom_keyword2"
     datareg.Registrar.keyword.create_keywords([kwd])
 
-    all_keywords = datareg.Query.get_keyword_list()
+    all_keywords = datareg.Query.get_keyword_list(query_mode="working")
 
     assert kwd in all_keywords
 
@@ -162,8 +163,7 @@ def test_create_bad_keyword(dummy_file, custom_keyword):
     tmp_src_dir, tmp_root_dir = dummy_file
     datareg = DataRegistry(
         root_dir=str(tmp_root_dir),
-        namespace=DEFAULT_NAMESPACE,
-        query_mode="working")
+        namespace=DEFAULT_NAMESPACE)
 
     # Add a keyword
     with pytest.raises(ValueError, match="not a valid keyword string"):
