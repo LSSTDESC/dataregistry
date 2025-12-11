@@ -63,8 +63,8 @@ def _check_replaced_dataset(
     """
 
     # Check replaced dataset
-    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
-    results = datareg.Query.find_datasets(
+    f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.query.find_datasets(
         [
             "dataset.name",
             "dataset.version_string",
@@ -185,7 +185,7 @@ def test_replacing_deleted_dataset(dummy_file):
     )
 
     # Delete dataset
-    datareg.Registrar.dataset._delete_by_id(d_id)
+    datareg.registrar.dataset._delete_by_id(d_id)
 
     with pytest.raises(ValueError, match="is deleted, cannot replace"):
         # Try to replace deleted dataset

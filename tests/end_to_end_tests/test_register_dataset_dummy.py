@@ -33,8 +33,8 @@ def test_register_dataset_defaults(dummy_file):
     )
 
     # Query
-    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
-    results = datareg.Query.find_datasets(None, [f], strip_table_names=True)
+    f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.query.find_datasets(None, [f], strip_table_names=True)
 
     # First make sure we find a result
     assert len(results) > 0
@@ -108,8 +108,8 @@ def test_register_dataset_manual(dummy_file):
     )
 
     # Query
-    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
-    results = datareg.Query.find_datasets(None, [f], strip_table_names=True)
+    f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.query.find_datasets(None, [f], strip_table_names=True)
 
     # First make sure we find a result
     assert len(results) > 0
@@ -179,8 +179,8 @@ def test_dataset_bumping(dummy_file, v_type, ans):
     )
 
     # Query
-    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
-    results = datareg.Query.find_datasets(
+    f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.query.find_datasets(
         ["dataset.name", "dataset.version_string", "dataset.relative_path"],
         [f],
     )
@@ -214,8 +214,8 @@ def test_dataset_owner_types(dummy_file, owner_type):
     )
 
     # Query
-    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
-    results = datareg.Query.find_datasets(["dataset.owner_type", "dataset.name"], [f])
+    f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.query.find_datasets(["dataset.owner_type", "dataset.name"], [f])
 
     # First make sure we find a result
     assert len(results) > 0
@@ -251,8 +251,8 @@ def test_register_dataset_with_global_owner_set(dummy_file):
     )
 
     # Query
-    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
-    results = datareg.Query.find_datasets(
+    f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.query.find_datasets(
         [
             "dataset.owner",
             "dataset.owner_type",
@@ -296,8 +296,8 @@ def test_register_dataset_with_modified_default_execution(dummy_file):
     )
 
     # Query on execution
-    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id_2)
-    results = datareg.Query.find_datasets(
+    f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id_2)
+    results = datareg.query.find_datasets(
         [
             "dataset.name",
             "execution.execution_id",
@@ -319,8 +319,8 @@ def test_register_dataset_with_modified_default_execution(dummy_file):
     ex_id_1 = results["execution.execution_id"][0]
 
     # Query on dependency
-    f = datareg.Query.gen_filter("dependency.input_id", "==", d_id_1)
-    results = datareg.Query.find_datasets(
+    f = datareg.query.gen_filter("dependency.input_id", "==", d_id_1)
+    results = datareg.query.find_datasets(
         [
             "dataset.dataset_id",
             "dependency.execution_id",
@@ -360,9 +360,9 @@ def test_dataset_query_return_format(dummy_file, return_format_str, expected_typ
         "3.2.1",
     )
 
-    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id_1)
+    f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id_1)
 
-    results = datareg.Query.find_datasets(
+    results = datareg.query.find_datasets(
         ["dataset.name", "dataset.version_string", "dataset.relative_path"],
         [f],
         return_format=return_format_str,
@@ -384,7 +384,7 @@ def test_query_all(dummy_file):
         "3.2.1",
     )
 
-    results = datareg.Query.find_datasets()
+    results = datareg.query.find_datasets()
 
     assert results is not None
 

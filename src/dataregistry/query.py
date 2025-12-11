@@ -775,8 +775,8 @@ class Query:
         -------
         .. code-block:: python
 
-           f = datareg.Query.gen_filter("dataset.name", "==", "my_dataset")
-           f = datareg.Query.gen_filter("dataset.version_major", ">", 1)
+           f = datareg.query.gen_filter("dataset.name", "==", "my_dataset")
+           f = datareg.query.gen_filter("dataset.version_major", ">", 1)
         """
 
         return Filter(property_name, bin_op, value)

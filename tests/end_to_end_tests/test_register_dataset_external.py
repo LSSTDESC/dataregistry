@@ -56,8 +56,8 @@ def test_register_dataset_external(dummy_file, contact_email, url, rel_path):
     )
 
     # Query
-    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
-    results = datareg.Query.find_datasets(
+    f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.query.find_datasets(
         [
             "dataset.contact_email",
             "dataset.url",

@@ -27,8 +27,8 @@ def test_simple_query(dummy_file):
 
     # Check
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
-    f = datareg.Query.gen_filter("dataset.name", "==", "my_cli_dataset")
-    results = datareg.Query.find_datasets(
+    f = datareg.query.gen_filter("dataset.name", "==", "my_cli_dataset")
+    results = datareg.query.find_datasets(
         ["dataset.name", "dataset.version_string"], [f]
     )
     assert len(results["dataset.name"]) == 2, "Bad result from query dcli1"
@@ -52,8 +52,8 @@ def test_dataset_entry_with_execution(dummy_file):
 
     # Check
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
-    f = datareg.Query.gen_filter("dataset.name", "==", "my_cli_dataset3")
-    results = datareg.Query.find_datasets(
+    f = datareg.query.gen_filter("dataset.name", "==", "my_cli_dataset3")
+    results = datareg.query.find_datasets(
         [
             "dataset.name",
             "dataset.version_string",
@@ -76,7 +76,7 @@ def test_production_entry(dummy_file):
 
     datareg = DataRegistry(root_dir=str(tmp_root_dir))
 
-    if datareg.Query._dialect != "sqlite":
+    if datareg.query._dialect != "sqlite":
         # Register a dataset
         cmd = "register dataset my_production_cli_dataset 0.1.2 --location_type dummy"
         cmd += " --owner_type production --owner production"
@@ -84,8 +84,8 @@ def test_production_entry(dummy_file):
         cli.main(shlex.split(cmd))
 
         # Check
-        f = datareg.Query.gen_filter("dataset.name", "==", "my_production_cli_dataset")
-        results = datareg.Query.find_datasets(
+        f = datareg.query.gen_filter("dataset.name", "==", "my_production_cli_dataset")
+        results = datareg.query.find_datasets(
             ["dataset.name", "dataset.version_string"], [f]
         )
         assert len(results["dataset.name"]) == 1, "Bad result from query dcli3"
@@ -105,8 +105,8 @@ def test_delete_dataset_by_id(dummy_file, monkeypatch):
 
     # Find the dataset id
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
-    f = datareg.Query.gen_filter("dataset.name", "==", "my_cli_dataset_to_delete")
-    results = datareg.Query.find_datasets(["dataset.dataset_id"], [f])
+    f = datareg.query.gen_filter("dataset.name", "==", "my_cli_dataset_to_delete")
+    results = datareg.query.find_datasets(["dataset.dataset_id"], [f])
     assert len(results["dataset.dataset_id"]) == 1, "Bad result from query dcli4"
     d_id = results["dataset.dataset_id"][0]
 
@@ -118,8 +118,8 @@ def test_delete_dataset_by_id(dummy_file, monkeypatch):
 
     # Check
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
-    f = datareg.Query.gen_filter("dataset.name", "==", "my_cli_dataset_to_delete")
-    results = datareg.Query.find_datasets(
+    f = datareg.query.gen_filter("dataset.name", "==", "my_cli_dataset_to_delete")
+    results = datareg.query.find_datasets(
         [
             "dataset.dataset_id",
             "dataset.delete_date",
@@ -155,8 +155,8 @@ def test_delete_dataset_by_name(dummy_file, monkeypatch):
 
     # Find the dataset id
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
-    f = datareg.Query.gen_filter("dataset.name", "==", DNAME)
-    results = datareg.Query.find_datasets(["dataset.dataset_id"], [f])
+    f = datareg.query.gen_filter("dataset.name", "==", DNAME)
+    results = datareg.query.find_datasets(["dataset.dataset_id"], [f])
     assert len(results["dataset.dataset_id"]) == 1, "Bad result from query dcli4"
     d_id = results["dataset.dataset_id"][0]
 
@@ -167,8 +167,8 @@ def test_delete_dataset_by_name(dummy_file, monkeypatch):
 
     # Check
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
-    f = datareg.Query.gen_filter("dataset.name", "==", DNAME)
-    results = datareg.Query.find_datasets(
+    f = datareg.query.gen_filter("dataset.name", "==", DNAME)
+    results = datareg.query.find_datasets(
         [
             "dataset.dataset_id",
             "dataset.delete_date",
@@ -198,8 +198,8 @@ def test_dataset_entry_with_keywords(dummy_file):
 
     # Check
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
-    f = datareg.Query.gen_filter("dataset.name", "==", "my_cli_dataset_keywords")
-    results = datareg.Query.find_datasets(
+    f = datareg.query.gen_filter("dataset.name", "==", "my_cli_dataset_keywords")
+    results = datareg.query.find_datasets(
         [
             "dataset.name",
             "dataset.version_string",
@@ -227,8 +227,8 @@ def test_modify_dataset(dummy_file):
 
     # Find the dataset id
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
-    f = datareg.Query.gen_filter("dataset.name", "==", "my_cli_dataset_to_modify")
-    results = datareg.Query.find_datasets(["dataset.dataset_id"], [f])
+    f = datareg.query.gen_filter("dataset.name", "==", "my_cli_dataset_to_modify")
+    results = datareg.query.find_datasets(["dataset.dataset_id"], [f])
     assert len(results["dataset.dataset_id"]) == 1, "Bad result from query dcli5"
     d_id = results["dataset.dataset_id"][0]
 
@@ -239,8 +239,8 @@ def test_modify_dataset(dummy_file):
 
     # Check
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
-    f = datareg.Query.gen_filter("dataset.name", "==", "my_cli_dataset_to_modify")
-    results = datareg.Query.find_datasets(
+    f = datareg.query.gen_filter("dataset.name", "==", "my_cli_dataset_to_modify")
+    results = datareg.query.find_datasets(
         [
             "dataset.dataset_id",
             "dataset.description",
@@ -264,8 +264,8 @@ def test_modify_dataset_creation_date(dummy_file):
 
     # Find the dataset id
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
-    f = datareg.Query.gen_filter("dataset.name", "==", "my_cli_dataset_date_modify")
-    results = datareg.Query.find_datasets(["dataset.dataset_id"], [f])
+    f = datareg.query.gen_filter("dataset.name", "==", "my_cli_dataset_date_modify")
+    results = datareg.query.find_datasets(["dataset.dataset_id"], [f])
     assert len(results["dataset.dataset_id"]) == 1, "Bad result from query"
     d_id = results["dataset.dataset_id"][0]
 
@@ -279,8 +279,8 @@ def test_modify_dataset_creation_date(dummy_file):
 
     # Check the modification
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
-    f = datareg.Query.gen_filter("dataset.name", "==", "my_cli_dataset_date_modify")
-    results = datareg.Query.find_datasets(
+    f = datareg.query.gen_filter("dataset.name", "==", "my_cli_dataset_date_modify")
+    results = datareg.query.find_datasets(
         [
             "dataset.dataset_id",
             "dataset.creation_date",

@@ -70,11 +70,11 @@ def test_modify_dataset(
     )
 
     # Modify entry
-    datareg.Registrar.dataset.modify(d_id, {column: new_value})
+    datareg.registrar.dataset.modify(d_id, {column: new_value})
 
     # Query to verify the modification
-    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
-    results = datareg.Query.find_datasets(
+    f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.query.find_datasets(
         [f"dataset.{column}"],
         [f],
     )
@@ -129,10 +129,10 @@ def test_modify_execution(dummy_file, execution_name, column, new_value):
     )
 
     # Modify entry
-    datareg.Registrar.execution.modify(e_id, {column: new_value})
+    datareg.registrar.execution.modify(e_id, {column: new_value})
 
-    f = datareg.Query.gen_filter("execution.execution_id", "==", e_id)
-    results = datareg.Query.find_datasets(
+    f = datareg.query.gen_filter("execution.execution_id", "==", e_id)
+    results = datareg.query.find_datasets(
         [f"execution.{column}"],
         [f],
     )
@@ -157,8 +157,8 @@ def test_modify_not_allowed(dummy_file):
 
     # Try to modify an column I'm not allowed to
     with pytest.raises(ValueError, match="not modifiable"):
-        datareg.Registrar.dataset.modify(d_id, {"dataset_id": d_id})
+        datareg.registrar.dataset.modify(d_id, {"dataset_id": d_id})
 
     # Try to mofify a column that doesn't exist
     with pytest.raises(ValueError, match="not exist in the schema"):
-        datareg.Registrar.dataset.modify(d_id, {"my_dataset_id": 10})
+        datareg.registrar.dataset.modify(d_id, {"my_dataset_id": 10})

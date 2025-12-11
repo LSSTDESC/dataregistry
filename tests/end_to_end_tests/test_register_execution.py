@@ -40,8 +40,8 @@ def test_register_execution_with_config_file(dummy_file):
     )
 
     # Query
-    f = datareg.Query.gen_filter("execution.execution_id", "==", ex_id)
-    results = datareg.Query.find_datasets(
+    f = datareg.query.gen_filter("execution.execution_id", "==", ex_id)
+    results = datareg.query.find_datasets(
         [
             "execution.execution_id",
             "execution.configuration",

@@ -18,7 +18,7 @@ def test_delete_dataset_bad_entry(dummy_file):
 
     # Make sure we raise an exception trying to delete a dataset that doesn't exist
     with pytest.raises(ValueError, match="not found in"):
-        datareg.Registrar.dataset._delete_by_id(10000)
+        datareg.registrar.dataset._delete_by_id(10000)
 
 
 @pytest.mark.parametrize(
@@ -76,13 +76,13 @@ def test_delete_dataset_entry(dummy_file, is_dummy, dataset_name, delete_by_id):
 
     # Now delete that entry
     if delete_by_id:
-        datareg.Registrar.dataset._delete_by_id(d_id)
+        datareg.registrar.dataset._delete_by_id(d_id)
     else:
-        datareg.Registrar.dataset.delete(DNAME, DVERSION, DOWNER, DOWNER_TYPE)
+        datareg.registrar.dataset.delete(DNAME, DVERSION, DOWNER, DOWNER_TYPE)
 
     # Check the entry was deleted
-    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
-    results = datareg.Query.find_datasets(
+    f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.query.find_datasets(
         [
             "dataset.status",
             "dataset.delete_date",
@@ -116,6 +116,6 @@ def test_delete_dataset_entry(dummy_file, is_dummy, dataset_name, delete_by_id):
     # Make sure we can not delete an already deleted entry.
     with pytest.raises(ValueError, match="previously been deleted"):
         if delete_by_id:
-            datareg.Registrar.dataset._delete_by_id(d_id)
+            datareg.registrar.dataset._delete_by_id(d_id)
         else:
-            datareg.Registrar.dataset.delete(DNAME, DVERSION, DOWNER, DOWNER_TYPE)
+            datareg.registrar.dataset.delete(DNAME, DVERSION, DOWNER, DOWNER_TYPE)

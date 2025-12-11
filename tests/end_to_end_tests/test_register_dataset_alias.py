@@ -34,16 +34,16 @@ def test_register_dataset_alias(dummy_file, query_mode):
     # Add alias
     alias_name = f"nice_dataset_name_{query_mode}"
     a_id = _insert_alias_entry(
-        datareg.Registrar,
+        datareg.registrar,
         alias_name,
         d_id)
 
     # Query
-    f = datareg.Query.gen_filter(
+    f = datareg.query.gen_filter(
         "dataset_alias.alias",
         "==",
         alias_name)
-    results = datareg.Query.find_datasets(
+    results = datareg.query.find_datasets(
         [
             "dataset.dataset_id",
             "dataset_alias.dataset_id",
@@ -57,14 +57,14 @@ def test_register_dataset_alias(dummy_file, query_mode):
 
     # Try to reuse alias without supersede.  Should fail
     a2_id = _insert_alias_entry(
-        datareg.Registrar,
+        datareg.registrar,
         f"nice_dataset_name_{query_mode}",
         d2_id)
     assert a2_id is None
 
     # Try again with supersede
     a2_id = _insert_alias_entry(
-        datareg.Registrar,
+        datareg.registrar,
         f"nice_dataset_name_{query_mode}",
         d2_id,
         supersede=True
@@ -72,23 +72,23 @@ def test_register_dataset_alias(dummy_file, query_mode):
     assert a2_id is not None
 
     # Check that old entry with this alias has been marked as superseded
-    f = datareg.Query.gen_filter("dataset_alias.dataset_alias_id", "==", a_id)
-    results = datareg.Query.find_aliases(
+    f = datareg.query.gen_filter("dataset_alias.dataset_alias_id", "==", a_id)
+    results = datareg.query.find_aliases(
         property_names=["dataset_alias.supersede_date"], filters=[f]
     )
     assert results["dataset_alias.supersede_date"][0] is not None
 
     # Add an alias to the alias
     aa_id = _insert_alias_entry(
-        datareg.Registrar,
+        datareg.registrar,
         f"alias_to_alias_{query_mode}",
         None,
         a2_id)
-    id, ref_type = datareg.Query.resolve_alias(f"alias_to_alias_{query_mode}")
+    id, ref_type = datareg.query.resolve_alias(f"alias_to_alias_{query_mode}")
     assert id == a2_id
     assert ref_type == "alias"
 
     # Fully resolve
-    dataset_id = datareg.Query.resolve_alias_fully(f"alias_to_alias_{query_mode}")
+    dataset_id = datareg.query.resolve_alias_fully(f"alias_to_alias_{query_mode}")
     assert dataset_id == d2_id
     assert aa_id is not None
