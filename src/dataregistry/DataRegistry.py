@@ -87,9 +87,11 @@ class DataRegistry:
 
         # Create registrar object
         self.Registrar = Registrar(self.db_connection, self.root_dir, owner, owner_type)
+        self.registrar = self.Registrar
 
         # Create query object
         self.Query = Query(self.db_connection, self.root_dir)
+        self.query = self.Query
 
     def _get_root_dir(self, root_dir, site):
         """

@@ -16,7 +16,7 @@ def test_query_return_format():
     """Test we get back correct data format from queries"""
 
     # Pandas DataFrame
-    results = datareg.Query.find_datasets(
+    results = datareg.query.find_datasets(
         ["dataset.name", "dataset.version_string", "dataset.relative_path"],
         [],
         return_format="dataframe",
@@ -24,7 +24,7 @@ def test_query_return_format():
     assert type(results) == pd.DataFrame
 
     # Property dictionary (each key is a property with a list for each row)
-    results = datareg.Query.find_datasets(
+    results = datareg.query.find_datasets(
         ["dataset.name", "dataset.version_string", "dataset.relative_path"],
         [],
     )
