@@ -260,12 +260,13 @@ class KeywordTable(BaseTable):
             result = conn.execute(stmt)
             conn.commit()
 
-        # Keyword not found
-        if result.rowcount != len(keywords):
+        # See if keyword not found
+        rows = result.fetchall()   # sqlite doesn't support rowcount
+        if len(rows) < len(keywords):
             raise ValueError("Not all keywords selected are registered")
 
         # Keyword found
-        for r in result:
+        for r in rows:
             if r.active:
                 keyword_ids.append(r.keyword_id)
 
