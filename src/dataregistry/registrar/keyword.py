@@ -33,40 +33,14 @@ class KeywordTable(BaseTable):
     ) -> None:
         super().__init__(db_connection, root_dir, owner, owner_type)
         self.which_table = "keyword"
-        self.entry_id = "keyword"
-
-    def create_keyword(
-            self,
-            keyword: str,
-            user_type: Literal["user", "group", "project"] = "user",
-            system: bool = False,
-            commit: bool = True):
-        """
-        Add a keyword to the registry.
-
-        Parameters
-        ----------
-        keyword : str
-            The keyword to add.
-        """
-        owner = self._owner or os.getenv("USER")
-        if not isinstance(keyword, str):
-            raise ValueError(f"Keyword {keyword} is not a valid keyword string.")
-        kwargs_dict = {"keyword": keyword.lower(),
-                       "creator_uid": owner,
-                       "system": system,
-                       "active": True,
-                       "creation_date": datetime.now()}
-        # Implementation for adding a keyword to the dataset in the database
-        keywords_table = self._get_table_metadata("keyword")
-        with self._engine.connect() as conn:
-            add_table_row(conn, keywords_table, kwargs_dict, commit=commit)
+        self.entry_id = "keyword_id"
 
     def create_keywords(
             self,
             keywords: list[str],
-            user_type: Literal["user", "group", "project"] = "user",
-            system: bool = False
+            user_type: Literal["user", "group", "project", "production"] = "user",
+            system: bool = False,
+            commit: bool = True
     ) -> None:
         """
         Add multiple keywords to the registry.
@@ -75,13 +49,26 @@ class KeywordTable(BaseTable):
         ----------
         keywords : list[str]
             The keywords to add.
+        user_type : string.
+            A known user type. Not currently used for anything
+        system : bool.
+            system keywords can only be created by a privileged user. They
+            are intended to be global
         """
-        for keyword in keywords:
-            if not isinstance(keyword, str):
-                raise ValueError(f"Keyword {keyword} is not a valid keyword string.")
-            self.create_keyword(keyword, user_type=user_type, system=system, commit=False)
+        owner = self._owner or os.getenv("USER")
+        keywords_table = self._get_table_metadata("keyword")
         with self._engine.connect() as conn:
-            conn.commit()
+            for keyword in keywords:
+                if not isinstance(keyword, str):
+                    raise ValueError(f"Keyword {keyword} is not a valid keyword string.")
+                kwargs_dict = {"keyword": keyword.lower(),
+                               "creator_uid": owner,
+                               "system": system,
+                               "active": True,
+                               "creation_date": datetime.now()}
+                add_table_row(conn, keywords_table, kwargs_dict, commit=False)
+            if commit:
+                conn.commit()
 
     def disable_keyword(self, keyword: str):
         """
@@ -176,7 +163,7 @@ class KeywordTable(BaseTable):
         if len(keywords) == 0:
             return
 
-        # Validate keywords (make sure they are in the `keyword` table)
+        # Validate (make sure keywords are in the `keyword` table & active)
         keyword_ids = self.validate_keywords(keywords)
 
         # Link fo the dataset-keyword association table
@@ -223,17 +210,17 @@ class KeywordTable(BaseTable):
 
     def _set_enable_keyword(self, keyword: str, enable: bool = True):
         keywords_table = self._get_table_metadata("keyword")
-        stmt = select(keywords_table.c.creator_uid).where(
+        stmt = select(keywords_table.c.keyword_id,
+                      keywords_table.c.active).where(
                       keywords_table.c.keyword == keyword)
         with self._engine.connect() as conn:
             result = conn.execute(stmt).fetchone()
             if result is None:
                 raise ValueError(f"Keyword {keyword} does not exist in the registry.")
-            owner: str = result[0]
-            if owner != self._owner:
-                raise ValueError(f"Keyword {keyword} is owned by another user.")
+            if result.active == enable:   # nothing to do
+                return
         modify_fields = {"active": enable}
-        self._modify(keyword, modify_fields)
+        self._modify(modify_fields, result.keyword_id)
 
     def validate_keywords(self, keywords: list) -> list[int]:
         """
@@ -264,7 +251,8 @@ class KeywordTable(BaseTable):
         # Make sure keywords are all in the keywords table
         keyword_table = self._get_table_metadata("keyword")
 
-        stmt = select(keyword_table.c.keyword_id).where(
+        stmt = select(keyword_table.c.keyword_id,
+                      keyword_table.c.active).where(
             keyword_table.c.keyword.in_([x.lower() for x in keywords])
         )
 
@@ -272,12 +260,14 @@ class KeywordTable(BaseTable):
             result = conn.execute(stmt)
             conn.commit()
 
-        # Keyword found
-        for r in result:
-            keyword_ids.append(r.keyword_id)
-
-        # Keyword not found
-        if len(keyword_ids) != len(keywords):
+        # See if keyword not found
+        rows = result.fetchall()   # sqlite doesn't support rowcount
+        if len(rows) < len(keywords):
             raise ValueError("Not all keywords selected are registered")
+
+        # Keyword found
+        for r in rows:
+            if r.active:
+                keyword_ids.append(r.keyword_id)
 
         return keyword_ids

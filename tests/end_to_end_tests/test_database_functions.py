@@ -19,7 +19,7 @@ db_connection = DbConnection(config_file=None, namespace=DEFAULT_NAMESPACE)
 def test_get_dataset_absolute_path(dummy_file, schema):
     """
     Test the generation of the full absolute path of a dataset using the
-    `Query.get_dataset_absolute_path()` function
+    `query.get_dataset_absolute_path()` function
     """
 
     # Establish connection to database
@@ -42,9 +42,9 @@ def test_get_dataset_absolute_path(dummy_file, schema):
         relative_path=dset_relpath,
     )
 
-    v = datareg.Query.get_dataset_absolute_path(d_id_1, schema=schema)
+    v = datareg.query.get_dataset_absolute_path(d_id_1, schema=schema)
 
-    if datareg.Query._dialect == "sqlite":
+    if datareg.query._dialect == "sqlite":
         assert v == os.path.join(
             str(tmp_root_dir), dset_ownertype, dset_owner, dset_relpath
         )
@@ -73,26 +73,28 @@ def test_find_entry(dummy_file):
     d_id = _insert_dataset_entry(datareg, "test_find_entry:dataset", "0.0.1")
 
     # Find it
-    r = datareg.Registrar.dataset.find_entry(d_id)
+    r = datareg.registrar.dataset.find_entry(d_id)
     assert r is not None
     assert r.dataset_id == d_id
     assert r.name == "test_find_entry:dataset"
     assert r.version_string == "0.0.1"
 
     # Make an execution
-    e_id = _insert_execution_entry(datareg, "test_find_entry_execution", "an execution")
+    e_id = _insert_execution_entry(datareg, "test_find_entry_execution",
+                                   "an execution")
 
     # Find it
-    r = datareg.Registrar.execution.find_entry(e_id)
+    r = datareg.registrar.execution.find_entry(e_id)
     assert r is not None
     assert r.description == "an execution"
     assert r.name == "test_find_entry_execution"
 
     # Make a dataset alias
-    da_id = _insert_alias_entry(datareg.Registrar, "test_find_entry_alias", d_id)
+    da_id = _insert_alias_entry(datareg.registrar, "test_find_entry_alias",
+                                d_id)
 
     # Find it
-    r = datareg.Registrar.dataset_alias.find_entry(da_id)
+    r = datareg.registrar.dataset_alias.find_entry(da_id)
     assert r is not None
     assert r.alias == "test_find_entry_alias"
     assert r.dataset_id == d_id
@@ -105,10 +107,10 @@ def test_get_modifiable_columns(dummy_file):
     tmp_src_dir, tmp_root_dir = dummy_file
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
-    mod_list = datareg.Registrar.dataset.get_modifiable_columns()
+    mod_list = datareg.registrar.dataset.get_modifiable_columns()
     assert "description" in mod_list
 
-    mod_list = datareg.Registrar.execution.get_modifiable_columns()
+    mod_list = datareg.registrar.execution.get_modifiable_columns()
     assert "description" in mod_list
 
 
@@ -120,7 +122,7 @@ def test_get_keywords(dummy_file):
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE,
             query_mode="working")
 
-    keywords = datareg.Query.get_keyword_list()
+    keywords = datareg.query.get_keyword_list()
 
     assert "simulation" in keywords
     assert "observation" in keywords

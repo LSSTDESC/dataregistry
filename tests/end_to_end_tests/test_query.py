@@ -16,7 +16,7 @@ def test_query_return_format():
     """Test we get back correct data format from queries"""
 
     # Pandas DataFrame
-    results = datareg.Query.find_datasets(
+    results = datareg.query.find_datasets(
         ["dataset.name", "dataset.version_string", "dataset.relative_path"],
         [],
         return_format="dataframe",
@@ -24,7 +24,7 @@ def test_query_return_format():
     assert type(results) == pd.DataFrame
 
     # Property dictionary (each key is a property with a list for each row)
-    results = datareg.Query.find_datasets(
+    results = datareg.query.find_datasets(
         ["dataset.name", "dataset.version_string", "dataset.relative_path"],
         [],
     )
@@ -46,8 +46,8 @@ def test_query_all(dummy_file):
     )
 
     # `property_names=None` should return all columns
-    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
-    results = datareg.Query.find_datasets(property_names=None, filters=[f])
+    f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.query.find_datasets(property_names=None, filters=[f])
 
     for c, v in results.items():
         assert len(v) == 1
@@ -78,18 +78,18 @@ def test_query_between_columns(dummy_file):
     for i in range(3):
         if i == 0:
             # Query on execution, but only return dataset columns
-            f = [datareg.Query.gen_filter("execution.execution_id", "==", e_id)]
+            f = [datareg.query.gen_filter("execution.execution_id", "==", e_id)]
         elif i == 1:
             # Query on alias, but only return dataset columns
-            f = [datareg.Query.gen_filter("dataset_alias.dataset_alias_id", "==", a_id)]
+            f = [datareg.query.gen_filter("dataset_alias.dataset_alias_id", "==", a_id)]
         else:
             # Query on execution and alias, but only return dataset columns
             f = [
-                datareg.Query.gen_filter("execution.execution_id", "==", e_id),
-                datareg.Query.gen_filter("dataset_alias.dataset_alias_id", "==", a_id),
+                datareg.query.gen_filter("execution.execution_id", "==", e_id),
+                datareg.query.gen_filter("dataset_alias.dataset_alias_id", "==", a_id),
             ]
 
-        results = datareg.Query.find_datasets(
+        results = datareg.query.find_datasets(
             property_names=["dataset.name", "dataset.version_string"],
             filters=f,
         )
@@ -127,8 +127,8 @@ def test_query_name(dummy_file, op, qstr, ans, tag):
         )
 
     # Do a wildcard search on the name
-    f = datareg.Query.gen_filter("dataset.name", op, qstr)
-    results = datareg.Query.find_datasets(property_names=None, filters=[f])
+    f = datareg.query.gen_filter("dataset.name", op, qstr)
+    results = datareg.query.find_datasets(property_names=None, filters=[f])
 
     # How many datasets did we find
     if ans == 0:
@@ -148,7 +148,7 @@ def test_aggregate_datasets_count(dummy_file):
         _insert_dataset_entry(datareg, f"test_aggregate_datasets_count_{i}", "1.0.0")
 
     # Count datasets
-    count = datareg.Query.aggregate_datasets("dataset_id", agg_func="count")
+    count = datareg.query.aggregate_datasets("dataset_id", agg_func="count")
     assert count >= 3  # Ensure at least 3 were counted
 
 
@@ -162,7 +162,7 @@ def test_aggregate_datasets_count_with_none_column(dummy_file):
         _insert_dataset_entry(datareg, f"test_count_none_col_{i}", "1.0.0")
 
     # Count datasets with None column
-    count = datareg.Query.aggregate_datasets(column_name=None, agg_func="count")
+    count = datareg.query.aggregate_datasets(column_name=None, agg_func="count")
     assert count >= 3
 
 
@@ -175,7 +175,7 @@ def test_aggregate_datasets_sum(dummy_file):
     for i in range(3):
         _insert_dataset_entry(datareg, f"test_aggregate_datasets_sum_{i}", "1.0.0")
 
-    sum_value = datareg.Query.aggregate_datasets("dataset_id", agg_func="sum")
+    sum_value = datareg.query.aggregate_datasets("dataset_id", agg_func="sum")
     assert sum_value >= 3
 
 
@@ -189,7 +189,7 @@ def test_aggregate_datasets_min(dummy_file):
         dataset_id = f"test_aggregate_datasets_min_{i}"
         _insert_dataset_entry(datareg, dataset_id, "1.0.0")
 
-    min_value = datareg.Query.aggregate_datasets("dataset_id", agg_func="min")
+    min_value = datareg.query.aggregate_datasets("dataset_id", agg_func="min")
     assert min_value >= 0
 
 
@@ -203,7 +203,7 @@ def test_aggregate_datasets_max(dummy_file):
         dataset_id = f"test_aggregate_datasets_max_{i}"
         _insert_dataset_entry(datareg, dataset_id, "1.0.0")
 
-    max_value = datareg.Query.aggregate_datasets("dataset_id", agg_func="max")
+    max_value = datareg.query.aggregate_datasets("dataset_id", agg_func="max")
     assert max_value >= 3
 
 
@@ -217,7 +217,7 @@ def test_aggregate_datasets_avg(dummy_file):
         dataset_id = f"test_aggregate_datasets_avg_{i}"
         _insert_dataset_entry(datareg, dataset_id, "1.0.0")
 
-    avg_value = datareg.Query.aggregate_datasets("dataset_id", agg_func="avg")
+    avg_value = datareg.query.aggregate_datasets("dataset_id", agg_func="avg")
     assert avg_value > 0
 
 
@@ -237,7 +237,7 @@ def test_aggregate_datasets_with_non_dataset_table(dummy_file):
         datareg.Registrar, "test_aggregate_datasets_with_non_dataset_table_alias", d_id
     )
 
-    count = datareg.Query.aggregate_datasets(
+    count = datareg.query.aggregate_datasets(
         column_name=None,
         agg_func="count",
         table_name="dataset_alias",
@@ -257,8 +257,8 @@ def test_aggregate_datasets_with_filters(dummy_file):
         )
 
     # Count with version filter
-    f = datareg.Query.gen_filter("dataset.version_string", "==", "12.123.111")
-    count = datareg.Query.aggregate_datasets(
+    f = datareg.query.gen_filter("dataset.version_string", "==", "12.123.111")
+    count = datareg.query.aggregate_datasets(
         column_name=None, agg_func="count", filters=[f]
     )
     assert count == 3
@@ -271,31 +271,31 @@ def test_aggregate_datasets_errors(dummy_file):
 
     # Test invalid aggregation function
     with pytest.raises(ValueError, match="agg_func must be one of"):
-        datareg.Query.aggregate_datasets("dataset_id", agg_func="invalid")
+        datareg.query.aggregate_datasets("dataset_id", agg_func="invalid")
 
     # Test invalid table name
     with pytest.raises(ValueError, match="table_name must be one of"):
-        datareg.Query.aggregate_datasets("dataset_id", table_name="invalid")
+        datareg.query.aggregate_datasets("dataset_id", table_name="invalid")
 
     # Test non-count aggregation on non-dataset table
     with pytest.raises(ValueError, match="Can only use agg_func"):
-        datareg.Query.aggregate_datasets(
+        datareg.query.aggregate_datasets(
             "id", agg_func="sum", table_name="dataset_alias"
         )
 
     # Test None column with non-count aggregation
     with pytest.raises(ValueError, match="column_name cannot be None"):
-        datareg.Query.aggregate_datasets(None, agg_func="sum")
+        datareg.query.aggregate_datasets(None, agg_func="sum")
 
     # Test non-existent column
     with pytest.raises(ValueError, match="Column.*does not exist"):
-        datareg.Query.aggregate_datasets("non_existent_column", agg_func="count")
+        datareg.query.aggregate_datasets("non_existent_column", agg_func="count")
 
     # Test non-numeric column with numeric aggregation
     # This requires knowing a non-numeric column in your schema
     # Assuming dataset_id is non-numeric:
     with pytest.raises(ValueError, match="must be numeric"):
-        datareg.Query.aggregate_datasets("description", agg_func="sum")
+        datareg.query.aggregate_datasets("description", agg_func="sum")
 
 @pytest.mark.parametrize(
     "table,include_table,include_schema",
@@ -315,7 +315,7 @@ def test_query_get_all_columns(dummy_file,table,include_table,include_schema):
     tmp_src_dir, tmp_root_dir = dummy_file
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
-    cols = datareg.Query.get_all_columns(table=table, include_table=include_table, include_schema=include_schema)
+    cols = datareg.query.get_all_columns(table=table, include_table=include_table, include_schema=include_schema)
 
     assert len(cols) > 0
 
@@ -331,6 +331,6 @@ def test_query_get_all_tables(dummy_file):
     tmp_src_dir, tmp_root_dir = dummy_file
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
-    tables = datareg.Query.get_all_tables()
+    tables = datareg.query.get_all_tables()
 
     assert len(tables) > 0

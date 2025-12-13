@@ -153,7 +153,7 @@ def _insert_execution_entry(
         The execution ID for this new entry
     """
 
-    new_id = datareg.Registrar.execution.register(
+    new_id = datareg.registrar.execution.register(
         name,
         description=description,
         input_datasets=input_datasets,
@@ -197,7 +197,7 @@ def _insert_dataset_entry(
     Parameters
     ----------
     **See `src/dataregistry/registrar/dataset.py` for a full description of
-    parameters 
+    parameters
 
     Returns
     -------
@@ -206,7 +206,7 @@ def _insert_dataset_entry(
     """
 
     # Add new entry.
-    dataset_id, execution_id = datareg.Registrar.dataset.register(
+    dataset_id, execution_id = datareg.registrar.dataset.register(
         name,
         version,
         creation_date=None,
@@ -275,7 +275,7 @@ def _replace_dataset_entry(
     """
 
     # Add new entry.
-    dataset_id, execution_id = datareg.Registrar.dataset.replace(
+    dataset_id, execution_id = datareg.registrar.dataset.replace(
         name,
         version,
         creation_date=None,

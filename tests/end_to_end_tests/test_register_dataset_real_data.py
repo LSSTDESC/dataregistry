@@ -47,8 +47,8 @@ def test_copy_data(dummy_file, data_org):
     )
 
     # Query
-    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
-    results = datareg.Query.find_datasets(
+    f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.query.find_datasets(
         ["dataset.data_org", "dataset.nfiles", "dataset.total_disk_space"],
         [f],
     )
@@ -60,10 +60,10 @@ def test_copy_data(dummy_file, data_org):
 
     if data_org == "file":
         # See if it's there
-        abs_path = datareg.Query.get_dataset_absolute_path(d_id, schema="working")
+        abs_path = datareg.query.get_dataset_absolute_path(d_id, schema="working")
         assert os.path.exists(abs_path)
 
-        abs_path_2 = datareg.Query.get_dataset_absolute_path(d_id_2,
+        abs_path_2 = datareg.query.get_dataset_absolute_path(d_id_2,
                                                              schema="working")
         assert os.path.exists(abs_path_2)
 
@@ -93,8 +93,8 @@ def test_on_location_data(dummy_file, data_org, data_path):
         relative_path=data_path,
     )
 
-    f = datareg.Query.gen_filter("dataset.relative_path", "==", data_path)
-    results = datareg.Query.find_datasets(
+    f = datareg.query.gen_filter("dataset.relative_path", "==", data_path)
+    results = datareg.query.find_datasets(
         [
             "dataset.data_org",
             "dataset.nfiles",
@@ -242,7 +242,7 @@ def test_registering_deleted_relative_path(dummy_file, link):
         )
 
     # Now delete
-    datareg.Registrar.dataset._delete_by_id(d2_id)
+    datareg.registrar.dataset._delete_by_id(d2_id)
 
     # Make a new entry (new name) using the original relative path
     d_id = _insert_dataset_entry(

@@ -45,8 +45,8 @@ def test_register_single_schema(dummy_file, schema, owner, owner_type):
     )
 
     # Find dataset
-    f = datareg.Query.gen_filter("dataset.dataset_id", "==", d_id)
-    results = datareg.Query.find_datasets(
+    f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.query.find_datasets(
         [
             "dataset.dataset_id",
             "dataset.name",
@@ -73,7 +73,7 @@ def test_register_single_schema(dummy_file, schema, owner, owner_type):
 def test_query_single_schema_through_namespace(dummy_file, query_mode):
     """
     By default, when connected to a namespace, queries search both the working
-    and production schemas and combine the results. 
+    and production schemas and combine the results.
 
     This behaviour can be changed with `query_mode` to search only the working
     or production schema.
@@ -82,7 +82,7 @@ def test_query_single_schema_through_namespace(dummy_file, query_mode):
     assured to be unique when querying (as results can come from two schemas).
     Here we test that when searching only one schema using `query_mode`, we
     only get back single results for a given `dataset_id` (even although we are
-    connected via a namespace). 
+    connected via a namespace).
     """
 
     # Connect to database
@@ -108,18 +108,18 @@ def test_query_single_schema_through_namespace(dummy_file, query_mode):
     # Find dataset
     if query_mode == "both":
         for DR in [datareg, datareg_prod]:
-            f = DR.Query.gen_filter("dataset.dataset_id", "==", 1)
-            results = DR.Query.find_datasets(["dataset.dataset_id",],
+            f = DR.query.gen_filter("dataset.dataset_id", "==", 1)
+            results = DR.query.find_datasets(["dataset.dataset_id",],
                 [f],
             )
             assert len(results["dataset.dataset_id"]) == 2
     else:
         for DR in [datareg, datareg_prod]:
             if query_mode == "production":
-                f = DR.Query.gen_filter("dataset.dataset_id", "==", d_id_prod)
+                f = DR.query.gen_filter("dataset.dataset_id", "==", d_id_prod)
             else:
-                f = DR.Query.gen_filter("dataset.dataset_id", "==", d_id)
-            results = DR.Query.find_datasets(["dataset.dataset_id",],
+                f = DR.query.gen_filter("dataset.dataset_id", "==", d_id)
+            results = DR.query.find_datasets(["dataset.dataset_id",],
                 [f],
             )
             assert len(results["dataset.dataset_id"]) == 1

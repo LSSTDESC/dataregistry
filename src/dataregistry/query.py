@@ -571,19 +571,21 @@ class Query:
 
         return list(tables_required)
 
-    def get_keyword_list(self):
+    def get_keyword_list(self, query_mode=None):
         """Get list of keywords from the keywords table"""
 
-        if self.db_connection._query_mode == "both":
+        if not query_mode:
+            query_mode = self.db_connection._query_mode
+        if query_mode == "both":
             self.db_connection.logger.warning(
                 "Keywords are unique to the working and production "
-                "schemas. Select a `query_mode` during `DataRegistry()` "
-                "creation before calling this function to select if you want "
-                "to list keywords from the working or production schema"
+                "schemas. Specify 'production' or 'working' for `query_mode` "
+                "here or during `DataRegistry()` "
             )
             return None
 
-        results = self.find_datasets(property_names=["keyword.keyword"])
+        results = self.find_datasets(property_names=["keyword.keyword"],
+                                     schema=query_mode)
         return results["keyword.keyword"]
 
     def find_datasets(
@@ -773,8 +775,8 @@ class Query:
         -------
         .. code-block:: python
 
-           f = datareg.Query.gen_filter("dataset.name", "==", "my_dataset")
-           f = datareg.Query.gen_filter("dataset.version_major", ">", 1)
+           f = datareg.query.gen_filter("dataset.name", "==", "my_dataset")
+           f = datareg.query.gen_filter("dataset.version_major", ">", 1)
         """
 
         return Filter(property_name, bin_op, value)
