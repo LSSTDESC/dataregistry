@@ -119,6 +119,51 @@ class Query:
             x: getattr(func, x) for x in ["count", "sum", "min", "max", "avg"]
         }
 
+        # Cache schema structure
+        self._schema_org = dict()
+        tbls = self.get_all_tables()
+
+        for tbl in tbls:
+            self._schema_org[tbl] = self.get_all_columns(table=tbl)
+
+    def _regularize_property_names(self, col_list):
+        '''
+        Return list of column identifiers in standard form, namely
+        <tablename>.<columnname>
+
+        Parmeters
+        ---------
+        None or list of column identifiers, optionally including table names
+        None is replaced with all columns belonging to dataset table
+
+        Returns
+        -------
+        List of strings (column identifieers) in canonical format
+        '''
+        # If columns unspecified, Select all columns from the dataset table
+        if col_list is None:
+            canon_names = self._schema_org['dataset']
+        else:
+            canon_names = []
+            for c in col_list:
+                parts = c.split(".")
+                if len(parts) > 2:
+                    raise ValueError(f"{c} is not a valid column")
+                elif len(parts) == 2:  # ok as is
+                    canon_names.append(c)
+                else:
+                    tbl_name = self.db_connection.map_column_to_table(c)
+                    if not tbl_name:   # table is not unique
+                        raise DataRegistryException(
+                            (
+                                f"Column name '{c}' is not unique to "
+                                f"one table in the database, use "
+                                f"<table_name>.<column_name> format instead"
+                            )
+                        )
+                    canon_names.append(".".join([tbl_name, c]))
+        return canon_names
+
     def get_all_tables(self):
         """
         Return all tables of the database.
@@ -199,21 +244,19 @@ class Query:
 
         return sorted(column_list)
 
-    def _parse_selected_columns(self, column_names):
+    def _parse_selected_columns(self, column_names, schema_mode=None):
         """
         What tables do we need for a given list of column names.
+        Only return tables in schema(s) compatible with schema mode
 
-        Column names can be in <column_name>, <table_name>.<column_name> or If
-        they are in <column_name> format the column name must be unique through
-        all tables in the database.
-
-        If column_names is None, all columns from the dataset table will be
-        selected.
+        Column names must be in canonical format: <table_name>.<column_name>
 
         Parameters
         ----------
         column_names : list
-            String list of database columns
+            String list of database columns in form <table_name>.<col_name>
+        schema_mode : may be 'production', 'working', 'both'  or None (default).
+                 Ignored unless query_mode is "both"
 
         Returns
         -------
@@ -224,93 +267,38 @@ class Query:
         is_orderable_list : dict[schema][list[bool]]
             Is the column of an orderable type?
         """
-
-        # Select all columns from the dataset table
-        if column_names is None:
-            column_names = []
-            for table in self.db_connection.metadata["tables"]:
-                tname = (
-                    table
-                    if self.db_connection.dialect == "sqlite"
-                    else table.split(".")[1]
-                )
-                if tname == "dataset":
-                    column_names.extend(
-                        [
-                            x.table.name + "." + x.name
-                            for x in self.db_connection.metadata["tables"][table].c
-                        ]
-                    )
-                    break  # Dont duplicate with production schema
-
         tables_required = set()
         column_list = {}
         is_orderable_list = {}
 
-        # Loop over each input column
-        for col_name in column_names:
-            # Stores matches for this input
-            tmp_column_list = {}
+        # Figure out which schema(s) we need to keep track of
+        if self.db_connection._query_mode != "both":  # No choice to make
+            # column_list[self.db_connection.schema] = []
+            schema_list = [self.db_connection.schema]
+        else:
+            if not schema_mode:
+                schema_mode = "both"
+            schema_list = self.db_connection.get_schema_list(schema_mode)
 
-            # Split column name into its parts
-            input_parts = col_name.split(".")
-            num_parts = len(input_parts)
+        # Validate column list and get into standard form
+        canon_columns = self._regularize_property_names(column_names)
 
-            # Make sure column name is value
-            if num_parts > 2:
-                raise ValueError(f"{col_name} is not a valid column")
+        for sch in schema_list:
+            canon_refs = []
+            orderables = []
+            for canon in canon_columns:
+                canon_parts = canon.split(".")
+                tbl = canon_parts[0]
+                tables_required.add(tbl)
 
-            if num_parts == 1:
-                if col_name in self.db_connection.duplicate_column_names:
-                    raise DataRegistryException(
-                        (
-                            f"Column name '{col_name}' is not unique to one table "
-                            f"in the database, use <table_name>.<column_name> "
-                            f"format instead"
-                        )
-                    )
+                # Find column description in metadata to see if it's orderable
+                qualified_tbl = tbl if (not sch or sch == "") else ".".join([sch, tbl])
+                alch_tbl = self.db_connection.metadata["tables"][qualified_tbl]
+                canon_refs.append(alch_tbl.c[canon_parts[1]])
+                orderables.append(is_orderable_type(alch_tbl.c[canon_parts[1]]))
 
-            # Both working and production schema columns are within
-            # `self.db_connection.metadata["tables"]`. The loop bwlow finds the
-            # columns relavent for our query, and what tables they come from.
-
-            # Loop over each column in the database and find matches
-            for table in self.db_connection.metadata["tables"]:
-                for column in self.db_connection.metadata["tables"][table].c:
-                    # Construct full name
-                    X = str(column.table) + "." + column.name  # <table>.<column>
-                    table_parts = X.split(".")
-
-                    # Initialize list to store columns for a given schema
-                    if column.table.schema not in tmp_column_list.keys():
-                        tmp_column_list[column.table.schema] = []
-
-                    # Match based on the format of column_names
-                    if num_parts == 1:
-                        # Input is in <column> format
-                        if input_parts[0] == table_parts[-1]:
-                            tmp_column_list[column.table.schema].append(column)
-                            tables_required.add(column.table.name)
-                    elif num_parts == 2:
-                        # Input is in <table>.<column> format
-                        if (
-                            input_parts[0] == table_parts[-2]
-                            and input_parts[1] == table_parts[-1]
-                        ):
-                            tmp_column_list[column.table.schema].append(column)
-                            tables_required.add(column.table.name)
-
-            # Store results
-            for att in tmp_column_list.keys():
-                if att not in column_list.keys():
-                    column_list[att] = []
-                column_list[att].extend(tmp_column_list[att])
-
-                if att not in is_orderable_list.keys():
-                    is_orderable_list[att] = []
-                is_orderable_list[att].extend(
-                    [is_orderable_type(c.type) for c in tmp_column_list[att]]
-                )
+            column_list[sch] = list(canon_refs)
+            is_orderable_list[sch] = list(orderables)
 
         return list(tables_required), column_list, is_orderable_list
 
@@ -479,7 +467,7 @@ class Query:
 
         return None
 
-    def _render_filter(self, f, stmt, schema):
+    def _render_filter(self, f, stmt, schema_mode):
         """
         Append SQL statement with an additional WHERE clause based on a
         dataregistry filter.
@@ -490,10 +478,13 @@ class Query:
             Logic filter to be appended to SQL query
         stmt : sql alchemy Query object
             Current SQL query
-        schema : str
+        schema_mode : str
             The dicts returned from `self._parse_selected_columns` are indexed
             by schema (i.e., working or production), we need to know which
-            schema's columns we are rendering a filter for
+            schema's columns we are rendering a filter for. Ignored
+            unless query_mode is "both".   In that case, the value must be
+            one of "working" or "production"
+
 
         Returns
         -------
@@ -502,7 +493,7 @@ class Query:
         """
 
         # Get the reference to the column being filtered on.
-        _, column_ref, column_is_orderable = self._parse_selected_columns([f[0]])
+        _, column_ref, column_is_orderable = self._parse_selected_columns([f[0]], schema_mode=schema_mode)
 
         # Extract the filter operator (also making sure it is an allowed one)
         if f[1] not in _colops.keys():
@@ -512,7 +503,9 @@ class Query:
 
         # Extract the property we are ordering on (also making sure it
         # is orderable)
-        if not column_is_orderable[schema][0] and f[1] not in [
+        # characteristics don't depend on schema, so just pick the first one
+        sch_key = list(column_is_orderable.keys())[0]
+        if not column_is_orderable[sch_key][0] and f[1] not in [
             "~==",
             "~=",
             "==",
@@ -532,16 +525,16 @@ class Query:
 
             # Case insensitive wildcard matching (wildcard is '*')
             if f[1] == "~=":
-                return stmt.where(column_ref[schema][0].ilike(tmp))
+                return stmt.where(column_ref[sch_key][0].ilike(tmp))
             # Case sensitive wildcard matching (wildcard is '*')
             else:
-                return stmt.where(column_ref[schema][0].like(tmp))
+                return stmt.where(column_ref[sch_key][0].like(tmp))
 
         # General case using traditional boolean operator
         else:
-            return stmt.where(column_ref[schema][0].__getattribute__(the_op)(value))
+            return stmt.where(column_ref[sch_key][0].__getattribute__(the_op)(value))
 
-    def _append_filter_tables(self, tables_required, filters):
+    def _append_filter_tables(self, tables_required, filters, schema_mode):
         """
         A list of tables required to join is initially built from the return
         columns in `property_names`. However there may be additional tables in
@@ -553,6 +546,8 @@ class Query:
             Current list of tables from `property_names`
         filters : list
             The list of filters
+        schema_mode : one of "working", "production", "both", None. None
+                 is used for sqlite connection.
 
         Returns
         -------
@@ -564,7 +559,8 @@ class Query:
 
         # Loop over each filter and add the tables to the list
         for f in filters:
-            tmp_tables_required, _, _ = self._parse_selected_columns([f[0]])
+            tmp_tables_required, _, _ = self._parse_selected_columns([f[0]],
+                                                                     schema_mode=schema_mode)
 
             for t in tmp_tables_required:
                 tables_required.add(t)
@@ -594,7 +590,7 @@ class Query:
         filters=[],
         return_format="property_dict",
         strip_table_names=False,
-        schema=None,
+        schema_mode=None,
     ):
         """
         Get specified properties for datasets satisfying all filters. Both
@@ -622,9 +618,10 @@ class Query:
         strip_table_names : bool, optional
             True to remove the table name in the results columns
             This only works if a single table is needed for the query
-        schema : optional
+        schema_mode : optional
             May be "production", "working" or None.  Defaults to None,
             in which case query mode established at connection time is used.
+            Ignored unless query mode was "both"
 
         Returns
         -------
@@ -641,9 +638,17 @@ class Query:
 
         results = []
 
+        if not schema_mode:
+            schema_mode = self.db_connection._query_mode
+
+        if self.db_connection.dialect == "sqlite":
+            schema_mode = None
+
         # What tables and what columns are required for this query?
-        tables_required, column_list, _ = self._parse_selected_columns(property_names)
-        tables_required = self._append_filter_tables(tables_required, filters)
+        canonical_names = self._regularize_property_names(property_names)
+        tables_required, column_list, _ = self._parse_selected_columns(canonical_names, schema_mode=schema_mode)
+        tables_required = self._append_filter_tables(tables_required, filters,
+                                                     schema_mode)
 
         # Can only strip table names for queries against a single table
         if strip_table_names and len(tables_required) > 1:
@@ -653,19 +658,8 @@ class Query:
 
         # Construct query
         for sch in column_list.keys():  # Loop over each schema
-            if not schema:
-                # Do we want to search this schema given current query_mode?
-                if self.db_connection._query_mode != "both":
-                    if self.db_connection.dialect != "sqlite":
-                        if self.db_connection._query_mode != sch.split("_")[-1]:
-                            continue
-            else:
-                if self.db_connection.dialect != "sqlite":
-                    if not sch.endswith(schema):
-                        continue
-
             schema_str = "" if self.db_connection.dialect == "sqlite" else f"{sch}."
-
+            filter_mode = None if schema_str == "" else sch.split("_")[-1]
             stmt = select(
                 *[p.label(f"{p.table.name}.{p.name}") for p in column_list[sch]]
             )
@@ -719,7 +713,7 @@ class Query:
             # Append filters if acceptable
             if len(filters) > 0:
                 for f in filters:
-                    stmt = self._render_filter(f, stmt, sch)
+                    stmt = self._render_filter(f, stmt, filter_mode)
 
             # Report the constructed SQL query
             self.db_connection.logger.debug(f"Executing query: {stmt}")
@@ -734,10 +728,11 @@ class Query:
                     return None
 
             # Store result
-            results.append(pd.DataFrame(result))
+            df = pd.DataFrame(result)
+            results.append(df)
 
         # Combine results across schemas
-        if schema or self.db_connection._query_mode != "both":
+        if not (schema_mode and schema_mode == "both"):
             return_result = results[0]
         else:
             return_result = pd.concat(results, ignore_index=True)
@@ -869,7 +864,7 @@ class Query:
         If no such alias is found, return None, None
         """
         if self.db_connection.dialect == "sqlite":
-            tbl_name = f"dataset_alias"
+            tbl_name = "dataset_alias"
         else:
             tbl_name = f"{self.alias_query_schema}.dataset_alias"
         tbl = self.db_connection.metadata["tables"][tbl_name]
@@ -884,7 +879,7 @@ class Query:
 
         stmt = select(tbl.c.dataset_id, tbl.c.ref_alias_id)
         stmt = stmt.select_from(tbl)
-        stmt = self._render_filter(f, stmt, self.alias_query_schema)
+        stmt = self._render_filter(f, stmt, self.alias_query_mode)
 
         with self._engine.connect() as conn:
             try:
@@ -933,6 +928,14 @@ class Query:
         else:
             return self.db_connection.query_schema[0]
 
+    @property
+    def alias_query_mode(self):
+        """
+        Similar to above but returns a mode (either "working" or "production")
+        """
+        schema = self.alias_query_schema
+        return schema.split("_")[-1]
+
     def find_aliases(
         self,
         property_names=None,
@@ -968,7 +971,7 @@ class Query:
 
         # This is always a query of a single table: dataset_alias
         if self.db_connection.dialect == "sqlite":
-            tbl_name = f"dataset_alias"
+            tbl_name = "dataset_alias"
         else:
             tbl_name = f"{self.alias_query_schema}.dataset_alias"
         tbl = self.db_connection.metadata["tables"][tbl_name]
@@ -992,7 +995,7 @@ class Query:
         # Append filters if acceptable
         if len(filters) > 0:
             for f in filters:
-                stmt = self._render_filter(f, stmt, self.alias_query_schema)
+                stmt = self._render_filter(f, stmt, self.alias_query_mode)
 
         # Report the constructed SQL query
         self.db_connection.logger.debug(f"Executing query: {stmt}")

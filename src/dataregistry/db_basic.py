@@ -155,13 +155,14 @@ class DbConnection:
         entry_mode : str, optional
             Which schema ("working" or "production") within the namespace to
             write new (or modify/delete previous) entries to. This defines the
-            `entry_schema` in the connection object.
+            `entry_schema` in the connection object. Ignored for sqlite
+            connections.
         query_mode : str, optional
             When querying, both the working and production schemas within the
             namespace are jointly searched and their results combined
             (`query_mode`="both"). However setting `query_mode` to either
             "working" or "production" will restrict queries to only the chosen
-            schema.
+            schema. Ignored for sqlite connections
         creation_mode : bool
             During schema creation the database cannot be "reflected" (as it
             does not exist yet). This flag prevents reflecting a current
@@ -495,6 +496,44 @@ class DbConnection:
                 all_columns.add(column.name)
 
         return list(duplicates)
+
+# ----
+    @cached_property
+    def map_column_to_table(self):
+        """
+        Probe the database for table(s) each column name belongs to.
+        This is used later for querying.
+        The mapping doesn't depend on schema
+
+        Returns
+        -------
+        columns_to_table
+            dict associating column names with containing table(s).  If
+            more than 1, value stored is None
+        """
+
+        # Database hasn't been reflected yet
+        if len(self.metadata) == 0:
+            self._reflect()
+
+        # Find table(s) containing column.
+        all_columns = set()
+        columns_to_table = dict()
+        for table in self.metadata["tables"]:
+            for column in self.metadata["tables"][table].c:
+                # Only need to focus on a single schema (due to duplicate layout)
+                if self.metadata["tables"][table].schema != self.entry_schema:
+                    continue
+
+                if column.name in all_columns:   # already seen
+                    columns_to_table[column.name] = None
+                else:
+                    all_columns.add(column.name)
+                    columns_to_table[column.name] = table.name
+
+        return columns_to_table
+
+# ----
 
     def get_table(self, tbl, schema=None):
         """
