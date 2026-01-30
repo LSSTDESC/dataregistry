@@ -935,7 +935,10 @@ class Query:
         Similar to above but returns a mode (either "working" or "production")
         """
         schema = self.alias_query_schema
-        return schema.split("_")[-1]
+        if schema:
+            return schema.split("_")[-1]
+        else:     # sqlite
+            return "working"
 
     def find_aliases(
         self,
