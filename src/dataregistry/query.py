@@ -272,8 +272,11 @@ class Query:
         is_orderable_list = {}
 
         # Figure out which schema(s) we need to keep track of
-        if self.db_connection._query_mode != "both":  # No choice to make
-            # column_list[self.db_connection.schema] = []
+        if schema_mode and schema_mode == "production":
+            schema_list = [self.db_connection.production_schema]
+        if self.db_connection._query_mode == "production":
+            schema_list = [self.db_connection.production_schema]
+        elif self.db_connection._query_mode != "both":  # No choice to make
             schema_list = [self.db_connection.schema]
         else:
             if not schema_mode:

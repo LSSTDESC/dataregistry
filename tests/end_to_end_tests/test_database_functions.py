@@ -49,21 +49,13 @@ def test_get_dataset_absolute_path(dummy_file, schema):
             str(tmp_root_dir), dset_ownertype, dset_owner, dset_relpath
         )
     else:
+        # Need full schema name since it's embedded in path
         schema_name = datareg.db_connection._namespace + "_" + schema
         should_be = os.path.join(
             str(tmp_root_dir), schema_name, dset_ownertype, dset_owner,
             dset_relpath
             )
-        print(f"Returned from get_dataset_absolute_path: {v}")
-        print(f"Should be: {should_be}")
         assert v == should_be
-        # assert v == os.path.join(
-        #     str(tmp_root_dir), schema_name, dset_ownertype, dset_owner,
-        #     dset_relpath
-        #     )
-    # Cannot easily make a similar test for non-sqlite since schema type
-    # ("production", "working") is not what's used to form the path; the
-    # full schema name is.
 
 def test_find_entry(dummy_file):
     """
