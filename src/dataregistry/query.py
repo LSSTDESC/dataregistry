@@ -367,7 +367,8 @@ class Query:
 
             if filters:
                 for f in filters:
-                    stmt = self._render_filter(f, stmt, schema)
+                    schema_mode = schema.split("_")[-1] if schema else schema
+                    stmt = self._render_filter(f, stmt, schema_mode)
 
             with self._engine.connect() as conn:
                 result = conn.execute(stmt).scalar()
@@ -581,7 +582,7 @@ class Query:
             return None
 
         results = self.find_datasets(property_names=["keyword.keyword"],
-                                     schema=query_mode)
+                                     schema_mode=query_mode)
         return results["keyword.keyword"]
 
     def find_datasets(
@@ -816,7 +817,7 @@ class Query:
                 "dataset.relative_path",
             ],
             filters=[("dataset.dataset_id", "==", dataset_id)],
-            schema=schema
+            schema_mode=schema
         )
 
         # Handle case where no results are found
