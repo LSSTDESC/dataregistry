@@ -273,9 +273,9 @@ class Query:
 
         # Figure out which schema(s) we need to keep track of
         if schema_mode and schema_mode == "production":
-            schema_list = [self.db_connection.production_schema]
+            schema_list = self.db_connection.get_schema_list("production")
         if self.db_connection._query_mode == "production":
-            schema_list = [self.db_connection.production_schema]
+            schema_list = self.db_connection.get_schema_list("production")
         elif self.db_connection._query_mode != "both":  # No choice to make
             schema_list = [self.db_connection.schema]
         else:

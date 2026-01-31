@@ -336,7 +336,10 @@ class DbConnection:
         if which_schema not in {"both", "working", "production"}:
             raise ValueError(f"{which_schema} is a bad `which_schema`")
 
-        if self._dialect == "sqlite":
+        if self._dialect == "sqlite":   # only one schema
+            return [self.schema]
+
+        if not self._namespace:   # only one schema
             return [self.schema]
         else:
             if which_schema == "both":
