@@ -4,6 +4,7 @@ from sqlalchemy import MetaData
 from sqlalchemy import column, insert, select
 import yaml
 import os
+import stat
 import logging
 from datetime import datetime
 from dataregistry import __version__
@@ -20,6 +21,8 @@ __all__ = [
     "add_table_row",
 ]
 
+_OTHER_ACCESS = stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | stat.S_IROTH |\
+    stat.S_IWOTH | stat.S_IXOTH
 
 def _get_dataregistry_config(logger, config_file=None):
     """
@@ -174,8 +177,18 @@ class DbConnection:
         self._setup_logger(logging_level)
 
         # Extract connection info from configuration file
-        with open(_get_dataregistry_config(self.logger, config_file)) as f:
+        fpath = _get_dataregistry_config(self.logger, config_file)
+
+        # with open(_get_dataregistry_config(self.logger, config_file)) as f:
+        with open(fpath) as f:
             connection_parameters = yaml.safe_load(f)
+
+        # If connection parameters include password and file is not
+        # protected, complain
+        if os.stat(fpath).st_mode & _OTHER_ACCESS:
+            url_obj = make_url(connection_parameters["sqlalchemy.url"])
+            if url_obj.password:
+                self._logger.error(f"config file {fpath} must be accessible only to user")
 
         # Build the engine
         self._engine = engine_from_config(connection_parameters)
