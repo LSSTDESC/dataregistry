@@ -101,7 +101,7 @@ def add_table_row(conn, table_meta, values, commit=True):
 
     return result.inserted_primary_key[0]
 
-
+_PQ_AUTH_PREFIX = "postgresql://"
 class DbConnection:
     def __init__(
         self,
@@ -186,9 +186,14 @@ class DbConnection:
         # If connection parameters include password and file is not
         # protected, complain
         if os.stat(fpath).st_mode & _OTHER_ACCESS:
-            url_obj = make_url(connection_parameters["sqlalchemy.url"])
-            if url_obj.password:
-                self._logger.error(f"config file {fpath} must be accessible only to user")
+            auth_string = connection_parameters["sqlalchemy.url"]
+            if auth_string.startswith(PQ_AUTH_PREFIX):
+                # partially parse to see if password is included
+                auth_string = auth_string[len(PQ_AUTH_PREFIX):]
+                if auth_string.find(":") < auth_string.find("@"):
+                    raise valueError(
+                        f"config file {fpath} must be accessible only to user"
+                    )
 
         # Build the engine
         self._engine = engine_from_config(connection_parameters)
