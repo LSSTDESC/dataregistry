@@ -72,7 +72,6 @@ jobs:
         run: |
           echo "sqlalchemy.url : postgresql://postgres:postgres@localhost:5432/desc_data_registry" > $HOME/.config_reg_access
           chmod og-rw $HOME/.config_reg_access
-          ls -l $HOME/.config_reg_access
 
       # Create schemas
       - name: Create data registry schemas
@@ -154,9 +153,7 @@ jobs:
       - name: Create dummy config file
         run: |
           echo "sqlalchemy.url : postgresql://postgres:postgres@localhost:5432/desc_data_registry" > $DATAREG_CONFIG
-          ls -l $DATAREG_CONFIG
           chmod og-rw $DATAREG_CONFIG
-          ls -l $DATAREG_CONFIG
 
       # Create schemas
       - name: Create data registry schemas
