@@ -187,9 +187,9 @@ class DbConnection:
         # protected, complain
         if os.stat(fpath).st_mode & _OTHER_ACCESS:
             auth_string = connection_parameters["sqlalchemy.url"]
-            if auth_string.startswith(PQ_AUTH_PREFIX):
+            if auth_string.startswith(_PQ_AUTH_PREFIX):
                 # partially parse to see if password is included
-                auth_string = auth_string[len(PQ_AUTH_PREFIX):]
+                auth_string = auth_string[len(_PQ_AUTH_PREFIX):]
                 if auth_string.find(":") < auth_string.find("@"):
                     raise valueError(
                         f"config file {fpath} must be accessible only to user"
