@@ -24,6 +24,7 @@ __all__ = [
 _OTHER_ACCESS = stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | stat.S_IROTH |\
     stat.S_IWOTH | stat.S_IXOTH
 
+
 def _get_dataregistry_config(logger, config_file=None):
     """
     Locate the data registry configuration file.
@@ -101,7 +102,10 @@ def add_table_row(conn, table_meta, values, commit=True):
 
     return result.inserted_primary_key[0]
 
+
 _PQ_AUTH_PREFIX = "postgresql://"
+
+
 class DbConnection:
     def __init__(
         self,
@@ -191,7 +195,7 @@ class DbConnection:
                 # partially parse to see if password is included
                 auth_string = auth_string[len(_PQ_AUTH_PREFIX):]
                 if auth_string.find(":") < auth_string.find("@"):
-                    raise valueError(
+                    raise ValueError(
                         f"config file {fpath} must be accessible only to user"
                     )
 
@@ -507,14 +511,14 @@ class DbConnection:
         duplicates = set()
         all_columns = set()
         for table in self.metadata["tables"]:
-            for column in self.metadata["tables"][table].c:
+            for col in self.metadata["tables"][table].c:
                 # Only need to focus on a single schema (due to duplicate layout)
                 if self.metadata["tables"][table].schema != self.entry_schema:
                     continue
 
-                if column.name in all_columns:
-                    duplicates.add(column.name)
-                all_columns.add(column.name)
+                if col.name in all_columns:
+                    duplicates.add(col.name)
+                all_columns.add(col.name)
 
         return list(duplicates)
 
@@ -541,20 +545,18 @@ class DbConnection:
         all_columns = set()
         columns_to_table = dict()
         for table in self.metadata["tables"]:
-            for column in self.metadata["tables"][table].c:
+            for col in self.metadata["tables"][table].c:
                 # Only need to focus on a single schema (due to duplicate layout)
                 if self.metadata["tables"][table].schema != self.entry_schema:
                     continue
 
-                if column.name in all_columns:   # already seen
-                    columns_to_table[column.name] = None
+                if col.name in all_columns:   # already seen
+                    columns_to_table[col.name] = None
                 else:
-                    all_columns.add(column.name)
-                    columns_to_table[column.name] = table.name
+                    all_columns.add(col.name)
+                    columns_to_table[col.name] = table.name
 
         return columns_to_table
-
-# ----
 
     def get_table(self, tbl, schema=None):
         """
@@ -695,7 +697,7 @@ def _insert_keyword(
     """
 
     if not isinstance(keyword, str):
-        db_connection.logger.warning(f"Only string keywords can be inserted")
+        db_connection.logger.warning("Only string keywords can be inserted")
         return
 
     values = dict()
