@@ -155,7 +155,7 @@ jobs:
         run: |
           echo "sqlalchemy.url : postgresql://postgres:postgres@localhost:5432/desc_data_registry" > $DATAREG_CONFIG
           ls -l $DATAREG_CONFIG
-          chmod og-rw $DATAREG_CONFG
+          chmod og-rw $DATAREG_CONFIG
           ls -l $DATAREG_CONFIG
 
       # Create schemas
