@@ -1,3 +1,20 @@
+## Version 1.5.4
+
+Update doc, tutorial for move to production Spin cluster
+
+## Version 1.5.3
+
+Modify strategy for handling db authorization config file
+
+## Version 1.5.2
+
+Reorganize find_datasets for efficiency
+
+## Version 1.5.1
+
+- Fix keyword code
+- Regularize member names in DataRegistry class
+
 ## Version 1.5.0
 
 Add workflow to publish to PyPI upon release
