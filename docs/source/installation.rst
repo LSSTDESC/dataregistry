@@ -27,7 +27,7 @@ Normally ``desc-python`` is preferred unless you need a more recent
 version of soome package in the environment.
 
 If you wish to install the ``dataregistry`` package yourself, see the
-instructions :ref:`here <local-installation>`. 
+instructions :ref:`here <local-installation>`.
 
 Access accounts
 ---------------
@@ -37,7 +37,7 @@ group accounts, ``reg_reader`` and ``reg_writer``. These accounts have
 different privileges depending on the database schema you are connected to.
 Both ``reg_reader`` and ``reg_writer`` have query (read) access to the primary
 working schema (``lsst_desc_working``), but only ``reg_writer`` has write
-access to register new entries in the database. 
+access to register new entries in the database.
 
 Both ``reg_reader`` and ``reg_writer`` accounts have read and write access to
 the tutorial schemas (used for the tutorial notebooks, i.e., the
@@ -46,7 +46,7 @@ the tutorial schemas (used for the tutorial notebooks, i.e., the
 Neither ``reg_reader`` or ``reg_writer`` can write to the main production
 schema (``lsst_desc_production``), however they both have read access. If you
 need to register production entries, please consult one of the data registry
-admins. 
+admins.
 
 Depending on which account you have access to, you will need to perform a
 one-time-setup to authenticate, detailed below.
@@ -72,8 +72,7 @@ read it.  If you change the mode to allow others to read it the
 Authenticating with the reg_writer account
 ------------------------------------------
 
-A one-time setup is required in order to authenticate with the DESC data
-registry database. This is done via a YAML configuration file which stores the
+In this case the setup involves a YAML configuration file which stores the
 connection information to the database, and a ``.pgpass`` file, which
 stores full user credentials, including password.  We expect this form
 of the set-up to be used primarily by those authenticating with the
@@ -89,8 +88,7 @@ or when you use the ``dregs`` CLI.)
 
 .. code-block:: yaml
 
-   sqlalchemy.url : postgresql://<username>@dataregistry-prod-loadbalancer.desc-dataregistry.production.svc.spin.nersc.org:5432/desc_data_registry 
-
+   sqlalchemy.url : postgresql://<username>@dataregistry-prod-loadbalancer.desc-dataregistry.production.svc.spin.nersc.org:5432/desc_data_registry
 
 Then, if you don't have one already, create a file named ``~/.pgpass`` in your
 ``$HOME`` directory, and append the entry
@@ -108,4 +106,3 @@ ensure by doing
 .. code-block:: bash
 
    chmod 600 ~/.pgpass
-
