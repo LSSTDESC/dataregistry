@@ -284,6 +284,7 @@ class DatasetTable(BaseTable):
         # Fill final values into the dict
         kwargs_dict["name"] = name
         kwargs_dict["register_date"] = datetime.now()
+        kwargs_dict["fetch_date"= = kwargs_dict["register_date"]
         kwargs_dict["creator_uid"] = self._uid
         kwargs_dict["register_root_dir"] = self._root_dir
         if kwargs_dict["access_api_configuration"]:

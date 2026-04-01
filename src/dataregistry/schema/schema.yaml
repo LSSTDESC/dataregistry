@@ -467,12 +467,6 @@ tables:
         type: "Integer"
         description: "How many times has this datset been overwritten?"
         nullable: False
-      original_path:
-        type: "String"
-        description: "Value of old_location supplied to register function"
-      original_endpoint:
-        type: "String"
-        description: "Value of old_endpoint supplied to register function; defaults to NERSC endpoint"
       fetch_date:
         type: "DateTime"
         description: "Last time entry was accessed by fetch function. Initialized to register_date"
