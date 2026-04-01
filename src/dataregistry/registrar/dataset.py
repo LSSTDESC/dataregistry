@@ -24,7 +24,7 @@ from .dataset_util import set_dataset_status, get_dataset_status
 
 _ILLEGAL_NAME_CHAR = ["$", "*", "&", "/", "?", "\\", " "]
 _ILLEGAL_RELPATH_CHAR = ["$", "*", "&", "?", "\\", " "]
-
+_TO_MBYTE = 1024 * 1024
 
 class DatasetTable(BaseTable):
     def __init__(
@@ -334,7 +334,7 @@ class DatasetTable(BaseTable):
                 .values(
                     data_org=dataset_organization,
                     nfiles=num_files,
-                    total_disk_space=total_size / 1024 / 1024,
+                    total_disk_space=total_size / TO_MBYTE
                     creation_date=ds_creation_date,
                     status=set_dataset_status(kwargs_dict["status"], valid=True),
                 )

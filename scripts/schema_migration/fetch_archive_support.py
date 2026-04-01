@@ -41,7 +41,6 @@ db_connection = DbConnection(schema=args.schema, config_file=args.config,
 
 if args.steps in ['mod_schema', 'both']:
     # Update the schema:
-    # alter_col = f"alter table {args.schema}.dataset alter column relative_path drop not null"
     alter_table = f"alter table {args.schema}.dataset add column fetch_date timestamp, add column restore_date timestamp"
 
     print("To be executed: ", alter_table)

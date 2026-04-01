@@ -401,7 +401,7 @@ tables:
         description: "How many files are in the dataset"
       total_disk_space:
         type: "Float"
-        description: "Total disk spaced used by the dataset"
+        description: "Total disk spaced used by the dataset (Mbytes)"
       register_root_dir:
         type: "String"
         description: "The `root_dir` the dataset was originally ingested into"
@@ -473,4 +473,3 @@ tables:
       restore_date:
         type: "DateTime"
         description: "Last time entry was restored from archive"
-        
