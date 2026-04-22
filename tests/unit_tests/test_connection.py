@@ -3,8 +3,8 @@ import os
 import pytest
 from dataregistry.db_basic import DbConnection
 
-# This is the old default. It does exists here for testing purposed.
-# New default location is in NERSC /global/common so can't be tested here
+# This is the old default. It's used when not runniing at NERSC
+# NERSC default location is in NERSC /global/common so can't be tested here
 _OLD_DEFAULT_LOCATION = os.path.join(os.getenv("HOME"), ".config_reg_access")
 
 
@@ -13,6 +13,7 @@ _OLD_DEFAULT_LOCATION = os.path.join(os.getenv("HOME"), ".config_reg_access")
     [
         (_OLD_DEFAULT_LOCATION, False),
         (None, True),
+        (None, False),
     ],
 )
 def test_connection(config_file, set_env_var):
@@ -21,7 +22,8 @@ def test_connection(config_file, set_env_var):
 
     - Manually by passing `config_file` to `DataRegistry`
     - Through setting the $DATAREG_CONFIG environment variable
-    Cannot test using the default here because the default is now a
+    - Using (non-NERSC) default
+    Cannot test using the NERSC default here because the default is now a
     file at NERSC
     """
 

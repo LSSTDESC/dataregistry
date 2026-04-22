@@ -24,7 +24,7 @@ __all__ = [
 _OTHER_ACCESS = stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | stat.S_IROTH |\
     stat.S_IWOTH | stat.S_IXOTH
 
-_DEFAULT_LOC = "/global/common/software/lsst/dbaccess/dataregistry/data/.writer_config"
+_DEFAULT_LOC_NERSC = "/global/common/software/lsst/dbaccess/dataregistry/data/.writer_config"
 
 
 def _get_dataregistry_config(logger, config_file=None):
@@ -34,7 +34,9 @@ def _get_dataregistry_config(logger, config_file=None):
     The code will check three scenarios, which are, in order of priority:
         - The config_file has been manually passed
         - The DATAREG_CONFIG env variable has been set
-        - The default location (.writer_config in cfs, group readable)
+        - The default location at NERSC
+        - The default location when not running at NERSC
+          ${HOME}/.config_reg_access
 
     If none of these are true, an exception is raised.
 
@@ -50,6 +52,7 @@ def _get_dataregistry_config(logger, config_file=None):
         Path to data registry configuration file
     """
 
+    _not_nersc_default = os.path.join(os.getenv("HOME"), ".config_reg_access")
     # Case where the user has manually specified the location
     if config_file is not None:
         logger.debug(f"Using manually passed config file ({config_file})")
@@ -65,10 +68,13 @@ def _get_dataregistry_config(logger, config_file=None):
         )
         return os.getenv("DATAREG_CONFIG")
 
-    # Finally check default location
-    elif os.path.isfile(_DEFAULT_LOC):
-        logger.debug(f"Using default location for config file ({_DEFAULT_LOC})")
-        return _DEFAULT_LOC
+    # Finally check default locations, one for NERSC, one for other sites
+    elif os.path.isfile(_DEFAULT_LOC_NERSC):
+        logger.debug(f"Using default location for config file ({_DEFAULT_LOC_NERSC})")
+        return _DEFAULT_LOC_NERSC
+    elif os.path.isfile(_not_nersc_default):
+        logger.debug(f"Using default location for config file ({_not_nersc_default})")
+        return _not_nersc_default
     else:
         raise ValueError("Unable to located data registry config file")
 
@@ -188,7 +194,7 @@ class DbConnection:
 
         # If connection parameters include password and file is not
         # protected, complain
-        if fpath == _DEFAULT_LOC:
+        if fpath == _DEFAULT_LOC_NERSC:
             pass
         elif os.stat(fpath).st_mode & _OTHER_ACCESS:
             auth_string = connection_parameters["sqlalchemy.url"]
