@@ -3,15 +3,15 @@ import os
 import pytest
 from dataregistry.db_basic import DbConnection
 
-# This is always assumed to exist from the one-time-setup for the dataregistry
-_DEFAULT_LOCATION = os.path.join(os.getenv("HOME"), ".config_reg_access")
+# This is the old default. It does exists here for testing purposed.
+# New default location is in NERSC /global/common so can't be tested here
+_OLD_DEFAULT_LOCATION = os.path.join(os.getenv("HOME"), ".config_reg_access")
 
 
 @pytest.mark.parametrize(
     "config_file,set_env_var",
     [
-        (_DEFAULT_LOCATION, False),
-        (None, False),
+        (_OLD_DEFAULT_LOCATION, False),
         (None, True),
     ],
 )
@@ -21,12 +21,13 @@ def test_connection(config_file, set_env_var):
 
     - Manually by passing `config_file` to `DataRegistry`
     - Through setting the $DATAREG_CONFIG environment variable
-    - The default (passing None), which should look for $HOME/.config_reg_access
+    Cannot test using the default here because the default is now a
+    file at NERSC
     """
 
     # Case where we are using the DATAREG_SITE env variable
     if set_env_var:
-        os.environ["DATAREG_CONFIG"] = _DEFAULT_LOCATION
+        os.environ["DATAREG_CONFIG"] = _OLD_DEFAULT_LOCATION
     else:
         if os.environ.get("DATAREG_CONFIG"):
             os.environ.pop("DATAREG_CONFIG")
