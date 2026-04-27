@@ -23,7 +23,7 @@ if [ ! -d "$BASE_DIR" ]; then
 fi
 
 # Create the main folder in the base directory
-mkdir -p "$TARGET_DIR"
+mkdir "$TARGET_DIR"
 
 # Check if the main folder was created successfully
 if [ $? -ne 0 ]; then
@@ -32,7 +32,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # Create subdirectories: user, group, project, production
-mkdir -p "$TARGET_DIR/user" "$TARGET_DIR/group" "$TARGET_DIR/project" "$TARGET_DIR/production"
+mkdir "$TARGET_DIR/user" "$TARGET_DIR/group" "$TARGET_DIR/project" "$TARGET_DIR/production"
 
 # Check if subdirectories were created successfully
 if [ $? -ne 0 ]; then
@@ -45,4 +45,3 @@ chmod g=rx "$TARGET_DIR"
 
 # Group should not be able to write to $TARGET_DIR, but should be
 # be able to write to its subdirectories.
-
