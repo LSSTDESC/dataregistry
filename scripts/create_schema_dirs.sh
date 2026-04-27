@@ -2,6 +2,8 @@
 
 # Script to create initial schema directories within the root_dir
 # Must be run under the `descdr` group account
+# Note this account has umask = 007  (no access for world;
+# read+write for user, group
 
 # Check if the correct number of arguments is provided
 if [ "$#" -ne 2 ]; then
@@ -41,13 +43,6 @@ fi
 # Set the owning group to have read and execute (r-x) permissions on the main folder
 chmod g=rx "$TARGET_DIR"
 
-# Set read and execute ACL for the lsst group on the main folder
-#setfacl -m g:lsst:rx "$TARGET_DIR"
+# Group should not be able to write to $TARGET_DIR, but should be
+# be able to write to its subdirectories.
 
-# Check if the ACL was set successfully
-if [ $? -eq 0 ]; then
-    echo "Folder '$TARGET_DIR' with subdirectories created and ACL set for 'lsst' group."
-else
-    echo "Error: Failed to set ACL for the 'lsst' group."
-    exit 1
-fi
