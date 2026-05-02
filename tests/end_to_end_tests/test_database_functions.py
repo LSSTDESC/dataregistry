@@ -5,7 +5,8 @@ from dataregistry import DataRegistry, DbConnection
 from dataregistry.schema import DEFAULT_NAMESPACE
 from dataregistry.db_basic import _insert_keyword
 
-from database_test_utils import *
+from database_test_utils import insert_dataset_entry, insert_dataset_entry
+from database_test_utils import insert_alias_entry, dummy_file
 from sqlalchemy.exc import IntegrityError
 
 # This is just to see what backend we are using

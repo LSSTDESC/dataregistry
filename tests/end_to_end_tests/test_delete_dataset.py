@@ -6,7 +6,7 @@ from dataregistry.schema import DEFAULT_NAMESPACE
 from dataregistry.registrar.dataset_util import get_dataset_status
 from dataregistry.registrar.registrar_util import _form_dataset_path
 
-from database_test_utils import *
+from database_test_utils import _insert_dataset_entry, dummy_file
 
 
 def test_delete_dataset_bad_entry(dummy_file):

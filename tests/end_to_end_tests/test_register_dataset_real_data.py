@@ -4,7 +4,8 @@ import pytest
 from dataregistry import DataRegistry
 from dataregistry.schema import DEFAULT_NAMESPACE
 from dataregistry.exceptions import DataRegistryRootDirBadState
-from database_test_utils import *
+from database_test_utils import _insert_dataset_entry, _replace_dataset_entry
+from database_test_utils import dummy_file
 
 
 @pytest.mark.parametrize("data_org", ["file", "directory"])
