@@ -1,7 +1,7 @@
 from dataregistry import DataRegistry
 from dataregistry.schema import DEFAULT_NAMESPACE
 
-from database_test_utils import _insert_dataset_entry, _insert_dataset_alias
+from database_test_utils import _insert_dataset_entry, _insert_alias_entry
 from database_test_utils import dummy_file
 import pytest
 

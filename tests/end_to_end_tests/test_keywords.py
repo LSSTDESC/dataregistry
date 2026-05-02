@@ -2,7 +2,7 @@ import pytest
 from dataregistry import DataRegistry
 from dataregistry.schema import DEFAULT_NAMESPACE
 
-from database_test_utils import insert_dataset_entry, dummy_file
+from database_test_utils import _insert_dataset_entry, dummy_file
 
 
 def test_register_dataset_with_bad_keywords(dummy_file):
