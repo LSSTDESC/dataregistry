@@ -2,7 +2,8 @@ import pytest
 from dataregistry import DataRegistry
 from dataregistry.schema import DEFAULT_NAMESPACE
 
-from database_test_utils import *
+from database_test_utils import dummy_file
+from database_test_utils import _insert_dataset_entry, _insert_execution_entry
 
 import datetime
 

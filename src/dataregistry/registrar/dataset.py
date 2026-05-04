@@ -24,6 +24,7 @@ from .dataset_util import set_dataset_status, get_dataset_status
 
 _ILLEGAL_NAME_CHAR = ["$", "*", "&", "/", "?", "\\", " "]
 _ILLEGAL_RELPATH_CHAR = ["$", "*", "&", "?", "\\", " "]
+_ADMIN_USER = 'descdr'
 
 
 class DatasetTable(BaseTable):
@@ -113,8 +114,8 @@ class DatasetTable(BaseTable):
         # Only needed for `register` function, `replace` has no `relative_path`
         # argument as this cannot be changed from the original `register`
         if "relative_path" in kwargs_dict.keys():
-            if kwargs_dict["relative_path"] is not None:
-                if type(kwargs_dict["relative_path"]) != str:
+            if not kwargs_dict["relative_path"] is None:
+                if not isinstance(kwargs_dict["relative_path"], str):
                     raise ValueError("Relative path is not a valid string")
 
                 # Relative path cannot start with a "/"
@@ -185,6 +186,34 @@ class DatasetTable(BaseTable):
         if kwargs_dict["max_config_length"] is None:
             kwargs_dict["max_config_length"] = self._DEFAULT_MAX_CONFIG
 
+    def _check_write_permission(self, dataset_id):
+        """
+        In order to modify or delete an entry, user must have same
+        user id as the creator of the dataset or be the admin user
+
+        Parameters
+        ----------
+        dataset_id for entry in question
+
+        Returns
+        -------
+        True iff user has write permission
+        """
+        user = os.getenv("USER")
+        if user != _ADMIN_USER:
+            dataset_table = self._get_table_metadata("dataset")
+            stmt = select(
+                dataset_table.c.creator_uid,
+            )
+            stmt = stmt.where(dataset_table.c.dataset_id == dataset_id)
+            with self._engine.connect() as conn:
+                result = conn.execute(stmt)
+
+            rows = result.all()
+            return rows[0].creator_uid == user
+
+        return True
+
     def _compute_version_string(self, name, version, kwargs_dict):
         """
         Compute version string (either manually, or from bumping)
@@ -245,7 +274,7 @@ class DatasetTable(BaseTable):
 
         return wrapper
 
-    def _register_row(self, name, version, kwargs_dict):
+    def _register_row(self, name, version, kwargs_dict, gen_path=False):
         """
         Register a new row in the dataset table
 
@@ -313,6 +342,7 @@ class DatasetTable(BaseTable):
                 kwargs_dict["old_location"],
                 kwargs_dict["owner"],
                 kwargs_dict["owner_type"],
+                gen_path=gen_path,
             )
         else:
             dataset_organization = kwargs_dict["location_type"]
@@ -450,9 +480,12 @@ class DatasetTable(BaseTable):
         # If `relative_path` not passed, automatically generate it
         # But for location types "external" and "meta_only" it should
         # be None
+        # Keep track of whether or not path was generated
+        gen_path = False
         if kwargs_dict["location_type"] in ["external", "meta_only"]:
             kwargs_dict["relative_path"] = None
         elif kwargs_dict["relative_path"] is None:
+            gen_path = True
             kwargs_dict["relative_path"] = _relpath_from_name(
                 name, kwargs_dict["version_string"], kwargs_dict["old_location"]
             )
@@ -526,7 +559,8 @@ class DatasetTable(BaseTable):
                 )
 
         # Register the new row in the dataset table
-        prim_key = self._register_row(name, version, kwargs_dict)
+        prim_key = self._register_row(name, version, kwargs_dict,
+                                      gen_path=gen_path)
 
         return prim_key, kwargs_dict["execution_id"]
 
@@ -624,6 +658,10 @@ class DatasetTable(BaseTable):
             if get_dataset_status(previous_datasets[-1].status, "deleted"):
                 raise ValueError(f"Dataset {full_name} is deleted, cannot replace")
 
+            # Check if user may delete (either creator of dataset or admin)
+            if not self._check_write_permission(previous_datasets[-1].dataset_id):
+                raise ValueError(f"Dataset {full_name} is owned by another user, cannot replace")
+
             kwargs_dict["relative_path"] = previous_datasets[-1].relative_path
             kwargs_dict["replace_iteration"] = (
                 previous_datasets[-1].replace_iteration + 1
@@ -661,7 +699,8 @@ class DatasetTable(BaseTable):
 
         return prim_key, kwargs_dict["execution_id"]
 
-    def _handle_data(self, relative_path, old_location, owner, owner_type):
+    def _handle_data(self, relative_path, old_location, owner, owner_type,
+                     gen_path=False):
         """
         Find characteristics of dataset (i.e., is it a file or directory, how
         many files and total disk space of the dataset).
@@ -680,6 +719,8 @@ class DatasetTable(BaseTable):
             Owner of the dataset
         owner_type : str
             Owner type of the dataset
+        gen_path : boolean
+            True if relative_path was not explicitly provided by user
 
         Returns
         -------
@@ -735,16 +776,33 @@ class DatasetTable(BaseTable):
         else:
             num_files = 1
             total_size = os.path.getsize(loc)
-        self.db_connection.logger.debug(f"  - took {time.time()-tic:.2f}s")
+        self.db_connection.logger.debug(f"  - took {time.time() - tic:.2f}s")
 
         # Copy data into data registry
         if old_location:
+            dataset_parent = _form_dataset_path(
+                owner_type,
+                owner,
+                ".",
+                schema=self._schema,
+                root_dir=self._root_dir,
+            )
+            if gen_path:
+                dataset_parent = os.path.join(dataset_parent, ".gen_paths")
+            # If owner or owner/.gen_paths subdir don't exist, create
+            # These should have same permission bits as owner_type directory
+            # (group write) whereas data to be copied has only group read
+            try:
+                os.makedirs(dataset_parent)
+            except FileExistsError:
+                pass
+
             tic = time.time()
             self.db_connection.logger.debug(
                 f"Copying {num_files} files ({total_size/1024/1024:.2f} Mb)...",
             )
             _copy_data(dataset_organization, old_location, dest)
-            self.db_connection.logger.debug(f"  - took {time.time()-tic:.2f}s")
+            self.db_connection.logger.debug(f" - took {time.time() - tic:.2f}s")
 
         return dataset_organization, num_files, total_size, ds_creation_date
 
@@ -841,7 +899,11 @@ class DatasetTable(BaseTable):
             )
 
         # Delete the entry (-1 index is the latest replace_iteration)
-        self._delete_by_id(previous[-1].dataset_id, confirm=confirm)
+        the_id = previous[-1].dataset_id
+        if not self._check_write_permission(the_id):
+            raise ValueError(f"Dataset {name}, {version_string} is owned by another user.  Cannot delete.")
+
+        self._delete_by_id(the_id, confirm=confirm)
 
     def _delete_by_id(self, dataset_id, confirm=False):
         """

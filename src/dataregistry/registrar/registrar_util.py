@@ -47,7 +47,11 @@ def _parse_version_string(version):
     return d
 
 
-def _form_dataset_path(owner_type, owner, relative_path, schema=None, root_dir=None):
+def _form_dataset_path(owner_type,
+                       owner,
+                       relative_path,
+                       schema=None,
+                       root_dir=None):
     """
     Construct full (or relative) path to dataset in the data registry.
 
@@ -103,7 +107,7 @@ def get_directory_info(path):
     num_files : int
         Total number of files in dir (including subdirectories)
     total_size : float
-        Total disk space (in bytes) used by directory (including subdirectories)
+        Total disk space (bytes) used by directory (including subdirectories)
     """
 
     num_files = 0
@@ -243,13 +247,18 @@ def _read_configuration_file(configuration_file, max_config_length):
     return contents
 
 
+_DATA_UMASK = 0o027
+
+
 def _copy_data(dataset_organization, source, dest, do_checksum=False):
     """
     Copy data from one location to another (for ingesting directories and files
     into the `root_dir` shared space.
 
     Note prior to this, in `_handle_data`, it has already been check that
-    `source` exists, so we do not have to check again.
+    `source` exists, so we do not have to check again. Also _handle_data
+    has created any containing directories. This function only copies the
+    source.
 
     To ensure robustness, if overwriting data, the original file/folder is
     moved to a temporary location, then deleted if the copy was successful. If
@@ -285,11 +294,19 @@ def _copy_data(dataset_organization, source, dest, do_checksum=False):
             os.rename(dest, temp_dest)
 
         # Create any intervening directories
-        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        try:
+            old_umask = os.umask(_DATA_UMASK)
+            os.makedirs(os.path.dirname(dest))
+        except FileExistsError:
+            pass
+        finally:
+            ret_umask = os.umask(old_umask)
 
         # Copy a single file
         if dataset_organization == "file":
+            old_umask = os.umask(_DATA_UMASK)
             copyfile(source, dest)
+            ret_umask = os.umask(old_umask)
 
             # Checksums on the files
             if do_checksum and os.path.exists(temp_dest):
@@ -301,7 +318,9 @@ def _copy_data(dataset_organization, source, dest, do_checksum=False):
 
         # Copy a single directory (and subdirectories)
         elif dataset_organization == "directory":
+            old_umask = os.umask(_DATA_UMASK)
             copytree(source, dest, copy_function=copyfile)
+            ret_umask = os.umask(old_umask)
 
         # If successful, delete the backup
         if os.path.exists(temp_dest):
