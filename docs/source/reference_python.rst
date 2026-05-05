@@ -10,7 +10,7 @@ The DataRegistry class
 ----------------------
 
 The ``DataRegistry`` class is the primary front end to the ``dataregistry`` package.
-This should be the only object users have to import to their code. 
+This should be the only object users have to import to their code.
 
 It connects the user to the database, and serves as a wrapper to both the
 ``Registrar`` and ``Query`` classes.
@@ -38,3 +38,15 @@ It connects the user to the database, and serves as a wrapper to both the
 .. automethod:: dataregistry.registrar.execution.ExecutionTable.register
 
 .. automethod:: dataregistry.registrar.dataset_alias.DatasetAliasTable.register
+
+.. automethod:: dataregistry.registrar.keyword.KeywordTable.create_keywords
+
+.. automethod:: dataregistry.registrar.keyword.KeywordTable.disable_keyword
+
+.. automethod:: dataregistry.registrar.keyword.KeywordTable.enable_keyword
+
+.. automethod:: dataregistry.registrar.keyword.KeywordTable.get_keywords_from_dataset
+
+.. automethod:: dataregistry.registrar.keyword.KeywordTable.add_keywords_to_dataset
+
+.. automethod:: dataregistry.registrar.keyword.KeywordTable.remove_keywords_from_dataset
