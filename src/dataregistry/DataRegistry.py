@@ -26,11 +26,11 @@ class DataRegistry:
         """
         Primary data registry wrapper class.
 
-        The DataRegistry class links to both the Registrar class, to
-        register/modify/delete datasets, and the Query class, to query existing
-        datasets.
+        Each DataRegistry instance has as members an instance of the Registrar
+        class, to register/modify/delete datasets, and of the Query class,
+        to query existing datasets.
 
-        Links to the database is done automatically using the:
+        Access to the database is handled automatically using:
             - the users config file (if None defaults are used)
             - the passed schema (if None the default schema is used)
 
@@ -45,9 +45,10 @@ class DataRegistry:
             instance.
         owner_type : str
             To set the default owner_type for all registered datasets in this
-            instance.
+            instance, one of "production", "project", "group", "user".
+            Defaults to "user".
         config_file : str
-            Path to config file, if None, default location is assumed.
+            Path to config file, if None, use default NERSC config.
         root_dir : str
             Root directory for datasets, if None, default is assumed.
         logging_level : int, optional
@@ -57,8 +58,8 @@ class DataRegistry:
             built in, such as "nersc", which will set the `root_dir` to the
             data registry's default data location at NERSC.
         namespace : str, optional
-            Namespace to connect to. If None, the default namespace will be
-            used.
+            Namespace to connect to. If None, the default namespace
+            ("lsst_desc") will be used
         schema : str, optional
             Schema to connect to, to connect directly to a chosen schema,
             bypassing the namespace.
