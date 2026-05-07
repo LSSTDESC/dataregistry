@@ -294,19 +294,15 @@ def _copy_data(dataset_organization, source, dest, do_checksum=False):
             os.rename(dest, temp_dest)
 
         # Create any intervening directories
-        try:
-            old_umask = os.umask(_DATA_UMASK)
-            os.makedirs(os.path.dirname(dest))
-        except FileExistsError:
-            pass
-        finally:
-            ret_umask = os.umask(old_umask)
+        old_umask = os.umask(_DATA_UMASK)
+        os.makedirs(os.path.dirname(dest))
+        _ = os.umask(old_umask)
 
         # Copy a single file
         if dataset_organization == "file":
             old_umask = os.umask(_DATA_UMASK)
             copyfile(source, dest)
-            ret_umask = os.umask(old_umask)
+            _ = os.umask(old_umask)
 
             # Checksums on the files
             if do_checksum and os.path.exists(temp_dest):
@@ -320,7 +316,7 @@ def _copy_data(dataset_organization, source, dest, do_checksum=False):
         elif dataset_organization == "directory":
             old_umask = os.umask(_DATA_UMASK)
             copytree(source, dest, copy_function=copyfile)
-            ret_umask = os.umask(old_umask)
+            _ = os.umask(old_umask)
 
         # If successful, delete the backup
         if os.path.exists(temp_dest):
