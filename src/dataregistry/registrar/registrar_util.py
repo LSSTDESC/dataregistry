@@ -295,7 +295,7 @@ def _copy_data(dataset_organization, source, dest, do_checksum=False):
 
         # Create any intervening directories
         old_umask = os.umask(_DATA_UMASK)
-        os.makedirs(os.path.dirname(dest))
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
         _ = os.umask(old_umask)
 
         # Copy a single file
