@@ -400,7 +400,7 @@ def test_dataset_bad_name_string(dummy_file, name):
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
     # Register a dataset
-    with pytest.raises(ValueError, match="Cannot have character"):
+    with pytest.raises(ValueError, match="Illegal character"):
         d_id_1 = _insert_dataset_entry(
             datareg,
             name,

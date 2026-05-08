@@ -115,7 +115,7 @@ def test_production_schema_bad_register(dummy_file):
             entry_mode="production")
 
     # Try to register dataset without production owner type
-    with pytest.raises(ValueError, match="can go in the production schema"):
+    with pytest.raises(ValueError, match=" for prod datasets must be 'production'"):
         d_id = _insert_dataset_entry(
             datareg,
             "DESC:datasets:bad_production_dataset_1",
