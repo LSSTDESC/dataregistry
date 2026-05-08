@@ -7,10 +7,13 @@ The tutorials for the ``dataregistry`` package come in the form of Jupyter
 Notebooks (hosted in the ``docs/source/tutorial_notebooks`` directory in the
 repository).
 
-These tutorial notebooks can be run interactively at NERSC (see :ref:`here
+The tutorial notebooks can be run interactively at NERSC (see :ref:`here
 <interactive-notebooks>` for more info), or serve as standalone reference
 material by `viewing the notebooks on GitHub
-<https://github.com/LSSTDESC/dataregistry/blob/main/docs/source/tutorial_notebooks/>`__. 
+<https://github.com/LSSTDESC/dataregistry/blob/main/docs/source/tutorial_notebooks/>`__.
+
+See also some simple examples of queries and dataset registration
+`here <usage>` which you may be able to adapt to your needs.
 
 1) Getting started with the data registry
 -----------------------------------------
@@ -18,6 +21,7 @@ material by `viewing the notebooks on GitHub
 **Getting started: Part 1 - Registering datasets**: `Link to notebook <https://github.com/LSSTDESC/dataregistry/blob/main/docs/source/tutorial_notebooks/getting_started_1_register.ipynb>`__
 
 **Getting started: Part 2 - Simple queries**: `Link to notebook <https://github.com/LSSTDESC/dataregistry/blob/main/docs/source/tutorial_notebooks/getting_started_2_query.ipynb>`__
+
 
 2) Advanced tutorials
 ---------------------
