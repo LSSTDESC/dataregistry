@@ -6,7 +6,7 @@ import yaml
 from dataregistry import DataRegistry
 from dataregistry.schema import DEFAULT_NAMESPACE
 
-from database_test_utils import *
+from database_test_utils import _insert_execution_entry, dummy_file
 
 
 def _make_dummy_config(tmp_src_dir):

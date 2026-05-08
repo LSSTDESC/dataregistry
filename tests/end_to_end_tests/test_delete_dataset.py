@@ -6,7 +6,7 @@ from dataregistry.schema import DEFAULT_NAMESPACE
 from dataregistry.registrar.dataset_util import get_dataset_status
 from dataregistry.registrar.registrar_util import _form_dataset_path
 
-from database_test_utils import *
+from database_test_utils import _insert_dataset_entry, dummy_file
 
 
 def test_delete_dataset_bad_entry(dummy_file):
@@ -114,7 +114,7 @@ def test_delete_dataset_entry(dummy_file, is_dummy, dataset_name, delete_by_id):
             assert not os.path.isdir(data_path)
 
     # Make sure we can not delete an already deleted entry.
-    with pytest.raises(ValueError, match="previously been deleted"):
+    with pytest.raises(ValueError, match="previously deleted"):
         if delete_by_id:
             datareg.registrar.dataset._delete_by_id(d_id)
         else:

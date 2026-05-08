@@ -7,7 +7,8 @@ from dataregistry import DataRegistry
 from dataregistry.schema import DEFAULT_NAMESPACE
 from dataregistry.db_basic import DbConnection
 
-from database_test_utils import *
+from database_test_utils import dummy_file
+from database_test_utils import _insert_dataset_entry, _insert_execution_entry
 
 # This is just to see what backend we are using
 # Remember no production schema when using sqlite backend
@@ -114,7 +115,7 @@ def test_production_schema_bad_register(dummy_file):
             entry_mode="production")
 
     # Try to register dataset without production owner type
-    with pytest.raises(ValueError, match="can go in the production schema"):
+    with pytest.raises(ValueError, match=" for prod datasets must be 'production'"):
         d_id = _insert_dataset_entry(
             datareg,
             "DESC:datasets:bad_production_dataset_1",

@@ -9,8 +9,7 @@ from dataregistry import DataRegistry
 from dataregistry.schema import DEFAULT_NAMESPACE
 from dataregistry.registrar.dataset_util import get_dataset_status, set_dataset_status
 from dataregistry.registrar.registrar_util import _form_dataset_path
-
-from database_test_utils import *
+from database_test_utils import _insert_dataset_entry, dummy_file
 
 
 def test_register_dataset_defaults(dummy_file):
@@ -401,7 +400,7 @@ def test_dataset_bad_name_string(dummy_file, name):
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
     # Register a dataset
-    with pytest.raises(ValueError, match="Cannot have character"):
+    with pytest.raises(ValueError, match="Illegal character"):
         d_id_1 = _insert_dataset_entry(
             datareg,
             name,

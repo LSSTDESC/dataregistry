@@ -26,11 +26,11 @@ def _add_generic_arguments(parser_obj, add_entry_mode=True, add_query_mode=False
     """
 
     parser_obj.add_argument(
-        "--config_file",
+        "--config-file", "--config_file",
         help="Path to config file, if None, default location is assumed.",
         type=str
     )
-    parser_obj.add_argument("--root_dir", type=str,
+    parser_obj.add_argument("--root-dir", "--root_dir", type=str,
             help="""Root directory for datasets, if None, default is assumed.""")
     parser_obj.add_argument(
         "--site", type=str,
@@ -51,13 +51,15 @@ def _add_generic_arguments(parser_obj, add_entry_mode=True, add_query_mode=False
     )
     if add_entry_mode:
         parser_obj.add_argument(
+            "--entry-mode",
             "--entry_mode",
             default="working",
-            help="""Which schema ('working' or 'production') within the namespace 
+            help="""Which schema ('working' or 'production') within the namespace
             to use when writing/modifying/deleting entries.""",
         )
     if add_query_mode:
         parser_obj.add_argument(
+            "--query-mode",
             "--query_mode",
             default="both",
             help="""Which schema(s) ("working" or "production") to probe when querying.

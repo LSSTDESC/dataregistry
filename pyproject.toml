@@ -14,7 +14,6 @@ authors = [
 license = { file = "LICENCE" }
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -29,7 +28,7 @@ dependencies = [
     'pyyaml',
     'pandas'
 ]
-requires-python = ">=3.9" # Supported versions in CI are 3.9 -> 3.13
+requires-python = ">=3.10" # Supported versions in CI are 3.10 -> 3.13
 
 [tool.setuptools.dynamic]
 version = {attr = "dataregistry._version.__version__"}

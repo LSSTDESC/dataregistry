@@ -1,14 +1,11 @@
 import os
-import sys
 
 import pytest
-import yaml
 from dataregistry import DataRegistry
 from dataregistry.schema import DEFAULT_NAMESPACE
-from dataregistry.registrar.dataset_util import get_dataset_status, set_dataset_status
-from dataregistry.registrar.registrar_util import _form_dataset_path
 from dataregistry.exceptions import DataRegistryRootDirBadState
-from database_test_utils import *
+from database_test_utils import _insert_dataset_entry, _replace_dataset_entry
+from database_test_utils import dummy_file
 
 
 @pytest.mark.parametrize("data_org", ["file", "directory"])
@@ -44,7 +41,7 @@ def test_copy_data(dummy_file, data_org):
             old_location=data_path,
             location_type="dataregistry",
             relative_path="my_path",
-    )
+        )
 
     # Query
     f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
@@ -66,6 +63,7 @@ def test_copy_data(dummy_file, data_org):
         abs_path_2 = datareg.query.get_dataset_absolute_path(d_id_2,
                                                              schema="working")
         assert os.path.exists(abs_path_2)
+
 
 @pytest.mark.parametrize(
     "data_org,data_path",
@@ -168,6 +166,7 @@ def test_registering_bad_relative_path(dummy_file, link):
             relative_path=f"test/register/bad/relpath/{link}",
         )
 
+
 @pytest.mark.parametrize("link", ["file1.txt", "directory1"])
 def test_registering_bad_relative_path_2(dummy_file, link):
     """
@@ -200,8 +199,9 @@ def test_registering_bad_relative_path_2(dummy_file, link):
             "0.0.1",
             old_location=data_path,
             location_type="dataregistry",
-            relative_path=f".gen_paths",
+            relative_path=".gen_paths",
         )
+
 
 @pytest.mark.parametrize("link", ["file1.txt", "directory1"])
 def test_registering_deleted_relative_path(dummy_file, link):

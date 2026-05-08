@@ -6,7 +6,8 @@ from sqlalchemy import inspect
 
 from dataregistry import DataRegistry
 from dataregistry.schema import DEFAULT_NAMESPACE
-from database_test_utils import *
+from database_test_utils import _insert_dataset_entry, _insert_alias_entry
+from database_test_utils import _insert_execution_entry, dummy_file
 
 # Establish connection to database (default schema)
 datareg = DataRegistry(root_dir="temp")

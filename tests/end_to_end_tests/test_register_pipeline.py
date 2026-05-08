@@ -6,7 +6,8 @@ import yaml
 from dataregistry import DataRegistry
 from dataregistry.schema import DEFAULT_NAMESPACE
 
-from database_test_utils import *
+from database_test_utils import dummy_file
+from database_test_utils import _insert_dataset_entry, _insert_execution_entry
 
 
 def _check_dataset_has_right_execution(datareg, d_id, ex_id):
