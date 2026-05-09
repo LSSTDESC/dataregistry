@@ -1,0 +1,445 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Background &mdash; DESC data management  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/css/custom.css?v=d7e3758a" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="The dataregistry package" href="reference_python.html" />
+    <link rel="prev" title="Data Registry CLI Cheat Sheet" href="cli_cheat_sheet.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: white" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            DESC data management
+              <img src="_static/DREGS_logo_v2.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Overview:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#using-the-dataregistry-at-nersc">Using the <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> at NERSC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#access-accounts">Access accounts</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials and examples:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="tutorial_setup.html">Getting set up</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_setup.html#working-with-the-data-registry-tutorial-notebooks-interactively">Working with the data registry tutorial notebooks interactively</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_python.html">The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_python.html#getting-started-with-the-data-registry">1) Getting started with the data registry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_python.html#advanced-tutorials">2) Advanced tutorials</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_cli.html">The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> CLI</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_cli.html#registering-a-dataset">Registering a dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_cli.html#updating-a-dataset">Updating a dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial_cli.html#querying-the-data-registry">Querying the data registry</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cli_cheat_sheet.html">Data Registry CLI Cheat Sheet</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#main-commands">Main Commands</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#querying-from-the-command-line">🟦 Querying from the Command Line 🟦</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#registering-a-dataset">🟩 Registering a Dataset 🟩</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#modifying-a-dataset">🟨 Modifying a Dataset 🟨</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli_cheat_sheet.html#deleting-a-dataset">🟥 Deleting a Dataset 🟥</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#registering-a-dataset">Registering a dataset</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#register-with-copy">Register with copy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#external-datasets">External datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#more-registration-options">More registration options</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#queries">Queries</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#simple-query">Simple query</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#query-using-keywords">Query using keywords</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="reference_python.html">The <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_python.html#the-dataregistry-class">The DataRegistry class</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference_cli.html">The <code class="docutils literal notranslate"><span class="pre">dregs</span></code> CLI</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_cli.html#dregs">dregs</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference_schema.html">Database schema</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-execution-table">The execution table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-provenance-table">The provenance table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-execution-alias-table">The execution_alias table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-dataset-table">The dataset table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-dependency-table">The dependency table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-dataset-alias-table">The dataset_alias table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-keyword-table">The keyword table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference_schema.html#the-dataset-keyword-table">The dataset_keyword table</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer notes:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="dev_notes_spin.html">SPIN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev_notes_database.html">Database structure</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dev_notes_database.html#the-database-schemas">The database schemas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev_notes_database.html#first-time-creation-of-database-schemas">First time creation of database schemas</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="installation_locally.html">Local installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#creating-a-conda-environment">Creating a Conda environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#creating-a-python-venv">Creating a Python venv</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#installing-the-dataregistry-package">Installing the <code class="docutils literal notranslate"><span class="pre">dataregistry</span></code> package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation_locally.html#install-from-source">Install from source</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="database_upgrades.html">Database Upgrades</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="database_upgrades.html#creating-an-alternate-database">Creating an alternate database</a></li>
+<li class="toctree-l2"><a class="reference internal" href="database_upgrades.html#dump-the-active-database">Dump the active database</a></li>
+<li class="toctree-l2"><a class="reference internal" href="database_upgrades.html#restore-to-alt-db-database">Restore to alt_db database</a></li>
+<li class="toctree-l2"><a class="reference internal" href="database_upgrades.html#test-and-apply-for-real">Test and apply for real</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contact:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="contact.html">Contact</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: white" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">DESC data management</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Background</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/usage_examples.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="background">
+<span id="usage"></span><h1>Background<a class="headerlink" href="#background" title="Link to this heading"></a></h1>
+<p>Registered datasets are partitioned into <em>production</em> and <em>non-production</em> (aka
+<em>working</em>).  These examples only concern non-production.  A non-production
+dataset is uniquely identified by a <strong>name</strong> and a <strong>version</strong>
+(both user-specified). And when it is registered it is also assigned a unique
+<strong>dataset_id</strong>.  <strong>name</strong> is arbitrary except that it may not contain
+certain non-alphanumberic characters like space, question mark, etc.
+There is no default value.  <strong>version</strong> must be of the form
+<cite>X.Y.Z</cite> where X, Y and Z are non-negative integers with the usual
+semantic versioning meaning.  If not supplied it will default to “1.0.0”.</p>
+</section>
+<section id="registering-a-dataset">
+<h1>Registering a dataset<a class="headerlink" href="#registering-a-dataset" title="Link to this heading"></a></h1>
+<p>The dataregistry supports several different modes of registering datasets.
+The most common are described here.</p>
+<section id="register-with-copy">
+<h2>Register with copy<a class="headerlink" href="#register-with-copy" title="Link to this heading"></a></h2>
+<p>When registering a “normal”, non-production dataset, it is typically
+copied from its original location to somewhere in cfs under the dataregistry
+root, which at NERSC is <cite>/global/cfs/cdirs/desc-reg</cite>.  More specifically,
+it will end up under
+<cite>/global/cfs/cdirs/desc-reg/lsst_desc_working/&lt;owner-type&gt;/&lt;owner&gt;</cite>
+where <cite>&lt;owner-type&gt;</cite> is one of “project”, “group” or “user”.  The value of
+<cite>&lt;owner&gt;</cite> is up to the user, but for owner-type=”user” it defaults to the
+unix userid of the caller. This will be referred to as <strong>entry_base_path</strong>
+below.</p>
+<p>Note there are two constraints to be satisfied when registering new dataset:</p>
+<ul class="simple">
+<li><p>the pair (<strong>name</strong>, <strong>version</strong>) must not have been already used.</p></li>
+<li><p>the destination location for the new dataset must not have already been
+used.</p></li>
+</ul>
+<p>(However, under certain circumstances you can <em>replace</em> a dataset, in which
+case <strong>name</strong>, <strong>version</strong>, and destination location will all be the same
+as before.)</p>
+<section id="relative-path-specified">
+<h3>Relative path specified<a class="headerlink" href="#relative-path-specified" title="Link to this heading"></a></h3>
+<p>The caller may specify the exact path relative to the <strong>entry_base_path</strong>
+by means of the optional keyword argument <cite>relative_path</cite>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataregistry</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataRegistry</span>
+
+<span class="c1"># create new data registry object; reference its registrar member</span>
+<span class="n">my_reg</span> <span class="o">=</span> <span class="n">DataRegistry</span><span class="p">()</span><span class="o">.</span><span class="n">registrar</span>
+
+<span class="c1"># establish values to be passed to the register routine</span>
+<span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;my_dataset&quot;</span>
+<span class="n">version</span> <span class="o">=</span> <span class="s2">&quot;1.0.1&quot;</span>
+
+<span class="c1"># The dataset may be either a regular file or a directory.</span>
+<span class="c1"># This one is a regular file in my scratch area</span>
+<span class="n">old_loc</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;SCRATCH&quot;</span><span class="p">),</span> <span class="s2">&quot;my_dataset.parquet&quot;</span><span class="p">)</span>
+
+<span class="n">rel_path</span> <span class="o">=</span> <span class="s2">&quot;my_dataset.parquet&quot;</span>
+
+<span class="n">id_1</span><span class="p">,</span> <span class="n">exec_1</span> <span class="o">=</span> <span class="n">my_reg</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">,</span>
+    <span class="n">version</span><span class="p">,</span>
+    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;A dataset registered with specific relative path&quot;</span><span class="p">,</span>
+    <span class="n">owner_type</span><span class="o">=</span><span class="s2">&quot;user&quot;</span><span class="p">,</span>  <span class="c1"># this is the default; no need to specify</span>
+    <span class="n">old_location</span><span class="o">=</span><span class="n">old_loc</span><span class="p">,</span>
+    <span class="n">relative_path</span><span class="o">=</span><span class="n">rel_path</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+<p>The result is a new entry in the dataset table in the database with
+<strong>dataset_id</strong> == id_1, a new entry in the execution table with
+<strong>execution_id</strong> == exec_1, and a copy of the dataset at
+<strong>entry_base_path</strong>/my_dataset.parquet</p>
+<p>To learn more about execution ids, see the
+<a class="reference external" href="https://github.com/LSSTDESC/dataregistry/blob/main/docs/source/tutorial_notebooks/pipelines.ipynb">pipelines tutorial</a></p>
+</section>
+<section id="relative-path-unspecified">
+<h3>Relative path unspecified<a class="headerlink" href="#relative-path-unspecified" title="Link to this heading"></a></h3>
+<p>If the relative path is unspecified, the dataregistry will form one out of
+name and version. Such generated relative paths always start with the
+subdirectory <cite>.gen_paths</cite> followed by subdirectory <cite>name`_`version</cite>, then
+the copy of the dataset at <cite>old_location</cite>:</p>
+<p>The code for this would look just like the previous example except that
+the <cite>relative_path</cite> argument would be omitted.  The resulting dataset
+would have parent directory</p>
+<p><strong>entry_base_path</strong>/<cite>name`_`version</cite>/.gen_paths/<cite>name`_`version</cite>/my_dataset.parquet</p>
+<p>The <cite>.gen_paths</cite> component guarantees that the generated paths will not
+collide with user-supplied relative paths (which may not start with
+<cite>.gen_paths</cite>).  The subdirectory whose name is manufactured out of
+<cite>name</cite> and <cite>version</cite> guarantees generated paths will not conflict with
+each other.</p>
+</section>
+</section>
+<section id="external-datasets">
+<h2>External datasets<a class="headerlink" href="#external-datasets" title="Link to this heading"></a></h2>
+<p>It is possible to register datasets whose files are not managed by the
+dataregistry.  They need not even be located at NERSC. Reasons
+for going this route include</p>
+<ul class="simple">
+<li><p>your dataset is dependent on a catalog whose official location is
+elsewhere, perhaps even maintained by a different collaboration.</p></li>
+<li><p>the dataset is large and is likely to be superseded by another version
+soon. It’s not worth the time and effort to copy to cfs</p></li>
+<li><p>the dataset is registered with and intended to be accessed via the Butler
+but you would like to be able to find it using the dataregistry.</p></li>
+</ul>
+<p>Naturally the dataregistry cannot archive such a dataset
+nor protect it from being overwritten or deleted by someone else.</p>
+<p>You can register a dataset as external by including the optional argument
+<cite>location_type</cite> with value “external” (default is “dataregistry”). In
+this case you are required to also include at least one of the optional
+arguments <cite>contact_email</cite> or <cite>url</cite>, preferably both. <cite>contact_email</cite> should be
+the email address of someone responsible for the dataset. <cite>url</cite> should be a
+valid url which may be used to access the dataset, either directly, e.g.
+downloading with curl, or by
+referencing a web site which describes how to access and use the dataset.
+(For datasets located at NERSC you can use a url starting with “<a class="reference external" href="file:///">file:///</a>”.)
+For datasets of general interest be sure to put something sufficiently
+informative for the <cite>description</cite> argument.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataregistry</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataRegistry</span>
+
+<span class="c1"># create new data registry object; reference its registrar member</span>
+<span class="n">my_reg</span> <span class="o">=</span> <span class="n">DataRegistry</span><span class="p">()</span><span class="o">.</span><span class="n">registrar</span>
+
+<span class="c1"># establish values to be passed to the register routine</span>
+<span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;external_dataset&quot;</span>
+<span class="n">version</span> <span class="o">=</span> <span class="s2">&quot;1.2.3&quot;</span>
+<span class="n">email</span> <span class="o">=</span> <span class="s2">&quot;JaneDoe@slac.stanford.edu&quot;</span>
+<span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;file:///global/cfs/cdirs/lsst/groups/some_group/large_dataset&quot;</span>
+
+<span class="n">id_2</span><span class="p">,</span> <span class="n">exec_2</span> <span class="o">=</span> <span class="n">my_reg</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">,</span>
+    <span class="n">version</span><span class="p">,</span>
+    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Registered</span>
+    <span class="n">owner_type</span><span class="o">=</span><span class="s2">&quot;user&quot;</span><span class="p">,</span>  <span class="c1"># this is the default</span>
+    <span class="n">location_type</span><span class="o">=</span><span class="s2">&quot;external&quot;</span><span class="p">,</span>
+    <span class="n">contact_email</span><span class="o">=</span><span class="n">email</span><span class="p">,</span>
+    <span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="more-registration-options">
+<h2>More registration options<a class="headerlink" href="#more-registration-options" title="Link to this heading"></a></h2>
+<section id="keywords">
+<h3>Keywords<a class="headerlink" href="#keywords" title="Link to this heading"></a></h3>
+<p>You may define keywords or use existing keywords to label your datasets.
+Keywords can be associated with datasets at the time you register them
+(argument <cite>keywords</cite>) or any time thereafter.</p>
+</section>
+<section id="inputs">
+<h3>Inputs<a class="headerlink" href="#inputs" title="Link to this heading"></a></h3>
+<p>You can specify which inputs were used to create a dataset either at
+the time you register the new dataset or at a later time.  See the
+pipeline tutorial for details.</p>
+</section>
+<section id="access-api">
+<h3>Access API<a class="headerlink" href="#access-api" title="Link to this heading"></a></h3>
+<p>By design the dataregistry does not itself read datasets except to copy them;
+it has no knowledge of their contents or structure.  However it is possible
+to identify an <em>access API</em>, an application which can read the dataset.
+Examples include GCRCatalogs and the Butler. Use the optional arguments
+<cite>access_api</cite> and <cite>access_api_configuration</cite> when you register the dataset
+to store the information needed. The value of <cite>access_api</cite> should be the
+name of the facility which knows how to read the file.  The value of
+<cite>access_api_configuration</cite> is the path to a text file containing whatever
+further information is needed by the facility to read the dataset.
+For GCRCatalogs it’s a yaml file, the same one used normally by GCRCatalogs
+to load a dataset; for other facilities any text file format will do as long
+as it contains the information needed by the facility to make sense of the
+dataset.
+When you register the dataset, the dataregistry will read the text file
+and store the contents. A user can then make a query to recover the
+contents of the confiuration file and pass them to the facility.</p>
+</section>
+</section>
+</section>
+<section id="queries">
+<h1>Queries<a class="headerlink" href="#queries" title="Link to this heading"></a></h1>
+<p>There are a few special query routines to return structural information,
+e.g. <cite>get_keyword_list</cite> returns a list of all defined keywords for either
+the production or non-production part of the database, but for the most
+part one uses the general-purpose <cite>find_datasets</cite>. Use the <cite>property_names</cite>
+argument to list all database columns you would like returned (defaults
+to all columns in the <cite>dataset</cite> table).  Use the <cite>filters</cite> argument to
+narrow down the rows for which values should be returned. A filter is
+just a triple (<cite>property_name</cite>, <cite>operator</cite>, <cite>value</cite>).  See documentation
+of the <cite>Filter</cite> class for details.</p>
+<section id="simple-query">
+<h2>Simple query<a class="headerlink" href="#simple-query" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataregistry</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataRegistry</span>
+
+<span class="c1"># create new data registry object; reference its query member</span>
+<span class="n">my_q</span> <span class="o">=</span> <span class="n">DataRegistry</span><span class="p">()</span><span class="o">.</span><span class="n">query</span>
+
+<span class="c1"># When specifying columns, qualify with table name</span>
+<span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;dataset.dataset_id&quot;</span><span class="p">,</span> <span class="s2">&quot;dataset.name&quot;</span><span class="p">,</span> <span class="s2">&quot;dataset.relative_path&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;dataset.access_api&quot;</span><span class="p">,</span> <span class="s2">&quot;dataset.access_api_configuration&quot;</span><span class="p">]</span>
+
+<span class="c1"># dataset.name must contain &quot;dc2&quot; (case insensitive)</span>
+<span class="n">filters</span> <span class="o">=</span> <span class="p">[</span><span class="n">my_q</span><span class="o">.</span><span class="n">gen_filter</span><span class="p">(</span><span class="s2">&quot;dataset.name&quot;</span><span class="p">,</span> <span class="s2">&quot;~=&quot;</span><span class="p">,</span> <span class="s2">&quot;*dc2*&quot;</span><span class="p">)]</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="n">my_q</span><span class="o">.</span><span class="n">find_datasets</span><span class="p">(</span>
+              <span class="n">property_names</span><span class="o">=</span><span class="n">columns</span><span class="p">,</span>
+              <span class="n">filters</span><span class="o">=</span><span class="n">filters</span><span class="p">,</span>
+              <span class="n">schema_mode</span><span class="o">=</span><span class="s2">&quot;production&quot;</span><span class="p">,</span>  <span class="c1"># search only production</span>
+          <span class="p">)</span>
+<span class="n">to_print</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;dataset.name&quot;</span><span class="p">]),</span> <span class="mi">5</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">to_print</span><span class="p">):</span>
+     <span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;dataset.name&quot;</span><span class="p">][</span><span class="n">i</span><span class="p">],</span>
+           <span class="n">results</span><span class="p">[</span><span class="s2">&quot;dataset.relative_path&quot;</span><span class="p">][</span><span class="n">i</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>The result will be a pandas DataFrame with a column for each entry in
+<cite>columns</cite>.</p>
+</section>
+<section id="query-using-keywords">
+<h2>Query using keywords<a class="headerlink" href="#query-using-keywords" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataregistry</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataRegistry</span>
+
+<span class="c1"># create new data registry object; reference its query member</span>
+<span class="n">my_q</span> <span class="o">=</span> <span class="n">DataRegistry</span><span class="p">()</span><span class="o">.</span><span class="n">query</span>
+
+<span class="c1"># When specifying columns, qualify with table name</span>
+<span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;dataset.dataset_id&quot;</span><span class="p">,</span> <span class="s2">&quot;dataset.name&quot;</span><span class="p">,</span> <span class="s2">&quot;dataset.relative_path&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;version_string&quot;</span><span class="p">]</span>
+
+<span class="c1"># dataset_id must be &gt; 10; name must contain &quot;dc2&quot; (case insensitive)</span>
+<span class="n">filters</span> <span class="o">=</span> <span class="p">[</span><span class="n">my_q</span><span class="o">.</span><span class="n">gen_filter</span><span class="p">(</span><span class="s2">&quot;keyword.keyword&quot;</span><span class="p">,</span> <span class="s2">&quot;==&quot;</span><span class="p">,</span> <span class="s2">&quot;pz_model&quot;</span><span class="p">)]</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="n">my_q</span><span class="o">.</span><span class="n">find_datasets</span><span class="p">(</span>
+              <span class="n">property_names</span><span class="o">=</span><span class="n">columns</span><span class="p">,</span>
+              <span class="n">filters</span><span class="o">=</span><span class="n">filters</span><span class="p">,</span>
+              <span class="n">schema_mode</span><span class="o">=</span><span class="s2">&quot;working&quot;</span><span class="p">,</span>  <span class="c1"># search only non-production</span>
+          <span class="p">)</span>
+<span class="n">to_print</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;dataset.name&quot;</span><span class="p">]),</span> <span class="mi">5</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">to_print</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;dataset.name&quot;</span><span class="p">][</span><span class="n">i</span><span class="p">],</span>
+          <span class="n">results</span><span class="p">[</span><span class="s2">&quot;dataset.version_string&quot;</span><span class="p">][</span><span class="n">i</span><span class="p">],</span>
+          <span class="n">results</span><span class="p">[</span><span class="s2">&quot;dataset.relative_path&quot;</span><span class="p">][</span><span class="n">i</span><span class="p">])</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="cli_cheat_sheet.html" class="btn btn-neutral float-left" title="Data Registry CLI Cheat Sheet" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="reference_python.html" class="btn btn-neutral float-right" title="The dataregistry package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, DESC.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
