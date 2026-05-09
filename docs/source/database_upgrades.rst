@@ -1,9 +1,7 @@
+.. _database_upgrades:
 
 Database Upgrades
 =================
-
-.. _database_upgrades
-
 
 Creating an alternate database
 ******************************
