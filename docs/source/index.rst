@@ -36,13 +36,14 @@ them.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Tutorials:
+   :caption: Tutorials and examples:
    :hidden:
 
    tutorial_setup
    tutorial_python
    tutorial_cli
    cli_cheat_sheet
+   usage_examples
 
 .. toctree::
    :maxdepth: 2

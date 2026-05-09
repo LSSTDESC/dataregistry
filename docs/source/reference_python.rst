@@ -33,8 +33,6 @@ It connects the user to the database, and serves as a wrapper to both the
 
 .. automethod:: dataregistry.registrar.dataset.DatasetTable.get_modifiable_columns
 
-.. automethod:: dataregistry.registrar.dataset.DatasetTable.get_keywords
-
 .. automethod:: dataregistry.registrar.execution.ExecutionTable.register
 
 .. automethod:: dataregistry.registrar.dataset_alias.DatasetAliasTable.register
