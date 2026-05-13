@@ -241,7 +241,7 @@ class DataRegistry:
                     # This is currently broken so only support _ne,
                     # but remove this when issue 220 in the data registry is resolved.
                     if suffix != "_ne":
-                        raise ValueError("Querying with _gt, _gte, _lt, or _lte is not currently supported due to a dataregistry issue 220.")
+                        raise ValueError("Querying with _gt, _ge, _lt, or _le is not currently supported due to a dataregistry issue 220.")
                     base_key = k[:-len(suffix)]
                     # Generate that actual query object
                     f = self.query.gen_filter("dataset." + base_key, op, v)
