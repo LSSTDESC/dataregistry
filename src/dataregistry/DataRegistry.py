@@ -280,13 +280,13 @@ class DataRegistry:
             # because we have already queried all the info we need to
             # generate the path and that would require another DB
             # query per result.
-            if r["dataset.owner_type"] is None:
+            if r["owner_type"] is None:
                 r["path"] = None
             else:
                 r["path"] = _form_dataset_path(
-                    r["dataset.owner_type"],
-                    r['dataset.owner'],
-                    r['dataset.relative_path'],
+                    r["owner_type"],
+                    r['owner'],
+                    r['relative_path'],
                     schema=schema_name,
                     root_dir=self.root_dir,
                 )
