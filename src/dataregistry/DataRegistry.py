@@ -226,9 +226,9 @@ class DataRegistry:
         filters = []
         ops = {
             "_lt": "<",
-            "_lte": "<=",
+            "_le": "<=",
             "_gt": ">",
-            "_gte": ">=",
+            "_ge": ">=",
             "_ne": "!="
         }
         # parse the query keywords and turn them all into filters.
