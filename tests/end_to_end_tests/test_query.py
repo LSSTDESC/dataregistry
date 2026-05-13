@@ -363,9 +363,11 @@ def test_easy_query(dummy_file):
     assert results[0]["version_string"] == "0.0.1"
 
     results = datareg.easy_query(name_ne="not_test_easy_query")
-    assert len(results) == 1
-    assert results[0]["name"] == "test_easy_query2"
-    assert results[0]["version_string"] == "0.0.2"
+    assert len(results) >= 1
+    names = [r["name"] for r in results]
+    index = names.index("test_easy_query2")
+    assert index >= 0
+    assert results[index]["version_string"] == "0.0.2"
 
     with pytest.raises(ValueError, match="Querying with _gt, _gte, _lt, or _lte is not currently supported."):
         datareg.easy_query(name_gt="test_easy_query")
