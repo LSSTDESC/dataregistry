@@ -369,5 +369,5 @@ def test_easy_query(dummy_file):
     assert index >= 0
     assert results[index]["version_string"] == "0.0.2"
 
-    with pytest.raises(ValueError, match="Querying with _gt, _gte, _lt, or _lte is not currently supported."):
+    with pytest.raises(ValueError, match="Querying with _gt, _ge, _lt, or _le is not currently supported."):
         datareg.easy_query(name_gt="test_easy_query")
