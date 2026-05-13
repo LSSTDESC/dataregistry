@@ -1,6 +1,7 @@
 from dataregistry.db_basic import DbConnection
 from dataregistry.query import Query
 from dataregistry.registrar import Registrar
+from dataregistry.registrar.registrar_util import _form_dataset_path
 import yaml
 import os
 import logging
@@ -255,6 +256,18 @@ class DataRegistry:
         # Change to a list of dicts for convenience. could update this if desired.
         results = results.to_dict(orient='records')
 
+
+        # We will need this schema information to
+        # generate the absolute path for each dataset.
+        if self.db_connection._query_mode == "both":
+            schema = "working"
+        else:
+            schema = self.db_connection._query_mode
+        if not self.db_connection._namespace:
+            schema_name = None
+        else:
+            schema_name = self.db_connection._namespace + '_' + schema
+
         # remove the "dataset." prefix from the keys
         for r in results:
             for k in list(r.keys()):
@@ -262,14 +275,20 @@ class DataRegistry:
                     new_k = k[len("dataset."):]
                     r[new_k] = r.pop(k)
 
-            # The get_dataset_absolute_path currently fails with various
-            # errors for some datasets, so catch any exceptions and just
-            # set the path to None in that case.
-            dataset_id = r['dataset_id']
-            try:
-                path = self.query.get_dataset_absolute_path(dataset_id)
-            except Exception:
-                path = None
-            r['path'] = path
+            # Get the absolute path for each dataset.
+            # We avoid using the query.get_dataset_absolute_path function here
+            # because we have already queried all the info we need to
+            # generate the path and that would require another DB
+            # query per result.
+            if r["dataset.owner_type"] is None:
+                r["path"] = None
+            else:
+                r["path"] = _form_dataset_path(
+                    r["dataset.owner_type"],
+                    r['dataset.owner'],
+                    r['dataset.relative_path'],
+                    schema=schema_name,
+                    root_dir=self.root_dir,
+                )
 
         return results
