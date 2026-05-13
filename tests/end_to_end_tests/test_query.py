@@ -335,3 +335,37 @@ def test_query_get_all_tables(dummy_file):
     tables = datareg.query.get_all_tables()
 
     assert len(tables) > 0
+
+def test_easy_query(dummy_file):
+    """Test the `easy_query()` function in `query.py`"""
+
+    # Establish connection to database
+    _, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+
+    # Insert dataset
+    _insert_dataset_entry(
+        datareg,
+        "test_easy_query",
+        "0.0.1",
+    )
+
+    _insert_dataset_entry(
+        datareg,
+        "test_easy_query2",
+        "0.0.2",
+    )
+
+    results = datareg.easy_query(name="test_easy_query")
+
+    assert len(results) == 1
+    assert results[0]["name"] == "test_easy_query"
+    assert results[0]["version_string"] == "0.0.1"
+
+    results = datareg.easy_query(name_ne="not_test_easy_query")
+    assert len(results) == 1
+    assert results[0]["name"] == "test_easy_query2"
+    assert results[0]["version_string"] == "0.0.2"
+
+    with pytest.raises(ValueError, match="Querying with _gt, _gte, _lt, or _lte is not currently supported."):
+        datareg.easy_query(name_gt="test_easy_query")
