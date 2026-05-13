@@ -159,15 +159,15 @@ class DataRegistry:
         results = registry.easy_query(owner="jbogart")
 
         # a specific dataset
-        results = registry.easy_query(registry, dataset_id=30)
+        results = registry.easy_query(dataset_id=30)
 
         # you can combine search terms, which are ANDed together:
-        results = registry.easy_query(registry, owner="jbogart", version_major=2)
+        results = registry.easy_query(owner="jbogart", version_major=2)
 
         Once issue 220 in the data registry is resolved then you will also
         be able to do searches with operators:
 
-        results = registry.easy_query(registry, total_disk_size_gt=100)
+        results = registry.easy_query(total_disk_size_gt=100)
 
         Current supported search terms are:
             access_api
@@ -206,9 +206,7 @@ class DataRegistry:
 
         Parameters
         ----------
-        reg : dataregistry.DataRegistry
-            The registry to query.
-        **kwargs : dict
+        **query : dict
             The query parameters. Currently these should always be
             of the form field=value, where field is one of the search
             terms listed above. There is an open issue 
@@ -270,7 +268,7 @@ class DataRegistry:
             dataset_id = r['dataset_id']
             try:
                 path = self.query.get_dataset_absolute_path(dataset_id)
-            except:
+            except Exception:
                 path = None
             r['path'] = path
 
