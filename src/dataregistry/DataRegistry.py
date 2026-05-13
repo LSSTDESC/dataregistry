@@ -209,7 +209,7 @@ class DataRegistry:
         **query : dict
             The query parameters. Currently these should always be
             of the form field=value, where field is one of the search
-            terms listed above. There is an open issue 
+            terms listed above.
 
         Returns
         -------
