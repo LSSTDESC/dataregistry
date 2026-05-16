@@ -149,3 +149,61 @@ class DataRegistry:
                     root_dir = data["nersc"]
 
             return root_dir
+
+    def fetch(self, dataset_id, schema_type="working",
+              destination_path=None, destination_endpoint="NERSC DTN",
+              no_cfs_copy=False):
+        """
+        Fetch a registered dataset. This is just a wrapper which calls
+        Registrar.fetch, supply the Query object as an argument.
+
+        Behavior depends on arguments and
+        whether dataset is available in cfs or only from archive, but
+        archiving is not yet implemented, so the only possibility is:
+
+        * If destination_path is not None, copy from cfg to user-specified
+          path, at user-specified globus endpoint.
+
+        Parameters
+        ----------
+        dataset_id : int
+            id of dataset to be retrieved
+        schema_type : string
+            one of "working" (the default) or "production"
+        destination_path : string
+            where to put the dataset.  If None, defaults to absolute
+            path in cfs assigned to this dataset
+        destination_endoint : string
+            globus endpoint to which dataa will be written. Defaults to
+            "NERSC DTN"
+        no_cfs_copy : boolean
+            If True and dataset was absent from cfs, write directly to
+            to the destination requested; do not also restore to cfs.
+
+        Returns
+        -------
+        Absolute cfs path of dataset when it was registered
+        """
+        return self.registrar.dataset.fetch(self.query, dataset_id,
+                                            schema_type, destination_path,
+                                            destination_endpoint, no_cfs_copy)
+
+    def find_datasets(
+            self,
+            property_names=None,
+            filters=[],
+            return_format="property_dict",
+            strip_table_names=False,
+            schema_mode=None,
+            ):
+        """
+        Convenience function which just calls the find_datasets function
+        of the Query object
+        """
+        return self.query.find_datasets(
+            property_names=property_names,
+            filters=[],
+            return_format=return_format,
+            strip_table_names=strip_table_names,
+            schema_mode=schema_mode,
+            )
