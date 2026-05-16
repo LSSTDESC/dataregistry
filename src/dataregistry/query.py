@@ -780,11 +780,16 @@ class Query:
 
         return Filter(property_name, bin_op, value)
 
-    def get_dataset_absolute_path(self, dataset_id, schema=None):
+    def get_dataset_absolute_path(self, dataset_id, schema=None,
+                                  silent=True):
         """
         Return full absolute path of specified dataset in specified schema
         Note as used here `schema` is not an actual schema name, but a
         schema type (one of "production", "working" if specified at all)
+
+        Only datasets of location_type "dataregistry" or "dummy" have
+        an absolute path.  For other types, if silent emit log message and
+        return None.  If not silent, raise error
 
         Parameters
         ----------
@@ -818,6 +823,7 @@ class Query:
                 "dataset.owner_type",
                 "dataset.owner",
                 "dataset.relative_path",
+                "dataset.location_type",
             ],
             filters=[("dataset.dataset_id", "==", dataset_id)],
             schema_mode=schema
@@ -825,10 +831,25 @@ class Query:
 
         # Handle case where no results are found
         if not results["dataset.owner_type"]:
-            self.db_connection.logger.warning(
-                f"No dataset found with dataset_id={dataset_id}"
-            )
-            return None
+            if silent:
+                self.db_connection.logger.warning(
+                    f"No dataset found with dataset_id={dataset_id}"
+                )
+                return None
+            else:
+                raise DataRegistryNoEntry(dataset_id=dataset_id,
+                                          schema_mode=schema)
+
+        # Handle bad location_type
+        if results["dataset.location_type"][0] not in ("dataregistry", "dummy"):
+            if silent:
+                self.db_connection.logger.warning(
+                    f"Dataset not stored by dataregistry; has no absolute Path")
+                return None
+            else:
+                raise DataRegistryUnmanaged(dataset_id=dataset_id,
+                                            schema_mode=schema)
+
 
         # Find actual schema name to pass to _form_dataset_path
         if not self.db_connection._namespace:

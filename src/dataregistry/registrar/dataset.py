@@ -7,8 +7,11 @@ import warnings
 
 from dataregistry.db_basic import add_table_row
 from dataregistry.exceptions import DataRegistryRootDirBadState
+from dataregistry.exceptions import DataRegistryNoEntry
 from sqlalchemy import select, update
 from functools import wraps
+from dataregistry.query import Filter
+from dataregistry.globus.transfer import transfer_NERSC
 
 from .base_table_class import BaseTable
 from .registrar_util import (
@@ -17,14 +20,15 @@ from .registrar_util import (
     _form_dataset_path,
     _parse_version_string,
     _read_configuration_file,
-    get_directory_info,
     _relpath_from_name,
+    get_directory_info,
 )
 from .dataset_util import set_dataset_status, get_dataset_status
 
 _ILLEGAL_NAME_CHAR = ["$", "*", "&", "/", "?", "\\", " "]
 _ILLEGAL_RELPATH_CHAR = ["$", "*", "&", "?", "\\", " "]
 _ADMIN_USER = 'descdr'
+
 
 
 class DatasetTable(BaseTable):
@@ -1028,3 +1032,77 @@ class DatasetTable(BaseTable):
             Keywords to remove from dataset
         """
         self.keyword_table.remove_keywords_from_dataset(dataset_id, keyword)
+
+    def fetch(self, query_object, dataset_id, schema_type="working",
+              destination_path=None, destination_endpoint="NERSC DTN",
+              no_cfs_copy=False):
+        """
+        Fetch a registered dataset. Behavior depends on arguments and
+        whether dataset is available in cfs or only from archive, but
+        archiving is not yet implemented, so the only possibility is:
+
+        * If destination_path is not None, copy from cfg to user-specified
+          path, at user-specified globus endpoint.
+
+        Parameters
+        ----------
+        query_object : Query
+        dataset_id : int
+            id of dataset to be retrieved
+        schema_type : string
+            one of "working" (the default) or "production"
+        destination_path : string
+            where to put the dataset.  If None, defaults to absolute
+            path in cfs assigned to this dataset
+        destination_endoint : string
+            globus endpoint to which dataa will be written. Defaults to
+            "NERSC DTN"
+        no_cfs_copy : boolean
+            If True and dataset was absent from cfs, write directly to
+            to the destination requested; do not also restore to cfs.
+
+        Returns
+        -------
+        Absolute cfs path of dataset when it was registered
+        """
+        # Retrieve status and absolute path for the dataset.
+        filter = Filter("dataset.dataset_id", "==", dataset_id)
+        results = query_object.find_datasets(
+            property_names=["dataset.status"],
+            filters=[filter],
+            schema_mode=schema_type
+            )
+        ok = True
+        archived = False
+        if not results or len(results["dataset.status"]) == 0:
+            ok = False
+        else:
+            status = results["dataset.status"][0]
+            if not get_dataset_status(status, "valid"):
+                ok = False
+            elif get_dataset_status(status, "deleted"):
+                if not get_dataset_status(status, "archive"):
+                    ok = False
+                else:
+                    archived = True
+        if not ok:
+            raise DataRegistryNoEntry(dataset_id, schema_type)
+
+        # Currently nothing is archived so ignore that case.  Dataset
+        # must be present on cfs.
+        abs_path = query_object.get_dataset_absolute_path(dataset_id,
+                                                          schema=schema_type,
+                                                          silent=False)
+
+        if not destination_path:
+            # Should check that it's really there.  Could be archived and
+            # deleted.  But for now, with no archiving implemented,
+            # we're done
+            return abs_path
+
+        transfer_result = transfer_NERSC(abs_path, destination_path,
+                                         logger=self.db_connection.logger)
+
+        # Should we poll on transfer result?
+        # For now, just..
+        return abs_path
