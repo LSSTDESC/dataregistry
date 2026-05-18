@@ -1,4 +1,5 @@
-from pathlib import Path
+import os
+from pathlib import Path, PurePath
 from globus_sdk import TransferClient, TransferData, UserApp, GlobusAppConfig
 from .globus_info import NERSC_COLLECTION_ID, CLIENT_ID
 
@@ -22,13 +23,15 @@ def transfer_from_NERSC(src_path, dest_path, dest_collection_id,
                                  )
             # Are we transferring a directory?
             is_dir = Path(src_path).is_dir()
-            # if is_dir:  # may have to add src base to dest
+            ppath = PurePath(src_path)
+
+            dest_path = os.path.join(dest_path, ppath.parts[-1])
 
             tdata.add_item(src_path, dest_path, recursive=is_dir)
             transfer_result = trans_client.submit_transfer(tdata)
 
     if logger:
-        logger.info("task_id = ", transfer_result["task_id"])
+        logger.info(f"task_id = {transfer_result['task_id']}")
     else:
         print("task_id = ", transfer_result["task_id"])
     return transfer_result
