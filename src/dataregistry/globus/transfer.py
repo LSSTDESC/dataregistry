@@ -1,7 +1,7 @@
 import os
 from pathlib import Path, PurePath
 from globus_sdk import TransferClient, TransferData, UserApp, GlobusAppConfig
-from .globus_info import NERSC_COLLECTION_ID, CLIENT_ID
+from .globus_info import NERSC_COLLECTION_ID, CLIENT_ID, APP_NAME
 
 __all__ = ["transfer_from_NERSC", "transfer_NERSC", "transfer_NERSC_auth"]
 
@@ -9,7 +9,7 @@ __all__ = ["transfer_from_NERSC", "transfer_NERSC", "transfer_NERSC_auth"]
 def transfer_from_NERSC(src_path, dest_path, dest_collection_id,
                         label="transfer from NERSC", logger=None):
     config = GlobusAppConfig(request_refresh_tokens=True)
-    with UserApp("dreg_transfer", client_id=CLIENT_ID, config=config) as dr_app:
+    with UserApp(APP_NAME, client_id=CLIENT_ID, config=config) as dr_app:
         with TransferClient(app=dr_app) as trans_client:
             trans_client.add_app_data_access_scope(NERSC_COLLECTION_ID)
 
