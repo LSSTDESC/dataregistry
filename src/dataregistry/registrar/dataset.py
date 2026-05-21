@@ -322,6 +322,7 @@ class DatasetTable(BaseTable):
         # Fill final values into the dict
         kwargs_dict["name"] = name
         kwargs_dict["register_date"] = datetime.now()
+        kwargs_dict["fetch_date"] = kwargs_dict["register_date"]
         kwargs_dict["creator_uid"] = self._uid
         kwargs_dict["register_root_dir"] = self._root_dir
         if kwargs_dict["access_api_configuration"]:
@@ -375,7 +376,7 @@ class DatasetTable(BaseTable):
                 .values(
                     data_org=dataset_organization,
                     nfiles=num_files,
-                    total_disk_space=total_size / _TO_MBYTE
+                    total_disk_space=total_size / _TO_MBYTE,
                     creation_date=ds_creation_date,
                     status=set_dataset_status(kwargs_dict["status"],
                                               valid=True),
@@ -1103,6 +1104,8 @@ class DatasetTable(BaseTable):
 
         transfer_result = transfer_NERSC(abs_path, destination_path,
                                          logger=self.db_connection.logger)
+
+        # Update fetch date (even if transfer ultimately fails)
 
         # Should we poll on transfer result?
         # For now, just..
