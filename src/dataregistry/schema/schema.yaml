@@ -329,7 +329,7 @@ tables:
         primary_key: True
         description: "Unique identifier for this archived file or collection"
       archive_type:
-        type: "StringShort"
+        type: "String"
         description: "Currently allowed values are 'hsi' and 'htar'"
 
       archive_status:
