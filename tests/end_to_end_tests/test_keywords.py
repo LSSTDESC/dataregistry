@@ -71,8 +71,8 @@ def test_register_dataset_with_keywords(dummy_file, mykeyword):
     # Query on the "simulation" keyword
     f = datareg.gen_filter("keyword.keyword", "==", mykeyword.lower())
     results = datareg.find_datasets(
-        ["dataset.dataset_id", "keyword.keyword"],
-        [f],
+        property_names=["dataset.dataset_id", "keyword.keyword"],
+        filters=[f],
         return_format="property_dict",
     )
 
@@ -107,8 +107,8 @@ def test_modify_dataset_with_keywords(dummy_file):
     # Query for the dataset
     f = datareg.gen_filter("dataset.dataset_id", "==", d_id)
     results = datareg.find_datasets(
-        ["dataset.dataset_id", "keyword.keyword"],
-        [f],
+        property_names=["dataset.dataset_id", "keyword.keyword"],
+        filters=[f],
     )
 
     # Should only be 1 keyword at this point
@@ -205,7 +205,7 @@ def test_add_keywords_to_dataset(dummy_file, create_dataset_entry_for_keyword):
 
     # Add keywords to the dataset
     datareg.create_keywords(["new_keyword1", "new_keyword2"])
-    datareg.add_keywords(d_id, ["new_keyword1", "new_keyword2"])
+    datareg.add_keywords_to_dataset(d_id, ["new_keyword1", "new_keyword2"])
 
     # Query for the dataset and check keywords
     f = datareg.gen_filter("dataset.dataset_id", "==", d_id)
