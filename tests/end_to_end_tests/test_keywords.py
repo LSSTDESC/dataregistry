@@ -117,13 +117,12 @@ def test_modify_dataset_with_keywords(dummy_file):
     assert results["keyword.keyword"][0] == "simulation"
 
     # Add a keyword
-    datareg.registrar.add_keywords_to_dataset(d_id,
-                                              ["simulation", "observation"])
+    datareg.add_keywords_to_dataset(d_id, ["simulation", "observation"])
 
     f = datareg.gen_filter("dataset.dataset_id", "==", d_id)
     results = datareg.find_datasets(
-        ["dataset.dataset_id", "keyword.keyword"],
-        [f],
+        property_names=["dataset.dataset_id", "keyword.keyword"],
+        filters=[f],
     )
 
     # Should now be two keywords (no duplicates)

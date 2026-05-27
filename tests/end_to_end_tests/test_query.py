@@ -15,16 +15,18 @@ def test_query_return_format():
 
     # Pandas DataFrame
     results = datareg.find_datasets(
-        ["dataset.name", "dataset.version_string", "dataset.relative_path"],
-        [],
+        property_names=["dataset.name", "dataset.version_string",
+                        "dataset.relative_path"],
+        filters=[],
         return_format="dataframe",
     )
     assert type(results) == pd.DataFrame
 
     # Property dictionary (each key is a property with a list for each row)
     results = datareg.find_datasets(
-        ["dataset.name", "dataset.version_string", "dataset.relative_path"],
-        [],
+        property_names=["dataset.name", "dataset.version_string",
+                        "dataset.relative_path"],
+        filters=[],
     )
     assert type(results) == dict
 
