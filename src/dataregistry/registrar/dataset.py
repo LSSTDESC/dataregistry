@@ -31,7 +31,6 @@ _TO_MBYTE = 1024 * 1024
 _ADMIN_USER = 'descdr'
 
 
-
 class DatasetTable(BaseTable):
     def __init__(
             self,
@@ -1106,6 +1105,15 @@ class DatasetTable(BaseTable):
                                          logger=self.db_connection.logger)
 
         # Update fetch date (even if transfer ultimately fails)
+        dataset_table = self._get_table_metadata(self.which_table)
+        with self._engine.connect() as conn:
+            update_stmt = (
+                update(dataset_table)
+                .where(dataset_table.c.dataset_id == dataset_id)
+                .values(fetch_date=datetime.now(),)
+                )
+            conn.execute(update_stmt)
+            conn.commit()
 
         # Should we poll on transfer result?
         # For now, just..

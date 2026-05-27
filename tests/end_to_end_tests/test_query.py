@@ -1,8 +1,5 @@
 import pytest
-import os
 import pandas as pd
-import sqlalchemy
-from sqlalchemy import inspect
 
 from dataregistry import DataRegistry
 from dataregistry.schema import DEFAULT_NAMESPACE
@@ -17,7 +14,7 @@ def test_query_return_format():
     """Test we get back correct data format from queries"""
 
     # Pandas DataFrame
-    results = datareg.query.find_datasets(
+    results = datareg.find_datasets(
         ["dataset.name", "dataset.version_string", "dataset.relative_path"],
         [],
         return_format="dataframe",
@@ -25,7 +22,7 @@ def test_query_return_format():
     assert type(results) == pd.DataFrame
 
     # Property dictionary (each key is a property with a list for each row)
-    results = datareg.query.find_datasets(
+    results = datareg.find_datasets(
         ["dataset.name", "dataset.version_string", "dataset.relative_path"],
         [],
     )
@@ -47,8 +44,8 @@ def test_query_all(dummy_file):
     )
 
     # `property_names=None` should return all columns
-    f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
-    results = datareg.query.find_datasets(property_names=None, filters=[f])
+    f = datareg.gen_filter("dataset.dataset_id", "==", d_id)
+    results = datareg.find_datasets(property_names=None, filters=[f])
 
     for c, v in results.items():
         assert len(v) == 1
@@ -86,8 +83,8 @@ def test_query_between_columns(dummy_file):
         else:
             # Query on execution and alias, but only return dataset columns
             f = [
-                datareg.query.gen_filter("execution.execution_id", "==", e_id),
-                datareg.query.gen_filter("dataset_alias.dataset_alias_id", "==", a_id),
+                datareg.gen_filter("execution.execution_id", "==", e_id),
+                datareg.gen_filter("dataset_alias.dataset_alias_id", "==", a_id),
             ]
 
         results = datareg.query.find_datasets(
@@ -128,8 +125,8 @@ def test_query_name(dummy_file, op, qstr, ans, tag):
         )
 
     # Do a wildcard search on the name
-    f = datareg.query.gen_filter("dataset.name", op, qstr)
-    results = datareg.query.find_datasets(property_names=None, filters=[f])
+    f = datareg.gen_filter("dataset.name", op, qstr)
+    results = datareg.find_datasets(property_names=None, filters=[f])
 
     # How many datasets did we find
     if ans == 0:
@@ -138,6 +135,7 @@ def test_query_name(dummy_file, op, qstr, ans, tag):
         assert len(results) > 0
         for c, v in results.items():
             assert len(v) == ans
+
 
 def test_aggregate_datasets_count(dummy_file):
     """Test counting the number of datasets."""
@@ -298,6 +296,7 @@ def test_aggregate_datasets_errors(dummy_file):
     with pytest.raises(ValueError, match="must be numeric"):
         datareg.query.aggregate_datasets("description", agg_func="sum")
 
+
 @pytest.mark.parametrize(
     "table,include_table,include_schema",
     [
@@ -325,6 +324,7 @@ def test_query_get_all_columns(dummy_file,table,include_table,include_schema):
             if include_table:
                 assert table in att
 
+
 def test_query_get_all_tables(dummy_file):
     """Test the `get_all_tables()` function in `query.py`"""
 
@@ -332,6 +332,6 @@ def test_query_get_all_tables(dummy_file):
     tmp_src_dir, tmp_root_dir = dummy_file
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
-    tables = datareg.query.get_all_tables()
+    tables = datareg.get_all_tables()
 
     assert len(tables) > 0

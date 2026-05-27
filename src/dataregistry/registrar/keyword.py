@@ -38,7 +38,7 @@ class KeywordTable(BaseTable):
     def create_keywords(
             self,
             keywords: list[str],
-            user_type: Literal["user", "group", "project", "production"] = "user",
+            owner_type: Literal["user", "group", "project", "production"] = "user",
             system: bool = False,
             commit: bool = True
     ) -> None:
@@ -49,11 +49,13 @@ class KeywordTable(BaseTable):
         ----------
         keywords : list[str]
             The keywords to add.
-        user_type : string.
-            A known user type. Not currently used for anything
+        owner_type : string.
+            A known owner type. Not currently used for anything
         system : bool.
             system keywords can only be created by a privileged user. They
             are intended to be global
+        commit : bool
+            if True (default) immediately commit change to db
         """
         owner = self._owner or os.getenv("USER")
         keywords_table = self._get_table_metadata("keyword")
