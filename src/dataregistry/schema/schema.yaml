@@ -331,13 +331,15 @@ tables:
       archive_type:
         type: "String"
         description: "Currently allowed values are 'hsi' and 'htar'"
-
       archive_status:
         type: "Integer"
+        nullable: False
       archive_date:
         type: "DateTime"
+        nullable: False
       archive_path:
         type: "String"
+        nullable: False
 
   dataset:
 
