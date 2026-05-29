@@ -313,4 +313,4 @@ class DataRegistry:
         """
         See full documentation under ExecutionTable.register
         """
-        return self.register.execution.registrar(name, **kwargs)
+        return self.registrar.execution.register(name, **kwargs)
