@@ -154,7 +154,7 @@ def _insert_execution_entry(
         The execution ID for this new entry
     """
 
-    new_id = datareg.registrar.execution.register(
+    new_id = datareg.register_execution(
         name,
         description=description,
         input_datasets=input_datasets,

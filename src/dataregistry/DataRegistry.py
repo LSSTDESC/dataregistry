@@ -198,7 +198,7 @@ class DataRegistry:
             ):
         """
         Convenience function which just calls
-        DataRegistry.registrar.dataset.register.   See that function
+        DataRegistry.registrar.dataset.register.   See DatasetTable.register
         for complete argument and return description.
         """
         return self.registrar.dataset.register(name, version, **kw)
@@ -211,7 +211,7 @@ class DataRegistry:
             ):
         """
         Convenience function which just calls
-        DataRegistry.registrar.dataset.replace.   See that function
+        DataRegistry.registrar.dataset.replace.   See DatasetTable.replace
         for complete argument and return description.
         """
         return self.registrar.dataset.replace(name, version, **kw)
@@ -225,7 +225,7 @@ class DataRegistry:
             confirm=False):
         """
         Convenience function which just calls
-        DataRegistry.registrar.dataset.delete.   See that function
+        DataRegistry.registrar.dataset.delete.   See DatasetTable.delete
         for complete argument and return description.
         """
         return self.registrar.dataset.delete(name, version_string, owner,
@@ -307,3 +307,10 @@ class DataRegistry:
         See Query.gen_filter for complete description
         """
         return self.query.gen_filter(property_name, bin_op, value)
+
+    # Register execution
+    def register_execution(self, name, **kwargs):
+        """
+        See full documentation under ExecutionTable.register
+        """
+        return self.register.execution.register(name, **kwargs)
