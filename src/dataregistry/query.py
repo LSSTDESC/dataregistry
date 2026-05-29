@@ -516,7 +516,7 @@ class Query:
             "=",
             "!=",
         ]:
-            raise ValueError('check_filter: Cannot apply "{f[1]}" to "{f[0]}"')
+            raise ValueError(f'check_filter: Cannot apply "{f[1]}" to "{f[0]}"')
         else:
             value = f[2]
 
