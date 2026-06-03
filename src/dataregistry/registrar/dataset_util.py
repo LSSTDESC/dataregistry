@@ -1,5 +1,5 @@
 # Define constants for dataset's "status" bit position
-VALID_STATUS_BITS = {
+DATASET_STATUS_BIT = {
     # Is a valid dataset or not. "Invalid" means the dataset entry was created in
     # the database, but there was an issue copying the physical data.
     "valid": 0,
@@ -9,11 +9,18 @@ VALID_STATUS_BITS = {
     "archived": 2,
     # Has this dataset been replaced at some point?
     "replaced": 3,
+    # Is there a request to archive this dataset?
+    "request_archive": 4,
+    # Is there a request to delete from disk following archive?
+    "request_archive_delete": 5,
 }
+
+DATASET_STATUS_VALUE = {key : 1 << DATASET_STATUS_BIT[key] for key in DATASET_STATUS_BIT}
 
 
 def set_dataset_status(
-    current_valid_flag, valid=None, deleted=None, archived=None, replaced=None
+    current_valid_flag, valid=None, deleted=None, archived=None,
+    replaced=None, request_archive=None, request_archive_delete=None,
 ):
     """
     Update a value of a dataset's status bit poistion.
@@ -33,6 +40,10 @@ def set_dataset_status(
         True to set the dataset as archived
     replaced : bool, optional
         True to set the dataset as replaced
+    request_archive : bool, optional
+        True to allow archive
+    request_archive_delete : bool, optional
+        True to allow archive followed by delete from disk
 
     Returns
     -------
@@ -42,12 +53,14 @@ def set_dataset_status(
 
     # Set the bits for each condition
     for cond, ref in zip(
-        [valid, deleted, archived, replaced],
-        ["valid", "deleted", "archived", "replaced"],
+        [valid, deleted, archived, replaced, request_archive,
+         request_archive_delete],
+        ["valid", "deleted", "archived", "replaced", "request_archive",
+         "request_archive_delete"],
     ):
         if cond is not None:
-            current_valid_flag &= ~(1 << VALID_STATUS_BITS[ref])
-            current_valid_flag |= cond << VALID_STATUS_BITS[ref]
+            current_valid_flag &= ~(1 << DATASET_STATUS_BIT[ref])
+            current_valid_flag |= cond << DATASET_STATUS_BIT[ref]
 
     return current_valid_flag
 
@@ -61,7 +74,7 @@ def get_dataset_status(current_valid_flag, which_bit):
     current_flag_value : int
         The current bitwise representation of the dataset's status
     which_bit : str
-        One of VALID_STATUS_BITS keys()
+        One of DATASET_STATUS_BIT keys()
 
     Returns
     -------
@@ -71,7 +84,7 @@ def get_dataset_status(current_valid_flag, which_bit):
     """
 
     # Make sure `which_bit` is valid.
-    if which_bit not in VALID_STATUS_BITS.keys():
+    if which_bit not in DATASET_STATUS_BIT.keys():
         raise ValueError(f"{which_bit} is not a valid dataset status")
 
-    return (current_valid_flag & (1 << VALID_STATUS_BITS[which_bit])) != 0
+    return (current_valid_flag & (1 << DATASET_STATUS_BIT[which_bit])) != 0

@@ -1,5 +1,7 @@
 from collections import namedtuple
 
+from sqlalchemy import select, text
+import sqlalchemy.sql.sqltypes as sqltypes
 import pandas as pd
 from sqlalchemy import DateTime, Float, Integer, Numeric, func, select
 from sqlalchemy.exc import DBAPIError
@@ -553,6 +555,7 @@ class Query:
         return_format="property_dict",
         strip_table_names=False,
         schema_mode=None,
+        conditions=[],
     ):
         """
         Get specified properties for datasets satisfying all filters. Both
@@ -565,6 +568,9 @@ class Query:
 
         Filters should be a list of dataregistry Filter objects, which are
         logic constraints on column values.
+
+        Conditions are additional constraints on the query which cannot be
+        readily expressed as Filter objects.
 
         These choices get translated into an SQL query.
 
@@ -584,6 +590,14 @@ class Query:
             May be "production", "working" or None.  Defaults to None,
             in which case query mode established at connection time is used.
             Ignored unless query mode was "both"
+        conditions : optional
+            List of strings, each of which represents a legitimate SQL WHERE
+            clause in the query.  In particular, string values must be
+            enclosed in single quotes and all operators must be true SQL
+            operators. To avoid possible ambiguity column names should be
+            prefaced by table name (e.g. dataset.dataset_id, not plain
+            dataset_id).
+            Caveat emptor.
 
         Returns
         -------
@@ -679,6 +693,11 @@ class Query:
             if len(filters) > 0:
                 for f in filters:
                     stmt = self._render_filter(f, stmt, filter_mode)
+
+            # Append conditions if any
+            if len(conditions) > 0:
+                for c in conditions:
+                    stmt = stmt.where(text(c))
 
             # Report the constructed SQL query
             self.db_connection.logger.debug(f"Executing query: {stmt}")
