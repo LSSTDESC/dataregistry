@@ -1,10 +1,13 @@
-import pytest
 import pandas as pd
+import pytest
+from database_test_utils import (
+    _insert_alias_entry,
+    _insert_dataset_entry,
+    _insert_execution_entry,
+)
 
 from dataregistry import DataRegistry
 from dataregistry.schema import DEFAULT_NAMESPACE
-from database_test_utils import _insert_dataset_entry, _insert_alias_entry
-from database_test_utils import _insert_execution_entry, dummy_file
 
 # Establish connection to database (default schema)
 datareg = DataRegistry(root_dir="temp")
@@ -15,8 +18,11 @@ def test_query_return_format():
 
     # Pandas DataFrame
     results = datareg.find_datasets(
-        property_names=["dataset.name", "dataset.version_string",
-                        "dataset.relative_path"],
+        property_names=[
+            "dataset.name",
+            "dataset.version_string",
+            "dataset.relative_path",
+        ],
         filters=[],
         return_format="dataframe",
     )
@@ -24,8 +30,11 @@ def test_query_return_format():
 
     # Property dictionary (each key is a property with a list for each row)
     results = datareg.find_datasets(
-        property_names=["dataset.name", "dataset.version_string",
-                        "dataset.relative_path"],
+        property_names=[
+            "dataset.name",
+            "dataset.version_string",
+            "dataset.relative_path",
+        ],
         filters=[],
     )
     assert type(results) == dict
@@ -57,15 +66,14 @@ def test_query_all(dummy_file):
     "op,offset_from_first,expected_count",
     [
         (">=", 0, 5),  # all five inserted ids
-        (">",  0, 4),  # all but the first
+        (">", 0, 4),  # all but the first
         ("<=", 4, 5),  # everything up to and including the last
-        ("<",  4, 4),  # everything up to but not including the last
+        ("<", 4, 4),  # everything up to but not including the last
         (">=", 2, 3),  # mid-range
-        ("<",  2, 2),  # mid-range
+        ("<", 2, 2),  # mid-range
     ],
 )
-def test_query_dataset_id_comparison(dummy_file, op, offset_from_first,
-                                     expected_count):
+def test_query_dataset_id_comparison(dummy_file, op, offset_from_first, expected_count):
     """
     Filtering on the integer dataset.dataset_id with ordering operators
     (>=, >, <=, <) must work. Bug report: these operators currently raise
@@ -96,8 +104,8 @@ def test_query_dataset_id_comparison(dummy_file, op, offset_from_first,
     f_upper = datareg.query.gen_filter("dataset.dataset_id", "<=", ids[-1])
 
     results = datareg.query.find_datasets(
-        ["dataset.dataset_id"],
-        [f_pivot, f_lower, f_upper],
+        property_names=["dataset.dataset_id"],
+        filters=[f_pivot, f_lower, f_upper],
     )
 
     assert len(results["dataset.dataset_id"]) == expected_count
@@ -124,11 +132,13 @@ def test_query_version_major_comparison(dummy_file):
     # version_major >= 2 should match the 2.x and 3.x rows we just created.
     f_ge = datareg.query.gen_filter("dataset.version_major", ">=", 2)
     f_name = datareg.query.gen_filter(
-        "dataset.name", "~==",
+        "dataset.name",
+        "~==",
         "DESC:datasets:test_query_version_major_comparison_*",
     )
     results = datareg.query.find_datasets(
-        ["dataset.version_major"], [f_ge, f_name],
+        property_names=["dataset.version_major"],
+        filters=[f_ge, f_name],
     )
 
     # Skip on sqlite because the name wildcard filter doesn't work there
@@ -393,16 +403,18 @@ def test_aggregate_datasets_errors(dummy_file):
         (None, True, True),
         ("dataset", True, False),
         ("execution", False, False),
-    ]
+    ],
 )
-def test_query_get_all_columns(dummy_file,table,include_table,include_schema):
+def test_query_get_all_columns(dummy_file, table, include_table, include_schema):
     """Test the `get_all_columns()` function in `query.py`"""
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
-    cols = datareg.query.get_all_columns(table=table, include_table=include_table, include_schema=include_schema)
+    cols = datareg.query.get_all_columns(
+        table=table, include_table=include_table, include_schema=include_schema
+    )
 
     assert len(cols) > 0
 

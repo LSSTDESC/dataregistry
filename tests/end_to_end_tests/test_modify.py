@@ -76,8 +76,8 @@ def test_modify_dataset(
     # Query to verify the modification
     f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
     results = datareg.query.find_datasets(
-        [f"dataset.{column}"],
-        [f],
+        property_names=[f"dataset.{column}"],
+        filters=[f],
     )
 
     # For datetime fields, check the components
@@ -134,8 +134,8 @@ def test_modify_execution(dummy_file, execution_name, column, new_value):
 
     f = datareg.query.gen_filter("execution.execution_id", "==", e_id)
     results = datareg.query.find_datasets(
-        [f"execution.{column}"],
-        [f],
+        property_names=[f"execution.{column}"],
+        filters=[f],
     )
 
     assert results[f"execution.{column}"][0] == new_value

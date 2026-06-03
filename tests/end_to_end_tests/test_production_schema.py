@@ -56,11 +56,11 @@ def test_register_with_production_dependencies(dummy_file):
     # Check dependencies were made
     f = datareg.query.gen_filter("dependency.execution_id", "==", ex_id)
     results = datareg.query.find_datasets(
-        [
+        property_names=[
             "dependency.input_id",
             "dependency.input_production_id",
         ],
-        [f],
+        filters=[f],
     )
 
     assert len(results["dependency.input_id"]) == 2
@@ -91,11 +91,11 @@ def test_production_schema_register(dummy_file):
     f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
     f2 = datareg.query.gen_filter("dataset.owner_type", "==", "production")
     results = datareg.query.find_datasets(
-        [
+        property_names=[
             "dataset.owner",
             "dataset.owner_type",
         ],
-        [f,f2],
+        filters=[f,f2],
     )
 
     assert len(results["dataset.owner"]) == 1

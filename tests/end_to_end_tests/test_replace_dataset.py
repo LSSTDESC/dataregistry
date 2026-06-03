@@ -66,7 +66,7 @@ def _check_replaced_dataset(
     # Check replaced dataset
     f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
     results = datareg.query.find_datasets(
-        [
+        property_names=[
             "dataset.name",
             "dataset.version_string",
             "dataset.description",
@@ -76,7 +76,7 @@ def _check_replaced_dataset(
             "dataset.relative_path",
             "dataset.replace_iteration",
         ],
-        [f],
+        filters=[f],
     )
 
     assert len(results["dataset.name"]) == 1

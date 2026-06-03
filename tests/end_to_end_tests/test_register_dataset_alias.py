@@ -45,11 +45,11 @@ def test_register_dataset_alias(dummy_file, query_mode):
         "==",
         alias_name)
     results = datareg.query.find_datasets(
-        [
+        property_names=[
             "dataset.dataset_id",
             "dataset_alias.dataset_id",
         ],
-        [f],
+        filters=[f],
     )
 
     assert len(results["dataset_alias.dataset_id"]) == 1

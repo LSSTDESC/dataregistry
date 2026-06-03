@@ -16,10 +16,10 @@ def _check_dataset_has_right_execution(datareg, d_id, ex_id):
     # Query for execution stage 2
     f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
     results = datareg.query.find_datasets(
-        [
+        property_names=[
             "dataset.execution_id",
         ],
-        [f],
+        filters=[f],
     )
 
     assert len(results["dataset.execution_id"]) == 1
@@ -32,13 +32,13 @@ def _check_execution_has_correct_dependencies(datareg, ex_id, input_datasets):
     # Query to make sure dependencies were created
     f = datareg.query.gen_filter("dependency.execution_id", "==", ex_id)
     results = datareg.query.find_datasets(
-        [
+        property_names=[
             "dependency.execution_id",
             "dataset.dataset_id",
             "dataset.execution_id",
             "dataset.name",
         ],
-        [f],
+        filters=[f],
     )
 
     assert len(results["dataset.name"]) == len(input_datasets)
