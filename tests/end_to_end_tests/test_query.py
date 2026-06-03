@@ -53,6 +53,91 @@ def test_query_all(dummy_file):
         assert len(v) == 1
 
 
+@pytest.mark.parametrize(
+    "op,offset_from_first,expected_count",
+    [
+        (">=", 0, 5),  # all five inserted ids
+        (">",  0, 4),  # all but the first
+        ("<=", 4, 5),  # everything up to and including the last
+        ("<",  4, 4),  # everything up to but not including the last
+        (">=", 2, 3),  # mid-range
+        ("<",  2, 2),  # mid-range
+    ],
+)
+def test_query_dataset_id_comparison(dummy_file, op, offset_from_first,
+                                     expected_count):
+    """
+    Filtering on the integer dataset.dataset_id with ordering operators
+    (>=, >, <=, <) must work. Bug report: these operators currently raise
+    "Cannot apply ...", because the orderable-type check inspects the Column
+    object rather than the column's underlying SQL type.
+    """
+
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+
+    # Insert 5 datasets so we get 5 consecutive dataset_ids.
+    ids = []
+    for i in range(5):
+        d_id = _insert_dataset_entry(
+            datareg,
+            f"DESC:datasets:test_query_dataset_id_comparison_{op}_{offset_from_first}_{i}",
+            "0.0.1",
+        )
+        ids.append(d_id)
+
+    # Anchor the filter at one of the inserted ids so other tests can't shift
+    # what we count.
+    pivot = ids[offset_from_first]
+    f_pivot = datareg.query.gen_filter("dataset.dataset_id", op, pivot)
+
+    # Restrict to the ids we just created so a polluted DB doesn't break us.
+    f_lower = datareg.query.gen_filter("dataset.dataset_id", ">=", ids[0])
+    f_upper = datareg.query.gen_filter("dataset.dataset_id", "<=", ids[-1])
+
+    results = datareg.query.find_datasets(
+        ["dataset.dataset_id"],
+        [f_pivot, f_lower, f_upper],
+    )
+
+    assert len(results["dataset.dataset_id"]) == expected_count
+
+
+def test_query_version_major_comparison(dummy_file):
+    """
+    Same check as test_query_dataset_id_comparison but on a different integer
+    column (dataset.version_major), to confirm the orderable-type check works
+    for any integer column, not just the primary key.
+    """
+
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+
+    # Three datasets with distinct major versions.
+    for v in ["1.0.0", "2.0.0", "3.0.0"]:
+        _insert_dataset_entry(
+            datareg,
+            f"DESC:datasets:test_query_version_major_comparison_{v}",
+            v,
+        )
+
+    # version_major >= 2 should match the 2.x and 3.x rows we just created.
+    f_ge = datareg.query.gen_filter("dataset.version_major", ">=", 2)
+    f_name = datareg.query.gen_filter(
+        "dataset.name", "~==",
+        "DESC:datasets:test_query_version_major_comparison_*",
+    )
+    results = datareg.query.find_datasets(
+        ["dataset.version_major"], [f_ge, f_name],
+    )
+
+    # Skip on sqlite because the name wildcard filter doesn't work there
+    # (mirroring the pattern in test_query_name).
+    if datareg.db_connection._dialect != "sqlite":
+        assert len(results["dataset.version_major"]) == 2
+        assert sorted(results["dataset.version_major"]) == [2, 3]
+
+
 def test_query_between_columns(dummy_file):
     """
     Make sure when querying with a filter from one table, but only returning
