@@ -1,5 +1,5 @@
 import pytest
-from database_test_utils import _insert_dataset_entry
+from database_test_utils import _insert_dataset_entry, dummy_file  # noqa
 
 from dataregistry import DataRegistry
 from dataregistry.schema import DEFAULT_NAMESPACE

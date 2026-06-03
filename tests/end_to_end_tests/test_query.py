@@ -4,6 +4,7 @@ from database_test_utils import (
     _insert_alias_entry,
     _insert_dataset_entry,
     _insert_execution_entry,
+    dummy_file,  # noqa
 )
 
 from dataregistry import DataRegistry
