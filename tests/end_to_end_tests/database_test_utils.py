@@ -12,6 +12,7 @@ __all__ = [
 
 DEFAULT_SCHEMA_WORKING = "lsst_desc_working"
 
+
 @pytest.fixture
 def dummy_file(tmp_path):
     """
@@ -153,7 +154,7 @@ def _insert_execution_entry(
         The execution ID for this new entry
     """
 
-    new_id = datareg.registrar.execution.register(
+    new_id = datareg.register_execution(
         name,
         description=description,
         input_datasets=input_datasets,
@@ -206,7 +207,8 @@ def _insert_dataset_entry(
     """
 
     # Add new entry.
-    dataset_id, execution_id = datareg.registrar.dataset.register(
+    # dataset_id, execution_id = datareg.registrar.dataset.register(
+    dataset_id, execution_id = datareg.register_dataset(
         name,
         version,
         creation_date=None,
@@ -235,6 +237,7 @@ def _insert_dataset_entry(
     print(f"Created dataset entry with id {dataset_id}")
 
     return dataset_id
+
 
 def _replace_dataset_entry(
     datareg,
@@ -275,7 +278,8 @@ def _replace_dataset_entry(
     """
 
     # Add new entry.
-    dataset_id, execution_id = datareg.registrar.dataset.replace(
+    # dataset_id, execution_id = datareg.registrar.dataset.replace(
+    dataset_id, execution_id = datareg.replace_dataset(
         name,
         version,
         creation_date=None,

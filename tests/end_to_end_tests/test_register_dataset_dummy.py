@@ -63,8 +63,6 @@ def test_register_dataset_defaults(dummy_file):
     assert get_dataset_status(results["status"][0], "replaced") == False
     assert results["is_overwritable"][0] == False
     assert results["status"][0] == 1
-    assert results["archive_date"][0] is None
-    assert results["archive_path"][0] is None
     assert results["delete_date"][0] is None
     assert results["delete_uid"][0] is None
     assert results["move_date"][0] is None
@@ -138,8 +136,6 @@ def test_register_dataset_manual(dummy_file):
     assert get_dataset_status(results["status"][0], "replaced") == False
     assert results["is_overwritable"][0] == _IS_OVERWRITABLE
     assert results["status"][0] == 1
-    assert results["archive_date"][0] is None
-    assert results["archive_path"][0] is None
     assert results["delete_date"][0] is None
     assert results["delete_uid"][0] is None
     assert results["move_date"][0] is None

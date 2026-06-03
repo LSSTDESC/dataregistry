@@ -45,9 +45,10 @@ def test_copy_data(dummy_file, data_org):
 
     # Query
     f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
-    results = datareg.query.find_datasets(
-        ["dataset.data_org", "dataset.nfiles", "dataset.total_disk_space"],
-        [f],
+    results = datareg.find_datasets(
+        property_names=["dataset.data_org",
+                        "dataset.nfiles", "dataset.total_disk_space"],
+        filters=[f],
     )
 
     assert len(results["dataset.data_org"]) == 1
@@ -57,10 +58,10 @@ def test_copy_data(dummy_file, data_org):
 
     if data_org == "file":
         # See if it's there
-        abs_path = datareg.query.get_dataset_absolute_path(d_id, schema="working")
+        abs_path = datareg.get_dataset_absolute_path(d_id, schema="working")
         assert os.path.exists(abs_path)
 
-        abs_path_2 = datareg.query.get_dataset_absolute_path(d_id_2,
+        abs_path_2 = datareg.get_dataset_absolute_path(d_id_2,
                                                              schema="working")
         assert os.path.exists(abs_path_2)
 
@@ -92,13 +93,11 @@ def test_on_location_data(dummy_file, data_org, data_path):
     )
 
     f = datareg.query.gen_filter("dataset.relative_path", "==", data_path)
-    results = datareg.query.find_datasets(
-        [
-            "dataset.data_org",
-            "dataset.nfiles",
-            "dataset.total_disk_space",
+    results = datareg.find_datasets(
+        property_names=["dataset.data_org", "dataset.nfiles",
+                        "dataset.total_disk_space",
         ],
-        [f],
+        filters=[f],
     )
 
     if data_org == "same_directory":

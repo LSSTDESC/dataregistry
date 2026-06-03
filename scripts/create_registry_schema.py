@@ -277,7 +277,10 @@ def _BuildTable(schema, table_name, has_production, production):
 # ----------------------------
 
 parser = argparse.ArgumentParser(
-    description="Creates dataregistry tables for specified schema and connection information (config)",
+    description="""
+    Creates dataregistry tables for specified schema and connection
+    information (config).  For PostgreSQL db at NERSC run from admin account.
+   """,
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
 )
 parser.add_argument(
