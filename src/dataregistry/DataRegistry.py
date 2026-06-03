@@ -302,12 +302,6 @@ class DataRegistry:
         """
         return self.query.get_keyword_list(query_mode=query_mode)
 
-    def gen_filter(self, property_name, bin_op, value):
-        """
-        See Query.gen_filter for complete description
-        """
-        return self.query.gen_filter(property_name, bin_op, value)
-
     # Register execution
     def register_execution(self, name, **kwargs):
         """
