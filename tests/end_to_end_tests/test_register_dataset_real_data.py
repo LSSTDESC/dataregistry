@@ -92,7 +92,7 @@ def test_on_location_data(dummy_file, data_org, data_path):
         relative_path=data_path,
     )
 
-    f = datareg.gen_filter("dataset.relative_path", "==", data_path)
+    f = datareg.query.gen_filter("dataset.relative_path", "==", data_path)
     results = datareg.find_datasets(
         property_names=["dataset.data_org", "dataset.nfiles",
                         "dataset.total_disk_space",

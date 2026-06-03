@@ -46,7 +46,7 @@ def test_query_all(dummy_file):
     )
 
     # `property_names=None` should return all columns
-    f = datareg.gen_filter("dataset.dataset_id", "==", d_id)
+    f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
     results = datareg.find_datasets(property_names=None, filters=[f])
 
     for c, v in results.items():
@@ -85,8 +85,8 @@ def test_query_between_columns(dummy_file):
         else:
             # Query on execution and alias, but only return dataset columns
             f = [
-                datareg.gen_filter("execution.execution_id", "==", e_id),
-                datareg.gen_filter("dataset_alias.dataset_alias_id", "==", a_id),
+                datareg.query.gen_filter("execution.execution_id", "==", e_id),
+                datareg.query.gen_filter("dataset_alias.dataset_alias_id", "==", a_id),
             ]
 
         results = datareg.query.find_datasets(
@@ -127,7 +127,7 @@ def test_query_name(dummy_file, op, qstr, ans, tag):
         )
 
     # Do a wildcard search on the name
-    f = datareg.gen_filter("dataset.name", op, qstr)
+    f = datareg.query.gen_filter("dataset.name", op, qstr)
     results = datareg.find_datasets(property_names=None, filters=[f])
 
     # How many datasets did we find
