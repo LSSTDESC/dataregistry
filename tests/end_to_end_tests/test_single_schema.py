@@ -47,14 +47,14 @@ def test_register_single_schema(dummy_file, schema, owner, owner_type):
     # Find dataset
     f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
     results = datareg.query.find_datasets(
-        [
+        property_names=[
             "dataset.dataset_id",
             "dataset.name",
             "dataset.version_string",
             "dataset.owner_type",
             "dataset.owner",
         ],
-        [f],
+        filters=[f],
     )
 
     assert len(results["dataset.dataset_id"]) == 1
@@ -109,8 +109,8 @@ def test_query_single_schema_through_namespace(dummy_file, query_mode):
     if query_mode == "both":
         for DR in [datareg, datareg_prod]:
             f = DR.query.gen_filter("dataset.dataset_id", "==", 1)
-            results = DR.query.find_datasets(["dataset.dataset_id",],
-                [f],
+            results = DR.query.find_datasets(property_names=["dataset.dataset_id",],
+                filters=[f],
             )
             assert len(results["dataset.dataset_id"]) == 2
     else:
@@ -119,7 +119,7 @@ def test_query_single_schema_through_namespace(dummy_file, query_mode):
                 f = DR.query.gen_filter("dataset.dataset_id", "==", d_id_prod)
             else:
                 f = DR.query.gen_filter("dataset.dataset_id", "==", d_id)
-            results = DR.query.find_datasets(["dataset.dataset_id",],
-                [f],
+            results = DR.query.find_datasets(property_names=["dataset.dataset_id",],
+                filters=[f],
             )
             assert len(results["dataset.dataset_id"]) == 1

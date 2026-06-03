@@ -1,42 +1,11 @@
-from sqlalchemy import func, Integer, Float, Numeric
 from collections import namedtuple
-from sqlalchemy import select
-import sqlalchemy.sql.sqltypes as sqltypes
+
 import pandas as pd
-from dataregistry.registrar.registrar_util import _form_dataset_path
-from dataregistry.exceptions import DataRegistryException
-
-try:
-    import sqlalchemy.dialects.postgresql as pgtypes
-
-    PG_TYPES = {
-        pgtypes.TIMESTAMP,
-        pgtypes.INTEGER,
-        pgtypes.BIGINT,
-        pgtypes.FLOAT,
-        pgtypes.DOUBLE_PRECISION,
-        pgtypes.NUMERIC,
-        pgtypes.DATE,
-    }
-
-except ModuleNotFoundError:
-    PG_TYPES = {}
-try:
-    import sqlalchemy.dialects.sqlite as lite_types
-
-    LITE_TYPES = {
-        lite_types.DATE,
-        lite_types.DATETIME,
-        lite_types.FLOAT,
-        lite_types.INTEGER,
-        lite_types.NUMERIC,
-        lite_types.TIME,
-        lite_types.TIMESTAMP,
-    }
-except ModuleNotFoundError:
-    LITE_TYPES = {}
-
+from sqlalchemy import DateTime, Float, Integer, Numeric, func, select
 from sqlalchemy.exc import DBAPIError
+
+from dataregistry.exceptions import DataRegistryException
+from dataregistry.registrar.registrar_util import _form_dataset_path
 
 __all__ = ["Query", "Filter"]
 
@@ -62,19 +31,7 @@ _colops = {
     "~=": None,
     "~==": None,
 }
-
-ALL_ORDERABLE = (
-    {
-        sqltypes.INTEGER,
-        sqltypes.FLOAT,
-        sqltypes.DOUBLE,
-        sqltypes.TIMESTAMP,
-        sqltypes.DATETIME,
-        sqltypes.DOUBLE_PRECISION,
-    }
-    .union(PG_TYPES)
-    .union(LITE_TYPES)
-)
+ALL_ORDERABLE = (Integer, Float, DateTime, Numeric)
 
 ILIKE_ALLOWED = [
     "dataset.name",
@@ -85,7 +42,7 @@ ILIKE_ALLOWED = [
 
 
 def is_orderable_type(ctype):
-    return type(ctype) in ALL_ORDERABLE
+    return isinstance(ctype, ALL_ORDERABLE)
 
 
 class Query:
@@ -127,7 +84,7 @@ class Query:
             self._schema_org[tbl] = self.get_all_columns(table=tbl)
 
     def _regularize_property_names(self, col_list):
-        '''
+        """
         Return list of column identifiers in standard form, namely
         <tablename>.<columnname>
 
@@ -139,10 +96,10 @@ class Query:
         Returns
         -------
         List of strings (column identifieers) in canonical format
-        '''
+        """
         # If columns unspecified, Select all columns from the dataset table
         if col_list is None:
-            canon_names = self._schema_org['dataset']
+            canon_names = self._schema_org["dataset"]
         else:
             canon_names = []
             for c in col_list:
@@ -153,7 +110,7 @@ class Query:
                     canon_names.append(c)
                 else:
                     tbl_name = self.db_connection.map_column_to_table(c)
-                    if not tbl_name:   # table is not unique
+                    if not tbl_name:  # table is not unique
                         raise DataRegistryException(
                             (
                                 f"Column name '{c}' is not unique to "
@@ -298,7 +255,7 @@ class Query:
                 qualified_tbl = tbl if (not sch or sch == "") else ".".join([sch, tbl])
                 alch_tbl = self.db_connection.metadata["tables"][qualified_tbl]
                 canon_refs.append(alch_tbl.c[canon_parts[1]])
-                orderables.append(is_orderable_type(alch_tbl.c[canon_parts[1]]))
+                orderables.append(is_orderable_type(alch_tbl.c[canon_parts[1]].type))
 
             column_list[sch] = list(canon_refs)
             is_orderable_list[sch] = list(orderables)
@@ -497,7 +454,9 @@ class Query:
         """
 
         # Get the reference to the column being filtered on.
-        _, column_ref, column_is_orderable = self._parse_selected_columns([f[0]], schema_mode=schema_mode)
+        _, column_ref, column_is_orderable = self._parse_selected_columns(
+            [f[0]], schema_mode=schema_mode
+        )
 
         # Extract the filter operator (also making sure it is an allowed one)
         if f[1] not in _colops.keys():
@@ -563,8 +522,9 @@ class Query:
 
         # Loop over each filter and add the tables to the list
         for f in filters:
-            tmp_tables_required, _, _ = self._parse_selected_columns([f[0]],
-                                                                     schema_mode=schema_mode)
+            tmp_tables_required, _, _ = self._parse_selected_columns(
+                [f[0]], schema_mode=schema_mode
+            )
 
             for t in tmp_tables_required:
                 tables_required.add(t)
@@ -584,8 +544,9 @@ class Query:
             )
             return None
 
-        results = self.find_datasets(property_names=["keyword.keyword"],
-                                     schema_mode=query_mode)
+        results = self.find_datasets(
+            property_names=["keyword.keyword"], schema_mode=query_mode
+        )
         return results["keyword.keyword"]
 
     def find_datasets(
@@ -650,14 +611,17 @@ class Query:
 
         # What tables and what columns are required for this query?
         canonical_names = self._regularize_property_names(property_names)
-        tables_required, column_list, _ = self._parse_selected_columns(canonical_names, schema_mode=schema_mode)
-        tables_required = self._append_filter_tables(tables_required, filters,
-                                                     schema_mode)
+        tables_required, column_list, _ = self._parse_selected_columns(
+            canonical_names, schema_mode=schema_mode
+        )
+        tables_required = self._append_filter_tables(
+            tables_required, filters, schema_mode
+        )
 
         # Can only strip table names for queries against a single table
         if strip_table_names and len(tables_required) > 1:
             raise DataRegistryException(
-                "Can only strip out table names " "for single table queries"
+                "Can only strip out table names for single table queries"
             )
 
         # Construct query
@@ -815,7 +779,8 @@ class Query:
                 schema = self.db_connection._query_mode
         elif schema not in ("production", "working"):
             raise ValueError(
-                f"Unknown schema value {schema}. Schema must be either 'working' or 'production'.")
+                f"Unknown schema value {schema}. Schema must be either 'working' or 'production'."
+            )
 
         # Query the database
         results = self.find_datasets(
@@ -826,7 +791,7 @@ class Query:
                 "dataset.location_type",
             ],
             filters=[("dataset.dataset_id", "==", dataset_id)],
-            schema_mode=schema
+            schema_mode=schema,
         )
 
         # Handle case where no results are found
@@ -855,7 +820,7 @@ class Query:
         if not self.db_connection._namespace:
             schema_name = None
         else:
-            schema_name = self.db_connection._namespace + '_' + schema
+            schema_name = self.db_connection._namespace + "_" + schema
 
         # Construct and return the absolute path
         index = 0
@@ -961,7 +926,7 @@ class Query:
         schema = self.alias_query_schema
         if schema:
             return schema.split("_")[-1]
-        else:     # sqlite
+        else:  # sqlite
             return "working"
 
     def find_aliases(

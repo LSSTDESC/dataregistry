@@ -33,7 +33,7 @@ def test_register_dataset_defaults(dummy_file):
 
     # Query
     f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
-    results = datareg.query.find_datasets(None, [f], strip_table_names=True)
+    results = datareg.query.find_datasets(property_names=None, filters=[f], strip_table_names=True)
 
     # First make sure we find a result
     assert len(results) > 0
@@ -106,7 +106,7 @@ def test_register_dataset_manual(dummy_file):
 
     # Query
     f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
-    results = datareg.query.find_datasets(None, [f], strip_table_names=True)
+    results = datareg.query.find_datasets(property_names=None, filters=[f], strip_table_names=True)
 
     # First make sure we find a result
     assert len(results) > 0
@@ -176,8 +176,8 @@ def test_dataset_bumping(dummy_file, v_type, ans):
     # Query
     f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
     results = datareg.query.find_datasets(
-        ["dataset.name", "dataset.version_string", "dataset.relative_path"],
-        [f],
+        property_names=["dataset.name", "dataset.version_string", "dataset.relative_path"],
+        filters=[f],
     )
 
     # First make sure we find a result
@@ -210,7 +210,7 @@ def test_dataset_owner_types(dummy_file, owner_type):
 
     # Query
     f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
-    results = datareg.query.find_datasets(["dataset.owner_type", "dataset.name"], [f])
+    results = datareg.query.find_datasets(property_names=["dataset.owner_type", "dataset.name"], filters=[f])
 
     # First make sure we find a result
     assert len(results) > 0
@@ -248,11 +248,11 @@ def test_register_dataset_with_global_owner_set(dummy_file):
     # Query
     f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
     results = datareg.query.find_datasets(
-        [
+        property_names=[
             "dataset.owner",
             "dataset.owner_type",
         ],
-        [f],
+        filters=[f],
     )
 
     # First make sure we find a result
@@ -293,14 +293,14 @@ def test_register_dataset_with_modified_default_execution(dummy_file):
     # Query on execution
     f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id_2)
     results = datareg.query.find_datasets(
-        [
+        property_names=[
             "dataset.name",
             "execution.execution_id",
             "execution.description",
             "execution.site",
             "execution.name",
         ],
-        [f],
+        filters=[f],
     )
 
     # First make sure we find a result
@@ -316,12 +316,12 @@ def test_register_dataset_with_modified_default_execution(dummy_file):
     # Query on dependency
     f = datareg.query.gen_filter("dependency.input_id", "==", d_id_1)
     results = datareg.query.find_datasets(
-        [
+        property_names=[
             "dataset.dataset_id",
             "dependency.execution_id",
             "dependency.input_id",
         ],
-        [f],
+        filters=[f],
     )
 
     # First make sure we find a result
@@ -358,8 +358,8 @@ def test_dataset_query_return_format(dummy_file, return_format_str, expected_typ
     f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id_1)
 
     results = datareg.query.find_datasets(
-        ["dataset.name", "dataset.version_string", "dataset.relative_path"],
-        [f],
+        property_names=["dataset.name", "dataset.version_string", "dataset.relative_path"],
+        filters=[f],
         return_format=return_format_str,
     )
     assert type(results) == expected_type

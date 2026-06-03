@@ -42,11 +42,11 @@ def test_register_execution_with_config_file(dummy_file):
     # Query
     f = datareg.query.gen_filter("execution.execution_id", "==", ex_id)
     results = datareg.query.find_datasets(
-        [
+        property_names=[
             "execution.execution_id",
             "execution.configuration",
         ],
-        [f],
+        filters=[f],
     )
 
     assert len(results["execution.execution_id"]) == 1
