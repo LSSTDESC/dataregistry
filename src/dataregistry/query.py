@@ -1,43 +1,11 @@
 from collections import namedtuple
 
 import pandas as pd
-import sqlalchemy.sql.sqltypes as sqltypes
-from sqlalchemy import Float, Integer, Numeric, func, select
+from sqlalchemy import DateTime, Float, Integer, Numeric, func, select
+from sqlalchemy.exc import DBAPIError
 
 from dataregistry.exceptions import DataRegistryException
 from dataregistry.registrar.registrar_util import _form_dataset_path
-
-try:
-    import sqlalchemy.dialects.postgresql as pgtypes
-
-    PG_TYPES = {
-        pgtypes.TIMESTAMP,
-        pgtypes.INTEGER,
-        pgtypes.BIGINT,
-        pgtypes.FLOAT,
-        pgtypes.DOUBLE_PRECISION,
-        pgtypes.NUMERIC,
-        pgtypes.DATE,
-    }
-
-except ModuleNotFoundError:
-    PG_TYPES = {}
-try:
-    import sqlalchemy.dialects.sqlite as lite_types
-
-    LITE_TYPES = {
-        lite_types.DATE,
-        lite_types.DATETIME,
-        lite_types.FLOAT,
-        lite_types.INTEGER,
-        lite_types.NUMERIC,
-        lite_types.TIME,
-        lite_types.TIMESTAMP,
-    }
-except ModuleNotFoundError:
-    LITE_TYPES = {}
-
-from sqlalchemy.exc import DBAPIError
 
 __all__ = ["Query", "Filter"]
 
@@ -63,15 +31,7 @@ _colops = {
     "~=": None,
     "~==": None,
 }
-
-ALL_ORDERABLE = {
-    sqltypes.INTEGER,
-    sqltypes.FLOAT,
-    sqltypes.DOUBLE,
-    sqltypes.TIMESTAMP,
-    sqltypes.DATETIME,
-    sqltypes.DOUBLE_PRECISION,
-}.union(PG_TYPES).union(LITE_TYPES)
+ALL_ORDERABLE = (Integer, Float, DateTime, Numeric)
 
 ILIKE_ALLOWED = [
     "dataset.name",
@@ -82,7 +42,7 @@ ILIKE_ALLOWED = [
 
 
 def is_orderable_type(ctype):
-    return type(ctype) in ALL_ORDERABLE
+    return isinstance(ctype, ALL_ORDERABLE)
 
 
 class Query:
