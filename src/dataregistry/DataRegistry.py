@@ -152,7 +152,7 @@ class DataRegistry:
 
             return root_dir
 
-    def easy_query(self, return_format="list_of_dicts", **query):
+    def easy_query(self, return_format="list_of_dicts", columns=None, **query):
         """
         Run a query on the registry with a simple syntax. For example, you can do:
 
@@ -213,6 +213,10 @@ class DataRegistry:
             "dataframe", "dict_of_lists". The default is "list_of_dicts".
             "dict_of_lists" matches the format return by find_datasets.
 
+        columns : list of str, optional
+            If not None, only return these columns in the results. The column
+            names should be from the list of search terms above, without the "dataset."
+
         **query : dict
             The query parameters. Currently these should always be
             of the form field=value, where field is one of the search
@@ -258,7 +262,13 @@ class DataRegistry:
                 filters.append(f)
 
         # run the actual query and ask for a dataframe back for convenience.
-        results = self.query.find_datasets(filters=filters, return_format='dataframe')
+        property_names = None
+        if columns is not None:
+            property_names = ["dataset." + c for c in columns]
+            for req_col in ["owner_type", "owner", "relative_path"]:
+                if req_col not in columns:
+                    property_names.append("dataset." + req_col)
+        results = self.query.find_datasets(filters=filters, property_names=property_names, return_format='dataframe')
 
 
         # We will need this schema information to
@@ -296,6 +306,16 @@ class DataRegistry:
             columns=lambda key: key[len("dataset."):] if key.startswith("dataset.") else key
         )
 
+        # remove any columns that the user did not actually want
+        # but we had to add to generate the path
+        if columns is not None:
+            for req_col in ["owner_type", "owner", "relative_path"]:
+                if req_col not in columns:
+                    results = results.drop(columns=req_col)
+
+
+        # convert into the user's requested return format,
+        # if needed
         if return_format == "dataframe":
             return results
         elif return_format == "dict_of_lists":

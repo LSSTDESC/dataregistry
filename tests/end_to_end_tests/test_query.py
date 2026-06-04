@@ -482,6 +482,14 @@ def test_easy_query(dummy_file):
     assert results.loc[1, "name"] == "test_easy_query2"
     assert results.loc[1, "version_string"] == "0.0.2"
 
+    results = datareg.easy_query(return_format="dataframe", columns=["name", "version_string", "owner"])
+    assert isinstance(results, pd.DataFrame)
+    assert "name" in results.columns
+    assert "version_string" in results.columns
+    assert "owner" in results.columns
+    assert "owner_type" not in results.columns
+    assert "relative_path" not in results.columns
+
     results = datareg.easy_query(name_ne="not_test_easy_query")
     assert len(results) >= 1
     names = [r["name"] for r in results]
