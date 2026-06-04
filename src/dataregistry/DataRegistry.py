@@ -152,7 +152,7 @@ class DataRegistry:
 
             return root_dir
 
-    def easy_query(self, **query):
+    def easy_query(self, return_format="list_of_dicts", **query):
         """
         Run a query on the registry with a simple syntax. For example, you can do:
 
@@ -207,6 +207,12 @@ class DataRegistry:
 
         Parameters
         ----------
+
+        return_format : str
+            The format to return the results in. Options are "list_of_dicts",
+            "dataframe", "dict_of_lists". The default is "list_of_dicts".
+            "dict_of_lists" matches the format return by find_datasets.
+
         **query : dict
             The query parameters. Currently these should always be
             of the form field=value, where field is one of the search
@@ -253,8 +259,6 @@ class DataRegistry:
 
         # run the actual query and ask for a dataframe back for convenience.
         results = self.query.find_datasets(filters=filters, return_format='dataframe')
-        # Change to a list of dicts for convenience. could update this if desired.
-        results = results.to_dict(orient='records')
 
 
         # We will need this schema information to
@@ -268,30 +272,39 @@ class DataRegistry:
         else:
             schema_name = self.db_connection._namespace + '_' + schema
 
+        # Get the absolute path for each dataset.
+        # We avoid using the query.get_dataset_absolute_path function here
+        # because we have already queried all the info we need to
+        # generate the path and that would require another DB
+        # query per result.
+        def _path_from_row(row):
+            owner_type = row["dataset.owner_type"]
+            if owner_type is None or owner_type != owner_type:
+                return None
+            return _form_dataset_path(
+                owner_type,
+                row["dataset.owner"],
+                row["dataset.relative_path"],
+                schema=schema_name,
+                root_dir=self.root_dir,
+            )
+
+        results["dataset.path"] = results.apply(_path_from_row, axis=1)
+
         # remove the "dataset." prefix from the keys
-        for r in results:
-            for k in list(r.keys()):
-                if k.startswith("dataset."):
-                    new_k = k[len("dataset."):]
-                    r[new_k] = r.pop(k)
+        results = results.rename(
+            columns=lambda key: key[len("dataset."):] if key.startswith("dataset.") else key
+        )
 
-            # Get the absolute path for each dataset.
-            # We avoid using the query.get_dataset_absolute_path function here
-            # because we have already queried all the info we need to
-            # generate the path and that would require another DB
-            # query per result.
-            if r["owner_type"] is None:
-                r["path"] = None
-            else:
-                r["path"] = _form_dataset_path(
-                    r["owner_type"],
-                    r['owner'],
-                    r['relative_path'],
-                    schema=schema_name,
-                    root_dir=self.root_dir,
-                )
+        if return_format == "dataframe":
+            return results
+        elif return_format == "dict_of_lists":
+            return results.to_dict(orient='list')
+        elif return_format == "list_of_dicts":
+            return results.to_dict(orient='records')
 
-        return results
+        raise ValueError(f"Invalid return_format {return_format}")
+
     # Simplify calls to functions in Registrar object
     def fetch(self, dataset_id, schema_type="working",
               destination_path=None, destination_endpoint="NERSC DTN",

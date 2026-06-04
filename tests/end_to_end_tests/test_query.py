@@ -456,11 +456,31 @@ def test_easy_query(dummy_file):
         "0.0.2",
     )
 
+    # default format, list of dicts
     results = datareg.easy_query(name="test_easy_query")
 
+    assert isinstance(results, list)
     assert len(results) == 1
     assert results[0]["name"] == "test_easy_query"
     assert results[0]["version_string"] == "0.0.1"
+
+    results = datareg.easy_query(return_format="dict_of_lists")
+    assert isinstance(results, dict)
+    assert "name" in results
+    assert len(results["name"]) == 2
+    assert results["name"][0] == "test_easy_query"
+    assert results["version_string"][0] == "0.0.1"
+    assert results["name"][1] == "test_easy_query2"
+    assert results["version_string"][1] == "0.0.2"
+
+    results = datareg.easy_query(return_format="dataframe")
+    assert isinstance(results, pd.DataFrame)
+    assert "name" in results.columns
+    assert len(results) == 2
+    assert results.loc[0, "name"] == "test_easy_query"
+    assert results.loc[0, "version_string"] == "0.0.1"
+    assert results.loc[1, "name"] == "test_easy_query2"
+    assert results.loc[1, "version_string"] == "0.0.2"
 
     results = datareg.easy_query(name_ne="not_test_easy_query")
     assert len(results) >= 1
