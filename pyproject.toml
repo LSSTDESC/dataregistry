@@ -26,7 +26,8 @@ dependencies = [
     'psycopg2',
     'sqlalchemy>=2.0.16',
     'pyyaml',
-    'pandas'
+    'pandas',
+    'globus-sdk>=4.4.0',
 ]
 requires-python = ">=3.10" # Supported versions in CI are 3.10 -> 3.13
 

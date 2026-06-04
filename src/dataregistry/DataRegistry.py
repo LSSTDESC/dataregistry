@@ -292,3 +292,160 @@ class DataRegistry:
                 )
 
         return results
+    # Simplify calls to functions in Registrar object
+    def fetch(self, dataset_id, schema_type="working",
+              destination_path=None, destination_endpoint="NERSC DTN",
+              no_cfs_copy=False):
+        """
+        Fetch a registered dataset. This is just a wrapper which calls
+        Registrar.fetch, supply the Query object as an argument.
+
+        Behavior depends on arguments and
+        whether dataset is available in cfs or only from archive, but
+        archiving is not yet implemented, so the only possibility is:
+
+        * If destination_path is not None, copy from cfg to user-specified
+          path, at user-specified globus endpoint.
+
+        Parameters
+        ----------
+        dataset_id : int
+            id of dataset to be retrieved
+        schema_type : string
+            one of "working" (the default) or "production"
+        destination_path : string
+            where to put the dataset.  If None, defaults to absolute
+            path in cfs assigned to this dataset
+        destination_endoint : string
+            globus endpoint to which dataa will be written. Defaults to
+            "NERSC DTN"
+        no_cfs_copy : boolean
+            If True and dataset was absent from cfs, write directly to
+            to the destination requested; do not also restore to cfs.
+
+        Returns
+        -------
+        Absolute cfs path of dataset when it was registered
+        """
+        return self.registrar.dataset.fetch(self.query, dataset_id,
+                                            schema_type, destination_path,
+                                            destination_endpoint, no_cfs_copy)
+
+    def register_dataset(
+            self,
+            name,
+            version,
+            **kw,
+            ):
+        """
+        Convenience function which just calls
+        DataRegistry.registrar.dataset.register.   See DatasetTable.register
+        for complete argument and return description.
+        """
+        return self.registrar.dataset.register(name, version, **kw)
+
+    def replace_dataset(
+            self,
+            name,
+            version,
+            **kw,
+            ):
+        """
+        Convenience function which just calls
+        DataRegistry.registrar.dataset.replace.   See DatasetTable.replace
+        for complete argument and return description.
+        """
+        return self.registrar.dataset.replace(name, version, **kw)
+
+    def delete_dataset(
+            self,
+            name,
+            version_string,
+            owner,
+            owner_type,
+            confirm=False):
+        """
+        Convenience function which just calls
+        DataRegistry.registrar.dataset.delete.   See DatasetTable.delete
+        for complete argument and return description.
+        """
+        return self.registrar.dataset.delete(name, version_string, owner,
+                                             owner_type, confirm=confirm)
+
+    def add_keywords_to_dataset(self, dataset_id, keyword):
+        """
+        Add keywords to a dataset entry.
+
+        Parameters
+        ----------
+        dataset_id : int
+            Dataset id to add keyword to
+        keyword : list[str]
+            Keywords to add to dataset
+        """
+        return self.registrar.keyword.add_keywords_to_dataset(dataset_id,
+                                                              keyword)
+
+    def remove_keywords_froom_dataset(self, dataset_id, keyword):
+        """
+        Remove keywords from a dataset entry.
+
+        Parameters
+        ----------
+        dataset_id : int
+            Dataset id to remove keyword from
+        keyword : list[str]
+            Keywords to remove from dataset
+        """
+        return self.registrar.keyword.remove_keywords_from_dataset(dataset_id,
+                                                                   keyword)
+
+    def create_keywords(self, keywords, user_type="user", system=False,
+                        commit=True):
+        """
+        Keyword.create_keywords for complete description of arguments
+        """
+        return self.registrar.keyword.create_keywords(keywords, )
+
+    # Simplify calls to functions in Query object
+    def find_datasets(self, **kwargs):
+        """
+        Convenience function which just calls the find_datasets function
+        of the Query object. See full documentation there.
+        """
+        return self.query.find_datasets(**kwargs)
+
+    def get_dataset_absolute_path(self, dataset_id, schema=None, silent=True):
+        """
+        See Query.get_dataset_absolute_path for complete description.
+        """
+        return self.query.get_dataset_absolute_path(dataset_id, schema=schema,
+                                                    silent=silent)
+
+    def get_all_tables(self):
+        """
+        See Query.get_all_tables for complete description)
+        """
+        return self.query.get_all_tables()
+
+    def get_all_columns(self, table="dataset", include_table=True,
+                        include_schema=False):
+        """
+        See Query.get_all_columns for complete description
+        """
+        return self.query.get_all_columns(table=table,
+                                          include_table=include_table,
+                                          include_schema=include_schema)
+
+    def get_keyword_list(self, query_mode=None):
+        """
+        See Query.get_keyword_list for complete description
+        """
+        return self.query.get_keyword_list(query_mode=query_mode)
+
+    # Register execution
+    def register_execution(self, name, **kwargs):
+        """
+        See full documentation under ExecutionTable.register
+        """
+        return self.registrar.execution.register(name, **kwargs)

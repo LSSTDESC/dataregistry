@@ -1,13 +1,14 @@
-import pytest
-import os
 import pandas as pd
-import sqlalchemy
-from sqlalchemy import inspect
+import pytest
+from database_test_utils import (
+    _insert_alias_entry,
+    _insert_dataset_entry,
+    _insert_execution_entry,
+    dummy_file,  # noqa
+)
 
 from dataregistry import DataRegistry
 from dataregistry.schema import DEFAULT_NAMESPACE
-from database_test_utils import _insert_dataset_entry, _insert_alias_entry
-from database_test_utils import _insert_execution_entry, dummy_file
 
 # Establish connection to database (default schema)
 datareg = DataRegistry(root_dir="temp")
@@ -17,17 +18,25 @@ def test_query_return_format():
     """Test we get back correct data format from queries"""
 
     # Pandas DataFrame
-    results = datareg.query.find_datasets(
-        ["dataset.name", "dataset.version_string", "dataset.relative_path"],
-        [],
+    results = datareg.find_datasets(
+        property_names=[
+            "dataset.name",
+            "dataset.version_string",
+            "dataset.relative_path",
+        ],
+        filters=[],
         return_format="dataframe",
     )
     assert type(results) == pd.DataFrame
 
     # Property dictionary (each key is a property with a list for each row)
-    results = datareg.query.find_datasets(
-        ["dataset.name", "dataset.version_string", "dataset.relative_path"],
-        [],
+    results = datareg.find_datasets(
+        property_names=[
+            "dataset.name",
+            "dataset.version_string",
+            "dataset.relative_path",
+        ],
+        filters=[],
     )
     assert type(results) == dict
 
@@ -48,10 +57,96 @@ def test_query_all(dummy_file):
 
     # `property_names=None` should return all columns
     f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
-    results = datareg.query.find_datasets(property_names=None, filters=[f])
+    results = datareg.find_datasets(property_names=None, filters=[f])
 
     for c, v in results.items():
         assert len(v) == 1
+
+
+@pytest.mark.parametrize(
+    "op,offset_from_first,expected_count",
+    [
+        (">=", 0, 5),  # all five inserted ids
+        (">", 0, 4),  # all but the first
+        ("<=", 4, 5),  # everything up to and including the last
+        ("<", 4, 4),  # everything up to but not including the last
+        (">=", 2, 3),  # mid-range
+        ("<", 2, 2),  # mid-range
+    ],
+)
+def test_query_dataset_id_comparison(dummy_file, op, offset_from_first, expected_count):
+    """
+    Filtering on the integer dataset.dataset_id with ordering operators
+    (>=, >, <=, <) must work. Bug report: these operators currently raise
+    "Cannot apply ...", because the orderable-type check inspects the Column
+    object rather than the column's underlying SQL type.
+    """
+
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+
+    # Insert 5 datasets so we get 5 consecutive dataset_ids.
+    ids = []
+    for i in range(5):
+        d_id = _insert_dataset_entry(
+            datareg,
+            f"DESC:datasets:test_query_dataset_id_comparison_{op}_{offset_from_first}_{i}",
+            "0.0.1",
+        )
+        ids.append(d_id)
+
+    # Anchor the filter at one of the inserted ids so other tests can't shift
+    # what we count.
+    pivot = ids[offset_from_first]
+    f_pivot = datareg.query.gen_filter("dataset.dataset_id", op, pivot)
+
+    # Restrict to the ids we just created so a polluted DB doesn't break us.
+    f_lower = datareg.query.gen_filter("dataset.dataset_id", ">=", ids[0])
+    f_upper = datareg.query.gen_filter("dataset.dataset_id", "<=", ids[-1])
+
+    results = datareg.query.find_datasets(
+        property_names=["dataset.dataset_id"],
+        filters=[f_pivot, f_lower, f_upper],
+    )
+
+    assert len(results["dataset.dataset_id"]) == expected_count
+
+
+def test_query_version_major_comparison(dummy_file):
+    """
+    Same check as test_query_dataset_id_comparison but on a different integer
+    column (dataset.version_major), to confirm the orderable-type check works
+    for any integer column, not just the primary key.
+    """
+
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+
+    # Three datasets with distinct major versions.
+    for v in ["1.0.0", "2.0.0", "3.0.0"]:
+        _insert_dataset_entry(
+            datareg,
+            f"DESC:datasets:test_query_version_major_comparison_{v}",
+            v,
+        )
+
+    # version_major >= 2 should match the 2.x and 3.x rows we just created.
+    f_ge = datareg.query.gen_filter("dataset.version_major", ">=", 2)
+    f_name = datareg.query.gen_filter(
+        "dataset.name",
+        "~==",
+        "DESC:datasets:test_query_version_major_comparison_*",
+    )
+    results = datareg.query.find_datasets(
+        property_names=["dataset.version_major"],
+        filters=[f_ge, f_name],
+    )
+
+    # Skip on sqlite because the name wildcard filter doesn't work there
+    # (mirroring the pattern in test_query_name).
+    if datareg.db_connection._dialect != "sqlite":
+        assert len(results["dataset.version_major"]) == 2
+        assert sorted(results["dataset.version_major"]) == [2, 3]
 
 
 def test_query_between_columns(dummy_file):
@@ -129,7 +224,7 @@ def test_query_name(dummy_file, op, qstr, ans, tag):
 
     # Do a wildcard search on the name
     f = datareg.query.gen_filter("dataset.name", op, qstr)
-    results = datareg.query.find_datasets(property_names=None, filters=[f])
+    results = datareg.find_datasets(property_names=None, filters=[f])
 
     # How many datasets did we find
     if ans == 0:
@@ -138,6 +233,7 @@ def test_query_name(dummy_file, op, qstr, ans, tag):
         assert len(results) > 0
         for c, v in results.items():
             assert len(v) == ans
+
 
 def test_aggregate_datasets_count(dummy_file):
     """Test counting the number of datasets."""
@@ -298,6 +394,7 @@ def test_aggregate_datasets_errors(dummy_file):
     with pytest.raises(ValueError, match="must be numeric"):
         datareg.query.aggregate_datasets("description", agg_func="sum")
 
+
 @pytest.mark.parametrize(
     "table,include_table,include_schema",
     [
@@ -307,16 +404,18 @@ def test_aggregate_datasets_errors(dummy_file):
         (None, True, True),
         ("dataset", True, False),
         ("execution", False, False),
-    ]
+    ],
 )
-def test_query_get_all_columns(dummy_file,table,include_table,include_schema):
+def test_query_get_all_columns(dummy_file, table, include_table, include_schema):
     """Test the `get_all_columns()` function in `query.py`"""
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
-    cols = datareg.query.get_all_columns(table=table, include_table=include_table, include_schema=include_schema)
+    cols = datareg.query.get_all_columns(
+        table=table, include_table=include_table, include_schema=include_schema
+    )
 
     assert len(cols) > 0
 
@@ -325,6 +424,7 @@ def test_query_get_all_columns(dummy_file,table,include_table,include_schema):
             if include_table:
                 assert table in att
 
+
 def test_query_get_all_tables(dummy_file):
     """Test the `get_all_tables()` function in `query.py`"""
 
@@ -332,7 +432,7 @@ def test_query_get_all_tables(dummy_file):
     tmp_src_dir, tmp_root_dir = dummy_file
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
-    tables = datareg.query.get_all_tables()
+    tables = datareg.get_all_tables()
 
     assert len(tables) > 0
 

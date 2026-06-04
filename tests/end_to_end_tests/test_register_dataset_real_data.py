@@ -1,17 +1,21 @@
 import os
 
 import pytest
+from database_test_utils import (
+    _insert_dataset_entry,
+    _replace_dataset_entry,
+    dummy_file,
+)  # noqa
+
 from dataregistry import DataRegistry
-from dataregistry.schema import DEFAULT_NAMESPACE
 from dataregistry.exceptions import DataRegistryRootDirBadState
-from database_test_utils import _insert_dataset_entry, _replace_dataset_entry
-from database_test_utils import dummy_file
+from dataregistry.schema import DEFAULT_NAMESPACE
 
 
 @pytest.mark.parametrize("data_org", ["file", "directory"])
 def test_copy_data(dummy_file, data_org):
     """Test copying real data into the registry (from an `old_location`)
-       Also test get_dataset_absolute_path"""
+    Also test get_dataset_absolute_path"""
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
@@ -45,9 +49,13 @@ def test_copy_data(dummy_file, data_org):
 
     # Query
     f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
-    results = datareg.query.find_datasets(
-        ["dataset.data_org", "dataset.nfiles", "dataset.total_disk_space"],
-        [f],
+    results = datareg.find_datasets(
+        property_names=[
+            "dataset.data_org",
+            "dataset.nfiles",
+            "dataset.total_disk_space",
+        ],
+        filters=[f],
     )
 
     assert len(results["dataset.data_org"]) == 1
@@ -57,11 +65,10 @@ def test_copy_data(dummy_file, data_org):
 
     if data_org == "file":
         # See if it's there
-        abs_path = datareg.query.get_dataset_absolute_path(d_id, schema="working")
+        abs_path = datareg.get_dataset_absolute_path(d_id, schema="working")
         assert os.path.exists(abs_path)
 
-        abs_path_2 = datareg.query.get_dataset_absolute_path(d_id_2,
-                                                             schema="working")
+        abs_path_2 = datareg.get_dataset_absolute_path(d_id_2, schema="working")
         assert os.path.exists(abs_path_2)
 
 
@@ -70,7 +77,7 @@ def test_copy_data(dummy_file, data_org):
     [
         ("file", "file1.txt"),
         ("directory", "dummy_dir"),
-        ("same_directory", "dummy_dir")
+        ("same_directory", "dummy_dir"),
     ],
 )
 def test_on_location_data(dummy_file, data_org, data_path):
@@ -92,13 +99,13 @@ def test_on_location_data(dummy_file, data_org, data_path):
     )
 
     f = datareg.query.gen_filter("dataset.relative_path", "==", data_path)
-    results = datareg.query.find_datasets(
-        [
+    results = datareg.find_datasets(
+        property_names=[
             "dataset.data_org",
             "dataset.nfiles",
             "dataset.total_disk_space",
         ],
-        [f],
+        filters=[f],
     )
 
     if data_org == "same_directory":

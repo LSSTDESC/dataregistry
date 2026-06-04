@@ -83,7 +83,7 @@ def test_delete_dataset_entry(dummy_file, is_dummy, dataset_name, delete_by_id):
     # Check the entry was deleted
     f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
     results = datareg.query.find_datasets(
-        [
+        property_names=[
             "dataset.status",
             "dataset.delete_date",
             "dataset.delete_uid",
@@ -91,7 +91,7 @@ def test_delete_dataset_entry(dummy_file, is_dummy, dataset_name, delete_by_id):
             "dataset.owner",
             "dataset.relative_path",
         ],
-        [f],
+        filters=[f],
     )
 
     assert len(results["dataset.status"]) == 1
