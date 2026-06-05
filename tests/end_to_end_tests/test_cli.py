@@ -306,3 +306,32 @@ def test_modify_dataset_creation_date(dummy_file):
         assert "2023" in result_str
         assert "05" in result_str or "5" in result_str
         assert "15" in result_str
+
+
+def test_path_dataset_by_id(dummy_file, capsys):
+    """Resolve and print the absolute path for one dataset by id."""
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+
+    # Register a dataset
+    cmd = "register dataset my_cli_dataset_path 0.0.1 --location_type dummy"
+    cmd += f" --namespace {DEFAULT_NAMESPACE} --root_dir {str(tmp_root_dir)}"
+    cli.main(shlex.split(cmd))
+
+    # Find its dataset id
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+    f = datareg.query.gen_filter("dataset.name", "==", "my_cli_dataset_path")
+    results = datareg.query.find_datasets(property_names=["dataset.dataset_id"], filters=[f])
+    assert len(results["dataset.dataset_id"]) == 1
+    dataset_id = results["dataset.dataset_id"][0]
+
+    expected_path = datareg.query.get_dataset_absolute_path(dataset_id, silent=False)
+
+    # Clear prior command output and run the path command
+    capsys.readouterr()
+    cmd = f"path {dataset_id} --namespace {DEFAULT_NAMESPACE} --root_dir {str(tmp_root_dir)}"
+    cli.main(shlex.split(cmd))
+    captured = capsys.readouterr()
+
+    assert captured.out.strip() == expected_path

@@ -15,6 +15,7 @@
 | ---------------- | -------------------------------------- |
 | `dregs show`     | Show some properties                   |
 | `dregs ls`       | List your entries in the data registry |
+| `dregs path`     | Print the path to one dataset          |
 | `dregs modify`   | Modify an entry in the database        |
 | `dregs register` | Register a new entry to the database   |
 | `dregs delete`   | Delete an entry in the database        |
@@ -51,6 +52,17 @@ The `dregs ls` command lists all datasets in the connected namespace owned by th
 | Command                      | Description                               |
 | ---------------------------- | ----------------------------------------- |
 | `dregs ls --keyword science` | Filter datasets by the keyword `science`. |
+
+### Printing One Dataset Path
+
+Use `dregs path` to print the absolute path for one dataset by `dataset_id`.
+
+| Command                                                 | Description                                                     |
+| ------------------------------------------------------- | --------------------------------------------------------------- |
+| `dregs path 1234`                                       | Print the absolute path for dataset id `1234`.                 |
+| `dregs path 1234 --schema_mode working`                 | Resolve path in the working schema.                             |
+| `dregs path 1234 --schema_mode production`              | Resolve path in the production schema.                          |
+| `dregs path 1234 --root_dir /path/to/root --namespace desc` | Resolve path using an explicit root directory and namespace. |
 
 ---
 
