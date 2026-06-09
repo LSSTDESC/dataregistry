@@ -37,5 +37,10 @@ def dregs_show(show_what, args):
     )
 
     if show_what == "keywords":
+        if args.query_mode == "both":
+            print('query-mode "both" is not supported.')
+            print('Please use "working" (the default) or "production".')
+            return
+
         print(f"Avaliable keywords:")
         print(datareg.Query.get_keyword_list())

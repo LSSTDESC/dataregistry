@@ -21,7 +21,7 @@ class DataRegistry:
         namespace=None,
         schema=None,
         entry_mode="working",
-        query_mode="both",
+        query_mode="working",
     ):
         """
         Primary data registry wrapper class.
