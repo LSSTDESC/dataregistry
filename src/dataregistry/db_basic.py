@@ -561,7 +561,8 @@ class DbConnection:
                     columns_to_table[col.name] = None
                 else:
                     all_columns.add(col.name)
-                    columns_to_table[col.name] = table.name
+                    # strip off schema if there is one
+                    columns_to_table[col.name] = table.split('.')[-1:]
 
         return columns_to_table
 

@@ -109,7 +109,8 @@ class Query:
                 elif len(parts) == 2:  # ok as is
                     canon_names.append(c)
                 else:
-                    tbl_name = self.db_connection.map_column_to_table(c)
+                    col_map = self.db_connection.map_column_to_table
+                    tbl_name = col_map[c][0]
                     if not tbl_name:  # table is not unique
                         raise DataRegistryException(
                             (

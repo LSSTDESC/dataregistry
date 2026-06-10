@@ -68,9 +68,9 @@ class DataRegistry:
             use when writing/modifying/deleting entries.
         query_mode : str, optional
             Which schema(s) ("working" or "production") to probe when querying.
-            By default query_mode="both", which searches both schemas together,
-            however this can be restricted to either "working" or "production"
-            to restrict searches to a single schema.
+            By default query_mode="working",
+            however this can be set to either "production" to search only
+            that schema or "both" to search both.
         """
 
         # Establish connection to database
