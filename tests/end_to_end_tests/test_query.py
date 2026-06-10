@@ -8,6 +8,7 @@ from database_test_utils import (
 )
 
 from dataregistry import DataRegistry
+from dataregistry.exceptions import DataRegistryColumnSpec
 from dataregistry.schema import DEFAULT_NAMESPACE
 
 # Establish connection to database (default schema)
@@ -27,7 +28,7 @@ def test_query_return_format():
         filters=[],
         return_format="dataframe",
     )
-    assert type(results) == pd.DataFrame
+    assert type(results) is pd.DataFrame
 
     # Property dictionary (each key is a property with a list for each row)
     results = datareg.find_datasets(
@@ -38,7 +39,7 @@ def test_query_return_format():
         ],
         filters=[],
     )
-    assert type(results) == dict
+    assert type(results) is dict
 
 
 def test_query_all(dummy_file):
