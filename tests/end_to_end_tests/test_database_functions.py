@@ -13,6 +13,7 @@ from sqlalchemy.exc import IntegrityError
 # Remember no production schema when using sqlite backend
 db_connection = DbConnection(config_file=None, namespace=DEFAULT_NAMESPACE)
 
+
 @pytest.mark.skipif(
     db_connection.dialect == "sqlite", reason="no production with sqlite"
 )
@@ -43,7 +44,7 @@ def test_get_dataset_absolute_path(dummy_file, schema):
         relative_path=dset_relpath,
     )
 
-    v = datareg.query.get_dataset_absolute_path(d_id_1, schema=schema)
+    v = datareg.get_dataset_absolute_path(d_id_1, schema=schema)
 
     if datareg.query._dialect == "sqlite":
         assert v == os.path.join(
@@ -57,6 +58,7 @@ def test_get_dataset_absolute_path(dummy_file, schema):
             dset_relpath
             )
         assert v == should_be
+
 
 def test_find_entry(dummy_file):
     """
@@ -107,10 +109,11 @@ def test_get_modifiable_columns(dummy_file):
     tmp_src_dir, tmp_root_dir = dummy_file
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
-    mod_list = datareg.registrar.dataset.get_modifiable_columns()
+    mod_list = datareg.get_modifiable_columns() # dataset table is default
     assert "description" in mod_list
+    assert "url" in mod_list
 
-    mod_list = datareg.registrar.execution.get_modifiable_columns()
+    mod_list = datareg.get_modifiable_columns(table="execution")
     assert "description" in mod_list
 
 
@@ -126,6 +129,7 @@ def test_get_keywords(dummy_file):
 
     assert "simulation" in keywords
     assert "observation" in keywords
+
 
 @pytest.mark.parametrize("mykeyword", ["KeYwOrD", "anotherkeyword"])
 def test_insert_keywords(dummy_file, mykeyword):
