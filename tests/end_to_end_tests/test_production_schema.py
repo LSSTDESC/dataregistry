@@ -27,7 +27,6 @@ def test_register_with_production_dependencies(dummy_file):
     datareg_prod = DataRegistry(
         root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE,
         entry_mode="production", query_mode="production")
-    )
 
     # Make a dataset in each schema
     d_id_prod = _insert_dataset_entry(
