@@ -142,7 +142,7 @@ def test_query_column_spec(dummy_file, column_spec, expected):
 
     status = "unknown"
     try:
-        results = datareg.find_dataset(
+        results = datareg.find_datasets(
             property_names=[column_spec],
             filters=[id_filter])
         status = "success"
