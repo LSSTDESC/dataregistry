@@ -4,7 +4,7 @@ import pandas as pd
 from sqlalchemy import DateTime, Float, Integer, Numeric, func, select
 from sqlalchemy.exc import DBAPIError
 
-from dataregistry.exceptions import DataRegistryException
+from dataregistry.exceptions import DataRegistryException, DataRegistryColumnSpec, DataRegistryNoEntry, DataRegistryUnmanaged, DataRegistryNoColumn
 from dataregistry.registrar.registrar_util import _form_dataset_path
 
 __all__ = ["Query", "Filter"]
@@ -110,15 +110,11 @@ class Query:
                     canon_names.append(c)
                 else:
                     col_map = self.db_connection.map_column_to_table
+                    if not c in col_map:
+                        raise DataRegistryNoColumn(c)
+                    if not col_map[c]:  # table is not unique
+                        raise DataRegistryColumnSpec(c)
                     tbl_name = col_map[c][0]
-                    if not tbl_name:  # table is not unique
-                        raise DataRegistryException(
-                            (
-                                f"Column name '{c}' is not unique to "
-                                f"one table in the database, use "
-                                f"<table_name>.<column_name> format instead"
-                            )
-                        )
                     canon_names.append(".".join([tbl_name, c]))
         return canon_names
 
@@ -810,12 +806,11 @@ class Query:
         if results["dataset.location_type"][0] not in ("dataregistry", "dummy"):
             if silent:
                 self.db_connection.logger.warning(
-                    f"Dataset not stored by dataregistry; has no absolute Path")
+                    "Dataset not stored by dataregistry; has no absolute Path")
                 return None
             else:
                 raise DataRegistryUnmanaged(dataset_id=dataset_id,
                                             schema_mode=schema)
-
 
         # Find actual schema name to pass to _form_dataset_path
         if not self.db_connection._namespace:
