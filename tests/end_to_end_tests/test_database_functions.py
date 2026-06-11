@@ -26,8 +26,9 @@ def test_get_dataset_absolute_path(dummy_file, schema):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE,
-            entry_mode=schema, query_mode=schema)
+    datareg = DataRegistry(root_dir=str(tmp_root_dir),
+                           namespace=DEFAULT_NAMESPACE,
+                           entry_mode=schema, query_mode=schema)
 
     dset_name = f"DESC:datasets:get_dataset_absolute_path_test_{schema}"
     dset_ownertype = "group" if schema == "working" else "production"
@@ -109,12 +110,23 @@ def test_get_modifiable_columns(dummy_file):
     tmp_src_dir, tmp_root_dir = dummy_file
     datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
 
-    mod_list = datareg.get_modifiable_columns() # dataset table is default
+    mod_list = datareg.get_modifiable_columns()  # dataset table is default
     assert "description" in mod_list
     assert "url" in mod_list
 
     mod_list = datareg.get_modifiable_columns(table="execution")
     assert "description" in mod_list
+
+    mod_list = datareg.get_modifible_columns(table="keyword")
+    assert mod_list == dict()
+
+    try:
+        mod_list = datareg.get_modifiable_columns(table="bogus")
+        status = "success"
+    except ValueError:
+        status = "failure"
+
+    assert status == "failure"
 
 
 def test_get_keywords(dummy_file):
@@ -122,8 +134,9 @@ def test_get_keywords(dummy_file):
 
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
-    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE,
-            query_mode="working")
+    datareg = DataRegistry(root_dir=str(tmp_root_dir),
+                           namespace=DEFAULT_NAMESPACE,
+                           query_mode="working")
 
     keywords = datareg.query.get_keyword_list()
 
