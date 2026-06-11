@@ -71,7 +71,7 @@ def test_modify_dataset(
     )
 
     # Modify entry
-    datareg.registrar.dataset.modify(d_id, {column: new_value})
+    datareg.modify_dataset(d_id, {column: new_value})
 
     # Query to verify the modification
     f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
@@ -130,7 +130,7 @@ def test_modify_execution(dummy_file, execution_name, column, new_value):
     )
 
     # Modify entry
-    datareg.registrar.execution.modify(e_id, {column: new_value})
+    datareg.modify_execution(e_id, {column: new_value})
 
     f = datareg.query.gen_filter("execution.execution_id", "==", e_id)
     results = datareg.query.find_datasets(
@@ -151,7 +151,7 @@ def test_modify_not_allowed(dummy_file):
     # Add entry
     d_id = _insert_dataset_entry(
         datareg,
-        f"DESC:datasets:bad_modify",
+        "DESC:datasets:bad_modify",
         "0.0.1",
         location_type="dummy",
     )

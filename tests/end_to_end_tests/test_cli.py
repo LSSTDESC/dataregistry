@@ -74,7 +74,8 @@ def test_production_entry(dummy_file):
     # Establish connection to database
     tmp_src_dir, tmp_root_dir = dummy_file
 
-    datareg = DataRegistry(root_dir=str(tmp_root_dir))
+    datareg = DataRegistry(root_dir=str(tmp_root_dir),
+                           query_mode="production")
 
     if datareg.query._dialect != "sqlite":
         # Register a dataset

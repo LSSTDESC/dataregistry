@@ -54,18 +54,18 @@ def _add_generic_arguments(parser_obj, add_entry_mode=True, add_query_mode=False
             "--entry-mode",
             "--entry_mode",
             default="working",
-            help="""Which schema ('working' or 'production') within the namespace
-            to use when writing/modifying/deleting entries.""",
+            help="""Which schema ('working', 'production' or both) within
+            the namespace to use when writing/modifying/deleting entries.
+            Defaults to 'working'.""",
         )
     if add_query_mode:
         parser_obj.add_argument(
             "--query-mode",
             "--query_mode",
-            default="both",
-            help="""Which schema(s) ("working" or "production") to probe when querying.
-                By default query_mode="both", which searches both schemas together,
-                however this can be restricted to either "working" or "production"
-                to restrict searches to a single schema."""
+            default="working",
+            help="""Which schema(s) ("working" or "production" or both) to probe when querying.
+                By default query_mode="working".
+            """
         )
 
 

@@ -8,6 +8,7 @@ from database_test_utils import (
 )
 
 from dataregistry import DataRegistry
+from dataregistry.exceptions import DataRegistryColumnSpec
 from dataregistry.schema import DEFAULT_NAMESPACE
 
 # Establish connection to database (default schema)
@@ -27,7 +28,7 @@ def test_query_return_format():
         filters=[],
         return_format="dataframe",
     )
-    assert type(results) == pd.DataFrame
+    assert type(results) is pd.DataFrame
 
     # Property dictionary (each key is a property with a list for each row)
     results = datareg.find_datasets(
@@ -38,7 +39,7 @@ def test_query_return_format():
         ],
         filters=[],
     )
-    assert type(results) == dict
+    assert type(results) is dict
 
 
 def test_query_all(dummy_file):
@@ -110,6 +111,45 @@ def test_query_dataset_id_comparison(dummy_file, op, offset_from_first, expected
     )
 
     assert len(results["dataset.dataset_id"]) == expected_count
+
+
+@pytest.mark.parametrize(
+    "column_spec,expected",
+    [
+        ("owner", "success"),
+        ("access_api", "failure"),
+        ("dataset.access_api", "success")
+    ],
+)
+def test_query_column_spec(dummy_file, column_spec, expected):
+    """
+    Check that column specifications are handled correctly.  An unqualified
+    column name should be rejected if it appears in more than one
+    table
+    """
+
+    tmp_src_dir, tmp_root_dir = dummy_file
+    datareg = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+    # Insert a dataset
+    d_id = _insert_dataset_entry(
+        datareg,
+        f"DESC:datasets:test_query_column_spec_{column_spec}_{expected}",
+        "0.0.1",
+    )
+
+    # Make a query using the column_spec
+    id_filter = datareg.query.gen_filter("dataset.dataset_id", "=", d_id)
+
+    status = "unknown"
+    try:
+        results = datareg.find_datasets(
+            property_names=[column_spec],
+            filters=[id_filter])
+        status = "success"
+    except DataRegistryColumnSpec:
+        status = "failure"
+
+    assert status == expected
 
 
 def test_query_version_major_comparison(dummy_file):

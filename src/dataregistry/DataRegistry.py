@@ -21,7 +21,7 @@ class DataRegistry:
         namespace=None,
         schema=None,
         entry_mode="working",
-        query_mode="both",
+        query_mode="working",
     ):
         """
         Primary data registry wrapper class.
@@ -68,9 +68,9 @@ class DataRegistry:
             use when writing/modifying/deleting entries.
         query_mode : str, optional
             Which schema(s) ("working" or "production") to probe when querying.
-            By default query_mode="both", which searches both schemas together,
-            however this can be restricted to either "working" or "production"
-            to restrict searches to a single schema.
+            By default query_mode="working",
+            however this can be set to either "production" to search only
+            that schema or "both" to search both.
         """
 
         # Establish connection to database
@@ -203,6 +203,18 @@ class DataRegistry:
         """
         return self.registrar.dataset.register(name, version, **kw)
 
+    def modify_dataset(
+            self,
+            dataset_id,
+            update_dict
+            ):
+        """
+        Convenience function which just calls
+        DataRegistry.registrar.dataset.modify.   See DatasetTable.modify
+        for complete argument and return description.
+        """
+        self.registrar.dataset.modify(dataset_id, update_dict)
+
     def replace_dataset(
             self,
             name,
@@ -296,6 +308,21 @@ class DataRegistry:
                                           include_table=include_table,
                                           include_schema=include_schema)
 
+    def get_modifiable_columns(self, table="dataset"):
+        """
+        See full documentation under DatasetTable.get_modifiable_columns()
+        """
+        if table == "dataset":
+            return self.registrar.dataset.get_modifiable_columns()
+        elif table == "execution":
+            return self.registrar.execution.get_modifiable_columns()
+        elif table == "dataset_alias":
+            return self.registrar.dataset_alias.get_modifiable_columns()
+        elif table in self.get_all_tables():
+            return dict()
+        else:
+            raise ValueError(f"No such table as '{table}'")
+
     def get_keyword_list(self, query_mode=None):
         """
         See Query.get_keyword_list for complete description
@@ -308,3 +335,15 @@ class DataRegistry:
         See full documentation under ExecutionTable.register
         """
         return self.registrar.execution.register(name, **kwargs)
+
+    def modify_execution(
+            self,
+            execution_id,
+            update_dict
+            ):
+        """
+        Convenience function which just calls
+        DataRegistry.registrar.execution.modify.   See ExecutionTable.modify
+        for complete argument and return description.
+        """
+        self.registrar.execution.modify(execution_id, update_dict)

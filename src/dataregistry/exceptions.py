@@ -1,4 +1,7 @@
-__all__ = ["DataRegistryException", "DataRegistryNYI", "DataRegistryRootDirBadState"]
+__all__ = ["DataRegistryException", "DataRegistryNYI",
+           "DataRegistryRootDirBadState", "dataRegistryNoEntry",
+           "DataRegistryUnmanaged", "DataRegistryColumnSpec",
+           "DataRegistryNoColumn"]
 
 
 class DataRegistryException(Exception):
@@ -30,5 +33,18 @@ class DataRegistryUnmanaged(DataRegistryException):
     def __init__(self, dataset_id="", schema_mode=""):
         msg = f"For dataset id {dataset_id}, schema_mode {schema_mode} "
         msg += "dataregistry does not manage data files, only metadata"
+        self.msg = msg
+        super().__init__(self.msg)
+
+class DataRegistryColumnSpec(DataRegistryException):
+    def __init__(self, column_spec=""):
+        msg = f"More than one table has column {column_spec}.\n"
+        msg += "Include table name in specification."
+        self.msg = msg
+        super().__init__(self.msg)
+
+class DataRegistryNoColumn(DataRegistryException):
+    def __init__(self, column_spec=""):
+        msg = f"No such column as {column_spec}."
         self.msg = msg
         super().__init__(self.msg)
