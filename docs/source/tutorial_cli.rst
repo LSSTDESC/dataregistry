@@ -132,3 +132,16 @@ To select what columns are printed in the result use the ``--return_cols`` optio
 
 Using ``dregs ls`` is a quick an easy way to remind yourself what names you
 gave to previous datasets, and what relative paths they reside at.
+
+If you want the full absolute path for one specific dataset, use ``dregs path``
+with its ``dataset_id``:
+
+.. code-block:: bash
+
+   dregs path 1234
+
+Optionally, specify which schema to query:
+
+.. code-block:: bash
+
+   dregs path 1234 --schema_mode working

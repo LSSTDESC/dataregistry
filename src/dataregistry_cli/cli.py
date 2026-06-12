@@ -5,6 +5,7 @@ from dataregistry.schema import DEFAULT_NAMESPACE
 from .register import register_dataset
 from .delete import delete_dataset
 from .query import dregs_ls
+from .path import dregs_path
 from .show import dregs_show
 from .modify import modify_dataset
 from dataregistry.schema import load_schema
@@ -134,6 +135,26 @@ def get_parser():
     )
     arg_ls.add_argument("--keyword", type=str, help="Keyword to filter by")
     _add_generic_arguments(arg_ls, add_entry_mode=False, add_query_mode=True)
+
+    # ---------------------
+    # Path (single dataset)
+    # ---------------------
+
+    arg_path = subparsers.add_parser(
+        "path", help="Print the absolute path to one dataset"
+    )
+    arg_path.add_argument(
+        "dataset_id",
+        help="Dataset ID to resolve to an absolute path",
+        type=int,
+    )
+    arg_path.add_argument(
+        "--schema_mode",
+        help="Which schema to search for this dataset",
+        choices=["working", "production"],
+        type=str,
+    )
+    _add_generic_arguments(arg_path, add_entry_mode=False, add_query_mode=True)
 
     # ------
     # Modify
@@ -396,6 +417,10 @@ def main(cmd=None):
     elif args.subcommand == "show":
         if args.show_type == "keywords":
             dregs_show("keywords", args)
+
+    # Print absolute path for one dataset
+    elif args.subcommand == "path":
+        dregs_path(args)
 
     # Modify an entry
     if args.subcommand == "modify":
