@@ -10,8 +10,6 @@ The data registry is a facility to store and share datasets from DESC related pr
 
 The data, once registered, are transferred and stored at a central location at NERSC, which can then be later accessed and queried using the ``dataregistry`` Python package, or the CLI.
 
-For example, use ``dregs ls`` to list datasets and ``dregs path <dataset_id>`` to print the absolute path to one dataset.
-
 ### Documentation
 
 The full documentation for the data registry can be found [here](http://lsstdesc.org/dataregistry).
