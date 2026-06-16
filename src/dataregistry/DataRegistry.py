@@ -243,6 +243,14 @@ class DataRegistry:
         return self.registrar.dataset.delete(name, version_string, owner,
                                              owner_type, confirm=confirm)
 
+    def request_archive(
+            self,
+            dataset_id,
+            delete_from_disk=False):
+        return self.registrar.dataset.request_archive(self.query,
+                                                      dataset_id,
+                                                      delete_from_disk)
+
     def add_keywords_to_dataset(self, dataset_id, keyword):
         """
         Add keywords to a dataset entry.

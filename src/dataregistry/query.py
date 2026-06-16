@@ -1,9 +1,7 @@
 from collections import namedtuple
-
-from sqlalchemy import select, text
-import sqlalchemy.sql.sqltypes as sqltypes
 import pandas as pd
-from sqlalchemy import DateTime, Float, Integer, Numeric, func, select
+from sqlalchemy import select, text
+from sqlalchemy import DateTime, Float, Integer, Numeric, func
 from sqlalchemy.exc import DBAPIError
 
 from dataregistry.exceptions import DataRegistryException, DataRegistryColumnSpec, DataRegistryNoEntry, DataRegistryUnmanaged, DataRegistryNoColumn
@@ -112,7 +110,7 @@ class Query:
                     canon_names.append(c)
                 else:
                     col_map = self.db_connection.map_column_to_table
-                    if not c in col_map:
+                    if c not in col_map:
                         raise DataRegistryNoColumn(c)
                     if not col_map[c]:  # table is not unique
                         raise DataRegistryColumnSpec(c)

@@ -8,9 +8,11 @@ import warnings
 from dataregistry.db_basic import add_table_row
 from dataregistry.exceptions import DataRegistryRootDirBadState
 from dataregistry.exceptions import DataRegistryNoEntry
+from dataregistry.exceptions import DataRegistryNotArchivable
 from sqlalchemy import select, update
 from functools import wraps
 from dataregistry.query import Filter
+from dataregistry.registrar.dataset_util import DATASET_STATUS_VALUE
 from dataregistry.globus.transfer import transfer_NERSC
 
 from .base_table_class import BaseTable
@@ -1069,13 +1071,17 @@ class DatasetTable(BaseTable):
         # Retrieve status and absolute path for the dataset.
         filter = Filter("dataset.dataset_id", "==", dataset_id)
         results = query_object.find_datasets(
-            property_names=["dataset.status"],
+            property_names=["dataset.status", "dataset.location_type"],
             filters=[filter],
             schema_mode=schema_type
             )
         ok = True
         archived = False
+        location_type = ""
         if not results or len(results["dataset.status"]) == 0:
+            ok = False
+        elif results["dataset.location_type"][0] != "dataregistry":
+            location_type = results["dataset.location_type"][0]
             ok = False
         else:
             status = results["dataset.status"][0]
@@ -1087,7 +1093,13 @@ class DatasetTable(BaseTable):
                 else:
                     archived = True
         if not ok:
-            raise DataRegistryNoEntry(dataset_id, schema_type)
+            raise DataRegistryNoEntry(dataset_id, schema_type, location_type)
+
+        # Update fetch time.  It's still possible it can't be fetched for
+        # one reason or another, but fetch time should be updated
+        # whenever someone tries to fetch a dataset which is in principle
+        # fetchable.
+        self._modify({"fetch_date": datetime.now()}, dataset_id)
 
         # Currently nothing is archived so ignore that case.  Dataset
         # must be present on cfs.
@@ -1104,17 +1116,69 @@ class DatasetTable(BaseTable):
         transfer_result = transfer_NERSC(abs_path, destination_path,
                                          logger=self.db_connection.logger)
 
-        # Update fetch date (even if transfer ultimately fails)
-        dataset_table = self._get_table_metadata(self.which_table)
-        with self._engine.connect() as conn:
-            update_stmt = (
-                update(dataset_table)
-                .where(dataset_table.c.dataset_id == dataset_id)
-                .values(fetch_date=datetime.now(),)
-                )
-            conn.execute(update_stmt)
-            conn.commit()
-
         # Should we poll on transfer result?
         # For now, just..
         return abs_path
+
+    def request_archive(self, query_object, dataset_id,
+                        delete_from_disk=False):
+        """
+        Mark dataset as ready for archive (if not already archived) and,
+        optionally, to be deleted from cfs once archived
+
+        Parameters
+        ----------
+        query_object     Query        Necessary to use API query methods
+        dataset_id       int          Identifies dataset to be archived
+        delete_from_disk boolean
+        """
+        schema = self._schema
+        sch_mode = "production" if schema.endswith("production") else "working"
+
+        # Fetch status. Do not archive if already archived or already
+        # deleted from disk
+        f = Filter("dataset.dataset_id", "=", dataset_id)
+        results = query_object.find_datasets(
+            property_names=["dataset.status", "dataset.location_type"],
+            filters=[f],
+            schema_mode=sch_mode)
+        ok = True
+        if not results or len(results["dataset.status"]) == 0:
+            location_type = None
+            ok = False
+        else:
+            old_status = results['dataset.status'][0]
+            loc_type = results['dataset.location_type'][0]
+            if not get_dataset_status(old_status, "valid"):
+                ok = False
+                reason = "has invalid status"
+            elif get_dataset_status(old_status, "archived"):
+                ok = False
+                reason = "is already archived"
+            elif get_dataset_status(old_status, "deleted"):
+                ok = False
+                reason = "has been deleted"
+            elif loc_type != "dataregistry":
+                ok = False
+                reason = ""
+
+        # if old_status & (DATASET_STATUS_VALUE["archived"] | DATASET_STATUS_VALUE["deleted"]) | (loc_type != "dataregistry") | (old_status & DATASET_STATUS_VALUE["valid"] == 0):
+        if not ok:
+            raise DataRegistryNotArchivable(id=dataset_id,
+                                            reason=reason,
+                                            location_type=loc_type)
+        op = "request_archive_delete" if delete_from_disk else "request_archive"
+        rqst_status = old_status | DATASET_STATUS_VALUE[op]
+
+        # Short from (but a little more code executed since generic)
+        self._modify({"status": rqst_status}, dataset_id)
+
+        # Long form
+        # update_stmt = (
+        #     updata(my_table)
+        #     .where(getattr(my_table.c, self.entry_id) == dataset_id)
+        #     .values({"status" : rqst_status})
+        #     )
+        # with self._engine.connect() as conn:
+        #     conn.execute(update_stmt)
+        #     conn.commit()
