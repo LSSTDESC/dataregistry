@@ -546,6 +546,19 @@ class Query:
         )
         return results["keyword.keyword"]
 
+    def get_project_list(self, query_mode=None):
+        """Get list of project owners from the dataset table"""
+
+        if not query_mode:
+            query_mode = self.db_connection._query_mode
+
+        results = self.find_datasets(
+            property_names=["dataset.owner"],
+            filters=[("dataset.owner_type", "==", "project")],
+            schema_mode=query_mode,
+        )
+        return sorted(set(results["dataset.owner"]))
+
     def find_datasets(
         self,
         property_names=None,

@@ -94,6 +94,11 @@ def get_parser():
     )
     _add_generic_arguments(arg_show_keywords, add_entry_mode=False, add_query_mode=True)
 
+    arg_show_projects = arg_show_sub.add_parser(
+        "projects", help="Show list of project owners"
+    )
+    _add_generic_arguments(arg_show_projects, add_entry_mode=False, add_query_mode=True)
+
     # ----------
     # Query (ls)
     # ----------
@@ -417,6 +422,8 @@ def main(cmd=None):
     elif args.subcommand == "show":
         if args.show_type == "keywords":
             dregs_show("keywords", args)
+        elif args.show_type == "projects":
+            dregs_show("projects", args)
 
     # Print absolute path for one dataset
     elif args.subcommand == "path":

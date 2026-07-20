@@ -336,3 +336,37 @@ def test_path_dataset_by_id(dummy_file, capsys):
     captured = capsys.readouterr()
 
     assert captured.out.strip() == expected_path
+
+
+def test_show_projects(dummy_file, capsys):
+    """List project owners through the CLI show command."""
+
+    # Establish connection to database
+    tmp_src_dir, tmp_root_dir = dummy_file
+
+    # Register datasets with project owners and one non-project owner
+    cmd = "register dataset project_dataset_a 0.0.1 --location_type dummy"
+    cmd += " --owner project_alpha --owner_type project"
+    cmd += f" --namespace {DEFAULT_NAMESPACE} --root_dir {str(tmp_root_dir)}"
+    cli.main(shlex.split(cmd))
+
+    cmd = "register dataset project_dataset_b 0.0.1 --location_type dummy"
+    cmd += " --owner project_beta --owner_type project"
+    cmd += f" --namespace {DEFAULT_NAMESPACE} --root_dir {str(tmp_root_dir)}"
+    cli.main(shlex.split(cmd))
+
+    cmd = "register dataset user_dataset 0.0.1 --location_type dummy"
+    cmd += " --owner user_alpha --owner_type user"
+    cmd += f" --namespace {DEFAULT_NAMESPACE} --root_dir {str(tmp_root_dir)}"
+    cli.main(shlex.split(cmd))
+
+    # Clear prior command output and run the show command
+    capsys.readouterr()
+    cmd = f"show projects --namespace {DEFAULT_NAMESPACE} --root_dir {str(tmp_root_dir)}"
+    cli.main(shlex.split(cmd))
+    captured = capsys.readouterr()
+
+    assert "Available projects:" in captured.out
+    assert "project_alpha" in captured.out
+    assert "project_beta" in captured.out
+    assert "user_alpha" not in captured.out
