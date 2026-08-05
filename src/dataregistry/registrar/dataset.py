@@ -2,12 +2,14 @@ import inspect
 import os
 import time
 from datetime import datetime
+from pathlib import PurePath
 import shutil
 import warnings
 
 from dataregistry.db_basic import add_table_row
 from dataregistry.exceptions import DataRegistryRootDirBadState
 from dataregistry.exceptions import DataRegistryNoEntry
+from dataregistry.exceptions import DataRegistryNYI
 from sqlalchemy import select, update
 from functools import wraps
 from dataregistry.query import Filter
@@ -1036,7 +1038,7 @@ class DatasetTable(BaseTable):
 
     def fetch(self, query_object, dataset_id, schema_type="working",
               destination_path=None, destination_endpoint="NERSC DTN",
-              no_cfs_copy=False):
+              no_cfs_copy=False, globus_threshold=5000):
         """
         Fetch a registered dataset. Behavior depends on arguments and
         whether dataset is available in cfs or only from archive, but
@@ -1061,15 +1063,30 @@ class DatasetTable(BaseTable):
         no_cfs_copy : boolean
             If True and dataset was absent from cfs, write directly to
             to the destination requested; do not also restore to cfs.
+        globus_threshold : double, units are Mbytes
+            If destination is NERSC, determines whether globus or unix cp
+            is used for the copy. cp is used if size of dataset is under the
+            threshold, else globus.  Default is 5000 (5 Gbytes). Values
+            over about 10000 are not recommended.
+            Copies using cp are synchronous (dataset has been copied when
+            function returns); copies using globus are not - the caller
+            must verify independently that the transfer has completed.
+            However globus is much faster for larger datasets.
+            If destination is not at NERSC, globus is always used.
 
         Returns
         -------
-        Absolute cfs path of dataset when it was registered
+        Absolute cfs path of dataset when it was registered (string)
+        Flag which is True if globus was used, else False
         """
-        # Retrieve status and absolute path for the dataset.
+        if destination_endpoint != "NERSC DTN":
+            raise DataRegistryNYI(feature="Remote fetch")
+        # Retrieve status, size and absolute path for the dataset.
         filter = Filter("dataset.dataset_id", "==", dataset_id)
         results = query_object.find_datasets(
-            property_names=["dataset.status"],
+            property_names=["dataset.status",
+                            "dataset.total_disk_space",
+                            "dataset.data_org"],
             filters=[filter],
             schema_mode=schema_type
             )
@@ -1098,11 +1115,22 @@ class DatasetTable(BaseTable):
         if not destination_path:
             # Should check that it's really there.  Could be archived and
             # deleted.  But for now, with no archiving implemented,
-            # we're done
-            return abs_path
+            # we're done and didn't use globus
+            return abs_path, False
 
-        transfer_result = transfer_NERSC(abs_path, destination_path,
-                                         logger=self.db_connection.logger)
+        use_globus = results["dataset.total_disk_space"][0] > globus_threshold
+
+        if use_globus:
+            transfer_result = transfer_NERSC(abs_path, destination_path,
+                                             logger=self.db_connection.logger)
+        else:
+            # Need to append final field of absolute path to dest
+            ppath = PurePath(abs_path)
+            dest = os.path.join(destination_path, ppath.parts[-1])
+            _copy_data(results["dataset.data_org"][0],
+                       abs_path,
+                       dest,
+                       set_mask=False)
 
         # Update fetch date (even if transfer ultimately fails)
         dataset_table = self._get_table_metadata(self.which_table)
@@ -1117,4 +1145,4 @@ class DatasetTable(BaseTable):
 
         # Should we poll on transfer result?
         # For now, just..
-        return abs_path
+        return abs_path, use_globus

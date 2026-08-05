@@ -295,7 +295,7 @@ class DataRegistry:
     # Simplify calls to functions in Registrar object
     def fetch(self, dataset_id, schema_type="working",
               destination_path=None, destination_endpoint="NERSC DTN",
-              no_cfs_copy=False):
+              no_cfs_copy=False, globus_threshold=5000):
         """
         Fetch a registered dataset. This is just a wrapper which calls
         Registrar.fetch, supply the Query object as an argument.
@@ -328,8 +328,11 @@ class DataRegistry:
         Absolute cfs path of dataset when it was registered
         """
         return self.registrar.dataset.fetch(self.query, dataset_id,
-                                            schema_type, destination_path,
-                                            destination_endpoint, no_cfs_copy)
+                                            schema_type=schema_type,
+                                            destination_path=destination_path,
+                                            destination_endpoint=destination_endpoint,
+                                            no_cfs_copy=no_cfs_copy,
+                                            globus_threshold=globus_threshold)
 
     def register_dataset(
             self,
