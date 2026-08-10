@@ -1123,6 +1123,12 @@ class DatasetTable(BaseTable):
         if use_globus:
             transfer_result = transfer_NERSC(abs_path, destination_path,
                                              logger=self.db_connection.logger)
+            transfer_status = transfer_result.http_status
+            transfer_reason = transfer_result.http_reason
+            task_id = transfer_result["task_id"]
+            if transfer_reason != "OK":
+                lg = self.db_connection.logger
+                lg.warning(f"HTTP transfer request failed with reason {transfer_reason}, status {transfer_status}")
         else:
             # Need to append final field of absolute path to dest
             ppath = PurePath(abs_path)
