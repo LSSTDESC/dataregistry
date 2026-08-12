@@ -36,7 +36,6 @@ below.
 Note there are two constraints to be satisfied when registering new dataset:
 
 - the pair (**name**, **version**) must not have been already used.
-
 - the destination location for the new dataset must not have already been
   used.
 
@@ -271,3 +270,72 @@ Query using keywords
        print(results["dataset.name"][i],
              results["dataset.version_string"][i],
              results["dataset.relative_path"][i])
+
+Fetching a Dataset
+==================
+Registered datasets are normally kept under a dedicated directory in cfs space
+at NERSC. There are several situations in which you might want a copy of such
+a dataset.
+
+- You want to use it as input and need it to be on a more performant file system, such as scratch
+- the dataset has been archived and, to save space, has been deleted from cfs.
+  You want to restore it
+- You need a copy on your laptop or at an institutional site other than
+  NERSC
+
+The DataRegistry function ``fetch`` is meant to address all of these though
+currently only the first is implemented. The call interface looks like this:
+
+.. code-block:: python
+
+   fetch(dataset_id,
+         sehcma_type="working",
+         destination_path=None,
+         destination_endpoint="NERSC DTN",
+         no_cfs_copy=False,
+         globus_threshold=5000,
+         )
+
+The function returns the absolute cfs path where the dataset is normally
+kept.
+
+``dataset_id`` and ``schema_type`` identify the dataset to be retrieved.
+The dataset will be copied to ``destination_path`` if not None. (If it
+**is** None the dataset will not be copied at all.)
+
+Depending on how large the dataset is, it will be copied using standard
+unix commands (size less than ``globus_threshold`` in Mbytes) or Globus.
+Globus is much faster for larger datasets, but asynchronous: when
+``fetch`` returns the dataset may not be fully copied.  You'll know it's
+done when you receive email from Globus.   It's also a bit more cumbersome
+to use because it requires authentication.  That process is described in the
+next section.
+
+Authenticating with Globus
+--------------------------
+The first time you invoke ``fetch`` with a dataset large enough for it to
+use Globus, a prompt something like this will appear in your terminal window:
+
+.. code-block::
+
+   Please authenticate with Globus here:
+   -------------------------------------
+   https://auth.globus.org/v2/oauth2/authorize?client_id=b10d6ef9-67f2-4dbb-830c-4b68673e601f&redirect....
+
+   Enter the resulting Authorization Code here:
+
+The actual URL you will see is several lines long. Copy and past the whole
+thing into a browser and follow the instructions on that page.   Copy the
+resulting authorization code into the terminal session.  This will save some
+information under ``.globus/app`` in your home directory.
+
+Alternatively, you can authenticate apart from any invocation of ``fetch``
+by navigating to the ``scripts`` folder in the ``dataregistry`` package
+and issuing the following at the command line:
+
+.. code-block:: bash
+
+   python authorize_globus.py --force
+
+In either case you should not have to reauthenticate unless you go several
+months without transferring files via Globus.
