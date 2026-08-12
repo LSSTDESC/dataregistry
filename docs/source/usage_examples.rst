@@ -331,9 +331,9 @@ information under ``.globus/app`` in your home directory.
 
 Alternatively, you can authenticate apart from any invocation of ``fetch``
 by navigating to the ``scripts`` folder in the ``dataregistry`` package
-and issue the following at the command line:
+and issuing the following at the command line:
 
-.. code-block::bash
+.. code-block:: bash
 
    python authorize_globus.py --force
 
