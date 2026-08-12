@@ -8,6 +8,9 @@ from dataregistry.db_basic import add_table_row
 from dataregistry.registrar.base_table_class import BaseTable
 from dataregistry.db_basic import DbConnection
 
+# Disallow certain characters in keyword names
+_ILLEGAL_KEYWORD_CHAR = ["$", "*", "&", "?", "\\", " "]
+
 
 class KeywordTable(BaseTable):
 
@@ -35,6 +38,45 @@ class KeywordTable(BaseTable):
         self.which_table = "keyword"
         self.entry_id = "keyword_id"
 
+    def create_keyword(
+            self,
+            keyword: str,
+            system: bool = False,
+            commit: bool = True,
+            description: str = ""
+    ) -> None:
+        """
+        Add a keyword to the registry.
+
+        Parameters
+        ----------
+        keyword : str
+           The keyword to add
+        system : bool
+            system keywords can only be created by a privileged user. They
+            are intended to be global
+        commit : bool
+            if True (default) immediately commit change to db
+        description: str
+            intended meaning/use of the keyword
+        """
+        owner = self._owner or os.getenv("USER")
+        keywords_table = self._get_table_metadata("keyword")
+        with self._engine.connect() as conn:
+            if not isinstance(keyword, str):
+                raise ValueError(f"Keyword {keyword} is not a valid keyword string.")
+            for i_char in _ILLEGAL_KEYWORD_CHAR:
+                if i_char in keyword:
+                    raise ValueError(f"Keyword {keyword} contains invalid character '{i_char}'")
+            kwargs_dict = {"keyword": keyword.lower(),
+                           "creator_uid": owner,
+                           "system": system,
+                           "active": True,
+                           "creation_date": datetime.now()}
+            add_table_row(conn, keywords_table, kwargs_dict, commit=False)
+        if commit:
+            conn.commit()
+
     def create_keywords(
             self,
             keywords: list[str],
@@ -43,7 +85,8 @@ class KeywordTable(BaseTable):
             commit: bool = True
     ) -> None:
         """
-        Add multiple keywords to the registry.
+        Add multiple keywords to the registry.  This function is deprecated.
+        Use create_keyword instead.
 
         Parameters
         ----------
