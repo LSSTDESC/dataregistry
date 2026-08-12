@@ -298,7 +298,7 @@ class DataRegistry:
               no_cfs_copy=False, globus_threshold=5000):
         """
         Fetch a registered dataset. This is just a wrapper which calls
-        Registrar.fetch, supply the Query object as an argument.
+        Registrar.fetch.
 
         Behavior depends on arguments and
         whether dataset is available in cfs or only from archive, but
