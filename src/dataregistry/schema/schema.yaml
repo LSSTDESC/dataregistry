@@ -98,7 +98,7 @@ tables:
       description:
         type: "String"
         description: "Short description of keyword meaning"
-        nullable: False
+        nullable: True
 
   dataset_keyword:
     column_definitions:
