@@ -9,6 +9,7 @@ from dataregistry.schema.schema_version import (
     _DB_VERSION_PATCH,
     _DB_VERSION_COMMENT
 )
+from dataregistry.schema import load_preset_keywords
 
 parser = argparse.ArgumentParser(
     description="Update specified schema, using specified config, adding columns to support fetch, archive and restore operations",
@@ -24,7 +25,6 @@ admin_config = os.path.join(home, '.dataregistry_admin_config')
 alt_admin_config = os.path.join(home, '.alt_admin_config')
 parser.add_argument("--config", help="Path to the data registry config file. Determines database (regular or alt) to be modified", default=alt_admin_config)
 
-# For this upgrade `mod_data` is ignored.  There is no data to modify
 parser.add_argument("--steps", choices=['mod_schema', 'mod_data', 'both'],
                     default='mod_schema')
 parser.add_argument("--no-permission-restrictions", action="store_true")
@@ -60,11 +60,15 @@ if args.steps in ['mod_schema', 'both']:
         comment=_DB_VERSION_COMMENT,
         associated_production=assoc_production
     )
-    # if args.steps in ['mod_data', 'both']:
-    #     # Update fetch_date to match register_date
-    #     upd_col = f" update {schema}.dataset set fetch_date = {schema}.dataset.register_date"
+if args.steps in ['mod_data', 'both']:
+    # update preset keywords to include description
+    keywords = load_preset_keywords()
 
-    #     print("to be executed: ", upd_col)
-    #     with db_connection.engine.connect() as conn:
-    #         conn.execute(text(upd_col))
-    #         conn.commit()
+    with db_connection.engine.connect() as conn:
+        for kwd in keywords["dataset"]:
+            desc = keywords["dataset"][kwd]
+            upd = f" update {schema}.keyword set description='{desc}' "
+            upd += f"where keyword='{kwd}'"
+            result = conn.execute(text(upd))
+        conn.commit()
+
