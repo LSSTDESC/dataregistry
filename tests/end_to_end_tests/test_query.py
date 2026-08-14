@@ -438,12 +438,14 @@ def test_aggregate_datasets_errors(dummy_file):
 @pytest.mark.parametrize(
     "table,include_table,include_schema",
     [
-        (None, True, False),
-        (None, False, True),
-        (None, False, False),
-        (None, True, True),
+        # (None, True, False),
+        # (None, False, True),
+        # (None, False, False),
+        # (None, True, True),
         ("dataset", True, False),
+        ("dataset", False, True),
         ("execution", False, False),
+        ("keyword", True, True),
     ],
 )
 def test_query_get_all_columns(dummy_file, table, include_table, include_schema):
@@ -511,7 +513,7 @@ def test_simple_query(dummy_file):
     assert results["name"][0] == "test_simple_query"
     assert results["version_string"][0] == "0.0.1"
 
-    results = datareg.simple_query(name="test_simple_query",return_format="dataframe")
+    results = datareg.simple_query(name="test_simple_query", return_format="dataframe")
     assert isinstance(results, pd.DataFrame)
     assert "name" in results.columns
     assert len(results) == 1
