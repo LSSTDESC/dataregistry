@@ -174,9 +174,9 @@ class Query:
 
         column_list = set()
 
-        # Loop over each table
+        # Loop over each table. Names in metadata are of form schema.tblname
         for tbl in self.db_connection.metadata["tables"]:
-            if tbl.name != table:
+            if not tbl.endswith(table):
                 continue
 
             # Loop over each column
