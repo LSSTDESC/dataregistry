@@ -1,7 +1,7 @@
 from collections import namedtuple
 
 import pandas as pd
-from sqlalchemy import DateTime, Float, Integer, Numeric, func, select, text
+from sqlalchemy import DateTime, Float, Integer, Numeric, func, select
 from sqlalchemy.exc import DBAPIError
 
 from dataregistry.exceptions import DataRegistryException, DataRegistryColumnSpec, DataRegistryNoEntry, DataRegistryUnmanaged, DataRegistryNoColumn
@@ -38,6 +38,12 @@ ILIKE_ALLOWED = [
     "dataset.owner",
     "dataset.relative_path",
     "dataset.access_api",
+    "dataset.description",
+    "keyword.keyword",
+    "keyword.description",
+    "execution.name",
+    "execution.description",
+    "archive.archive_path",
 ]
 
 
@@ -552,12 +558,29 @@ class Query:
         )
         return results["keyword.keyword"]
 
-    def _get_table_values(self, table, properties, query_mode=None, filters=[]):
+    def get_table_values(self, table, properties, query_mode=None, filters=[]):
         """
-        Return specified values from the specified table, optionally subject
-        to filters of the form   (colname, binary-op, value) where colname
-        is in table (joins not supported)
+        A general-purpose routine which returns values as specified in properties
+        for the requested table, optionally subject to filters of the form
+        (colname, binary-op, value) where colname
+        is in table (joins not supported).
+        For querying the dataset table the routine find_datasets is preferred;
+        it has more capabilities.
+
+        Paraemters:
+        table : str
+            One of the tables of the Data Registry. Required
+        properties : non-empty list of str
+            Columns belonging to the table. Required
+        query_mode : str, optional
+            Defaults to query mode established at connection time
+        filters : list of Filter objects, defaults to empty list
+
+        Returns:
+        dict with keys = property names, e.g. "execution.name"
         """
+        if not table:
+            raise ValueError("get_table_values:  table argument is required")
         if self.db_connection.dialect == "sqlite":
             query_mode = None
         else:
@@ -566,7 +589,12 @@ class Query:
             if query_mode == "both":
                 query_mode = self.db_connection._entry_mode
 
-        props_canon = [p if p.startswith(table + ".") else (table + "." + p) for p in properties]
+        canonical_names = [p if p.startswith(table + ".") else (table + "." + p) for p in properties]
+
+        tables_required, column_list, _ = self._parse_selected_columns(
+            canonical_names, schema_mode=query_mode
+        )
+
         f_canon = []
         for f in filters:
             if f[0].startswith(table + "."):
@@ -574,19 +602,19 @@ class Query:
             else:
                 col = table + "." + f[0]
             f_canon.append(Filter(col, f[1], f[2]))
-        if query_mode:
-            if query_mode == "production":
-                schema = self.db_connection.production_schema
-            else:
-                schema = self.db_connection.schema
-            tbl = ".".join([schema, table])
+
+        # if query_mode:
+        if query_mode == "production":
+            schema_str = self.db_connection.production_schema
         else:
-            tbl = table
+            schema_str = self.db_connection.schema  # is None for sqlite
+        if not schema_str:
+            schema_str = ""
 
-        to_select = ",".join(props_canon)
-        stmt = text(f"select {to_select} from {tbl} ")
+        stmt = select(
+            *[p.label(f"{p.table.name}.{p.name}") for p in column_list[schema_str]]
+        )
 
-        # tentative...
         # Append filters if acceptable
         if len(filters) > 0:
             filter_mode = query_mode
