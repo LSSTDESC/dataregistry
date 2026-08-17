@@ -613,13 +613,19 @@ class Query:
         if not schema_str:
             schema_str = ""
 
+        sch_keys = column_list.keys()
+        sch = sch_keys.pop()
+
         stmt = select(
-            *[p.label(f"{p.table.name}.{p.name}") for p in column_list[schema_str]]
+            *[p.label(f"{p.table.name}.{p.name}") for p in column_list[sch]]
         )
 
         # Append filters if acceptable
         if len(filters) > 0:
-            filter_mode = query_mode
+            if len(schema_str) > 0:
+                filter_mode = query_mode
+            else:
+                filter_mode = None
             for f in filters:
                 stmt = self._render_filter(f, stmt, filter_mode)
 
