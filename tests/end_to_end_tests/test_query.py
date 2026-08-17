@@ -532,7 +532,7 @@ def test_get_table_values():
     e_id = _insert_execution_entry(datareg, "test_get_table_values", "the description")
 
     ex_results = datareg.query.get_table_values("execution",
-                                                ["dataset_id", "name"])
+                                                ["execution_id", "name"])
     assert e_id in ex_results["dataset_id"]
 
     # Query keyword table.  It contains at least preset entries
