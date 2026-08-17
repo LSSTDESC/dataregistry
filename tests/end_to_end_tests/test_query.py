@@ -533,7 +533,7 @@ def test_get_table_values():
 
     ex_results = datareg.query.get_table_values("execution",
                                                 ["execution_id", "name"])
-    assert e_id in ex_results["dataset_id"]
+    assert e_id in ex_results["execution_id"]
 
     # Query keyword table.  It contains at least preset entries
     # table qualifier is optional on column names
