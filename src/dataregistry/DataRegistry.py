@@ -424,14 +424,14 @@ class DataRegistry:
                                                      commit=commit,
                                                      description=description)
 
-    def create_keywords(self, keywords, user_type="user", system=False,
+    def create_keywords(self, keywords, owner_type="user", system=False,
                         commit=True):
         """
         Convenience routine.   See
         Keyword.create_keywords for complete description of arguments
         """
         return self.registrar.keyword.create_keywords(keywords,
-                                                      user_type=user_type,
+                                                      owner_type=owner_type,
                                                       system=system,
                                                       commit=commit)
 
