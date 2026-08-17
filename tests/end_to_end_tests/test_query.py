@@ -438,10 +438,6 @@ def test_aggregate_datasets_errors(dummy_file):
 @pytest.mark.parametrize(
     "table,include_table,include_schema",
     [
-        # (None, True, False),
-        # (None, False, True),
-        # (None, False, False),
-        # (None, True, True),
         ("dataset", True, False),
         ("dataset", False, True),
         ("execution", False, False),
@@ -461,10 +457,9 @@ def test_query_get_all_columns(dummy_file, table, include_table, include_schema)
 
     assert len(cols) > 0
 
-    if table is not None:
-        for att in cols:
-            if include_table:
-                assert table in att
+    for att in cols:
+        if include_table or include_schema:
+            assert table in att
 
 
 def test_query_get_all_tables(dummy_file):
@@ -477,6 +472,7 @@ def test_query_get_all_tables(dummy_file):
     tables = datareg.get_all_tables()
 
     assert len(tables) > 0
+
 
 def test_simple_query(dummy_file):
     """Test the `simple_query()` function in `query.py`"""
@@ -527,3 +523,26 @@ def test_simple_query(dummy_file):
     assert "owner" in results.columns
     assert "owner_type" not in results.columns
     assert "relative_path" not in results.columns
+
+
+def test_get_table_values():
+    """Test the `get_table_values()` function in `query.py`"""
+
+    # Make an entry in the execution table.
+    e_id = _insert_execution_entry(datareg, "test_get_table_values", "the description")
+
+    ex_results = datareg.query.get_table_values("execution",
+                                                ["dataset_id", "name"])
+    assert e_id in ex_results["dataset_id"]
+
+    # Query keyword table.  It contains at least preset entries
+    # table qualifier is optional on column names
+    k1_results = datareg.query.get_table_values("keyword",
+                                                ["keyword",
+                                                 "keyword.description"])
+    assert len(k1_results["keyword.description"]) >= 4
+
+    f = datareg.query.gen_filter("keyword.keyword", "=~", "sim*")
+    k2_results = datareg.query.get_table_values("keyword", ["keyword"],
+                                                filters=[f])
+    assert len(k2_results["keyword.keyword"]) >= 1

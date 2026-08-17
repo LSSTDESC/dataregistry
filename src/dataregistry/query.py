@@ -162,13 +162,13 @@ class Query:
 
         Parameters
         ----------
-        table : str, optional
-            Limit results to a given table, default is dataset table
-            If None, return results for all tables
+        table : str, required
+            Limit results to the given table, default is dataset table
         include_table : bool, optional
             If true, include `<table>.`  in the return string
         include_schema : bool, optional
-            If True, also return the schema name in the column name
+            If True, return the schema name and column in the column name
+            (implies include_schema == True implies include_table == True)
 
         Returns
         -------
@@ -179,6 +179,8 @@ class Query:
             raise ValueError("get_all_columns: Table argument must be valid table name")
 
         column_list = set()
+        if include_schema:
+            include_table = True
 
         # Loop over each table. Names in metadata are of form schema.tblname
         for tbl in self.db_connection.metadata["tables"]:
@@ -205,7 +207,7 @@ class Query:
 
                 column_list.add(".".join(mystr))
 
-            if table is not None:       # we're done
+            if not include_schema:       # we're done
                 break
 
         return sorted(column_list)
