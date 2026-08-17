@@ -613,8 +613,7 @@ class Query:
         if not schema_str:
             schema_str = ""
 
-        sch_keys = column_list.keys()
-        sch = sch_keys.pop()
+        sch = list(column_list.keys())[0]   # there only is one
 
         stmt = select(
             *[p.label(f"{p.table.name}.{p.name}") for p in column_list[sch]]
