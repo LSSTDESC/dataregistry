@@ -542,7 +542,7 @@ def test_get_table_values():
                                                  "keyword.description"])
     assert len(k1_results["keyword.description"]) >= 4
 
-    f = datareg.query.gen_filter("keyword.keyword", "=~", "sim*")
+    f = datareg.query.gen_filter("keyword.keyword", "~=", "sim*")
     k2_results = datareg.query.get_table_values("keyword", ["keyword"],
                                                 filters=[f])
     assert len(k2_results["keyword.keyword"]) >= 1
