@@ -98,6 +98,7 @@ tables:
       description:
         type: "String"
         description: "Short description of keyword meaning"
+        modifiable: True
         nullable: True
 
   dataset_keyword:

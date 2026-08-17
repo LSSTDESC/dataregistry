@@ -535,6 +535,11 @@ def test_get_table_values():
                                                 ["execution_id", "name"])
     assert e_id in ex_results["execution.execution_id"]
 
+    # Now do the same thing using the convenience function
+    ex_results2 = datareg.get_table_values("execution",
+                                           ["execution_id", "name"])
+    assert e_id in ex_results2["execution.execution_id"]
+
     # Query keyword table.  It contains at least preset entries
     # table qualifier is optional on column names
     k1_results = datareg.query.get_table_values("keyword",

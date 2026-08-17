@@ -44,7 +44,7 @@ class KeywordTable(BaseTable):
             system: bool = False,
             commit: bool = True,
             description: str = ""
-    ) -> None:
+    ) -> int:
         """
         Add a keyword to the registry.
 
@@ -59,6 +59,10 @@ class KeywordTable(BaseTable):
             if True (default) immediately commit change to db
         description: str
             intended meaning/use of the keyword
+
+        Returns
+        -------
+        keyword_id for the newly created keyword
         """
         owner = self._owner or os.getenv("USER")
         keywords_table = self._get_table_metadata("keyword")
@@ -73,9 +77,12 @@ class KeywordTable(BaseTable):
                            "system": system,
                            "active": True,
                            "creation_date": datetime.now()}
-            add_table_row(conn, keywords_table, kwargs_dict, commit=False)
+            kwd_id = add_table_row(conn, keywords_table, kwargs_dict,
+                                   commit=commit)
         if commit:
             conn.commit()
+
+        return kwd_id
 
     def create_keywords(
             self,

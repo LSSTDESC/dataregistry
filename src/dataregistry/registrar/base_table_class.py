@@ -86,7 +86,7 @@ class BaseTable:
         Parameters
         ----------
         entry_id : int
-            The dataset/execution/etc ID we wish to delete from the database
+            The dataset/execution/etc ID of the entry we wish to modify
         modify_fields : dict
             Dict where key is the column to modify (must be allowed to modify)
             and value is the desired new value for the entry
