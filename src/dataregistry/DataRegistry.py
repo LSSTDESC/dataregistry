@@ -353,8 +353,8 @@ class DataRegistry:
             update_dict
             ):
         """
-        Convenience function which just calls
-        DataRegistry.registrar.dataset.modify.   See DatasetTable.modify
+        Convenience function which just calls a generic modify function
+        on the dataset table.   See BaseTable.modify
         for complete argument and return description.
         """
         self.registrar.dataset.modify(dataset_id, update_dict)
@@ -486,8 +486,34 @@ class DataRegistry:
             update_dict
             ):
         """
-        Convenience function which just calls
-        DataRegistry.registrar.execution.modify.   See ExecutionTable.modify
+        Convenience function which just calls a generic modify function
+        on the execution table.   See BaseTable.modify
         for complete argument and return description.
         """
         self.registrar.execution.modify(execution_id, update_dict)
+
+    def modify_keyword(
+            self,
+            keyword_id,
+            update_dict):
+        """
+        Convenience function which just calls a generic modify function
+        on the keyword table.   See BaseTable.modify
+        for complete argument and return description.
+        """
+        self.registrar.keyword.modify(execution_id, update_dict)
+
+    def get_table_values(
+            self,
+            table,
+            properties,
+            query_mode=None,
+            filters=[]):
+        """
+        Convenience function which calls the get_table_values function
+        of the Query object. See full documentation there.
+        """
+        return self.query.get_table_values(table,
+                                           properties,
+                                           query_mode,
+                                           filters)
