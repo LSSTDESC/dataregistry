@@ -106,6 +106,7 @@ def get_parser():
                 Selecting '--owner none' will return results from all owners."""
     )
     arg_ls.add_argument(
+        "--owner-type",
         "--owner_type",
         help="List datasets for a given owner type",
         choices=["user", "group", "production", "project"],
@@ -116,18 +117,21 @@ def get_parser():
         with wildcard support, for example `--name DESC:*`"""
     )
     arg_ls.add_argument(
+        "--return-cols",
         "--return_cols",
         help="List of columns from dataset table to return in the query",
         nargs="+",
         type=str,
     )
     arg_ls.add_argument(
+        "--max-rows",
         "--max_rows",
         help="Maximum number of rows to print (default 500)",
         type=int,
         default=500,
     )
     arg_ls.add_argument(
+        "--max-chars",
         "--max_chars",
         help="Maximum number of characters to print in a column (default 40)",
         type=int,
@@ -149,6 +153,7 @@ def get_parser():
         type=int,
     )
     arg_path.add_argument(
+        "--schema-mode",
         "--schema_mode",
         help="Which schema to search for this dataset",
         choices=["working", "production"],
@@ -294,37 +299,48 @@ def get_parser():
         type=str,
     )
     arg_register_dataset.add_argument(
+        "--old-location",
         "--old_location",
         help="""Absolute location of dataset to copy. If None dataset should
         already be at correct relative_path.""",
         type=str,
     )
     arg_register_dataset.add_argument(
-        "--execution_name", help="Typically pipeline name or program name", type=str
+        "--execution-name",
+        "--execution_name",
+        help="Typically pipeline name or program name", type=str
     )
     arg_register_dataset.add_argument(
+        "--exectuion-description",
         "--execution_description",
         help="Human readible description of execution",
         type=str,
     )
     arg_register_dataset.add_argument(
-        "--execution_start", help="Date the execution started"
+        "--execution-start",
+        "--execution_start",
+        help="Date the execution started"
     )
     arg_register_dataset.add_argument(
-        "--execution_site", help="Where was the execution performed?", type=str
+        "--execution-site",
+        "--execution_site",
+        help="Where was the execution performed?", type=str
     )
     arg_register_dataset.add_argument(
+        "--execution-configuration",
         "--execution_configuration",
         help="Path to text file used to configure the execution",
         type=str,
     )
     arg_register_dataset.add_argument(
+        "--input-datasets",
         "--input_datasets",
         help="List of dataset ids that were the input to this execution",
         type=int,
         default=[],
         nargs="+",
     )
+
     arg_register_dataset.add_argument(
         "--keywords",
         help="List of (predefined) keywords to tag dataset with",
