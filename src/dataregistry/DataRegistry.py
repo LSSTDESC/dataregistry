@@ -413,27 +413,23 @@ class DataRegistry:
         return self.registrar.keyword.remove_keywords_from_dataset(dataset_id,
                                                                    keyword)
 
-    def create_keyword(self, keyword, system=False, commit=True,
-                       description=""):
+    def create_keyword(self, keyword, system=False, description=""):
         """
         Convenience routine.   See
         Keyword.create_keyword for complete description of arguments
         """
         return self.registrar.keyword.create_keyword(keyword,
                                                      system=system,
-                                                     commit=commit,
                                                      description=description)
 
-    def create_keywords(self, keywords, owner_type="user", system=False,
-                        commit=True):
+    def create_keywords(self, keywords, owner_type="user", system=False):
         """
         Convenience routine.   See
         Keyword.create_keywords for complete description of arguments
         """
         return self.registrar.keyword.create_keywords(keywords,
                                                       owner_type=owner_type,
-                                                      system=system,
-                                                      commit=commit)
+                                                      system=system)
 
     # Simplify calls to functions in Query object
     def find_datasets(self, **kwargs):
