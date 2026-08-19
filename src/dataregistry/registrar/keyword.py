@@ -42,7 +42,6 @@ class KeywordTable(BaseTable):
             self,
             keyword: str,
             system: bool = False,
-            commit: bool = True,
             description: str = ""
     ) -> int:
         """
@@ -55,8 +54,6 @@ class KeywordTable(BaseTable):
         system : bool
             system keywords can only be created by a privileged user. They
             are intended to be global
-        commit : bool
-            if True (default) immediately commit change to db
         description: str
             intended meaning/use of the keyword
 
@@ -72,15 +69,16 @@ class KeywordTable(BaseTable):
             for i_char in _ILLEGAL_KEYWORD_CHAR:
                 if i_char in keyword:
                     raise ValueError(f"Keyword {keyword} contains invalid character '{i_char}'")
+            if not description:
+                description = ""
             kwargs_dict = {"keyword": keyword.lower(),
                            "creator_uid": owner,
                            "system": system,
                            "active": True,
+                           "description": description,
                            "creation_date": datetime.now()}
             kwd_id = add_table_row(conn, keywords_table, kwargs_dict,
-                                   commit=commit)
-        if commit:
-            conn.commit()
+                                   commit=True)
 
         return kwd_id
 
@@ -89,7 +87,6 @@ class KeywordTable(BaseTable):
             keywords: list[str],
             owner_type: Literal["user", "group", "project", "production"] = "user",
             system: bool = False,
-            commit: bool = True
     ) -> None:
         """
         Add multiple keywords to the registry.  This function is deprecated.
@@ -104,8 +101,6 @@ class KeywordTable(BaseTable):
         system : bool.
             system keywords can only be created by a privileged user. They
             are intended to be global
-        commit : bool
-            if True (default) immediately commit change to db
         """
         owner = self._owner or os.getenv("USER")
         keywords_table = self._get_table_metadata("keyword")
@@ -119,8 +114,7 @@ class KeywordTable(BaseTable):
                                "active": True,
                                "creation_date": datetime.now()}
                 add_table_row(conn, keywords_table, kwargs_dict, commit=False)
-            if commit:
-                conn.commit()
+            conn.commit()
 
     def disable_keyword(self, keyword: str):
         """

@@ -475,6 +475,8 @@ class DataRegistry:
             return self.registrar.execution.get_modifiable_columns()
         elif table == "dataset_alias":
             return self.registrar.dataset_alias.get_modifiable_columns()
+        elif table == "keyword":
+            return self.registrar.keyword.get_modifiable_columns()
         elif table in self.get_all_tables():
             return dict()
         else:

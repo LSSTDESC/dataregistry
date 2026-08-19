@@ -625,7 +625,7 @@ class Query:
                 filter_mode = query_mode
             else:
                 filter_mode = None
-            for f in filters:
+            for f in f_canon:
                 stmt = self._render_filter(f, stmt, filter_mode)
 
         # Report the constructed SQL query
