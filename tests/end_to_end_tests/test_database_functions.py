@@ -118,7 +118,7 @@ def test_get_modifiable_columns(dummy_file):
     assert "description" in mod_list
 
     mod_list = datareg.get_modifiable_columns(table="keyword")
-    assert mod_list == dict()
+    assert "description" in mod_list
 
     try:
         mod_list = datareg.get_modifiable_columns(table="bogus")

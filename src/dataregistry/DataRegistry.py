@@ -228,7 +228,7 @@ class DataRegistry:
         """
         filters = [self.query.gen_filter("dataset." + k, "==", v) for (k, v) in conditions.items()]
 
-        # run the actual query and ask for a dataframe back for convenience.
+        # run the actual query and ask for a dataframe back for convenience.
         property_names = None
         if columns is not None:
             property_names = ["dataset." + c for c in columns]
@@ -237,9 +237,8 @@ class DataRegistry:
                     property_names.append("dataset." + req_col)
         results = self.query.find_datasets(filters=filters, property_names=property_names, return_format='dataframe')
 
-
-        # We will need this schema information to
-        # generate the absolute path for each dataset.
+        # We will need this schema information to
+        # generate the absolute path for each dataset.
         if self.db_connection._query_mode == "both":
             schema = "working"
         else:
@@ -250,10 +249,10 @@ class DataRegistry:
             schema_name = self.db_connection._namespace + '_' + schema
 
         # Get the absolute path for each dataset.
-        # We avoid using the query.get_dataset_absolute_path function here
+        # We avoid using the query.get_dataset_absolute_path function here
         # because we have already queried all the info we need to
-        # generate the path and that would require another DB
-        # query per result.
+        # generate the path and that would require another DB
+        # query per result.
         def _path_from_row(row):
             owner_type = row["dataset.owner_type"]
             if owner_type is None or owner_type != owner_type:
@@ -274,12 +273,11 @@ class DataRegistry:
         )
 
         # remove any columns that the user did not actually want
-        # but we had to add to generate the path
+        # but we had to add to generate the path
         if columns is not None:
             for req_col in ["owner_type", "owner", "relative_path"]:
                 if req_col not in columns:
                     results = results.drop(columns=req_col)
-
 
         # convert into the user's requested return format,
         # if needed
@@ -353,8 +351,8 @@ class DataRegistry:
             update_dict
             ):
         """
-        Convenience function which just calls
-        DataRegistry.registrar.dataset.modify.   See DatasetTable.modify
+        Convenience function which just calls a generic modify function
+        on the dataset table.   See BaseTable.modify
         for complete argument and return description.
         """
         self.registrar.dataset.modify(dataset_id, update_dict)
@@ -415,12 +413,23 @@ class DataRegistry:
         return self.registrar.keyword.remove_keywords_from_dataset(dataset_id,
                                                                    keyword)
 
-    def create_keywords(self, keywords, user_type="user", system=False,
-                        commit=True):
+    def create_keyword(self, keyword, system=False, description=""):
         """
+        Convenience routine.   See
+        Keyword.create_keyword for complete description of arguments
+        """
+        return self.registrar.keyword.create_keyword(keyword,
+                                                     system=system,
+                                                     description=description)
+
+    def create_keywords(self, keywords, owner_type="user", system=False):
+        """
+        Convenience routine.   See
         Keyword.create_keywords for complete description of arguments
         """
-        return self.registrar.keyword.create_keywords(keywords, )
+        return self.registrar.keyword.create_keywords(keywords,
+                                                      owner_type=owner_type,
+                                                      system=system)
 
     # Simplify calls to functions in Query object
     def find_datasets(self, **kwargs):
@@ -462,6 +471,8 @@ class DataRegistry:
             return self.registrar.execution.get_modifiable_columns()
         elif table == "dataset_alias":
             return self.registrar.dataset_alias.get_modifiable_columns()
+        elif table == "keyword":
+            return self.registrar.keyword.get_modifiable_columns()
         elif table in self.get_all_tables():
             return dict()
         else:
@@ -486,8 +497,34 @@ class DataRegistry:
             update_dict
             ):
         """
-        Convenience function which just calls
-        DataRegistry.registrar.execution.modify.   See ExecutionTable.modify
+        Convenience function which just calls a generic modify function
+        on the execution table.   See BaseTable.modify
         for complete argument and return description.
         """
         self.registrar.execution.modify(execution_id, update_dict)
+
+    def modify_keyword(
+            self,
+            keyword_id,
+            update_dict):
+        """
+        Convenience function which just calls a generic modify function
+        on the keyword table.   See BaseTable.modify
+        for complete argument and return description.
+        """
+        self.registrar.keyword.modify(keyword_id, update_dict)
+
+    def get_table_values(
+            self,
+            table,
+            properties,
+            query_mode=None,
+            filters=[]):
+        """
+        Convenience function which calls the get_table_values function
+        of the Query object. See full documentation there.
+        """
+        return self.query.get_table_values(table,
+                                           properties,
+                                           query_mode,
+                                           filters)

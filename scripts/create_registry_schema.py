@@ -428,4 +428,4 @@ for schema in schema_list:
     if not args.no_keywords:
         # Populate the preset system keywords for datasets
         for att in keywords["dataset"]:
-            _insert_keyword(db_connection, att, True)
+            _insert_keyword(db_connection, att, True, keywords["dataset"][att])

@@ -38,6 +38,12 @@ ILIKE_ALLOWED = [
     "dataset.owner",
     "dataset.relative_path",
     "dataset.access_api",
+    "dataset.description",
+    "keyword.keyword",
+    "keyword.description",
+    "execution.name",
+    "execution.description",
+    "archive.archive_path",
 ]
 
 
@@ -110,7 +116,7 @@ class Query:
                     canon_names.append(c)
                 else:
                     col_map = self.db_connection.map_column_to_table
-                    if not c in col_map:
+                    if c not in col_map:
                         raise DataRegistryNoColumn(c)
                     if not col_map[c]:  # table is not unique
                         raise DataRegistryColumnSpec(c)
@@ -142,7 +148,7 @@ class Query:
         Return all columns of the db in <table_name>.<column_name> format.
 
         By default results are limited to the dataset table, can be changed via
-        the `table` parameter (`table=None` returns all tables). By default the
+        the `table` parameter. By default the
         `<table_name>` is included, but this can be removed setting
         `include_table=False`.
 
@@ -156,22 +162,31 @@ class Query:
 
         Parameters
         ----------
-        table : str, optional
-            Limit results to a given table, default is dataset table
+        table : str, required
+            Limit results to the given table, default is dataset table
         include_table : bool, optional
             If true, include `<table>.`  in the return string
         include_schema : bool, optional
-            If True, also return the schema name in the column name
+            If True, return the schema name and column in the column name
+            (implies include_schema == True implies include_table == True)
 
         Returns
         -------
         column_list : list
         """
 
-        column_list = set()
+        if table is None:
+            raise ValueError("get_all_columns: Table argument must be valid table name")
 
-        # Loop over each table
+        column_list = set()
+        if include_schema:
+            include_table = True
+
+        # Loop over each table. Names in metadata are of form schema.tblname
         for tbl in self.db_connection.metadata["tables"]:
+            if not tbl.endswith(table):
+                continue
+
             # Loop over each column
             for c in self.db_connection.metadata["tables"][tbl].c:
                 # Pull out information
@@ -182,10 +197,6 @@ class Query:
                 _table = str(c.table.name)
                 _column = c.name
 
-                # Are we considering this table?
-                if table is not None and _table != table:
-                    continue
-
                 # Build string
                 mystr = []
                 if include_schema:
@@ -195,6 +206,9 @@ class Query:
                 mystr.append(_column)
 
                 column_list.add(".".join(mystr))
+
+            if not include_schema:       # we're done
+                break
 
         return sorted(column_list)
 
@@ -545,6 +559,90 @@ class Query:
             property_names=["keyword.keyword"], schema_mode=query_mode
         )
         return results["keyword.keyword"]
+
+    def get_table_values(self, table, properties, query_mode=None, filters=[]):
+        """
+        A general-purpose routine which returns values as specified in properties
+        for the requested table, optionally subject to filters of the form
+        (colname, binary-op, value) where colname
+        is in table (joins not supported).
+        For querying the dataset table the routine find_datasets is preferred;
+        it has more capabilities.
+
+        Paraemters:
+        table : str
+            One of the tables of the Data Registry. Required
+        properties : non-empty list of str
+            Columns belonging to the table. Required
+        query_mode : str, optional
+            Defaults to query mode established at connection time
+        filters : list of Filter objects, defaults to empty list
+
+        Returns:
+        dict with keys = property names, e.g. "execution.name"
+        """
+        if not table:
+            raise ValueError("get_table_values:  table argument is required")
+        if self.db_connection.dialect == "sqlite":
+            query_mode = None
+        else:
+            if not query_mode:
+                query_mode = self.db_connection._query_mode
+            if query_mode == "both":
+                query_mode = self.db_connection._entry_mode
+
+        canonical_names = [p if p.startswith(table + ".") else (table + "." + p) for p in properties]
+
+        tables_required, column_list, _ = self._parse_selected_columns(
+            canonical_names, schema_mode=query_mode
+        )
+
+        f_canon = []
+        for f in filters:
+            if f[0].startswith(table + "."):
+                col = f[0]
+            else:
+                col = table + "." + f[0]
+            f_canon.append(Filter(col, f[1], f[2]))
+
+        # if query_mode:
+        if query_mode == "production":
+            schema_str = self.db_connection.production_schema
+        else:
+            schema_str = self.db_connection.schema  # is None for sqlite
+        if not schema_str:
+            schema_str = ""
+
+        sch = list(column_list.keys())[0]   # there only is one
+
+        stmt = select(
+            *[p.label(f"{p.table.name}.{p.name}") for p in column_list[sch]]
+        )
+
+        # Append filters if acceptable
+        if len(filters) > 0:
+            if len(schema_str) > 0:
+                filter_mode = query_mode
+            else:
+                filter_mode = None
+            for f in f_canon:
+                stmt = self._render_filter(f, stmt, filter_mode)
+
+        # Report the constructed SQL query
+        self.db_connection.logger.debug(f"Executing query: {stmt}")
+
+        # Execute the query
+        with self._engine.connect() as conn:
+            try:
+                result = conn.execute(stmt)
+            except DBAPIError as e:
+                self.db_connection.logger.error("Original error:")
+                self.db_connection.logger.error(e.StatementError.orig)
+                return None
+
+        return_result = pd.DataFrame(result)
+
+        return return_result.to_dict("list")
 
     def find_datasets(
         self,
