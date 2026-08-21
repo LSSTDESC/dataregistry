@@ -295,12 +295,12 @@ parser.add_argument(
 )
 parser.add_argument("--config", help="Path to the data registry config file")
 parser.add_argument(
-    "--create_both", "--create-both",
+    "--create-both", "--create_both",
     help="Create both the production and working schema",
     action="store_true",
 )
 parser.add_argument(
-    "--no_permission_restrictions", "--no-permission-restrictions",
+    "--no-permission-restrictions", "--no_permission_restrictions",
     help="Both `reg_reader` and `reg_writer` get read/write access to all tables. For the tutorial schemas.",
     action="store_true",
 )
