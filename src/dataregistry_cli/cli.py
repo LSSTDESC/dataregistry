@@ -13,7 +13,7 @@ from dataregistry.schema import load_schema
 
 def _add_generic_arguments(parser_obj, add_entry_mode=True, add_query_mode=False):
     """
-    Most commands have the schema, root_dir, etc. as options. This function
+    Most commands have the schema, root-dir, etc. as options. This function
     does that for us.
 
     Parameters
@@ -35,7 +35,7 @@ def _add_generic_arguments(parser_obj, add_entry_mode=True, add_query_mode=False
             help="""Root directory for datasets, if None, default is assumed.""")
     parser_obj.add_argument(
         "--site", type=str,
-        help="""Can be used instead of `root_dir`. Some predefined "sites" are
+        help="""Can be used instead of `--root-dir`. Some predefined "sites" are
             built in, such as "nersc", which will set the `root_dir` to the
             data registry's default data location at NERSC."""
     )
