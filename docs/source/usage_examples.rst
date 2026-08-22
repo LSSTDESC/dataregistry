@@ -1,8 +1,5 @@
 .. _usage:
 
-==============
-Usage Examples
-==============
 
 Background
 ==========
