@@ -274,8 +274,10 @@ def get_parser():
         if schema_data["tables"]["dataset"]["column_definitions"][column][
             "cli_optional"
         ]:
+            # regularize to standard option names with embedded hyphens
+            column_hyphen = column.replace("_", "-")
             arg_register_dataset.add_argument(
-                "--" + column,
+                "--" + column_hyphen,
                 help=schema_data["tables"]["dataset"]["column_definitions"][column][
                     "description"
                 ]
@@ -311,7 +313,7 @@ def get_parser():
         help="Typically pipeline name or program name", type=str
     )
     arg_register_dataset.add_argument(
-        "--exectuion-description",
+        "--execution-description",
         "--execution_description",
         help="Human readible description of execution",
         type=str,
