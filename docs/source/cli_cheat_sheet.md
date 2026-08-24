@@ -3,8 +3,8 @@
 ## Overview
 
 **CLI Name:** dregs\
-**Version:** 1.1.0\
-**Date:** February 2025\
+**Version:** 1.9.0\
+**Date:** August 2026\
 **Description:** A command-line tool for querying and managing datasets in a data registry.
 
 ---
@@ -21,6 +21,14 @@
 | `dregs delete`   | Delete an entry in the database        |
 
 ---
+
+NOTE: for the most up-to-date help information use command line help, e.g.
+
+| Help command                    |
+| ------------------------------- |
+| `dregs ls --help`               |
+| `dregs register --help`         |
+| `dregs register dataset --help` |
 
 ## 🟦 Querying from the Command Line 🟦
 
