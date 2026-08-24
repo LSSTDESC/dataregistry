@@ -277,7 +277,7 @@ def get_parser():
             # regularize to standard option names with embedded hyphens
             column_hyphen = column.replace("_", "-")
             arg_register_dataset.add_argument(
-                "--" + column_hyphen,
+                "--" + column_hyphen, "--" + column,
                 help=schema_data["tables"]["dataset"]["column_definitions"][column][
                     "description"
                 ]
