@@ -136,6 +136,9 @@ dmypy.json
 # emacs backup files
 *~
 
+# MacOS junk
+.DS_Store
+
 # local stuff which doesn't belong in the repo
 local/
 extra/

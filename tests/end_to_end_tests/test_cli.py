@@ -16,13 +16,13 @@ def test_simple_query(dummy_file):
     tmp_src_dir, tmp_root_dir = dummy_file
 
     # Register a dataset
-    cmd = "register dataset my_cli_dataset 0.0.1 --location_type dummy"
-    cmd += f" --namespace {DEFAULT_NAMESPACE} --root_dir {str(tmp_root_dir)}"
+    cmd = "register dataset my_cli_dataset 0.0.1 --location-type dummy"
+    cmd += f" --namespace {DEFAULT_NAMESPACE} --root-dir {str(tmp_root_dir)}"
     cli.main(shlex.split(cmd))
 
     # Update the registered dataset
-    cmd = "register dataset my_cli_dataset patch --location_type dummy"
-    cmd += f" --namespace {DEFAULT_NAMESPACE} --root_dir {str(tmp_root_dir)}"
+    cmd = "register dataset my_cli_dataset patch --location-type dummy"
+    cmd += f" --namespace {DEFAULT_NAMESPACE} --root-dir {str(tmp_root_dir)}"
     cli.main(shlex.split(cmd))
 
     # Check
@@ -41,13 +41,13 @@ def test_dataset_entry_with_execution(dummy_file):
     tmp_src_dir, tmp_root_dir = dummy_file
 
     # Register a dataset with many options
-    cmd = "register dataset my_cli_dataset3 1.2.3 --location_type dummy"
+    cmd = "register dataset my_cli_dataset3 1.2.3 --location-type dummy"
     cmd += " --description 'This is my dataset description'"
-    cmd += " --access_api 'Awesome API' --owner DESC --owner_type group"
-    cmd += " --creation_date '2020-01-01'"
-    cmd += " --input_datasets 1 2 --execution_name 'I have given the execution a name'"
-    cmd += " --is_overwritable"
-    cmd += f" --namespace {DEFAULT_NAMESPACE} --root_dir {str(tmp_root_dir)}"
+    cmd += " --access-api 'Awesome API' --owner DESC --owner-type group"
+    cmd += " --creation-date '2020-01-01'"
+    cmd += " --input-datasets 1 2 --execution-name 'I have given the execution a name'"
+    cmd += " --is-overwritable"
+    cmd += f" --namespace {DEFAULT_NAMESPACE} --root-dir {str(tmp_root_dir)}"
     cli.main(shlex.split(cmd))
 
     # Check
@@ -79,9 +79,9 @@ def test_production_entry(dummy_file):
 
     if datareg.query._dialect != "sqlite":
         # Register a dataset
-        cmd = "register dataset my_production_cli_dataset 0.1.2 --location_type dummy"
-        cmd += " --owner_type production --owner production"
-        cmd += f" --entry_mode production --root_dir {str(tmp_root_dir)}"
+        cmd = "register dataset my_production_cli_dataset 0.1.2 --location-type dummy"
+        cmd += " --owner-type production --owner production"
+        cmd += f" --entry-mode production --root-dir {str(tmp_root_dir)}"
         cli.main(shlex.split(cmd))
 
         # Check
@@ -100,8 +100,8 @@ def test_delete_dataset_by_id(dummy_file, monkeypatch):
     tmp_src_dir, tmp_root_dir = dummy_file
 
     # Register a dataset
-    cmd = "register dataset my_cli_dataset_to_delete 0.0.1 --location_type dummy"
-    cmd += f" --namespace {DEFAULT_NAMESPACE} --root_dir {str(tmp_root_dir)}"
+    cmd = "register dataset my_cli_dataset_to_delete 0.0.1 --location-type dummy"
+    cmd += f" --namespace {DEFAULT_NAMESPACE} --root-dir {str(tmp_root_dir)}"
     cli.main(shlex.split(cmd))
 
     # Find the dataset id
@@ -113,7 +113,7 @@ def test_delete_dataset_by_id(dummy_file, monkeypatch):
 
     # Delete the dataset
     cmd = f"delete dataset_by_id {d_id}"
-    cmd += f" --namespace {DEFAULT_NAMESPACE} --root_dir {str(tmp_root_dir)}"
+    cmd += f" --namespace {DEFAULT_NAMESPACE} --root-dir {str(tmp_root_dir)}"
     monkeypatch.setattr("builtins.input", lambda _: "y")
     cli.main(shlex.split(cmd))
 
@@ -148,9 +148,9 @@ def test_delete_dataset_by_name(dummy_file, monkeypatch):
     DOWNER_TYPE = "user"
 
     # Register a dataset
-    cmd = f"register dataset {DNAME} {DVERSION} --location_type dummy"
-    cmd += f" --namespace {DEFAULT_NAMESPACE} --root_dir {str(tmp_root_dir)}"
-    cmd += f" --owner {DOWNER} --owner_type {DOWNER_TYPE}"
+    cmd = f"register dataset {DNAME} {DVERSION} --location-type dummy"
+    cmd += f" --namespace {DEFAULT_NAMESPACE} --root-dir {str(tmp_root_dir)}"
+    cmd += f" --owner {DOWNER} --owner-type {DOWNER_TYPE}"
     monkeypatch.setattr("builtins.input", lambda _: "y")
     cli.main(shlex.split(cmd))
 
@@ -163,7 +163,7 @@ def test_delete_dataset_by_name(dummy_file, monkeypatch):
 
     # Delete the dataset
     cmd = f"delete dataset {DNAME} {DVERSION} {DOWNER} {DOWNER_TYPE}"
-    cmd += f" --namespace {DEFAULT_NAMESPACE} --root_dir {str(tmp_root_dir)}"
+    cmd += f" --namespace {DEFAULT_NAMESPACE} --root-dir {str(tmp_root_dir)}"
     cli.main(shlex.split(cmd))
 
     # Check
@@ -192,9 +192,9 @@ def test_dataset_entry_with_keywords(dummy_file):
     tmp_src_dir, tmp_root_dir = dummy_file
 
     # Register a dataset with many options
-    cmd = "register dataset my_cli_dataset_keywords 1.0.0 --location_type dummy"
-    cmd += " --is_overwritable --keywords simulation observation"
-    cmd += f" --namespace {DEFAULT_NAMESPACE} --root_dir {str(tmp_root_dir)}"
+    cmd = "register dataset my_cli_dataset_keywords 1.0.0 --location-type dummy"
+    cmd += " --is-overwritable --keywords simulation observation"
+    cmd += f" --namespace {DEFAULT_NAMESPACE} --root-dir {str(tmp_root_dir)}"
     cli.main(shlex.split(cmd))
 
     # Check
@@ -222,8 +222,8 @@ def test_modify_dataset(dummy_file):
     tmp_src_dir, tmp_root_dir = dummy_file
 
     # Register a dataset
-    cmd = "register dataset my_cli_dataset_to_modify 0.0.1 --location_type dummy"
-    cmd += f" --namespace {DEFAULT_NAMESPACE} --root_dir {str(tmp_root_dir)}"
+    cmd = "register dataset my_cli_dataset_to_modify 0.0.1 --location-type dummy"
+    cmd += f" --namespace {DEFAULT_NAMESPACE} --root-dir {str(tmp_root_dir)}"
     cli.main(shlex.split(cmd))
 
     # Find the dataset id
@@ -235,7 +235,7 @@ def test_modify_dataset(dummy_file):
 
     # Modify dataset
     cmd = f"modify dataset {d_id} description 'Updated CLI desc'"
-    cmd += f" --namespace {DEFAULT_NAMESPACE} --root_dir {str(tmp_root_dir)}"
+    cmd += f" --namespace {DEFAULT_NAMESPACE} --root-dir {str(tmp_root_dir)}"
     cli.main(shlex.split(cmd))
 
     # Check
@@ -259,8 +259,8 @@ def test_modify_dataset_creation_date(dummy_file):
     tmp_src_dir, tmp_root_dir = dummy_file
 
     # Register a dataset
-    cmd = "register dataset my_cli_dataset_date_modify 0.0.1 --location_type dummy"
-    cmd += f" --namespace {DEFAULT_NAMESPACE} --root_dir {str(tmp_root_dir)}"
+    cmd = "register dataset my_cli_dataset_date_modify 0.0.1 --location-type dummy"
+    cmd += f" --namespace {DEFAULT_NAMESPACE} --root-dir {str(tmp_root_dir)}"
     cli.main(shlex.split(cmd))
 
     # Find the dataset id
@@ -275,7 +275,7 @@ def test_modify_dataset_creation_date(dummy_file):
 
     # Modify dataset creation_date
     cmd = f"modify dataset {d_id} creation_date '{new_date}'"
-    cmd += f" --namespace {DEFAULT_NAMESPACE} --root_dir {str(tmp_root_dir)}"
+    cmd += f" --namespace {DEFAULT_NAMESPACE} --root-dir {str(tmp_root_dir)}"
     cli.main(shlex.split(cmd))
 
     # Check the modification
@@ -316,8 +316,8 @@ def test_path_dataset_by_id(dummy_file, capsys):
     tmp_src_dir, tmp_root_dir = dummy_file
 
     # Register a dataset
-    cmd = "register dataset my_cli_dataset_path 0.0.1 --location_type dummy"
-    cmd += f" --namespace {DEFAULT_NAMESPACE} --root_dir {str(tmp_root_dir)}"
+    cmd = "register dataset my_cli_dataset_path 0.0.1 --location-type dummy"
+    cmd += f" --namespace {DEFAULT_NAMESPACE} --root-dir {str(tmp_root_dir)}"
     cli.main(shlex.split(cmd))
 
     # Find its dataset id
@@ -331,7 +331,7 @@ def test_path_dataset_by_id(dummy_file, capsys):
 
     # Clear prior command output and run the path command
     capsys.readouterr()
-    cmd = f"path {dataset_id} --namespace {DEFAULT_NAMESPACE} --root_dir {str(tmp_root_dir)}"
+    cmd = f"path {dataset_id} --namespace {DEFAULT_NAMESPACE} --root-dir {str(tmp_root_dir)}"
     cli.main(shlex.split(cmd))
     captured = capsys.readouterr()
 

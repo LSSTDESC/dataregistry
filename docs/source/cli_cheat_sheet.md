@@ -3,8 +3,8 @@
 ## Overview
 
 **CLI Name:** dregs\
-**Version:** 1.1.0\
-**Date:** February 2025\
+**Version:** 1.9.0\
+**Date:** August 2026\
 **Description:** A command-line tool for querying and managing datasets in a data registry.
 
 ---
@@ -22,6 +22,14 @@
 
 ---
 
+NOTE: for the most up-to-date help information use command line help, e.g.
+
+| Help command                    |
+| ------------------------------- |
+| `dregs ls --help`               |
+| `dregs register --help`         |
+| `dregs register dataset --help` |
+
 ## 🟦 Querying from the Command Line 🟦
 
 ### Listing Datasets
@@ -38,14 +46,14 @@ The `dregs ls` command lists all datasets in the connected namespace owned by th
 
 | Command                                     | Description                  |
 | ------------------------------------------- | ---------------------------- |
-| `dregs ls --return_cols name version owner` | Show only specified columns. |
+| `dregs ls --return-cols name version owner` | Show only specified columns. |
 
 ### Limiting Rows and Characters
 
 | Command                   | Description                          |
 | ------------------------- | ------------------------------------ |
-| `dregs ls --max_rows 100` | Limit output to 100 rows.            |
-| `dregs ls --max_chars 20` | Limit column width to 20 characters. |
+| `dregs ls --max-rows 100` | Limit output to 100 rows.            |
+| `dregs ls --max-chars 20` | Limit column width to 20 characters. |
 
 ### Filtering by Keyword
 
@@ -60,9 +68,9 @@ Use `dregs path` to print the absolute path for one dataset by `dataset_id`.
 | Command                                                 | Description                                                     |
 | ------------------------------------------------------- | --------------------------------------------------------------- |
 | `dregs path 1234`                                       | Print the absolute path for dataset id `1234`.                 |
-| `dregs path 1234 --schema_mode working`                 | Resolve path in the working schema.                             |
-| `dregs path 1234 --schema_mode production`              | Resolve path in the production schema.                          |
-| `dregs path 1234 --root_dir /path/to/root --namespace desc` | Resolve path using an explicit root directory and namespace. |
+| `dregs path 1234 --schema-mode working`                 | Resolve path in the working schema.                             |
+| `dregs path 1234 --schema-mode production`              | Resolve path in the production schema.                          |
+| `dregs path 1234 --root-dir /path/to/root --namespace desc` | Resolve path using an explicit root directory and namespace. |
 
 ---
 
@@ -74,9 +82,9 @@ To register a new dataset, use the following command:
 
 ```
 dregs register dataset my_dataset 1.0.0 \
-    --old_location /path/to/data \
+    --old-location /path/to/data \
     --owner myowner \
-    --owner_type group \
+    --owner-type group \
     --description "My first dataset in the registry"
 ```
 
@@ -86,9 +94,9 @@ dregs register dataset my_dataset 1.0.0 \
 |-------------------------------------|-----------------------------------------------------------------------------|
 | `my_dataset`                        | The name to register the dataset under.                                    |
 | `1.0.0`                             | The version of the dataset following semantic versioning.                  |
-| `--old_location /path/to`           | The absolute path to the existing dataset location. Data will be copied to the root directory. |
+| `--old-location /path/to`           | The absolute path to the existing dataset location. Data will be copied to the root directory. |
 | `--owner myowner`                   | The owner of the dataset.                                                  |
-| `--owner_type group`                | Specifies that the owner type is a group.                                  |
+| `--owner-type group`                | Specifies that the owner type is a group.                                  |
 | `--description "My first dataset"`  | A human-readable description of the dataset.                               |
 
 ### Additional Properties
@@ -105,12 +113,12 @@ to see all available options. We recommend being as detailed as possible when pr
 
 ### Updating Dataset Information
 
-To modify an existing dataset, use the following command:
+To modify an existing dataset (in this example modifying the description field), use a command like this:
 
 ```
 dregs modify dataset 1234 \
-    --column description \
-    --new_value "Updated dataset description"
+    description \
+    "Updated dataset description"
 ```
 
 ### Description of Options
@@ -118,8 +126,8 @@ dregs modify dataset 1234 \
 | Option                                      | Description                                      |
 | ------------------------------------------- | ------------------------------------------------ |
 | `1234`                                      | The dataset ID of the dataset to be modified.    |
-| `--column description`                      | Specifies which column in the dataset to modify. |
-| `--new_value "Updated dataset description"` | The new value to set for the specified column.   |
+| `description`                               | Specifies which column in the dataset to modify. |
+| `"Updated dataset description"`             | The new value to set for the specified column.   |
 
 ### Additional Properties
 
@@ -141,8 +149,8 @@ To delete a dataset, use the following command:
 
 ```
 dregs delete dataset my_dataset 1.0.0 \
-    --owner myowner \
-    --owner_type group
+    myowner \
+    group
 ```
 
 ### Description of Options
@@ -151,8 +159,8 @@ dregs delete dataset my_dataset 1.0.0 \
 | -------------------- | ----------------------------------------- |
 | `my_dataset`         | The name of the dataset to be deleted.    |
 | `1.0.0`              | The version of the dataset to be deleted. |
-| `--owner myowner`    | The owner of the dataset.                 |
-| `--owner_type group` | Specifies that the owner is a group.      |
+| `myowner`            | The owner of the dataset.                 |
+| `group`              | Specifies that the owner is a group.      |
 
 ### Confirmation
 
@@ -164,5 +172,3 @@ dregs delete dataset --help
 ```
 
 ---
-
-
