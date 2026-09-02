@@ -60,6 +60,12 @@ def test_get_dataset_absolute_path(dummy_file, schema):
             )
         assert v == should_be
 
+    # Should return same value when connecting with schema arg.
+    datareg2 = DataRegistry(root_dir=str(tmp_root_dir),
+                            schema=DEFAULT_NAMESPACE + schema)
+    v2 = datareg2.get_dataset_absolute_path(d_id_1, schema=schema)
+
+    assert v2 == v
 
 def test_find_entry(dummy_file):
     """
