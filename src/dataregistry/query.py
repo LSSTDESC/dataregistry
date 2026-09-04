@@ -912,7 +912,7 @@ class Query:
 
         # Find actual schema name to pass to _form_dataset_path
         if not self.db_connection._namespace:
-            schema_name = None
+            schema_name = self.db_connection._schema
         else:
             schema_name = self.db_connection._namespace + "_" + schema
 
