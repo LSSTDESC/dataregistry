@@ -785,11 +785,11 @@ class Query:
                 for f in filters:
                     stmt = self._render_filter(f, stmt, filter_mode)
 
-            # If value of status is not "all" add a where clause
-            stat_cols_canon = self._regularize_property_names(["status"])
-            _, stat_col_refs, _ = self._parse_selected_columns(stat_cols_canon,
-                                                              schema_mode=schema_mode)
-            for sch in stat_col_refs.keys():
+            if "dataset" in tables_required:
+                # If value of status is not "all" add a where clause
+                stat_cols_canon = self._regularize_property_names(["status"])
+                _, stat_col_refs, _ = self._parse_selected_columns(stat_cols_canon,
+                                                                   schema_mode=schema_mode)
                 stat_ref = stat_col_refs[sch][0]
                 if status == "good":
                     stmt = stmt.where(stat_ref.bitwise_and(1) == 1)

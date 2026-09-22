@@ -89,17 +89,17 @@ def test_copy_data(dummy_file, data_org):
     results_good = datareg.find_datasets(
         property_names=["dataset.dataset_id"],
         )
-    len_good = len(results_good["dataset.dataset_id"][0])
+    len_good = len(results_good["dataset.dataset_id"])
     results_bad = datareg.find_datasets(
         property_names=["dataset.dataset_id"],
         status="bad",
         )
-    len_bad = len(results_bad["dataset.dataset_id"][0])
+    len_bad = len(results_bad["dataset.dataset_id"])
     results_all = datareg.find_datasets(
         property_names=["dataset.dataset_id"],
         status="all",
         )
-    len_all = len(results_all["dataset.dataset_id"][0])
+    len_all = len(results_all["dataset.dataset_id"])
     assert len_bad > 0
     assert len_good > 0
     assert len_bad + len_good == len_all
