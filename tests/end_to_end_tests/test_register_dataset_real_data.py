@@ -57,8 +57,8 @@ def test_copy_data(dummy_file, data_org):
             "0.0.3",
             old_location=bad_data_path,
             location_type="dataregistry",
-            )
-    except:
+        )
+    except Exception:
         pass
 
     # Query
@@ -86,23 +86,23 @@ def test_copy_data(dummy_file, data_org):
         assert os.path.exists(abs_path_2)
 
     # Query based on status
-    results_good = datareg.find_datasets(
+    results_valid = datareg.find_datasets(
         property_names=["dataset.dataset_id"],
-        )
-    len_good = len(results_good["dataset.dataset_id"])
-    results_bad = datareg.find_datasets(
+    )
+    len_valid = len(results_valid["dataset.dataset_id"])
+    results_invalid = datareg.find_datasets(
         property_names=["dataset.dataset_id"],
-        status="bad",
-        )
-    len_bad = len(results_bad["dataset.dataset_id"])
+        status="invalid",
+    )
+    len_invalid = len(results_invalid["dataset.dataset_id"])
     results_all = datareg.find_datasets(
         property_names=["dataset.dataset_id"],
         status="all",
-        )
+    )
     len_all = len(results_all["dataset.dataset_id"])
-    assert len_bad > 0
-    assert len_good > 0
-    assert len_bad + len_good == len_all
+    assert len_invalid > 0
+    assert len_valid > 0
+    assert len_invalid + len_valid == len_all
 
 
 @pytest.mark.parametrize(

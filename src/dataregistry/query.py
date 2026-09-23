@@ -651,7 +651,7 @@ class Query:
         return_format="property_dict",
         strip_table_names=False,
         schema_mode=None,
-        status="good",
+        status="valid",
     ):
         """
         Get specified properties for datasets satisfying all filters. Both
@@ -699,9 +699,9 @@ class Query:
 
         # Make sure requested status value is acceptable
         status = status.lower()
-        _allowed_status = ["good", "bad", "all"]
+        _allowed_status = ["valid", "invalid", "all"]
         if status not in _allowed_status:
-            raise ValueError(f"{status} is not an acceptable status value (valie={_allowed_status})")
+            raise ValueError(f"{status} is not an acceptable status value (value={_allowed_status})")
 
         results = []
 
@@ -791,9 +791,9 @@ class Query:
                 _, stat_col_refs, _ = self._parse_selected_columns(stat_cols_canon,
                                                                    schema_mode=schema_mode)
                 stat_ref = stat_col_refs[sch][0]
-                if status == "good":
+                if status == "valid":
                     stmt = stmt.where(stat_ref.bitwise_and(1) == 1)
-                elif status == "bad":
+                elif status == "invalid":
                     stmt = stmt.where(stat_ref.bitwise_and(1) == 0)
 
             # Report the constructed SQL query
