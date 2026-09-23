@@ -683,6 +683,11 @@ class Query:
             May be "production", "working" or None.  Defaults to None,
             in which case query mode established at connection time is used.
             Ignored unless query mode was "both"
+        status : optional
+            May be "valid", "invalid" or "all".  Filters datasets to be
+            returned on their validity.  "valid", the default, implies the
+            dataset was successfully registered and any associated data files
+            stored by the Registry are retrievable.
 
         Returns
         -------
