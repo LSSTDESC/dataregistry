@@ -42,5 +42,8 @@ def dregs_show(show_what, args):
             print('Please use "working" (the default) or "production".')
             return
 
-        print(f"Avaliable keywords:")
+        print("Available keywords:")
         print(datareg.Query.get_keyword_list())
+    elif show_what == "projects":
+        print("Available projects:")
+        print(datareg.Query.get_project_list())
