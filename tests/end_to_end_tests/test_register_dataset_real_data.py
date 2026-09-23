@@ -24,8 +24,10 @@ def test_copy_data(dummy_file, data_org):
     # File/directory we are copying in
     if data_org == "file":
         data_path = str(tmp_src_dir / "file1.txt")
+        bad_data_path = str(tmp_src_dir / "badfile.txt")
     else:
         data_path = str(tmp_src_dir / "directory1")
+        bad_data_path = str(tmp_src_dir / "baddirectory")
 
     # Add entry
     d_id = _insert_dataset_entry(
@@ -46,6 +48,18 @@ def test_copy_data(dummy_file, data_org):
             location_type="dataregistry",
             relative_path="my_path",
         )
+
+    # Also add an entry for which copy will fail
+    try:
+        d_id_bad = _insert_dataset_entry(
+            datareg,
+            f"DESC:datasets:copy_bad_{data_org}",
+            "0.0.3",
+            old_location=bad_data_path,
+            location_type="dataregistry",
+        )
+    except Exception:
+        pass
 
     # Query
     f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
@@ -70,6 +84,25 @@ def test_copy_data(dummy_file, data_org):
 
         abs_path_2 = datareg.get_dataset_absolute_path(d_id_2, schema="working")
         assert os.path.exists(abs_path_2)
+
+    # Query based on status
+    results_valid = datareg.find_datasets(
+        property_names=["dataset.dataset_id"],
+    )
+    len_valid = len(results_valid["dataset.dataset_id"])
+    results_invalid = datareg.find_datasets(
+        property_names=["dataset.dataset_id"],
+        status="invalid",
+    )
+    len_invalid = len(results_invalid["dataset.dataset_id"])
+    results_all = datareg.find_datasets(
+        property_names=["dataset.dataset_id"],
+        status="all",
+    )
+    len_all = len(results_all["dataset.dataset_id"])
+    assert len_invalid > 0
+    assert len_valid > 0
+    assert len_invalid + len_valid == len_all
 
 
 @pytest.mark.parametrize(
