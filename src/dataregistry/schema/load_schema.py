@@ -59,6 +59,8 @@ def load_preset_keywords():
     with open(yaml_file_path, "r") as file:
         yaml_data = yaml.safe_load(file)
 
+    # Format is dict named after table ("dataset").  Each key is
+    # a keyword name.  Value is description of keyword
     return yaml_data
 
 

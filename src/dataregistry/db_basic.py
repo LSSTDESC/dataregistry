@@ -681,10 +681,11 @@ def _insert_provenance(
 
 
 def _insert_keyword(
-    db_connection,
-    keyword,
-    system,
-    creator_uid=None,
+        db_connection,
+        keyword,
+        system,
+        description=None,
+        creator_uid=None,
 ):
     """
     Write a row to a keyword table.
@@ -699,6 +700,8 @@ def _insert_keyword(
         Keyword to add (added in lower case form regardless of input)
     system : bool
         True if this is a preset system keyword (False for user custom keyword)
+    description : str
+        Supplied keyword description if any
     creator_uid : int, optional
 
     Returns
@@ -714,6 +717,8 @@ def _insert_keyword(
     values = dict()
     values["keyword"] = keyword.lower()
     values["system"] = system
+    if description:
+        values["description"] = description
     if creator_uid is None:
         values["creator_uid"] = os.getenv("USER")
     else:

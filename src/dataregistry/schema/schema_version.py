@@ -7,9 +7,9 @@ The information is only needed when creating a new schema or when
 modifying the schema in place
 '''
 _DB_VERSION_MAJOR = 3
-_DB_VERSION_MINOR = 5
+_DB_VERSION_MINOR = 6
 _DB_VERSION_PATCH = 0
-_DB_VERSION_COMMENT = "Add support for fetch, archive and restore operations"
+_DB_VERSION_COMMENT = "Add column keyword.description"
 
 __all__ = ["_DB_VERSION_MAJOR", "_DB_VERSION_MINOR", "_DB_VERSION_PATCH",
            "_DB_VERSION_COMMENT"]

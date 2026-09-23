@@ -60,6 +60,12 @@ def test_get_dataset_absolute_path(dummy_file, schema):
             )
         assert v == should_be
 
+    # Should return same value when connecting with schema arg.
+    datareg2 = DataRegistry(root_dir=str(tmp_root_dir),
+                            schema=DEFAULT_NAMESPACE + "_" + schema)
+    v2 = datareg2.get_dataset_absolute_path(d_id_1, schema=schema)
+
+    assert v2 == v
 
 def test_find_entry(dummy_file):
     """
@@ -118,7 +124,7 @@ def test_get_modifiable_columns(dummy_file):
     assert "description" in mod_list
 
     mod_list = datareg.get_modifiable_columns(table="keyword")
-    assert mod_list == dict()
+    assert "description" in mod_list
 
     try:
         mod_list = datareg.get_modifiable_columns(table="bogus")

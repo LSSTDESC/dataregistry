@@ -142,11 +142,21 @@ def test_create_custom_keyword(dummy_file):
 
     # Add a keyword
     kwd = "test_custom_keyword2"
-    datareg.create_keywords([kwd])
+    kwd_id = datareg.create_keyword(kwd, description="initial description")
 
     all_keywords = datareg.get_keyword_list(query_mode="working")
 
     assert kwd in all_keywords
+
+    # Attempt to modify description
+    datareg.modify_keyword(kwd_id, {"description": "new description"})
+
+    # Verify
+    f = datareg.query.gen_filter("keyword.keyword_id", "=", kwd_id)
+    res = datareg.get_table_values("keyword", ["keyword.description"],
+                                   filters=[f])
+
+    assert "new" in res["keyword.description"][0]
 
 
 @pytest.mark.parametrize("custom_keyword", [12, [], None])

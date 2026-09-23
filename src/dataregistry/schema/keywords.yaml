@@ -1,5 +1,5 @@
 dataset:
-  - "simulation"
-  - "observation"
-  - "dc2"
-  - "deprecated"
+  "simulation": "simulated or generated from simulated data"
+  "observation": "observation or generated from observations"
+  "dc2": "associated with DC2 data challenge"
+  "deprecated": "deprecated"

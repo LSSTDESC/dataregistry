@@ -250,7 +250,8 @@ def _read_configuration_file(configuration_file, max_config_length):
 _DATA_UMASK = 0o027
 
 
-def _copy_data(dataset_organization, source, dest, do_checksum=False):
+def _copy_data(dataset_organization, source, dest, do_checksum=False,
+               set_mask=True):
     """
     Copy data from one location to another (for ingesting directories and files
     into the `root_dir` shared space.
@@ -277,6 +278,8 @@ def _copy_data(dataset_organization, source, dest, do_checksum=False):
         Destination we are copying to
     do_checksum : bool
         When overwriting files, do a checksum with the old and new file
+    set_mask : bool
+        If True set protections appropriate for dataregistry cfs area
     """
 
     def _compute_checksum(file_path):
@@ -294,15 +297,19 @@ def _copy_data(dataset_organization, source, dest, do_checksum=False):
             os.rename(dest, temp_dest)
 
         # Create any intervening directories
-        old_umask = os.umask(_DATA_UMASK)
+        if set_mask:
+            old_umask = os.umask(_DATA_UMASK)
         os.makedirs(os.path.dirname(dest), exist_ok=True)
-        _ = os.umask(old_umask)
+        if set_mask:
+            _ = os.umask(old_umask)
 
         # Copy a single file
         if dataset_organization == "file":
-            old_umask = os.umask(_DATA_UMASK)
+            if set_mask:
+                old_umask = os.umask(_DATA_UMASK)
             copyfile(source, dest)
-            _ = os.umask(old_umask)
+            if set_mask:
+                _ = os.umask(old_umask)
 
             # Checksums on the files
             if do_checksum and os.path.exists(temp_dest):
@@ -314,9 +321,11 @@ def _copy_data(dataset_organization, source, dest, do_checksum=False):
 
         # Copy a single directory (and subdirectories)
         elif dataset_organization == "directory":
-            old_umask = os.umask(_DATA_UMASK)
+            if set_mask:
+                old_umask = os.umask(_DATA_UMASK)
             copytree(source, dest, copy_function=copyfile)
-            _ = os.umask(old_umask)
+            if set_mask:
+                _ = os.umask(old_umask)
 
         # If successful, delete the backup
         if os.path.exists(temp_dest):

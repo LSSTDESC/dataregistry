@@ -95,6 +95,11 @@ tables:
         type: "DateTime"
         description: "When this keyword was created"
         nullable: False
+      description:
+        type: "String"
+        description: "Short description of keyword meaning"
+        modifiable: True
+        nullable: True
 
   dataset_keyword:
     column_definitions:
