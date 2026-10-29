@@ -1,4 +1,4 @@
-[![python](https://img.shields.io/badge/Python-3.10-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org)
+[![python](https://img.shields.io/badge/Python-3.11-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org)
 
 <img src="docs/source/_static/DREGS_logo_v2.png" width="300"/>
 
