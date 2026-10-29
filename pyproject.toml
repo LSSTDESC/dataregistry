@@ -23,7 +23,7 @@ keywords = ["desc", "python", "registry"]
 # NOTE: Those needing to create a database will also need to install the
 #       GitPython package. It is not needed for accessing an existing db.
 dependencies = [
-    'psycopg2',
+    'psycopg',
     'sqlalchemy>=2.0.16',
     'pyyaml',
     'pandas',
