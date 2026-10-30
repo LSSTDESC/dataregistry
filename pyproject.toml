@@ -23,13 +23,13 @@ keywords = ["desc", "python", "registry"]
 # NOTE: Those needing to create a database will also need to install the
 #       GitPython package. It is not needed for accessing an existing db.
 dependencies = [
-    'psycopg2',
+    'psycopg',
     'sqlalchemy>=2.0.16',
     'pyyaml',
     'pandas',
     'globus-sdk>=4.4.0',
 ]
-requires-python = ">=3.10" # Supported versions in CI are 3.10 -> 3.13
+requires-python = ">=3.11" # Supported versions in CI are 3.11 -> 3.14
 
 [tool.setuptools.dynamic]
 version = {attr = "dataregistry._version.__version__"}
