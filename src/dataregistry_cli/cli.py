@@ -117,6 +117,8 @@ def get_parser():
         with wildcard support, for example `--name DESC:*`"""
     )
     arg_ls.add_argument(
+        "--cols",
+        "--columns",
         "--return-cols",
         "--return_cols",
         help="List of columns from dataset table to return in the query",

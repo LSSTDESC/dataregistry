@@ -2,6 +2,7 @@ import os
 from dataregistry import DataRegistry
 import pandas as pd
 from dataregistry import Filter
+from dataregistry.registrar.dataset_util import translate_status
 
 
 def _render_filters(datareg, args):
@@ -58,7 +59,7 @@ def dregs_ls(args):
     args : argparse object
 
     args.owner : str
-        Owner to list dataset entries for
+        Owner to list dataset entries for.  Defaults to all
     args.owner_type : str
         Owner type to list dataset entries for
     args.name : str
@@ -74,7 +75,7 @@ def dregs_ls(args):
         Path to root_dir
     args.site : str
         Look up root_dir using a site
-    args.return_cols : list[str]
+    args.cols : list[str]
         List of dataset columns to return
     args.max_chars : int
         Maximum number of character to print per column
@@ -96,21 +97,29 @@ def dregs_ls(args):
 
     # By default, search for "our" dataset
     if args.owner is None:
-        args.owner = os.getenv("USER")
+        # args.owner = os.getenv("USER")
+        args.owner = "none"
 
     # Render search filters
     filters = _render_filters(datareg, args)
 
     # What columns are we printing
     _print_cols = [
+        "dataset.dataset_id",
         "dataset.name",
         "dataset.version_string",
         "dataset.owner",
-        "dataset.owner_type",
-        "dataset.description",
+        # "dataset.owner_type",
+        # "dataset.description",
     ]
-    if args.return_cols is not None:
-        _print_cols = [f"dataset.{x}" for x in args.return_cols]
+    if args.cols is not None:
+        _print_cols = [f"dataset.{x}" for x in args.cols if x != "keyword"]
+        if "keyword" in args.cols:
+            _print_cols.append("keyword")
+        if 'dataset.dataset_id' not in _print_cols and 'dataset_id' not in _print_cols:
+            prepend = ['dataset.dataset_id']
+            prepend.extend(_print_cols)
+            _print_cols = prepend
     if args.keyword is not None:
         _print_cols.append("keyword.keyword")
 
@@ -133,7 +142,22 @@ def dregs_ls(args):
 
     # Strip "dataset." from column names
     new_col = {x: x.split("dataset.")[1] for x in results.columns if "dataset." in x}
+    # Shorten a couple names
+    if 'dataset.dataset_id' in new_col:
+        new_col['dataset.dataset_id'] = 'd_id'
+    if 'dataset.version_string' in new_col:
+        new_col['dataset.version_string'] = 'version'
+    if 'keyword.keyword' in results.columns:
+        new_col['keyword.keyword'] = 'keyword'
     results.rename(columns=new_col, inplace=True)
+    if 'd_id' in results.columns:
+        results = results.sort_values(by='d_id')
+
+    # Translate status if included
+    if 'status' in results.columns:
+        str_status =  [translate_status(x) for x in results['status']]
+        results.drop(columns='status')
+        results['status'] = str_status
 
     # Fix date formatting
     if "register_date" in results.keys():
@@ -143,4 +167,4 @@ def dregs_ls(args):
     with pd.option_context(
         "display.max_colwidth", args.max_chars, "display.max_rows", args.max_rows
     ):
-        print(results)
+        print(results.to_string(index=False))

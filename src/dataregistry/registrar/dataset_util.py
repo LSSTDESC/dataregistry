@@ -75,3 +75,28 @@ def get_dataset_status(current_valid_flag, which_bit):
         raise ValueError(f"{which_bit} is not a valid dataset status")
 
     return (current_valid_flag & (1 << VALID_STATUS_BITS[which_bit])) != 0
+
+def translate_status(status, as_string=True):
+    """
+    Given an integer value of dataset.status, translate to a word or words
+
+    Parameters
+    ----------
+    status     int       The input integer status value
+    as_string  Boolean   if True return a single string of blank-separated
+                         values.  If False return a list
+    """
+    word_list = []
+    if status == 0:
+        if as_string:
+            return "invalid"
+        else:
+            return ["invalid"]
+    for v in VALID_STATUS_BITS:
+        if (1 << (VALID_STATUS_BITS[v]) & status):
+            word_list.append(v)
+
+    if as_string:
+        return ' '.join(word_list)
+    else:
+        return word_list
