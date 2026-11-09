@@ -42,5 +42,5 @@ def dregs_show(show_what, args):
             print('Please use "working" (the default) or "production".')
             return
 
-        print(f"Avaliable keywords:")
+        print(f"Available keywords:")
         print(datareg.Query.get_keyword_list())

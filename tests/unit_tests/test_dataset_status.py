@@ -1,5 +1,5 @@
 import pytest
-from dataregistry.registrar.dataset_util import get_dataset_status, set_dataset_status
+from dataregistry.registrar.dataset_util import get_dataset_status, set_dataset_status, translate_status
 
 
 @pytest.mark.parametrize(
@@ -49,3 +49,21 @@ def test_get_dataset_status(bin_status, is_valid, is_deleted, is_archived):
     assert get_dataset_status(int(bin_status, 2), "valid") == is_valid
     assert get_dataset_status(int(bin_status, 2), "deleted") == is_deleted
     assert get_dataset_status(int(bin_status, 2), "archived") == is_archived
+
+@pytest.mark.parametrize(
+    "int_status, out_string, out_list",
+    [
+        (0, "invalid", ["invalid"]),
+        (1, "valid", ["valid"]),
+        (2, "deleted", ["deleted"]),
+        (4, "archived", ["archived"]),
+        (8, "replaced", ["replaced"]),
+        (9, "valid replaced", ["valid", "replaced"]),
+    ],
+)
+def test_translate_status(int_status, out_string, out_list):
+    """
+    Check that the routine translate_status works correctly
+    """
+    assert translate_status(int_status) == out_string
+    assert translate_status(int_status, as_string=False) == out_list
