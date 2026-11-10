@@ -1,16 +1,18 @@
+import os
+import stat
+import subprocess
+import logging
+import yaml
+from datetime import datetime
+from functools import cached_property
 from sqlalchemy import engine_from_config
 from sqlalchemy.engine import make_url
 from sqlalchemy import MetaData
 from sqlalchemy import column, insert, select
-import yaml
-import os
-import stat
-import logging
-from datetime import datetime
 from dataregistry import __version__
 from dataregistry.exceptions import DataRegistryException
+from dataregistry.exceptions import DataRegistrySystemError
 from dataregistry.schema import DEFAULT_NAMESPACE
-from functools import cached_property
 
 """
 Low-level utility routines and classes for accessing the registry
@@ -19,6 +21,7 @@ Low-level utility routines and classes for accessing the registry
 __all__ = [
     "DbConnection",
     "add_table_row",
+    "get_username",
 ]
 
 _OTHER_ACCESS = stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | stat.S_IROTH |\
@@ -649,7 +652,7 @@ def _insert_provenance(
     values["db_version_minor"] = db_version_minor
     values["db_version_patch"] = db_version_patch
     values["schema_enabled_date"] = datetime.now()
-    values["creator_uid"] = os.getenv("USER")
+    values["creator_uid"] = get_username()
     pkg_root = os.path.join(os.path.dirname(__file__), "../..")
 
     # If this is a git repo, save hash and state
@@ -720,7 +723,7 @@ def _insert_keyword(
     if description:
         values["description"] = description
     if creator_uid is None:
-        values["creator_uid"] = os.getenv("USER")
+        values["creator_uid"] = get_username()
     else:
         values["creator_uid"] = creator_uid
     values["creation_date"] = datetime.now()
@@ -737,3 +740,23 @@ def _insert_keyword(
         id = add_table_row(conn, keyword_table, values)
 
         return id
+
+
+def get_username():
+    '''
+    Get username of current user
+
+    Returns
+    -------
+    username  string
+    '''
+
+    timeout = 10
+    cmd_args = ["id", "-un"]
+    completed = subprocess.run(cmd_args, capture_output=True,
+                               timeout=timeout, text=True)
+    if completed.returncode == 0:
+        return completed.stdout.strip()
+    else:
+        raise DataRegistrySystemError(completed.returncode,
+                                      service="id -un")

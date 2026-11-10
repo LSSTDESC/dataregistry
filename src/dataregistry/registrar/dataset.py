@@ -6,7 +6,7 @@ from pathlib import PurePath
 import shutil
 import warnings
 
-from dataregistry.db_basic import add_table_row
+from dataregistry.db_basic import add_table_row, get_username
 from dataregistry.exceptions import DataRegistryRootDirBadState
 from dataregistry.exceptions import DataRegistryNoEntry
 from dataregistry.exceptions import DataRegistryNYI
@@ -206,7 +206,7 @@ class DatasetTable(BaseTable):
         -------
         True iff user has write permission
         """
-        user = os.getenv("USER")
+        user = get_username()
         if user != _ADMIN_USER:
             dataset_table = self._get_table_metadata("dataset")
             stmt = select(

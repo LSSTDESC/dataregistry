@@ -1,8 +1,7 @@
-import os
 from dateutil import parser
-from dataregistry.schema import load_schema
 from sqlalchemy import select, update, DateTime
-
+from dataregistry.schema import load_schema
+from dataregistry.db_basic import get_username
 # Allowed owner types
 _OWNER_TYPES = {"user", "project", "group", "production"}
 
@@ -46,7 +45,7 @@ class BaseTable:
         self._dialect = db_connection._dialect
 
         # Store user id
-        self._uid = os.getenv("USER")
+        self._uid = get_username()
 
         # Default owner and owner_type's
         self._owner = owner
@@ -95,7 +94,7 @@ class BaseTable:
             raise ValueError(f"modify_fields is expected as a dict, {'column': new_values}")
 
         # First make sure the given entry is in the registry
-        previous_entry = self.find_entry(entry_id, raise_if_not_found=True)
+        _ = self.find_entry(entry_id, raise_if_not_found=True)
 
         # Loop over each column to be modified
         for key, v in modify_fields.items():

@@ -1,10 +1,9 @@
-import os
 from datetime import datetime
 from typing import Literal
 
 from sqlalchemy import select
 
-from dataregistry.db_basic import add_table_row
+from dataregistry.db_basic import add_table_row, get_username
 from dataregistry.registrar.base_table_class import BaseTable
 from dataregistry.db_basic import DbConnection
 
@@ -61,7 +60,7 @@ class KeywordTable(BaseTable):
         -------
         keyword_id for the newly created keyword
         """
-        owner = self._owner or os.getenv("USER")
+        owner = self._owner or get_username()
         keywords_table = self._get_table_metadata("keyword")
         with self._engine.connect() as conn:
             if not isinstance(keyword, str):
@@ -102,7 +101,7 @@ class KeywordTable(BaseTable):
             system keywords can only be created by a privileged user. They
             are intended to be global
         """
-        owner = self._owner or os.getenv("USER")
+        owner = self._owner or get_username()
         keywords_table = self._get_table_metadata("keyword")
         with self._engine.connect() as conn:
             for keyword in keywords:
