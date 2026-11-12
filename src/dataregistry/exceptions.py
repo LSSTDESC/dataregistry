@@ -1,7 +1,7 @@
 __all__ = ["DataRegistryException", "DataRegistryNYI",
-           "DataRegistryRootDirBadState", "dataRegistryNoEntry",
+           "DataRegistryRootDirBadState", "DataRegistryNoEntry",
            "DataRegistryUnmanaged", "DataRegistryColumnSpec",
-           "DataRegistryNoColumn"]
+           "DataRegistryNoColumn", "DataRegistrySystemError"]
 
 
 class DataRegistryException(Exception):
@@ -29,12 +29,14 @@ class DataRegistryNoEntry(DataRegistryException):
         self.msg = msg
         super().__init__(self.msg)
 
+
 class DataRegistryUnmanaged(DataRegistryException):
     def __init__(self, dataset_id="", schema_mode=""):
         msg = f"For dataset id {dataset_id}, schema_mode {schema_mode} "
         msg += "dataregistry does not manage data files, only metadata"
         self.msg = msg
         super().__init__(self.msg)
+
 
 class DataRegistryColumnSpec(DataRegistryException):
     def __init__(self, column_spec=""):
@@ -43,8 +45,16 @@ class DataRegistryColumnSpec(DataRegistryException):
         self.msg = msg
         super().__init__(self.msg)
 
+
 class DataRegistryNoColumn(DataRegistryException):
     def __init__(self, column_spec=""):
         msg = f"No such column as {column_spec}."
+        self.msg = msg
+        super().__init__(self.msg)
+
+
+class DataRegistrySystemError(DataRegistryException):
+    def __init__(self, bad_return, service=""):
+        msg = f"Bad return code {bad_return} from {service}"
         self.msg = msg
         super().__init__(self.msg)
