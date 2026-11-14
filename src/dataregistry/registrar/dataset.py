@@ -333,7 +333,8 @@ class DatasetTable(BaseTable):
             )
 
         # We tentatively start with an "invalid" dataset in the database. This
-        # will be upgraded to valid if data copying (if any) was successful.
+        # will be upgraded to "registered" if data handling was
+        # successful (or unnecessary).
         kwargs_dict["status"] = 0
 
         # Create a new row in the data registry database.
@@ -358,17 +359,21 @@ class DatasetTable(BaseTable):
                 kwargs_dict["owner_type"],
                 gen_path=gen_path,
             )
+            success_status = set_dataset_status(kwargs_dict["status"],
+                                                registered=True, managed=True)
         else:
             dataset_organization = kwargs_dict["location_type"]
             num_files = 0
             total_size = 0
             ds_creation_date = None
+            success_status = set_dataset_status(kwargs_dict["status"],
+                                                registered=True)
 
         # Case where user is overwriting the dataset `creation_date`
         if kwargs_dict["creation_date"]:
             ds_creation_date = kwargs_dict["creation_date"]
 
-        # Copy was successful
+        # Copy, if any, was successful
         with self._engine.connect() as conn:
             # Update the entry with dataset metadata
             update_stmt = (
@@ -379,8 +384,7 @@ class DatasetTable(BaseTable):
                     nfiles=num_files,
                     total_disk_space=total_size / _TO_MBYTE,
                     creation_date=ds_creation_date,
-                    status=set_dataset_status(kwargs_dict["status"],
-                                              valid=True),
+                    status=success_status,
                 )
             )
             conn.execute(update_stmt)
@@ -430,8 +434,10 @@ class DatasetTable(BaseTable):
 
         First, the dataset entry is created in the database. If success, the
         data is then copied (if `old_location` was provided). Only if both
-        steps are successful will there be "valid" status entry in the
-        registry.
+        steps are successful will the entry be marked "registered"
+        Datasets with associated data to be maintained by the Data Registry
+        (location_type = "dataregistry"), whether or not a copy was necessary,
+        will also be marked "managed".
 
         Parameters
         ----------
@@ -662,7 +668,7 @@ class DatasetTable(BaseTable):
 
             # Cannot replace (valid) non-overwritable datasets
             if previous_datasets[-1].is_overwritable is False and get_dataset_status(
-                previous_datasets[-1].status, "valid"
+                previous_datasets[-1].status, "registered"
             ):
                 raise ValueError(
                     f"Dataset {full_name}'s latest iteration "
@@ -1096,7 +1102,7 @@ class DatasetTable(BaseTable):
             ok = False
         else:
             status = results["dataset.status"][0]
-            if not get_dataset_status(status, "valid"):
+            if not get_dataset_status(status, "registered"):
                 ok = False
             elif get_dataset_status(status, "deleted"):
                 if not get_dataset_status(status, "archive"):
