@@ -10,6 +10,7 @@ from database_test_utils import (
 from dataregistry import DataRegistry
 from dataregistry.exceptions import DataRegistryRootDirBadState
 from dataregistry.schema import DEFAULT_NAMESPACE
+from dataregistry.registrar.dataset_util import get_dataset_status
 
 
 @pytest.mark.parametrize("data_org", ["file", "directory"])
@@ -68,6 +69,7 @@ def test_copy_data(dummy_file, data_org):
             "dataset.data_org",
             "dataset.nfiles",
             "dataset.total_disk_space",
+            "dataset.status",
         ],
         filters=[f],
     )
@@ -76,6 +78,7 @@ def test_copy_data(dummy_file, data_org):
     assert results["dataset.data_org"][0] == data_org
     assert results["dataset.nfiles"][0] == 1
     assert results["dataset.total_disk_space"][0] > 0
+    assert get_dataset_status(results["dataset.status"], "managed")
 
     if data_org == "file":
         # See if it's there
