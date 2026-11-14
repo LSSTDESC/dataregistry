@@ -1,7 +1,7 @@
 from collections import namedtuple
-
+from packaging.version import Version
 import pandas as pd
-from sqlalchemy import DateTime, Float, Integer, Numeric, func, select
+from sqlalchemy import DateTime, Float, Integer, Numeric, func, select, or_
 from sqlalchemy.exc import DBAPIError
 
 from dataregistry.exceptions import DataRegistryException, DataRegistryColumnSpec, DataRegistryNoEntry, DataRegistryUnmanaged, DataRegistryNoColumn
@@ -797,9 +797,20 @@ class Query:
                                                                    schema_mode=schema_mode)
                 stat_ref = stat_col_refs[sch][0]
                 if status == "valid":
-                    stmt = stmt.where(stat_ref.bitwise_and(1) == 1)
+                    exp = or_(
+                        stat_ref.bitwise_and(7) == 1,
+                        stat_ref.bitwise_and(7) == 5,
+                        stat_ref.bitwise_and(7) == 7,
+                        )
+                    stmt = stmt.where(exp)
                 elif status == "invalid":
-                    stmt = stmt.where(stat_ref.bitwise_and(1) == 0)
+                    exp = or_(
+                        stat_ref.bitwise_and(1) == 0,
+                        stat_ref.bitwise_and(7) == 3,
+                        )
+                    stmt = stmt.where(exp)
+
+                    # stmt = stmt.where(stat_ref.bitwise_and(1) == 0)
 
             # Report the constructed SQL query
             self.db_connection.logger.debug(f"Executing query: {stmt}")
@@ -1127,3 +1138,76 @@ class Query:
                 result = result.to_dict("list")
 
         return result
+
+    def find_latest(self, name, owner_type=None, owner=None, overwritable=False,
+                    valid_only=True, schema_mode=None):
+        '''
+        Find "latest" (i.e., highest version) datasets with the given
+        name.  There can be more than one dataset with the same name and
+        version if owner or owner type differ.
+
+        Parameters
+        ----------
+        name           string           dataset.name
+        owner_type     string or None   owner_type to filter on
+        owner          string or None   owner to filter on
+        valid_only     boolean          If True (default) only return items
+                                        with good status.
+        schema_mode    string           one of "working", "production" or
+                                        None (use default mode)
+
+        Returns
+        -------
+        dict        Keys are triples of strings (owner_type, owner, query_mode)
+                    where query_mode can only be "working" or "production".
+                    Each value is a duple (version_string, dataset_id)
+        '''
+        if schema_mode is None:
+            schema_mode = self.db_connection._query_mode
+
+        filters = []
+        if not overwritable:
+            filters.append(Filter("is_overwritable", "==", False))
+
+        if owner_type:
+            filters.append(Filter("owner_type", "==", owner_type))
+        if owner:
+            filters.append(Filter("owner", "==", owner))
+
+        to_return = dict()
+
+        if schema_mode == "both":
+            modes = ["working", "production"]
+        elif schema_mode in ("working", "production"):
+            modes = [schema_mode]
+        else:
+            raise ValueError(f"{schema_mode} is not a recognized schema mode")
+
+        for mode in modes:
+            cols = ["name", "version_string", "owner_type", "owner",
+                    "dataset_id"]
+            status_arg = "all"
+            if valid_only:
+                status_arg = "valid"
+            results = self.find_datasets(
+                property_names=cols,
+                filters=filters,
+                return_format="DataFrame",
+                strip_table_names=True,
+                schema_mode=mode,
+                status=status_arg)
+            results = results.sort_values(by=['owner_type', 'owner']).reset_index(drop=True)
+
+            groups = results.groupby(by=["owner_type", "owner"]).groups
+
+            to_return = dict()
+            for k in groups:
+                latest = max(
+                    (results.loc[i] for i in groups[k]),
+                    key=lambda i: Version(results["version_string"][i]))
+                new_key = (mode,) + k
+                to_return[new_key] = latest["dataset_id"]
+
+            # Need to determine boundaries (if any) where one or both of
+            # owner_type, owner change.   Then for each such group,
+            # find highest version_string (see Patricia's example)
