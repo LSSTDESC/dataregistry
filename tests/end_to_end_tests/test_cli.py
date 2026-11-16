@@ -128,6 +128,7 @@ def test_delete_dataset_by_id(dummy_file, monkeypatch):
             "dataset.status",
         ],
         filters=[f],
+        status="all",
     )
 
     assert len(results["dataset.dataset_id"]) == 1
@@ -177,6 +178,7 @@ def test_delete_dataset_by_name(dummy_file, monkeypatch):
             "dataset.status",
         ],
         filters=[f],
+        status="all",
     )
 
     assert len(results["dataset.dataset_id"]) == 1
