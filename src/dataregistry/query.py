@@ -1160,7 +1160,7 @@ class Query:
         -------
         dict        Keys are triples of strings (owner_type, owner, query_mode)
                     where query_mode can only be "working" or "production".
-                    Each value is a duple (version_string, dataset_id)
+                    Each value is a duple (dataset_id, version_string)
         '''
         if schema_mode is None:
             schema_mode = self.db_connection._query_mode
@@ -1212,6 +1212,7 @@ class Query:
                 the_iterable = [results.loc[i] for i in groups[k]]
                 latest = max(the_iterable, key=key_func)
                 new_key = (mode,) + k
-                to_return[new_key] = int(latest["dataset_id"])
+                to_return[new_key] = (int(latest["dataset_id"]),
+                                      latest["version_string"])
 
         return to_return
