@@ -1166,13 +1166,14 @@ class Query:
             schema_mode = self.db_connection._query_mode
 
         filters = []
+        filters.append(Filter("dataset.name", "==", name))
         if not overwritable:
-            filters.append(Filter("is_overwritable", "==", False))
+            filters.append(Filter("dataset.is_overwritable", "==", False))
 
         if owner_type:
-            filters.append(Filter("owner_type", "==", owner_type))
+            filters.append(Filter("dataset.owner_type", "==", owner_type))
         if owner:
-            filters.append(Filter("owner", "==", owner))
+            filters.append(Filter("dataset.owner", "==", owner))
 
         to_return = dict()
 
@@ -1183,12 +1184,16 @@ class Query:
         else:
             raise ValueError(f"{schema_mode} is not a recognized schema mode")
 
+        cols = ["dataset.name", "dataset.version_string",
+                "dataset.owner_type", "dataset.owner", "dataset.dataset_id"]
+        status_arg = "all"
+        if valid_only:
+            status_arg = "valid"
+
+        def key_func(d):
+            return Version(d["version_string"])
+
         for mode in modes:
-            cols = ["name", "version_string", "owner_type", "owner",
-                    "dataset_id"]
-            status_arg = "all"
-            if valid_only:
-                status_arg = "valid"
             results = self.find_datasets(
                 property_names=cols,
                 filters=filters,
@@ -1196,18 +1201,17 @@ class Query:
                 strip_table_names=True,
                 schema_mode=mode,
                 status=status_arg)
-            results = results.sort_values(by=['owner_type', 'owner']).reset_index(drop=True)
+            if len(results) == 0:
+                continue
+            results = results.sort_values(
+                by=['owner_type', 'owner']).reset_index(drop=True)
 
             groups = results.groupby(by=["owner_type", "owner"]).groups
 
-            to_return = dict()
             for k in groups:
-                latest = max(
-                    (results.loc[i] for i in groups[k]),
-                    key=lambda i: Version(results["version_string"][i]))
+                the_iterable = [results.loc[i] for i in groups[k]]
+                latest = max(the_iterable, key=key_func)
                 new_key = (mode,) + k
-                to_return[new_key] = latest["dataset_id"]
+                to_return[new_key] = int(latest["dataset_id"])
 
-            # Need to determine boundaries (if any) where one or both of
-            # owner_type, owner change.   Then for each such group,
-            # find highest version_string (see Patricia's example)
+        return to_return
