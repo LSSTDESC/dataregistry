@@ -287,6 +287,14 @@ def test_registering_deleted_relative_path(dummy_file, link):
     # Now delete
     datareg.registrar.dataset._delete_by_id(d2_id)
 
+    # Confirm status has been updated correctly
+    f = datareg.query.gen_filter("dataset.dataset_id", "==", d2_id)
+    results = datareg.find_datasets(property_names=["dataset.status"],
+                                    filters=[f])
+    new_stat = results["dataset.status"][0]
+    assert get_dataset_status(new_stat, "deleted")
+    assert get_dataset_status(new_stat, "data_deleted")
+
     # Make a new entry (new name) using the original relative path
     d_id = _insert_dataset_entry(
         datareg,

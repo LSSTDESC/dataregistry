@@ -359,8 +359,11 @@ class DatasetTable(BaseTable):
                 kwargs_dict["owner_type"],
                 gen_path=gen_path,
             )
-            success_status = set_dataset_status(kwargs_dict["status"],
-                                                registered=True, managed=True)
+            success_status = set_dataset_status(
+                kwargs_dict["status"],
+                registered=True,
+                data_managed=True
+            )
         else:
             dataset_organization = kwargs_dict["location_type"]
             num_files = 0
@@ -995,25 +998,94 @@ class DatasetTable(BaseTable):
 
         # Delete the physical data in the root_dir
         if previous_dataset.location_type == "dataregistry":
-            data_path = _form_dataset_path(
-                previous_dataset.owner_type,
-                previous_dataset.owner,
-                previous_dataset.relative_path,
-                schema=self._schema,
-                root_dir=self._root_dir,
-            )
-            self.db_connection.logger.info(f"Deleting data {data_path}")
-            if os.path.isfile(data_path):
-                os.remove(data_path)
-            elif os.path.isdir(data_path):
-                shutil.rmtree(data_path)
-            else:
-                warnings.warn(
-                    f"Dataset {data_path} not found under the `root_dir`, "
-                    "could not delete",
-                    UserWarning,
-                )
+            self._delete_data_by_id(dataset_id, previous_dataset)
+            # data_path = _form_dataset_path(
+            #     previous_dataset.owner_type,
+            #     previous_dataset.owner,
+            #     previous_dataset.relative_path,
+            #     schema=self._schema,
+            #     root_dir=self._root_dir,
+            # )
+            # self.db_connection.logger.info(f"Deleting data {data_path}")
+            # if os.path.isfile(data_path):
+            #     os.remove(data_path)
+            # elif os.path.isdir(data_path):
+            #     shutil.rmtree(data_path)
+            # else:
+            #     warnings.warn(
+            #         f"Dataset {data_path} not found under the `root_dir`, "
+            #         "could not delete",
+            #         UserWarning,
+            #     )
+            # # Update status, setting data_deleted bit
+            # with self._engine.connect() as conn:
+            #     update_stmt = (
+            #         update(dataset_table)
+            #         .where(dataset_table.c.dataset_id == dataset_id)
+            #         .values(
+            #             status=set_dataset_status(previous_dataset.status,
+            #                                       data_deleted=True),
+            #             delete_uid=self._uid,
+            #         )
+            #     )
+            #     conn.execute(update_stmt)
+            #     conn.commit()
+
         msg = f"Deleted {dataset_id} from data registry"
+        self.db_connection.logger.info(msg)
+
+    def _delete_data_by_id(self, dataset_id, the_dataset=None, confirm=False):
+        """
+        Delete the data belonging to a dataset and update the status
+        to reflect this
+
+        dataset_id     int
+        the_dataset    row   Data stored in db for this entry
+                             Use if provided, otherwise query db
+
+        This routine should not be called directly by users.  It may be called
+        by `_delete_by_id` (in turn called by delete) or by the archiver.
+        It assumes the dataset has location_type = "dataregistry"; that is,
+        there is data on disk to be deleted.
+        """
+        if not the_dataset:
+            dataset_table = self._get_table_metadata(self.which_table)
+            the_dataset = self.find_entry(dataset_id, raise_if_not_found=True)
+
+        data_path = _form_dataset_path(
+            the_dataset.owner_type,
+            the_dataset.owner,
+            the_dataset.relative_path,
+            schema=self._schema,
+            root_dir=self._root_dir,
+        )
+        self.db_connection.logger.info(f"Deleting data {data_path}")
+        if os.path.isfile(data_path):
+            os.remove(data_path)
+        elif os.path.isdir(data_path):
+            shutil.rmtree(data_path)
+        else:
+            warnings.warn(
+                f"Dataset {data_path} not found under the `root_dir`, "
+                "could not delete",
+                UserWarning,
+            )
+
+        # Update status, setting data_deleted bit
+        with self._engine.connect() as conn:
+            update_stmt = (
+                update(dataset_table)
+                .where(dataset_table.c.dataset_id == dataset_id)
+                .values(
+                    status=set_dataset_status(the_dataset.status,
+                                              data_deleted=True),
+                    delete_uid=self._uid,
+                )
+            )
+            conn.execute(update_stmt)
+            conn.commit()
+
+        msg = f"Deleted data for {dataset_id} from data registry"
         self.db_connection.logger.info(msg)
 
     def add_keywords(self, dataset_id, keyword):
@@ -1105,7 +1177,7 @@ class DatasetTable(BaseTable):
             if not get_dataset_status(status, "registered"):
                 ok = False
             elif get_dataset_status(status, "deleted"):
-                if not get_dataset_status(status, "archive"):
+                if not get_dataset_status(status, "archived"):
                     ok = False
                 else:
                     archived = True

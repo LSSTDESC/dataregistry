@@ -4,20 +4,22 @@ VALID_STATUS_BITS = {
     # "Invalid" (least sig. bit = 0) means the dataset entry was created in
     # the database, but there was an issue copying the physical data.
     "registered": 0,
-    # Has the data of this dataset been deleted from the `root_dir`?
+    # Has this dataset been marked 'deleted'?
     "deleted": 1,
     # Has the data for this dataset been archived?
     "archived": 2,
     # Has this dataset been replaced at some point?
     "replaced": 3,
     # Is dataregistry managing data for this dataset?
-    "managed": 4,
+    "data_managed": 4,
+    # Has the data from this dataset been deleted from the `root_dir`?
+    "data_deleted": 5,
 }
 
 
 def set_dataset_status(
         current_valid_mask, registered=None, deleted=None, archived=None,
-        replaced=None, managed=None
+        replaced=None, data_managed=None, data_deleted=None,
 ):
     """
     Update a value of a dataset's status bit poistion.
@@ -37,8 +39,11 @@ def set_dataset_status(
         True to set the dataset as archived
     replaced : bool, optional
         True to set the dataset as replaced
-    managed : bool, optional
-        True to set the dataset a managed
+    data_managed : bool, optional
+        True to set the dataset as data_managed
+    data_deleted : bool, optional
+        True means data associated with the dataset has been deleted from disk
+        (but might be archived)
 
     Returns
     -------
@@ -48,8 +53,9 @@ def set_dataset_status(
 
     # Set the bits for each condition
     for cond, ref in zip(
-        [registered, deleted, archived, replaced, managed],
-        ["registered", "deleted", "archived", "replaced", "managed"],
+        [registered, deleted, archived, replaced, data_managed, data_deleted],
+        ["registered", "deleted", "archived", "replaced",
+         "data_managed", "data_deleted"],
     ):
         if cond is not None:
             current_valid_mask &= ~(1 << VALID_STATUS_BITS[ref])
