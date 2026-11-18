@@ -78,7 +78,7 @@ def test_copy_data(dummy_file, data_org):
     assert results["dataset.data_org"][0] == data_org
     assert results["dataset.nfiles"][0] == 1
     assert results["dataset.total_disk_space"][0] > 0
-    assert get_dataset_status(results["dataset.status"][0], "managed")
+    assert get_dataset_status(results["dataset.status"][0], "data_managed")
 
     if data_org == "file":
         # See if it's there

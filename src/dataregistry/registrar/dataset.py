@@ -1048,8 +1048,8 @@ class DatasetTable(BaseTable):
         It assumes the dataset has location_type = "dataregistry"; that is,
         there is data on disk to be deleted.
         """
+        dataset_table = self._get_table_metadata(self.which_table)
         if not the_dataset:
-            dataset_table = self._get_table_metadata(self.which_table)
             the_dataset = self.find_entry(dataset_id, raise_if_not_found=True)
 
         data_path = _form_dataset_path(
