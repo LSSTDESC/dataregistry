@@ -998,7 +998,7 @@ class DatasetTable(BaseTable):
 
         # Delete the physical data in the root_dir
         if previous_dataset.location_type == "dataregistry":
-            self._delete_data_by_id(dataset_id, previous_dataset)
+            self._delete_data_by_id(dataset_id)
             # data_path = _form_dataset_path(
             #     previous_dataset.owner_type,
             #     previous_dataset.owner,
@@ -1034,7 +1034,7 @@ class DatasetTable(BaseTable):
         msg = f"Deleted {dataset_id} from data registry"
         self.db_connection.logger.info(msg)
 
-    def _delete_data_by_id(self, dataset_id, the_dataset=None, confirm=False):
+    def _delete_data_by_id(self, dataset_id, confirm=False):
         """
         Delete the data belonging to a dataset and update the status
         to reflect this
@@ -1049,8 +1049,7 @@ class DatasetTable(BaseTable):
         there is data on disk to be deleted.
         """
         dataset_table = self._get_table_metadata(self.which_table)
-        if not the_dataset:
-            the_dataset = self.find_entry(dataset_id, raise_if_not_found=True)
+        the_dataset = self.find_entry(dataset_id, raise_if_not_found=True)
 
         data_path = _form_dataset_path(
             the_dataset.owner_type,

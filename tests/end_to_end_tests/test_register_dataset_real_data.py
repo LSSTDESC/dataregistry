@@ -290,7 +290,7 @@ def test_registering_deleted_relative_path(dummy_file, link):
     # Confirm status has been updated correctly
     f = datareg.query.gen_filter("dataset.dataset_id", "==", d2_id)
     results = datareg.find_datasets(property_names=["dataset.status"],
-                                    filters=[f])
+                                    filters=[f], status="all")
     new_stat = results["dataset.status"][0]
     assert get_dataset_status(new_stat, "deleted")
     assert get_dataset_status(new_stat, "data_deleted")
