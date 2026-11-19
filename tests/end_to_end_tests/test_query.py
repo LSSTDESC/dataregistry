@@ -551,3 +551,43 @@ def test_get_table_values():
     k2_results = datareg.query.get_table_values("keyword", ["keyword"],
                                                 filters=[f])
     assert len(k2_results["keyword.keyword"]) >= 1
+
+
+def test_query_latest(dummy_file):
+    """Test the `find_latest_dataset` function in DataRegistry"""
+
+    # Establish connection to database
+    _, tmp_root_dir = dummy_file
+    dr = DataRegistry(root_dir=str(tmp_root_dir), namespace=DEFAULT_NAMESPACE)
+
+    # Insert several datasets
+    nm = "test_latest"
+    d_id1 = _insert_dataset_entry(dr, nm, "0.0.1",)
+    d_id2 = _insert_dataset_entry(dr, nm, "0.1.1",)
+    d_id3 = _insert_dataset_entry(dr, nm, "0.1.0",)
+
+    _insert_dataset_entry(dr, nm, "0.2.0", owner_type="group", owner="groupie",)
+    _insert_dataset_entry(dr, nm, "0.1.1", owner_type="group", owner="groupie",)
+
+    # Specify good owner_type, owner
+    latest = dr.find_latest_dataset(nm, owner_type="group", owner="groupie")
+
+    assert len(latest) == 1
+    assert latest[("working", "group", "groupie")][1] == "0.2.0"
+
+    # Leave owner_type, owner unspecified
+    latest = dr.find_latest_dataset(nm)
+    assert len(latest) == 2
+    for k in latest:
+        if k == ("working", "group", "groupie"):
+            assert latest[k][1] == "0.2.0"
+        else:
+            assert latest[k][0] == d_id2
+            assert latest[k][1] == "0.1.1"
+
+    # Look for something that isn't there
+    latest = dr.find_latest_dataset("nonexistent_name")
+    assert len(latest) == 0
+
+    latest = dr.find_latest_dataset(nm, owner_type="group", owner="groupie2")
+    assert len(latest) == 0
