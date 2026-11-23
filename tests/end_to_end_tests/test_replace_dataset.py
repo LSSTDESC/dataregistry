@@ -77,6 +77,7 @@ def _check_replaced_dataset(
             "dataset.replace_iteration",
         ],
         filters=[f],
+        status="all"
     )
 
     assert len(results["dataset.name"]) == 1
@@ -106,7 +107,7 @@ def _check_replaced_dataset(
 
 
 @pytest.mark.parametrize(
-    "_REL_PATH,name_tag",
+    "_RELFAIL_PATH,name_tag",
     [(None, ""), ("test_replace_dataset/relpath", "_with_relpath")],
 )
 def test_replace_dataset(dummy_file, _REL_PATH, name_tag):
