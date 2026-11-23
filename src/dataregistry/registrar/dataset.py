@@ -1009,37 +1009,6 @@ class DatasetTable(BaseTable):
         # Delete the physical data in the root_dir
         if previous_dataset.location_type == "dataregistry":
             self._delete_data_by_id(dataset_id)
-            # data_path = _form_dataset_path(
-            #     previous_dataset.owner_type,
-            #     previous_dataset.owner,
-            #     previous_dataset.relative_path,
-            #     schema=self._schema,
-            #     root_dir=self._root_dir,
-            # )
-            # self.db_connection.logger.info(f"Deleting data {data_path}")
-            # if os.path.isfile(data_path):
-            #     os.remove(data_path)
-            # elif os.path.isdir(data_path):
-            #     shutil.rmtree(data_path)
-            # else:
-            #     warnings.warn(
-            #         f"Dataset {data_path} not found under the `root_dir`, "
-            #         "could not delete",
-            #         UserWarning,
-            #     )
-            # # Update status, setting data_deleted bit
-            # with self._engine.connect() as conn:
-            #     update_stmt = (
-            #         update(dataset_table)
-            #         .where(dataset_table.c.dataset_id == dataset_id)
-            #         .values(
-            #             status=set_dataset_status(previous_dataset.status,
-            #                                       data_deleted=True),
-            #             delete_uid=self._uid,
-            #         )
-            #     )
-            #     conn.execute(update_stmt)
-            #     conn.commit()
 
         msg = f"Deleted {dataset_id} from data registry"
         self.db_connection.logger.info(msg)
