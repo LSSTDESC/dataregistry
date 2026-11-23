@@ -10,7 +10,7 @@ from dataregistry.db_basic import add_table_row, get_username
 from dataregistry.exceptions import DataRegistryRootDirBadState
 from dataregistry.exceptions import DataRegistryNoEntry
 from dataregistry.exceptions import DataRegistryNYI
-from sqlalchemy import select, update
+from sqlalchemy import select, update, text
 from functools import wraps
 from dataregistry.query import Filter
 from dataregistry.globus.transfer import transfer_NERSC
@@ -705,8 +705,17 @@ class DatasetTable(BaseTable):
         dataset_table = self._get_table_metadata("dataset")
 
         # Delete the old data (if not already deleted)
-        if not get_dataset_status(previous_datasets[-1].status, "deleted"):
-            self._delete_by_id(previous_datasets[-1].dataset_id)
+        prev = previous_datasets[-1]
+        if not get_dataset_status(prev.status, "deleted"):
+            self._delete_by_id(prev.dataset_id)
+
+        # Update our cached version of the previous dataset's status
+        tbl_name = self.db_connection.schema + ".dataset"
+        stmt = f"select status from {tbl_name} where "
+        stmt += f"dataset_id = {prev.dataset_id}"
+        with self._engine.connect() as conn:
+            results = conn.execute(text(stmt))
+            prev_status = results.fetchone()[0]
 
         # Register the new row in the dataset table
         prim_key = self._register_row(name, version, kwargs_dict)
@@ -718,9 +727,7 @@ class DatasetTable(BaseTable):
                 update(dataset_table)
                 .where(dataset_table.c.dataset_id == previous_datasets[-1].dataset_id)
                 .values(
-                    status=set_dataset_status(
-                        previous_datasets[-1].status, replaced=True
-                    ),
+                    status=set_dataset_status(prev_status, replaced=True),
                     replace_id=prim_key,
                 )
             )
