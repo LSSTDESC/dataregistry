@@ -710,7 +710,10 @@ class DatasetTable(BaseTable):
             self._delete_by_id(prev.dataset_id)
 
         # Update our cached version of the previous dataset's status
-        tbl_name = self.db_connection.schema + ".dataset"
+        if self.db_connection.schema:
+            tbl_name = self.db_connection.schema + ".dataset"
+        else:
+            tbl_name = "dataset"
         stmt = f"select status from {tbl_name} where "
         stmt += f"dataset_id = {prev.dataset_id}"
         with self._engine.connect() as conn:
