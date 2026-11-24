@@ -50,8 +50,10 @@ admin_config = os.path.join(home, '.dataregistry_admin_config')
 alt_admin_config = os.path.join(home, '.alt_admin_config')
 parser.add_argument("--config", help="Path to the data registry config file. Determines database (regular or alt) to be modified", default=alt_admin_config)
 
-parser.add_argument("--steps", choices=['mod_schema', 'mod_data', 'both'],
-                    default='mod_schema')
+# For this upgrade there is no change to the schema, only to the interpretation
+# of the dataset.status column. So only mod_data is applicable.
+# parser.add_argument("--steps", choices=['mod_schema', 'mod_data', 'both'],
+#                    default='mod_schema')
 args = parser.parse_args()
 
 schema = args.namespace + '_' + args.schema_type
@@ -68,7 +70,6 @@ print("Db server host is ", parsed_config.host, prod_host)
 print("Database is ", parsed_config.db, prod_db)
 print("Namespace is ", args.namespace, prod_namespace)
 print("Schema type is ", args.schema_type)
-print("Steps to execute:  ", args.steps)
 
 response = input("Do you wish to continue? (y or n)")
 response = response.lower()[0]
@@ -84,44 +85,30 @@ db_connection = DbConnection(schema=schema, config_file=args.config,
 logger = db_connection.logger
 engine = db_connection.engine
 
-if args.steps in ['mod_schema', 'both']:
-    # Update the schema, sort of.  We're not really changing the schema;
-    # just the meaning of some bits in dataset.status.  But we still need
-    # to add a row to the provenance table
-    _insert_provenance(
-        db_connection,
-        _DB_VERSION_MAJOR,
-        _DB_VERSION_MINOR,
-        _DB_VERSION_PATCH,
-        "MIGRATE",
-        comment=_DB_VERSION_COMMENT,
-        associated_production=assoc_production
-    )
-if args.steps in ['mod_data', 'both']:
-    # Fix up status in existing dataset entries.
-    schema = args.namespace + '_' + entry_mode
+# Fix up status in existing dataset entries.
+schema = args.namespace + '_' + entry_mode
 
-    # OR in manage bit for successfully reg. datasets with managed data
-    # (that is, with location_type == "dataregistry")
-    manage_stmt = f"update {schema}.dataset set status = status | {DATA_MANAGED} "
-    manage_where = " where (location_type = 'dataregistry') and "
-    manage_where = manage_where + f" (status & {REGISTERED} = {REGISTERED}) "
-    manage_stmt = manage_stmt + manage_where
+# OR in manage bit for successfully reg. datasets with managed data
+# (that is, with location_type == "dataregistry")
+manage_stmt = f"update {schema}.dataset set status = status | {DATA_MANAGED} "
+manage_where = " where (location_type = 'dataregistry') and "
+manage_where = manage_where + f" (status & {REGISTERED} = {REGISTERED}) "
+manage_stmt = manage_stmt + manage_where
 
-    # OR in DELETED bit for datasets which have been replaced (because
-    # of bug in old `replace` code)
-    replace_stmt = f"update {schema}.dataset set status = status | {DELETED} "
-    replace_where = f" where (status & {REPLACED} = {REPLACED})"
-    replace_stmt += replace_where
+# OR in DELETED bit for datasets which have been replaced (because
+# of bug in old `replace` code)
+replace_stmt = f"update {schema}.dataset set status = status | {DELETED} "
+replace_where = f" where (status & {REPLACED} = {REPLACED})"
+replace_stmt += replace_where
 
-    # OR in DATA_DELETED bit for deleted datasets with managed data
-    del_stmt = f"update {schema}.dataset set status = status | {DATA_DELETED} "
-    del_where =  " where (location_type = 'dataregistry') and "
-    del_where = del_where + f" (status & {DELETED} = {DELETED})"
-    del_stmt = del_stmt + del_where
+# OR in DATA_DELETED bit for deleted datasets with managed data
+del_stmt = f"update {schema}.dataset set status = status | {DATA_DELETED} "
+del_where =  " where (location_type = 'dataregistry') and "
+del_where = del_where + f" (status & {DELETED} = {DELETED})"
+del_stmt = del_stmt + del_where
 
-    for stmt in [manage_stmt, replace_stmt, del_stmt]:
-        logger.debug(f"Executing {stmt}")
-        with engine.connect() as conn:
-            results = conn.execute(text(stmt))
-            conn.commit()
+for stmt in [manage_stmt, replace_stmt, del_stmt]:
+    logger.debug(f"Executing {stmt}")
+    with engine.connect() as conn:
+        results = conn.execute(text(stmt))
+        conn.commit()
