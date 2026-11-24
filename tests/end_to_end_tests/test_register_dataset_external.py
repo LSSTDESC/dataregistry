@@ -1,14 +1,7 @@
-import os
-import sys
-
-import pandas as pd
 import pytest
-import sqlalchemy
-import yaml
+
 from dataregistry import DataRegistry
 from dataregistry.schema import DEFAULT_NAMESPACE
-from dataregistry.registrar.dataset_util import get_dataset_status, set_dataset_status
-from dataregistry.registrar.registrar_util import _form_dataset_path
 
 from database_test_utils import _insert_dataset_entry, dummy_file
 

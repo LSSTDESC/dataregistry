@@ -10,7 +10,7 @@ from dataregistry.db_basic import add_table_row, get_username
 from dataregistry.exceptions import DataRegistryRootDirBadState
 from dataregistry.exceptions import DataRegistryNoEntry
 from dataregistry.exceptions import DataRegistryNYI
-from sqlalchemy import select, update
+from sqlalchemy import select, update, text
 from functools import wraps
 from dataregistry.query import Filter
 from dataregistry.globus.transfer import transfer_NERSC
@@ -333,7 +333,8 @@ class DatasetTable(BaseTable):
             )
 
         # We tentatively start with an "invalid" dataset in the database. This
-        # will be upgraded to valid if data copying (if any) was successful.
+        # will be upgraded to "registered" if data handling was
+        # successful (or unnecessary).
         kwargs_dict["status"] = 0
 
         # Create a new row in the data registry database.
@@ -358,17 +359,24 @@ class DatasetTable(BaseTable):
                 kwargs_dict["owner_type"],
                 gen_path=gen_path,
             )
+            success_status = set_dataset_status(
+                kwargs_dict["status"],
+                registered=True,
+                data_managed=True
+            )
         else:
             dataset_organization = kwargs_dict["location_type"]
             num_files = 0
             total_size = 0
             ds_creation_date = None
+            success_status = set_dataset_status(kwargs_dict["status"],
+                                                registered=True)
 
         # Case where user is overwriting the dataset `creation_date`
         if kwargs_dict["creation_date"]:
             ds_creation_date = kwargs_dict["creation_date"]
 
-        # Copy was successful
+        # Copy, if any, was successful
         with self._engine.connect() as conn:
             # Update the entry with dataset metadata
             update_stmt = (
@@ -379,8 +387,7 @@ class DatasetTable(BaseTable):
                     nfiles=num_files,
                     total_disk_space=total_size / _TO_MBYTE,
                     creation_date=ds_creation_date,
-                    status=set_dataset_status(kwargs_dict["status"],
-                                              valid=True),
+                    status=success_status,
                 )
             )
             conn.execute(update_stmt)
@@ -430,8 +437,10 @@ class DatasetTable(BaseTable):
 
         First, the dataset entry is created in the database. If success, the
         data is then copied (if `old_location` was provided). Only if both
-        steps are successful will there be "valid" status entry in the
-        registry.
+        steps are successful will the entry be marked "registered"
+        Datasets with associated data to be maintained by the Data Registry
+        (location_type = "dataregistry"), whether or not a copy was necessary,
+        will also be marked "managed".
 
         Parameters
         ----------
@@ -662,7 +671,7 @@ class DatasetTable(BaseTable):
 
             # Cannot replace (valid) non-overwritable datasets
             if previous_datasets[-1].is_overwritable is False and get_dataset_status(
-                previous_datasets[-1].status, "valid"
+                previous_datasets[-1].status, "registered"
             ):
                 raise ValueError(
                     f"Dataset {full_name}'s latest iteration "
@@ -696,8 +705,20 @@ class DatasetTable(BaseTable):
         dataset_table = self._get_table_metadata("dataset")
 
         # Delete the old data (if not already deleted)
-        if not get_dataset_status(previous_datasets[-1].status, "deleted"):
-            self._delete_by_id(previous_datasets[-1].dataset_id)
+        prev = previous_datasets[-1]
+        if not get_dataset_status(prev.status, "deleted"):
+            self._delete_by_id(prev.dataset_id)
+
+        # Update our cached version of the previous dataset's status
+        if self.db_connection.schema:
+            tbl_name = self.db_connection.schema + ".dataset"
+        else:
+            tbl_name = "dataset"
+        stmt = f"select status from {tbl_name} where "
+        stmt += f"dataset_id = {prev.dataset_id}"
+        with self._engine.connect() as conn:
+            results = conn.execute(text(stmt))
+            prev_status = results.fetchone()[0]
 
         # Register the new row in the dataset table
         prim_key = self._register_row(name, version, kwargs_dict)
@@ -709,9 +730,7 @@ class DatasetTable(BaseTable):
                 update(dataset_table)
                 .where(dataset_table.c.dataset_id == previous_datasets[-1].dataset_id)
                 .values(
-                    status=set_dataset_status(
-                        previous_datasets[-1].status, replaced=True
-                    ),
+                    status=set_dataset_status(prev_status, replaced=True),
                     replace_id=prim_key,
                 )
             )
@@ -989,25 +1008,62 @@ class DatasetTable(BaseTable):
 
         # Delete the physical data in the root_dir
         if previous_dataset.location_type == "dataregistry":
-            data_path = _form_dataset_path(
-                previous_dataset.owner_type,
-                previous_dataset.owner,
-                previous_dataset.relative_path,
-                schema=self._schema,
-                root_dir=self._root_dir,
-            )
-            self.db_connection.logger.info(f"Deleting data {data_path}")
-            if os.path.isfile(data_path):
-                os.remove(data_path)
-            elif os.path.isdir(data_path):
-                shutil.rmtree(data_path)
-            else:
-                warnings.warn(
-                    f"Dataset {data_path} not found under the `root_dir`, "
-                    "could not delete",
-                    UserWarning,
-                )
+            self._delete_data_by_id(dataset_id)
+
         msg = f"Deleted {dataset_id} from data registry"
+        self.db_connection.logger.info(msg)
+
+    def _delete_data_by_id(self, dataset_id, confirm=False):
+        """
+        Delete the data belonging to a dataset and update the status
+        to reflect this
+
+        dataset_id     int
+        the_dataset    row   Data stored in db for this entry
+                             Use if provided, otherwise query db
+
+        This routine should not be called directly by users.  It may be called
+        by `_delete_by_id` (in turn called by delete) or by the archiver.
+        It assumes the dataset has location_type = "dataregistry"; that is,
+        there is data on disk to be deleted.
+        """
+        dataset_table = self._get_table_metadata(self.which_table)
+        the_dataset = self.find_entry(dataset_id, raise_if_not_found=True)
+
+        data_path = _form_dataset_path(
+            the_dataset.owner_type,
+            the_dataset.owner,
+            the_dataset.relative_path,
+            schema=self._schema,
+            root_dir=self._root_dir,
+        )
+        self.db_connection.logger.info(f"Deleting data {data_path}")
+        if os.path.isfile(data_path):
+            os.remove(data_path)
+        elif os.path.isdir(data_path):
+            shutil.rmtree(data_path)
+        else:
+            warnings.warn(
+                f"Dataset {data_path} not found under the `root_dir`, "
+                "could not delete",
+                UserWarning,
+            )
+
+        # Update status, setting data_deleted bit
+        with self._engine.connect() as conn:
+            update_stmt = (
+                update(dataset_table)
+                .where(dataset_table.c.dataset_id == dataset_id)
+                .values(
+                    status=set_dataset_status(the_dataset.status,
+                                              data_deleted=True),
+                    delete_uid=self._uid,
+                )
+            )
+            conn.execute(update_stmt)
+            conn.commit()
+
+        msg = f"Deleted data for {dataset_id} from data registry"
         self.db_connection.logger.info(msg)
 
     def add_keywords(self, dataset_id, keyword):
@@ -1096,10 +1152,10 @@ class DatasetTable(BaseTable):
             ok = False
         else:
             status = results["dataset.status"][0]
-            if not get_dataset_status(status, "valid"):
+            if not get_dataset_status(status, "registered"):
                 ok = False
             elif get_dataset_status(status, "deleted"):
-                if not get_dataset_status(status, "archive"):
+                if not get_dataset_status(status, "archived"):
                     ok = False
                 else:
                     archived = True

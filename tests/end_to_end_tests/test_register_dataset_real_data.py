@@ -10,6 +10,7 @@ from database_test_utils import (
 from dataregistry import DataRegistry
 from dataregistry.exceptions import DataRegistryRootDirBadState
 from dataregistry.schema import DEFAULT_NAMESPACE
+from dataregistry.registrar.dataset_util import get_dataset_status
 
 
 @pytest.mark.parametrize("data_org", ["file", "directory"])
@@ -68,6 +69,7 @@ def test_copy_data(dummy_file, data_org):
             "dataset.data_org",
             "dataset.nfiles",
             "dataset.total_disk_space",
+            "dataset.status",
         ],
         filters=[f],
     )
@@ -76,6 +78,7 @@ def test_copy_data(dummy_file, data_org):
     assert results["dataset.data_org"][0] == data_org
     assert results["dataset.nfiles"][0] == 1
     assert results["dataset.total_disk_space"][0] > 0
+    assert get_dataset_status(results["dataset.status"][0], "data_managed")
 
     if data_org == "file":
         # See if it's there
@@ -104,6 +107,20 @@ def test_copy_data(dummy_file, data_org):
     assert len_valid > 0
     assert len_invalid + len_valid == len_all
 
+    # Now delete the file and check that status has changed correctly
+    if data_org == "file":
+        datareg.registrar.dataset._delete_by_id(d_id)
+        f = datareg.query.gen_filter("dataset.dataset_id", "==", d_id)
+        results_deleted = datareg.find_datasets(
+            property_names=["dataset.status"],
+            filters = [f],
+            status="all"
+        )
+        new_stat = results_deleted["dataset.status"][0]
+        assert get_dataset_status(new_stat, "registered")
+        assert get_dataset_status(new_stat, "data_managed")
+        assert get_dataset_status(new_stat, "deleted")
+        assert get_dataset_status(new_stat, "data_deleted")
 
 @pytest.mark.parametrize(
     "data_org,data_path",
@@ -283,6 +300,13 @@ def test_registering_deleted_relative_path(dummy_file, link):
 
     # Now delete
     datareg.registrar.dataset._delete_by_id(d2_id)
+
+    # Confirm status has been updated correctly
+    f = datareg.query.gen_filter("dataset.dataset_id", "==", d2_id)
+    results = datareg.find_datasets(property_names=["dataset.status"],
+                                    filters=[f], status="all")
+    new_stat = results["dataset.status"][0]
+    assert get_dataset_status(new_stat, "deleted")
 
     # Make a new entry (new name) using the original relative path
     d_id = _insert_dataset_entry(

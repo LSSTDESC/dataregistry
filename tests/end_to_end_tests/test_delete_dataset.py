@@ -92,6 +92,7 @@ def test_delete_dataset_entry(dummy_file, is_dummy, dataset_name, delete_by_id):
             "dataset.relative_path",
         ],
         filters=[f],
+        status="all",
     )
 
     assert len(results["dataset.status"]) == 1

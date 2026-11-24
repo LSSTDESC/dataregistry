@@ -3,7 +3,7 @@ from dataregistry.registrar.dataset_util import get_dataset_status, set_dataset_
 
 
 @pytest.mark.parametrize(
-    "start_status,valid,deleted,archived,end_status",
+    "start_status,registered,deleted,archived,end_status",
     [
         (0, True, False, False, "0b1"),
         (0, True, True, True, "0b111"),
@@ -11,7 +11,8 @@ from dataregistry.registrar.dataset_util import get_dataset_status, set_dataset_
         (5, None, True, None, "0b111"),
     ],
 )
-def test_set_dataset_status(start_status, valid, deleted, archived, end_status):
+def test_set_dataset_status(start_status, registered, deleted, archived,
+                            end_status):
     """
     Make sure dataset bitwise valid flags get set correctly
 
@@ -22,7 +23,8 @@ def test_set_dataset_status(start_status, valid, deleted, archived, end_status):
     assert (
         bin(
             set_dataset_status(
-                start_status, valid=valid, deleted=deleted, archived=archived
+                start_status, registered=registered, deleted=deleted,
+                archived=archived
             )
         )
         == end_status
@@ -30,7 +32,7 @@ def test_set_dataset_status(start_status, valid, deleted, archived, end_status):
 
 
 @pytest.mark.parametrize(
-    "bin_status,is_valid,is_deleted,is_archived",
+    "bin_status,is_registered,is_deleted,is_archived",
     [
         ("0b1", True, False, False),
         ("0b111", True, True, True),
@@ -38,7 +40,7 @@ def test_set_dataset_status(start_status, valid, deleted, archived, end_status):
         ("0b011", True, True, False),
     ],
 )
-def test_get_dataset_status(bin_status, is_valid, is_deleted, is_archived):
+def test_get_dataset_status(bin_status, is_registered, is_deleted, is_archived):
     """
     Make sure dataset bitwise valid flags get checked correctly.
 
@@ -46,19 +48,20 @@ def test_get_dataset_status(bin_status, is_valid, is_deleted, is_archived):
     individual flags correctly.
     """
 
-    assert get_dataset_status(int(bin_status, 2), "valid") == is_valid
+    assert get_dataset_status(int(bin_status, 2), "registered") == is_registered
     assert get_dataset_status(int(bin_status, 2), "deleted") == is_deleted
     assert get_dataset_status(int(bin_status, 2), "archived") == is_archived
+
 
 @pytest.mark.parametrize(
     "int_status, out_string, out_list",
     [
         (0, "invalid", ["invalid"]),
-        (1, "valid", ["valid"]),
+        (1, "registered", ["registered"]),
         (2, "deleted", ["deleted"]),
         (4, "archived", ["archived"]),
         (8, "replaced", ["replaced"]),
-        (9, "valid replaced", ["valid", "replaced"]),
+        (9, "registered replaced", ["registered", "replaced"]),
     ],
 )
 def test_translate_status(int_status, out_string, out_list):

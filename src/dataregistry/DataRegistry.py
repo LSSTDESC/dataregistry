@@ -439,6 +439,13 @@ class DataRegistry:
         """
         return self.query.find_datasets(**kwargs)
 
+    def find_latest_dataset(self, name, **kwargs):
+        """
+        Convenience function which just calls the find_latest function
+        of the Query object. See full documentation there.
+        """
+        return self.query.find_latest(name, **kwargs)
+
     def get_dataset_absolute_path(self, dataset_id, schema=None, silent=True):
         """
         See Query.get_dataset_absolute_path for complete description.

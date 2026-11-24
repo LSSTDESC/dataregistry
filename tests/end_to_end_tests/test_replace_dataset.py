@@ -77,6 +77,7 @@ def _check_replaced_dataset(
             "dataset.replace_iteration",
         ],
         filters=[f],
+        status="all"
     )
 
     assert len(results["dataset.name"]) == 1
